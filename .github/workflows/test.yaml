@@ -1,0 +1,24 @@
+name: test
+on:
+  - pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Pull submodules
+        run: git submodule update --init --recursive
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "17"
+
+      - name: Check types + linting + build
+        run: |
+          npm install
+          npx prettier --check .
+          npx eslint .
+          npm run build
