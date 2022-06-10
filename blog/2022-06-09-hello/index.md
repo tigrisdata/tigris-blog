@@ -3,6 +3,7 @@ slug: hello-world
 title: Hello world! 🚀
 authors: [ot, himank, firsov]
 tags: [tigris, hello, database]
+image: ./light-bulb-small.jpg
 ---
 
 We're excited to announce the launch of
