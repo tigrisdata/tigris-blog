@@ -101,7 +101,7 @@ technological perspective. All the team has built is a backend that can:
 4. Allows experimentation and quick iteration in a “safe” manner that
    doesn’t put the entire business in jeopardy.
 
-The backend though has become a distributed system with many different
+The backend though has become a complex distributed system with many different
 moving components. Each component must be deployed, configured, secured,
 monitored, and maintained. The team has to think about things like data
 replication, data consistency, availability, and scalability for each of the
@@ -139,7 +139,7 @@ Most open source databases today take a narrow view of the world:
 
 We believe that, **“Correctness, reliability, and user experience over raw
 performance”** is a good guiding principle that, if followed, would lead to
-the development of a modern database platform that would keep the data
+the development of a modern database platform that could keep the data
 infrastructure sprawl at bay.
 
 This of course sounds great on paper, but prioritizing user experience over
@@ -180,7 +180,7 @@ instead of micro-benchmarks look like? At Tigris, it boils down to a system
 with the following characteristics:
 
 1. A flexible document model that enables developers to model data in a way
-   that best suits the applications’ needs. The data model should also be easy
+   that best suits their applications’ needs. The data model should also be easy
    to evolve, and schema changes should be as simple and painless as regular
    feature development.
 2. Simple and intuitive APIs that allow developers to quickly insert and
@@ -189,7 +189,7 @@ with the following characteristics:
 3. Strictly serializable isolation by default. This ensures that developers
    never need to think about how transactions work or what their limitations
    are, nor do they need to configure things like read and write concerns or
-   transaction isolation level.
+   transaction isolation levels.
 4. “Distributed by default” with no painful transition point when the needs
    of the application begin to exceed the capabilities of a single node.
    Sharding should also be transparent, and the system should ensure that the
@@ -210,4 +210,4 @@ This is exactly what we’re building with
 [Tigris](https://github.com/tigrisdata/tigris)! Stay tuned for future posts
 where we’ll discuss in detail how we’re leveraging open source technology
 like FoundationDB to build a rock solid and intuitive database platform in
-record time. We’re also hiring!
+record time. We’re also [hiring](https://jobs.lever.co/tigris)!
