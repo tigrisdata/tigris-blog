@@ -1,0 +1,365 @@
+---
+slug: http2-websockets-future-of-real-time
+title: HTTP/2, WebSockets, and the Future of Real-Time Client-Server Interactions
+description: >
+  Real-time client-server interactions will only become more vital as 
+  applications and use cases continue to evolve. Though both the WebSocket and 
+  HTTP/2 protocols can work well for real-time communication, HTTP/2 is the 
+  better option in certain situations.
+image: https://imgur.com/qsOEaIn.png
+keywords: [Realtime database, http2, websockets]
+authors: [anshuman]
+tags: [realtime]
+---
+
+# HTTP/2, WebSockets, and the Future of Real-Time Client-Server Interactions
+
+The client-server model is one of the most used patterns in web development. In its simplest form, the client-server model can be described as a resource seeker (client) requesting the resource from a computer (server) serving it.
+
+Advancements in web technologies have intensified the need for real-time client-server interactions. Protocols like WebSocket solve many of the problems in the older client-server model. WebSocket provides convenient bidirectional communication between the client and server while allowing messages to be broadcast among a variety of clients. But its flexible approach encourages bad practices among developers, such as not setting up an API contract for request/response or overusing WebSockets where HTTP would do fine. Its overuse has caused it to lose its essence.
+
+HTTP/2—the successor of the HTTP protocol—provides advantages over its predecessor, such as multiplexing and server push. Although it's a significant improvement over HTTP/1, HTTP/2 is not a replacement for WebSockets. So what is the future of real-time client-server interactions?
+
+In this article, you'll learn more about real-time client-server interactions as well as the HTTP/2 and WebSocket protocols and their use cases. If you're planning to build real-time interactions, you'll be able to choose the right tools for your application needs.
+
+## Why Do You Need Real-Time Client-Server Interactions?
+
+Real-time client-server interactions have become vital for many modern applications. This means it's crucial for any developer who's looking to develop fast and resilient applications to understand the inner workings of real-time communication.
+
+Below are some popular use cases for real-time client-server interactions:
+
+- Modern-day chat applications like WhatsApp are an implementation of real-time client-server interactions, hence the name instant messaging. Such real-time communication can also be implemented using solutions like [Tigris](https://www.tigrisdata.com/), which provide you with an event stream to listen to the latest messages published.
+- Multiplayer online games use real-time client-server interactions to broadcast different players' locations and maintain the leaderboard. Low latency is crucial for these games because the lower the latency, the closer it is to real time.
+- Stockbroker platforms rely on real-time client-server interactions to broadcast ever-changing stock prices. Real-time interactions ensure that buying and selling prices are as accurate as possible so users avoid losses due to system delays.
+
+## What's the Future of Real-Time Client-Server Interactions?
+
+Both HTTP/2 and WebSockets are potential solutions for your real-time communication needs, but each protocol comes with benefits and drawbacks.
+
+### How Does the HTTP/2 Protocol Work?
+
+HTTP/2 is an advanced version of HTTP. It follows the same semantics and external formatting like headers, methods, and response codes, but its internal implementation offers performance enhancements.
+
+![HTTP/2 Single TCP](https://i.imgur.com/6jxrjyi.png)
+
+HTTP/2 follows the same request and response model as its predecessor, but unlike HTTP, HTTP/2 uses a single TCP connection per origin, and it supports multiplexing for requests and responses. This means that there can be more than one request/response in flight on the same TCP connection, utilizing the bandwidth to its full potential.
+
+This amazing efficiency of HTTP/2 is made possible through two important features: binary encoding for transmission and splitting requests/responses into multiple frames.
+
+- HTTP used plaintext-based communication, which was easier for humans to understand, but it caused unnecessary overheads to computer systems. HTTP/2, on the other hand, encodes the small messages and frames into a binary format and later decodes them on the client/server. This encoding only affects the transmission of the messages and not how they appear on the sending or the receiving sides, which means the client and server will still follow the same semantics of HTTP, like methods or headers.
+- The binary framing splits the messages into smaller units called frames, which carry portions of the message like headers or data along with the stream ID to which they belong. Frames can be put in any order or even in a different stream during transmission. They are put together in the correct structure at the end of the line at the application protocol layer. Frames allow HTTP/2 to send multiple requests/responses in parallel without worrying about mixing up the messages.
+
+### How Does the WebSocket Protocol Work?
+
+WebSockets provide a persistent channel for interaction between the client and server. A WebSocket connection is created by the client initiating a handshake request with the server. After both parties agree on the request, a bidirectional connection persists until one of the parties chooses to close it.
+
+![WebSocket connection](https://i.imgur.com/eH1N3Se.png)
+
+The following headers are sent in the first HTTP request for connection upgrade:
+
+```
+Upgrade: WebSocket
+Connection: Upgrade
+```
+
+The `Upgrade` header indicates that the client wants to upgrade the connection to the WebSocket protocol. The `Connection` header is sent because the `Upgrade` header is a hop-by-hop header.
+
+As you can see, the WebSocket protocol depends on HTTP for the initial handshake. After that, the WebSocket connection stays open for any number of messages to be sent across the channel.
+
+The request and response formatting is set more loosely in WebSockets, and it's left to the messaging layer—the developers—to settle on a specific request and response structure.
+
+### Why Is HTTP/2 the Future of Real-Time Client-Server Interactions?
+
+While WebSockets provide several advantages, you can also use HTTP/2 to implement many real-time applications. Consider:
+
+- Stream prioritization in HTTP/2 allows you to prioritize streams for loading urgent data. This feature is built into the protocol as long as the server supports it. WebSocket doesn't provide any such feature, leaving the heavy lifting to developers.
+- HTTP/2 caters to one of the fundamental needs of the modern web—edge caching. This makes it a good choice for serving cacheable information for faster responses, like stock prices from the past year. Messages delivered using WebSockets are not cached.
+- HTTP/2 follows widely known request methods. Each method (GET, POST, PUT) has a designated meaning, making the APIs accessible across teams without knowledge overhead. With WebSockets, the messaging layer is responsible for implementing a similar mechanism to request methods, which creates ambiguity.
+- As with the requests, the responses of HTTP/2 are well-defined and standardized. An error in the request resolution will reflect in its response code. Because there's a definite request resolution, it's easier to synchronize multiple requests. WebSocket, though, doesn't provide request resolution out of the box. The protocol doesn't guarantee any acknowledgment from the receiver, leaving the error handling on the messaging layer.
+
+HTTP/2 doesn't support WebSockets as HTTP did, making the protocols an either-or choice. One good workaround for this situation would be to use the gRPC protocol, which uses HTTP/2 under the hood.
+
+Alternatively, you can simplify the process with a tool like [Tigris](https://www.tigrisdata.com/), which uses gRPC with HTTP/2 to provide event streaming to your application without much setup. Tigris provides SDKs in TypeScript, Java, and Go that you can use to [get started quickly](https://docs.tigrisdata.com/quickstart).
+
+## Building Real-Time Client-Server Interactions with Tigris
+
+To demonstrate, you're going to build an application that adds new users to a Tigris database and updates the frontend (containing a table of users) in real time.
+
+### Prerequisites
+
+You'll need the following installed on your system:
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Node.js](https://nodejs.org/en/download/)
+
+### Getting Started
+
+Once you have Docker running on your system, run the following command to get the Tigris local development environment running on port 8081:
+
+```
+docker run -d -p 8081:8081 tigrisdata/tigris-local:latest
+```
+
+Clone the [tigris-starter-ts](https://github.com/tigrisdata/tigris-starter-ts) repository
+
+```
+git clone https://github.com/tigrisdata/tigris-starter-ts.git
+```
+
+Now open it in a code editor like [Visual Studio Code](https://code.visualstudio.com/download). The starter repository provides a basic ecommerce application with REST API for CRUD operations on users, products and orders.
+
+We will extend it to add a social element, by allowing users to submit social messages.
+
+Run `npm i` to install all dependencies.
+
+Create a new `public` folder inside the project and add an `index.html` file to build the client for your application.
+
+Then, update the `public/index.html` file to show two input fields: `nickName` and `message` and a button to publish a new message using the `/social_messages/messages/publish` API endpoint:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Tigris real-time example</title>
+  </head>
+  <body>
+    <label for="nickName">Nick name</label>
+    <input type="text" placeholder="Nick name" id="nickName" />
+    <label for="message">Message</label>
+    <input type="text" placeholder="Message" id="message" />
+    <button onclick="addNewMessage()">Send message</button>
+    <table class="messages">
+      <thead>
+        <tr>
+          <th>NickName</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody id="messages-table"></tbody>
+    </table>
+    <script>
+      const baseURL =
+        "http://localhost:8081/api/v1/databases/tigris_starter_ts/collections";
+
+      // publish new messages
+      function addNewMessage() {
+        const nickNameInput = document.getElementById("nickName");
+        const messageInput = document.getElementById("message");
+        const nickName = nickNameInput.value;
+        const message = messageInput.value;
+        nickNameInput.value = "";
+        messageInput.value = "";
+        fetch(`${baseURL}/social_messages/messages/publish`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                nickName,
+                message,
+              },
+            ],
+          }),
+        });
+      }
+    </script>
+  </body>
+</html>
+```
+
+### Adding a Message Row
+
+Now, use the Tigris [Event Streaming API](https://docs.tigrisdata.com/httpdocs/server/v1/api#tag/Event-Streaming/operation/Tigris_Subscribe) to subscribe to the messages published to the `social_messages` topic using the `/social_messages/messages/subscribe` API endpoint and add a new row inside the `#messages-table`.
+
+Update the `public/index.html` file with the following:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Tigris real-time example</title>
+  </head>
+  <body>
+    <label for="nickName">Nick name</label>
+    <input type="text" placeholder="Nick name" id="nickName" />
+    <label for="message">Message</label>
+    <input type="text" placeholder="Message" id="message" />
+    <button onclick="addNewMessage()">Send message</button>
+    <table class="messages">
+      <thead>
+        <tr>
+          <th>NickName</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody id="messages-table"></tbody>
+    </table>
+    <script>
+      const baseURL =
+        "http://localhost:8081/api/v1/databases/tigris_starter_ts/collections";
+
+      // publish new messages
+      function addNewMessage() {
+        const nickNameInput = document.getElementById("nickName");
+        const messageInput = document.getElementById("message");
+        const nickName = nickNameInput.value;
+        const message = messageInput.value;
+        nickNameInput.value = "";
+        messageInput.value = "";
+        fetch(`${baseURL}/social_messages/messages/publish`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                nickName,
+                message,
+              },
+            ],
+          }),
+        });
+      }
+
+      // listen for new messages
+      fetch(`${baseURL}/social_messages/messages/subscribe`, {
+        method: "post",
+      }).then(async (response) => {
+        const streamReader = response.body.getReader();
+        while (true) {
+          const { value, done } = await streamReader.read();
+          if (done) break;
+          const string = new TextDecoder().decode(value);
+          const strLines = string.split("\n");
+          for (let i in strLines) {
+            if (strLines[i].length === 0) continue;
+            let {
+              result: { message },
+            } = JSON.parse(strLines[i]);
+            const newMessageRow = document.createElement("tr");
+            newMessageRow.innerHTML = `<td>${message.nickName}</td><td>${message.message}</td>`;
+            document
+              .getElementById("messages-table")
+              .appendChild(newMessageRow);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
+```
+
+The code above uses the `streamReader.read()` function to consume the stream, parses the JSON string from the response, and then adds the message to the table until the stream is closed.
+
+You can learn more about parsing HTTP streaming responses in [this article](https://www.loginradius.com/blog/engineering/guest-post/http-streaming-with-nodejs-and-fetch-api/).
+
+### Updating the `setup` Method
+
+Update the `setup()` method inside the `src/app.ts` file to serve static content from the `public` folder:
+
+```ts
+import express from "express";
+import { DB, Tigris } from "@tigrisdata/core";
+import { User, userSchema } from "./models/user";
+import { Product, productSchema } from "./models/product";
+import { Order, orderSchema } from "./models/order";
+import { UserEvent, userEventSchema } from "./models/user-event";
+import { SocialMessage, socialMessageSchema } from "./models/social-message";
+import { UserController } from "./controllers/user-controller";
+import { ProductController } from "./controllers/product-controller";
+import { OrderController } from "./controllers/order-controller";
+import { SocialMessageController } from "./controllers/social-message-controller";
+
+export class App {
+  private readonly app: express.Application;
+  private readonly port: string | number;
+  private readonly dbName: string;
+  private readonly tigris: Tigris;
+  private db: DB;
+
+  constructor() {
+    this.app = express();
+    this.port = 8080;
+    this.dbName = "tigris_starter_ts";
+    this.tigris = new Tigris({
+      serverUrl: "localhost:8081",
+      insecureChannel: true,
+    });
+
+    this.setup();
+  }
+
+  public async setup() {
+    this.app.use(express.json());
+    this.app.use(express.static("public")); // add this line
+    await this.initializeTigris();
+    await this.setupControllers();
+  }
+
+  public async initializeTigris() {
+    // create database (if not exists)
+    this.db = await this.tigris.createDatabaseIfNotExists(this.dbName);
+    console.log("db: " + this.dbName + " created successfully");
+
+    // register collections schema and wait for it to finish
+    await Promise.all([
+      this.db.createOrUpdateCollection<User>("users", userSchema),
+      this.db.createOrUpdateCollection<Product>("products", productSchema),
+      this.db.createOrUpdateCollection<Order>("orders", orderSchema),
+      this.db.createOrUpdateTopic<UserEvent>("user_events", userEventSchema),
+      this.db.createOrUpdateTopic<SocialMessage>(
+        "social_messages",
+        socialMessageSchema
+      ),
+    ]);
+  }
+
+  public setupControllers() {
+    new UserController(this.db, this.app);
+    new ProductController(this.db, this.app);
+    new OrderController(this.db, this.app);
+    new SocialMessageController(this.db, this.app);
+  }
+
+  public start() {
+    this.app.listen(this.port, () => {
+      console.log(
+        `⚡️[server]: Server is running at http://localhost:${this.port}`
+      );
+    });
+  }
+}
+```
+
+Run `npm run build` to compile the TypeScript into `dist/index.js` as JavaScript code.
+
+Lastly, run `npm run start` to start the server and open [http://localhost:8080](http://localhost:8080) in a web browser.
+
+Your application with real-time client-server interaction is ready.
+
+![Real-time application with Tigris](https://i.imgur.com/oL4BXFN.gif)
+
+## Conclusion
+
+Real-time client-server interactions will only become more vital as applications and use cases continue to evolve. Though both the WebSocket and HTTP/2 protocols can work well for real-time communication, HTTP/2 is the better option in certain situations. You can improve operations with HTTP/2 even further by using an alternate protocol like gRPC.
+
+As you build your real-time websites and apps, you can enable seamless development with Tigris. Tigris is an open source developer data platform available with a simple yet powerful, unified API that spans search, event streaming, and transactional document store. It enables you to focus on building your applications rather than on managing databases.
+
+If you are interested in trying out Tigris for your next application, [sign up for the beta and get early access](https://www.tigrisdata.com/beta).
+
+You can also follow the Tigris [documentation](https://docs.tigrisdata.com) to learn about more use cases.
