@@ -73,4 +73,4 @@ below. We will be providing access to the platform on a rolling basis in the
 coming weeks. If you’re selected to participate in the beta, you’ll receive an
 email invitation to get started.
 
-[cta to Tigris beta signup page](https://www.tigrisdata.com/beta)
+🚀 [Click here to signup for the Tigris beta and get early access](https://www.tigrisdata.com/beta)
