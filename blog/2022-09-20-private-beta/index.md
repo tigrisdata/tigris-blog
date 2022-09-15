@@ -5,15 +5,15 @@ description: >
   Tigris announces the launch of the new open-source developer data platform 
   and invites developers to join the waitlist and be the first to try it for 
   their next application.
-image: ./launch-blog-banner-social.png
+image: ./launch-blog-banner-small.jpg
 keywords: [tigris, developer data platform, developers, database, beta launch]
 authors: [ot]
 tags: [tigris, beta, launch]
 ---
 
-[![Complexity to Simplicity with Tigris](launch-blog-banner.png)](https://www.tigrisdata.com/beta)
+[![Complexity to Simplicity with Tigris](launch-blog-banner.jpg)](https://www.tigrisdata.com/beta)
 
-### [Join the Tigris waitlist and be the first to try the new open-source developer data platform for your next application!](https://www.tigrisdata.com/beta)
+### [Join the Tigris waitlist and be the first to try the new open-source developer data platform for your next application](https://www.tigrisdata.com/beta)
 
 Over the past year, we’ve been building a revolutionary new data platform for
 developers to handle all their applications’ data needs without all the data
