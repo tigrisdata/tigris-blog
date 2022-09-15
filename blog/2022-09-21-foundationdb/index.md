@@ -1,10 +1,10 @@
 ---
 slug: building-a-database-using-foundationdb
-title: Skipping The Boring Parts of Building a Database using FoundationDB
+title: Skipping the boring parts of building a database using FoundationDB
 description: >
   Why Tigris Leverages FoundationDB to Replace Multiple Database Systems
 image: ./building-construction.png
-keywords: [foundationdb, database, developers]
+keywords: [foundationdb, database, developers, developer data platform]
 authors: [himank, firsov]
 tags: [foundationdb]
 ---
