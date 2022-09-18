@@ -3,6 +3,10 @@
 
 /* eslint @typescript-eslint/no-var-requires: "off" */
 
+// Needed for testing with environment variables locally
+// On Vercel the environment variables are automatically injected
+require("dotenv").config({ path: ".env.local" });
+
 const lightCodeTheme = require("prism-react-renderer/themes/github");
 const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 
@@ -57,7 +61,10 @@ const config = {
     [
       "docusaurus-plugin-segment",
       {
-        apiKey: "qla6XhK4PEBr8uUya14LQecowXvugUlo",
+        apiKey: process.env.NEXT_PUBLIC_ANALYTICS_ID,
+        page: {
+          category: "blog",
+        },
       },
     ],
   ],

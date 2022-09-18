@@ -2,6 +2,9 @@ name: test
 on:
   - pull_request
 
+env:
+  NEXT_PUBLIC_ANALYTICS_ID: dummy_for_testing
+
 jobs:
   build:
     runs-on: ubuntu-latest
