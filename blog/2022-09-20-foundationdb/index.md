@@ -1,4 +1,5 @@
 ---
+date: 2022-09-20T09:00
 slug: building-a-database-using-foundationdb
 title: Skipping the boring parts of building a database using FoundationDB
 description: >
