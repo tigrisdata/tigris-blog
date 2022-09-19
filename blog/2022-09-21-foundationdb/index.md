@@ -3,13 +3,13 @@ slug: building-a-database-using-foundationdb
 title: Skipping the boring parts of building a database using FoundationDB
 description: >
   Why Tigris Leverages FoundationDB to Replace Multiple Database Systems
-image: ./boring-database-blog-banner.png
+image: ./foundationdb-blog-header.jpg
 keywords: [foundationdb, database, developers, developer data platform]
 authors: [himank, firsov]
 tags: [foundationdb]
 ---
 
-![Building a new database](boring-database-blog-banner.png)
+![Building a new database](foundationdb-blog-header.jpg)
 
 The most complicated and time-consuming parts of building a new database system are usually the edge cases and low-level details. Concurrency control, consistency, handling faults, load balancing, that kind of thing. Almost every mature storage system will have to grapple with all of these problems at one point or another. For example, at a high level, load balancing hot partitions across brokers in Kafka is not that different from load balancing hot shards in MongoDB, but each system ends up re-implementing a custom load-balancing solution instead of focusing on their differentiating value to end-developers.
 
