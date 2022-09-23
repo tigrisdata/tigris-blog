@@ -1,0 +1,115 @@
+---
+slug: tigris-private-beta-press-announcement
+title: Tigris Data launches all-in-one developer data platform to simplify building real-time applications
+description: >
+  Tigris announces the launch of the new open-source developer data platform
+  and invites developers to join the waitlist and be the first to try it for
+  their next application.
+image: ./pr-banner-lite.jpg
+keywords: [tigris, developer data platform, developers, database, press]
+authors: [ot]
+tags: [press, beta, launch]
+---
+
+[![Complexity to Simplicity with Tigris](pr-banner-lite.jpg)](https://www.tigrisdata.com/beta#signup-form)
+
+- _Launch to offer open source and serverless API-based developer data platform
+  in order to solve problems around scalability, search and support_
+- _Platform based on open source database FoundationDB, and backed by leading
+  figures in the world of open source as well as General Catalyst, Basis Set Ventures and Netlify_
+
+**Sunnyvale, CA - 23rd September 2022 -** Tigris Data, a groundbreaking open
+source developer data platform provider, today announced the launch of its
+serverless and open source developer data platform Tigris. Tigris is aimed at
+web and mobile apps, providing a unified API that spans search, event streaming,
+and transactional document store, along with smart features like automatic
+indexing and management. By using serverless and a single API, this approach
+simplifies the data infrastructure for application developers and enables them
+to focus on building.
+
+The company launched with seed funding of $6.9million, including backing from
+[General Catalyst](https://www.generalcatalyst.com/) and
+[Basis Set Ventures](https://www.basisset.com/) as well as a range of open
+source and software leaders including
+[Guillermo Rauch](https://www.linkedin.com/in/guillermo-rauch-b834b917b/) (CEO at Vercel) and
+[Rob Skillington](https://www.linkedin.com/in/robskillington/) (CTO and Co-Founder, Chronosphere).
+In addition, [Peter Zaitsev](https://www.linkedin.com/in/peterzaitsev/), CEO at Percona,
+is an Advisor for Tigris. Tigris Data also received funding from
+[Netlify's Jamstack Innovation Fund](https://www.netlify.com/blog/jamstack-innovation-fund-launches-with-the-10-most-promising-jamstack-startups/),
+which supports the most promising companies in the community.
+
+The cost of maintaining multiple data services is not only expensive, but is
+disruptive to development time. Tigris is an all-in-one open source developer
+data platform with a single, unified API to ensure developers spend less time
+on tedious infrastructure management and more time on what they do best - coding
+and feature development. Tigris is based on FoundationDB, a distributed database
+that was open sourced by Apple in 2018 under the Apache 2.0 licence. With
+FoundationDB at its core, Tigris is designed to help developers to:
+
+- Eliminate the need for deploying, configuring, securing, monitoring, and
+  maintaining data infrastructure
+- Prevent data silos and data infrastructure sprawl
+- Stop the need for administration operations such as cluster management,
+  query tuning, index optimization, and other maintenance activities
+- Reduce the number of moving parts within applications that can cause outages
+  and slowdowns
+- Remove reliability and scalability issues as applications scale and need
+  changes
+- Avoid vendor lock-in and maintain control of their data
+
+_"Developers want to build applications and scale up those services, and they
+don't want to spend time managing databases or linking up infrastructure
+components. They want to use an API like approach to interact with data,
+in just the same way as they interact with other services. And they want to
+achieve all this fast. This is why we built and launched Tigris,"_ commented
+Ovais Tariq, CEO at Tigris Data. _"Providing that single approach to data
+management in one developer-friendly environment makes it easier to prevent
+data infrastructure sprawl and let the developers focus on what they like
+best - building - while still providing all the services that developers need.
+Lastly, building this as an open source platform means that developers can
+avoid lock-in."_
+
+As a company, Tigris Data was founded by senior engineers,
+[Ovais Tariq](https://www.linkedin.com/in/ovaistariq/),
+[Himank Chaudhary](https://www.linkedin.com/in/himank-chaudhary-1937b958/) and
+[Yevgeniy Firsov](https://www.linkedin.com/in/efirsov/), that led the
+development of data storage and management at Uber, where they faced exactly
+the same challenges around data growth and infrastructure sprawl. Before this,
+the team worked across various data and infrastructure teams including time at
+Yahoo, SanDisk, Percona and Khoros. With this experience, the team was inspired
+with the idea of creating a developer data platform to simplify data
+applications without sacrificing speed or scalability.
+
+_"Ovais and the whole team at Tigris are super focused on customer value -
+building a true platform solution that scales with the developer,"_ said
+[Quentin Clark](https://www.linkedin.com/in/quentin-clark/), managing director
+at General Catalyst. _"Out in the industry, we are seeing innovation towards
+eliminating the depth of 'infrastructure' expertise that was once necessary to
+build to scale. Tigris is exactly this."_
+
+_"Developers increasingly make the decisions that set their applications –
+and their companies – on the route to success. Being the developer data
+platform of choice for developers is a huge market that existing companies
+have not fully solved, so there is a great opportunity for new entrants to
+win here. We are pleased to support the Tigris Data team in their approach,"_
+added [Xuezhao Lan](https://www.linkedin.com/in/xuezhao-lan-lan-50aa1a1/),
+Founder and Managing Partner, Basis Set Ventures.
+
+_"The open source market continues to innovate and find solutions to the
+problems that developers and data professionals face. Simplifying the
+interactions around data using API interface fits with how developers want
+to build and implement their applications in the cloud. I'm happy to support
+Ovais and his team in building Tigris as they start their journey,"_ commented
+[Peter Zaitsev](https://www.linkedin.com/in/peterzaitsev/), advisor to
+Tigris Data and CEO at open source database company Percona.
+
+#### About Tigris Data
+
+Tigris Data provides an open source developer data platform that enables
+developers to store, access, stream, and search data from the tools and
+languages they already use and love. It provides all the base functionality
+developers need to build robust, data-driven applications in seconds, making
+it easier to run and manage the applications that deliver what customers want.
+[Join the Tigris waitlist](https://www.tigrisdata.com/beta#signup-form) and be
+the first to try the new open-source developer data platform for your next
+application.
