@@ -1,17 +1,23 @@
 ot:
   name: Ovais Tariq
   title: Co-Founder @ Tigris Data
-  url: https://github.com/ovaistariq
+  url: https://www.linkedin.com/in/ovaistariq/
   image_url: https://github.com/ovaistariq.png
 
 himank:
   name: Himank Chaudhary
   title: Co-Founder @ Tigris Data
-  url: https://github.com/himank
+  url: https://www.linkedin.com/in/himank-chaudhary-1937b958/
   image_url: https://github.com/himank.png
 
 firsov:
   name: Yevgeniy Firsov
   title: Co-Founder @ Tigris Data
-  url: https://github.com/efirs
+  url: https://www.linkedin.com/in/efirsov/
   image_url: https://github.com/efirs.png
+
+anshuman:
+  name: Anshuman Bhardwaj
+  title: Dev Advocate @commercetools
+  url: https://twitter.com/sun_anshuman
+  image_url: https://github.com/Anshuman71.png
