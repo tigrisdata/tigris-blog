@@ -97,19 +97,9 @@ const config = {
             position: "left",
           },
           {
-            type: "dropdown",
             label: "API Reference",
             position: "left",
-            items: [
-              {
-                label: "HTTP API",
-                href: "https://docs.tigrisdata.com/apidocs/",
-              },
-              {
-                label: "RPC",
-                href: "https://docs.tigrisdata.com/protodocs/server/v1/api.proto",
-              },
-            ],
+            href: "https://docs.tigrisdata.com/apidocs/",
           },
           {
             label: "Blog",
