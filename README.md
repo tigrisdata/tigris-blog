@@ -53,3 +53,8 @@ We use [pre-commit](https://pre-commit.com/index.html) to automatically
 setup and run git hooks.
 
 On every `git commit` we check the code quality using prettier and eslint.
+
+```shell
+brew install pre-commit
+pre-commit install
+```
