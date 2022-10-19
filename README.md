@@ -54,6 +54,8 @@ setup and run git hooks.
 
 On every `git commit` we check the code quality using prettier and eslint.
 
+Install pre-commit and initialize it with the included commit hooks as follows:
+
 ```shell
 brew install pre-commit
 pre-commit install
