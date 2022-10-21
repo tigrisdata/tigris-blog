@@ -5,9 +5,9 @@ description: >
   Learn how to deploy a fullstack app built with Next.js and Tigris, the open source developer data
   platform to Vercel. You will see how easy it is to integrate Tigris in your Next.js web app and
   deploy it on Vercel.
-keywords: [open source, web application, nextjs, vercel, deployment]
+keywords: [open source, web application, nextjs, vercel, deployment, typescript]
 authors: [ot]
-tags: [tigris, nextjs, vercel, fullstack, web development, deploy]
+tags: [nextjs, vercel, fullstack, web development, typescript, deployment]
 ---
 
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
@@ -183,11 +183,12 @@ The `TodoItem` interface is native _typeScript_ model that is used in our applic
 individual to-do list item within app. Tigris schema is defined as `TodoItemSchema` which wraps around
 `TodoItem` object and defines each property as collection field to persist in schema.
 
-### 3.2 `lib/tigris.ts` - Connecting to Tigris
+### 3.2 `lib/tigris.ts` - Connecting to Tigris {#code-connecting-to-tigris}
 
 This file loads the environment variables you specified previously in [creating a Vercel project section](#create-vercel-project)
 and uses them to configure a re-usable Tigris client. This client can be used to manage all your
-Tigris operations from here on.
+Tigris operations from here on. Also, note how we are caching the client instance that it can
+be subsequently used for multiple requests without having to reconnect to Tigris.
 
 <!-- prettier-ignore-start -->
 ```typescript title=lib/tigris.ts
@@ -321,6 +322,94 @@ convention; we have three files `/pages/api/items/index.ts`, `/pages/api/items/s
 - `GET /api/item/{id}` to get an item having **item.id={id}**
 - `PUT /api/item/{id}` to update the given item
 - `DELETE /api/item/[id]` to delete a single item with **item.id={id}**
+
+Let's start with the `/api/items` api that supports both `GET` and `POST` handler. You'll realize
+that Next.js eliminates a lot of REST boilerplate and allows developers to focus more on the
+functional aspects of the application.
+
+<!-- prettier-ignore-start -->
+```typescript title=/pages/api/items/index.ts
+import type { NextApiRequest, NextApiResponse } from 'next'
+import { COLLECTION_NAME, TodoItem } from '../../../lib/schema'
+import tigrisDb from '../../../lib/tigris'
+
+type Response = {
+  result?: Array<TodoItem>,
+  error?: string
+}
+
+// GET /api/items -- gets items from collection
+// POST /api/items {ToDoItem} -- inserts a new item to collection
+export default async function handler (
+  req: NextApiRequest,
+  res: NextApiResponse<Response>
+) {
+  switch (req.method) {
+    case 'GET':
+      await handleGet(req, res)
+      break
+    case 'POST':
+      await handlePost(req, res)
+      break
+    default:
+      res.setHeader('Allow', ['GET', 'POST'])
+      res.status(405).end(`Method ${req.method} Not Allowed`)
+  }
+}
+
+...
+```
+<!-- prettier-ignore-end -->
+
+`handleGet()` method is fetching and returning items from Tigris collection, let's take a look at its
+implementation
+
+<!-- prettier-ignore-start -->
+```typescript title=/pages/api/items/index.ts
+async function handleGet (req: NextApiRequest,
+  res: NextApiResponse<Response>) {
+  try {
+    const itemsCollection = tigrisDb.getCollection<TodoItem>(COLLECTION_NAME)
+    const cursor = itemsCollection.findMany()
+    const items = await cursor.toArray()
+    res.status(200).json({ result: items })
+  } catch (err) {
+    const error = err as Error
+    res.status(500).json({ error: error.message })
+  }
+}
+```
+<!-- prettier-ignore-end -->
+
+In this code, we imported `tigrisDb` from [/lib/tigris](#code-connecting-to-tigris) and re-used it
+to establish a communication with Tigris. Tigris has collections, and each collection has
+multiple documents. Tigris typeScript client provides a very simple abstraction from the data layer
+that is easy to comprehend for the developers operating on large code-bases. `itemsCollection.findMany()`
+follows native coding convention to send a query to Tigris DB equivalent to **SELECT \*** statement of
+SQL and returns a cursor to fetch results from collection.
+
+Let's look at `handlePost()` implementation in the same file that inserts a `TodoItem` in collection
+
+<!-- prettier-ignore-start -->
+```typescript title=/pages/api/items/index.ts
+async function handlePost (req: NextApiRequest,
+  res: NextApiResponse<Response>) {
+  try {
+    const item = JSON.parse(req.body) as TodoItem
+    const itemsCollection = tigrisDb.getCollection<TodoItem>(COLLECTION_NAME)
+    const inserted = await itemsCollection.insertOne(item)
+    res.status(200).json({ result: [inserted] })
+  } catch (err) {
+    const error = err as Error
+    res.status(500).json({ error: error.message })
+  }
+}
+```
+<!-- prettier-ignore-end -->
+
+`handlePost()` gets called on `POST /api/items` and expects a TodoItem object as json in body. It
+leverages another simple `insertOne()` construct on the collection object to execute SQL equivalent
+**INSERT INTO** query.
 
 ## Summary
 
