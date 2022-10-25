@@ -260,8 +260,9 @@ declare global {
 
 let tigrisDb: DB;
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "development") {
   if (!global.tigrisDb) {
+    // re-use the same connection in dev
     const tigrisClient = new Tigris(clientConfig);
     global.tigrisDb = tigrisClient.getDatabase(DB_NAME);
   }
