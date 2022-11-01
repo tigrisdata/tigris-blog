@@ -54,74 +54,6 @@ For this tutorial you'll need:
 4. Node.js 16+
 5. npm and npx
 
-## Setting up Tigris {#setting-up-tigris}
-
-The CLI is the easiest way to get started with Tigris. Let's install the CLI
-first:
-
-<Tabs>
-<TabItem value="macos" label="macOS">
-
-```shell
-brew install tigrisdata/tigris/tigris-cli
-```
-
-</TabItem>
-
-<TabItem value="linux" label="linux">
-
-```shell
-curl -sSL https://tigris.dev/cli-linux | sudo tar -xz -C /usr/local/bin
-```
-
-</TabItem>
-</Tabs>
-
-The next step is to generate credentials: _clientId_, _clientSecret_. These
-credentials will be used by the Next.js to-do list app to connect and
-authenticate with Tigris. Let's login to your Tigris Cloud account and
-create the application credentials.
-
-```shell
-tigris login
-```
-
-```shell
-tigris create application todo_list "to-do list application"
-```
-
-Once the command is executed, it would create the application credentials
-(_clientID_ and _clientSecret_) and print it on the screen. Make a note of `id`
-and `secret` from the output.
-
-<details>
-    <summary>Output</summary>
-
-    ```json
-    {
-        "id": "your_client_id_here",
-        "name": "todo_list",
-        "description": "to-do list application",
-        "secret": "your_client_secret_here",
-        "created_at": 1666248043000,
-        "created_by": "google-oauth2|xxx"
-    }
-    ```
-
-</details>
-
-:::note
-Alternatively, you can generate the application credentials through the
-[Tigris Cloud web console](https://console.preview.tigrisdata.cloud/).
-
-<LiteYouTubeEmbed
-  id="Ls50EOrU3AQ"
-  params="autoplay=1&autohide=1&showinfo=0&rel=0"
-  title="Generate application keys for Tigris"
-  poster="maxresdefault"
-/>
-:::
-
 ## Deploying the to-do list app to Vercel
 
 We will start off first by deploying the pre-prepared to-do list app to Vercel
@@ -135,27 +67,26 @@ Vercel makes it easier to deploy Git projects with a few clicks.
 Hit the following **Deploy** button to get started with the Vercel
 workflow to clone the repo to your account
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ftigrisdata%2Ftigris-vercel-starter%2F&env=TIGRIS_URI,TIGRIS_CLIENT_ID,TIGRIS_CLIENT_SECRET&envDescription=Application%20secrets%20to%20access%20Tigris%20cloud&envLink=https%3A%2F%2Fgithub.com%2Ftigrisdata%2Ftigris-vercel-starter%2Fblob%2Fmain%2F.env.example&project-name=tigris-nextjs-todo-app&repo-name=tigris-nextjs-todo-app&demo-title=Tigris%20todo%20app&demo-description=A%20ToDo%20list%20web%20app%20using%20NextJS%20and%20Tigris%20Data)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ftigrisdata%2Ftigris-vercel-starter&project-name=todo-list-app-tigris&repo-name=todo-list-webapp-tigris&demo-title=My%20To-do%20list%20webapp&demo-description=A%20To-do%20list%20webapp%20using%20NextJS%20and%20Tigris&integration-ids=oac_Orjx197uMuJobdSaEpVv2Zn8)
 
 This should take you to Vercel to the "Create Git Repository" step
 
-![Vercel create repo](./vercel-create-repo.jpg)
+![Vercel create repo](./vercel-create-repo.png)
 
-Pick a name for your new Git repo and then you'll configure the environment
-variables needed to connect the to-do list app to Tigris. This is where we'd
-need the _clientID_ and _clientSecret_ generated in the
-[setting up Tigris](#setting-up-tigris) section above.
+### Add Tigris integration
 
-```shell
-TIGRIS_URI=api.preview.tigrisdata.cloud
-TIGRIS_CLIENT_ID=<your_client_id_here>
-TIGRIS_CLIENT_SECRET=<your_client_secret_here>
-```
+Pick a name for your new Git repo and then you'll configure the Tigris
+integration that will setup the environment variables needed to connect to
+Tigris: `TIGRIS_URI`, `TIGRIS_CLIENT_ID`, and `TIGRIS_CLIENT_SECRET`.
 
-![Vercel environment](./vercel-env-variables.jpg)
+![Vercel environment](./vercel-add-integration.jpg)
 
-Once you have entered the environment variables hit the **Deploy** button.
-That's it!
+Hit the **Add** button and it will take you to the Tigris integration page
+where in few simple steps you will be able to configure the integration.
+
+![Vercel integrate Tigris](./vercel-integration-tigris-screen.jpg)
+
+Hit the **Continue** button and that's it!
 
 Once the deployment completes, continue to your project dashboard on Vercel
 where you'll find URL for your to-do list app
@@ -176,40 +107,43 @@ you just deployed. Let's glance over the important components of the project.
 ```text title="File structure"
 |-- package.json
 |-- lib
-|   |-- schema.ts
-|   |-- tigris.ts
+    |-- tigris.ts
+|-- models
+    |-- tigris
+        |-- todoStarterApp
+            |-- todoItems.ts
 |-- pages
     |-- index.tsx
     |-- api
         |-- item
-        |   |-- [id].ts
+            |-- [id].ts
         |-- items
             |-- index.ts
             |-- search.ts
 ```
 
-### Tigris schema definition - `lib/schema.ts`
+### Tigris data models and schemas - `models/tigris`
 
-With Tigris it all starts with the data model!
+With Tigris it all starts with the data model! Tigris stores data records as
+documents. Documents are analogous to JSON objects but Tigris stores them in
+an optimized binary format. Documents are grouped together in collections.
 
-Tigris stores data records as documents. Documents are analogous to JSON
-objects but Tigris stores them in an optimized binary format. Documents are
-grouped together in collections. The to-do list app has a single
-[collection](https://docs.tigrisdata.com/documents/documents)
+The to-do list app has a single [collection](https://docs.tigrisdata.com/documents/documents)
 `todoItems` that stores the to-do items. The first thing you would do is
-define the schema that enables you to structure the data. The schema can be
-easily evolved in a lightweight way without costly rebuild operations.
+define the schema.
 
-The schema for the collection is defined in `lib/schema.ts` as follows:
+Tigris follows the convention of having the models and schemas stored in the
+`models/tigris` directory. Within this directory we have the
+`todoStarterApp` directory which is our database name and the file
+`todoItems.ts` stores the schema for the collection named `todoItems`:
 
-```ts title=lib/schema.ts
+```ts title=models/tigris/todoItems.ts
 import {
   TigrisCollectionType,
   TigrisDataTypes,
   TigrisSchema,
 } from "@tigrisdata/core/dist/types";
 
-export const DB_NAME = "tigrisTodoApp";
 export const COLLECTION_NAME = "todoItems";
 
 export interface TodoItem extends TigrisCollectionType {
@@ -230,15 +164,15 @@ export const TodoItemSchema: TigrisSchema<TodoItem> = {
 
 ### Connecting to Tigris - `lib/tigris.ts`
 
-This file loads the environment variables you specified previously in
-[creating a Vercel project section](#create-vercel-project)
-and uses them to configure the Tigris client. This client is used to
+This file loads the environment variables that were populated by the Tigris
+integration and configured the Tigris client. This client is used to
 manage all the Tigris operations from here on. Also, note how we are caching
 the client instance so that it can be used for subsequent requests.
 
 ```ts title=lib/tigris.ts
 import { DB, Tigris, TigrisClientConfig } from "@tigrisdata/core";
-import { DB_NAME } from "./schema";
+
+const DB_NAME = "todoStarterApp";
 
 if (!process.env.TIGRIS_URI) {
   throw new Error("Cannot find TIGRIS_URI environment variable ");
@@ -255,14 +189,15 @@ if (process.env.TIGRIS_CLIENT_SECRET) {
 }
 
 declare global {
+  // eslint-disable-next-line no-var
   var tigrisDb: DB;
 }
 
 let tigrisDb: DB;
 
 if (process.env.NODE_ENV === "development") {
+  // re-use the same connection in dev
   if (!global.tigrisDb) {
-    // re-use the same connection in dev
     const tigrisClient = new Tigris(clientConfig);
     global.tigrisDb = tigrisClient.getDatabase(DB_NAME);
   }
@@ -278,11 +213,10 @@ export default tigrisDb;
 
 ### Creating the database and collection - `scripts/setup.ts`
 
-This app ensures that the database and collection are automatically created
-at build time. There is no need to manually create them. Databases and
-collections can be created in an idempotent way instantaneously, i.e.
-it is safe to run the creation operation during build time.
-More details on this automatic setup can be found in `scripts/setup.ts`.
+The file `scripts/setup.ts` automatically sets up the database and
+collection at build time. It looks for the models in the directory
+`models/tigris` and creates the databases and collections in an idempotent
+way instantaneously.
 
 ### Pages
 
