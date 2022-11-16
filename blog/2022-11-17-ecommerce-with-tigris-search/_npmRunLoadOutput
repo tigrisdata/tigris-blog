@@ -1,0 +1,21 @@
+> ecommerce-netlify@1.0.0 load
+> npm run setup:dev
+
+
+> ecommerce-netlify@1.0.0 setup:dev
+> NODE_ENV=development npm run setup
+
+
+> ecommerce-netlify@1.0.0 setup
+> npx ts-node scripts/setup.ts
+
+event - Scanning /Users/himank/tigris-netlify-ecommerce/models/tigris for Tigris schema definitions
+info - Found DB definition catalog
+info - Found Schema file products.ts in catalog
+info - Found schema definition: ProductSchema
+debug - Generated Tigris Manifest: [{"dbName":"catalog","collections":[{"collectionName":"products","schema":{"id":{"type":"string","primary_key":{"order":1}},"color":{"type":"string"},"description":{"type":"string"},"gender":{"type":"string"},"name":{"type":"string"},"review":{"type":"string"},"starrating":{"type":"number"},"price":{"type":"number"},"sizes":{"type":"array","items":{"type":"string"}},"img":{"type":"string"}},"schemaName":"ProductSchema"}]}]
+event - Created database: catalog
+debug - {"title":"products","additionalProperties":false,"type":"object","properties":{"id":{"type":"string"},"color":{"type":"string"},"description":{"type":"string"},"gender":{"type":"string"},"name":{"type":"string"},"review":{"type":"string"},"starrating":{"type":"number"},"price":{"type":"number"},"sizes":{"type":"array","items":{"type":"string"}},"img":{"type":"string"}},"collection_type":"documents","primary_key":["id"]}
+event - Created collection: products from schema: ProductSchema in db: catalog
+Inserted 30 documents
+Setup complete ...

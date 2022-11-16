@@ -1,0 +1,8 @@
+{
+  "id": "dummy-id",
+  "name": "ecommerce_search",
+  "description": "search tutorial",
+  "secret": "dummy-secret",
+  "created_at": 1668493288000,
+  "created_by": "google-oauth2|107496644751065904534"
+}
