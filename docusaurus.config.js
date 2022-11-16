@@ -85,7 +85,6 @@ const config = {
       },
       navbar: {
         hideOnScroll: false,
-        title: "Tigris",
         logo: {
           href: "/",
           src: "/logo/light.png",
