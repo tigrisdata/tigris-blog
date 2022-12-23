@@ -16,6 +16,14 @@ be checked by running node -v).
 npm install
 ```
 
+## Configuration
+
+Copy `.env.local.example` to `.env.local`:
+
+```shell
+cp .env.local.example .env.local
+```
+
 ## Local Development
 
 ```shell
