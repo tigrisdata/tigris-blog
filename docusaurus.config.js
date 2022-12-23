@@ -64,6 +64,13 @@ const config = {
         },
       },
     ],
+    [
+      "posthog-docusaurus",
+      {
+        apiKey: process.env.NEXT_POSTHOG_APIKEY,
+        enableInDevelopment: false,
+      },
+    ],
   ],
 
   themeConfig:
