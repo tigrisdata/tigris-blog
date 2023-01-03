@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    {
+      "source": "/blog/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "blog.tigrisdata.com"
+        }
+      ],
+      "destination": "/:path*"
+    }
+  ]
+}
