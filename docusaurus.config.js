@@ -22,6 +22,7 @@ const config = {
   projectName: "blog",
   onBrokenLinks: "ignore",
   onBrokenMarkdownLinks: "warn",
+  trailingSlash: true,
 
   presets: [
     [
@@ -93,7 +94,7 @@ const config = {
       navbar: {
         hideOnScroll: false,
         logo: {
-          href: "/",
+          href: "https://www.tigrisdata.com/",
           src: "/logo/light.png",
           srcDark: "/logo/dark.png",
           alt: "Tigris Blog",

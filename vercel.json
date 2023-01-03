@@ -10,5 +10,6 @@
       ],
       "destination": "/:path*"
     }
-  ]
+  ],
+  "trailingSlash": true
 }
