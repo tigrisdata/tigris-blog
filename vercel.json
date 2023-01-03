@@ -1,14 +1,14 @@
 {
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/",
       "has": [
         {
           "type": "host",
           "value": "blog.tigrisdata.com"
         }
       ],
-      "destination": "https://www.tigrisdata.com/blog/:path*"
+      "destination": "https://www.tigrisdata.com/blog/"
     }
   ]
 }
