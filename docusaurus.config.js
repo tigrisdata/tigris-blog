@@ -57,15 +57,6 @@ const config = {
 
   plugins: [
     [
-      "docusaurus-plugin-segment",
-      {
-        apiKey: process.env.NEXT_PUBLIC_ANALYTICS_ID,
-        page: {
-          category: "blog",
-        },
-      },
-    ],
-    [
       "posthog-docusaurus",
       {
         apiKey: process.env.NEXT_POSTHOG_APIKEY,

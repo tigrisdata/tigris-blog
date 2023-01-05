@@ -3,7 +3,6 @@ on:
   - pull_request
 
 env:
-  NEXT_PUBLIC_ANALYTICS_ID: dummy_for_testing
   NEXT_POSTHOG_APIKEY: dummy_for_testing
 
 jobs:
