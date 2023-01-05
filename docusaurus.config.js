@@ -16,7 +16,7 @@ const config = {
   tagline:
     "For developers who want to build scalable web and mobile apps fast!",
   url: "https://www.tigrisdata.com",
-  baseUrl: process.env.VERCEL_ENV === "preview" ? "/" : "/blog/",
+  baseUrl: "/blog/",
   favicon: "img/favicon.ico",
   organizationName: "tigrisdata",
   projectName: "blog",
