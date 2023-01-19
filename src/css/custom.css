@@ -466,3 +466,7 @@ table th {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 }
+
+.disable-external-icon svg {
+  display: none;
+}
