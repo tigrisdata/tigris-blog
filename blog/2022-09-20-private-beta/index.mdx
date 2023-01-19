@@ -11,9 +11,17 @@ authors: [ot]
 tags: [tigris, beta, launch]
 ---
 
-[![Complexity to Simplicity with Tigris](blog-header-beta.jpg)](https://www.tigrisdata.com/beta#signup-form)
+import tigrisConfig from "@site/tigris.config.js";
 
-### [Join the Tigris waitlist and be the first to try the new open-source developer data platform for your next application](https://www.tigrisdata.com/beta)
+<a href={tigrisConfig.signupUrl}>
+  <img src={require('./blog-header-beta.jpg').default} alt="Complexity to Simplicity with Tigris" />
+</a>
+
+<h3>
+  <a href={tigrisConfig.signupUrl}>
+    Join the Tigris waitlist and be the first to try the new open-source developer data platform for your next application
+  </a>
+</h3>
 
 Over the past year, we’ve been building a revolutionary new data platform for
 developers to handle all their applications’ data needs without all the data
@@ -28,9 +36,8 @@ a solution that addresses the unique needs of developers in a data driven
 environment. The best way for us to build a better platform is to work with
 our users on a daily basis.
 
-If you are interested in helping us out please add yourself to our waitlist
-[here](https://www.tigrisdata.com/beta). We will be providing access to the
-platform on a rolling basis in the coming weeks.
+If you are interested in helping us out please add yourself to <a href={tigrisConfig.signupUrl}>our waitlist</a>.
+We will be providing access to the platform on a rolling basis in the coming weeks.
 
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
 import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
@@ -84,4 +91,4 @@ below. We will be providing access to the platform on a rolling basis in the
 coming weeks. If you’re selected to participate in the beta, you’ll receive an
 email invitation to get started.
 
-🚀 [Click here to signup for the Tigris beta and get early access!](https://www.tigrisdata.com/beta)
+🚀 <a href={tigrisConfig.signupUrl}>Signup for the Tigris beta and get early access!</a>

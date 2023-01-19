@@ -11,7 +11,11 @@ authors: [ot]
 tags: [press, beta, launch]
 ---
 
-[![Complexity to Simplicity with Tigris](pr-banner-lite.jpg)](https://www.tigrisdata.com/beta#signup-form)
+import tigrisConfig from "@site/tigris.config.js";
+
+<a href={tigrisConfig.signupUrl}>
+  <img src={require('./pr-banner-lite.jpg').default} alt="Complexity to Simplicity with Tigris" />
+</a>
 
 - _Launch to offer open source and serverless API-based developer data platform
   in order to solve problems around scalability, search and support_

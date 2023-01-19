@@ -13,6 +13,8 @@ authors: [adil, tkhan]
 tags: [nextjs, vercel, typescript, guides]
 ---
 
+import tigrisConfig from "@site/tigris.config.js";
+
 [Next.js][nextjs-url] gives you the best developer experience with all the
 features you need to build modern, fast production-ready applications.
 [Tigris][tigris-url] is the perfect companion for Next.js as it is similarly
@@ -44,7 +46,7 @@ once its deployed:
 For this tutorial you'll need:
 
 1. [GitHub account (sign up for free)](https://github.com)
-2. [Tigris Cloud account (sign up for free)](https://www.tigrisdata.com/beta#signup-form)
+2. <a href={tigrisConfig.signupUrl}>Tigris Cloud account (sign up for free)</a>
 3. [Vercel account (sign up for free)][vercel-url] to deploy app
 4. Node.js 16+
 5. npm and npx

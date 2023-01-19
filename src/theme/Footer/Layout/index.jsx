@@ -3,6 +3,8 @@ import React from "react";
 import clsx from "clsx";
 import Link from "@docusaurus/Link";
 
+import tigrisConfig from "@site/tigris.config.js";
+
 export default function FooterLayout({ style, links, logo, copyright }) {
   return (
     <footer
@@ -25,7 +27,7 @@ export default function FooterLayout({ style, links, logo, copyright }) {
           <div className="footer__data">
             <div className="footer__cta">
               <p>Signup to get get early access!</p>
-              <Link href="https://www.tigrisdata.com/beta#signup-form">
+              <Link href={tigrisConfig.signupUrl}>
                 Sign Up
               </Link>
             </div>
