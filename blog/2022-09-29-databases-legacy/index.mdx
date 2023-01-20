@@ -12,6 +12,8 @@ authors: [ot]
 tags: [developer data platform]
 ---
 
+import tigrisConfig from "@site/tigris.config.js";
+
 Data is the lifeblood of modern applications, powering rich and diverse user
 experiences. We rely on these applications in our daily life to do everything
 from managing logistics, finances, shopping needs, and even the most mundane and
@@ -91,7 +93,12 @@ troubleshooting, learning, and getting components to play nicely together.
 Much of the complexity of the infrastructure comes from how data is stored
 and accessed using legacy database management systems.
 
-[![Databases are dead](databases-legacy-blog-header.jpg)](https://www.tigrisdata.com/beta#signup-form)
+<a href={tigrisConfig.signupUrl}>
+  <img
+    src={require("./databases-legacy-blog-header.jpg").default}
+    alt="Databases are dead"
+  />
+</a>
 
 ## Databases are legacy
 

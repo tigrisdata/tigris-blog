@@ -7,6 +7,8 @@
 // On Vercel the environment variables are automatically injected
 require("dotenv").config({ path: ".env.local" });
 
+const tigrisConfig = require("./tigris.config");
+
 const lightCodeTheme = require("prism-react-renderer/themes/github");
 const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 
@@ -15,7 +17,7 @@ const config = {
   title: "Tigris",
   tagline:
     "For developers who want to build scalable web and mobile apps fast!",
-  url: "https://www.tigrisdata.com",
+  url: tigrisConfig.websiteUrl,
   baseUrl: "/blog/",
   favicon: "img/favicon.ico",
   organizationName: "tigrisdata",
@@ -23,6 +25,8 @@ const config = {
   onBrokenLinks: "ignore",
   onBrokenMarkdownLinks: "warn",
   trailingSlash: true,
+
+  clientModules: [require.resolve("./src/util/augmentConsoleLinks.js")],
 
   presets: [
     [
@@ -60,7 +64,7 @@ const config = {
       "posthog-docusaurus",
       {
         apiKey: process.env.NEXT_POSTHOG_APIKEY,
-        enableInDevelopment: false,
+        enableInDevelopment: process.env.USE_POSTHOG_IN_DEVELOPMENT === "true",
       },
     ],
   ],
@@ -78,14 +82,14 @@ const config = {
       },
       announcementBar: {
         id: "announcementBar-1", // increment on change
-        content: `🚀 <a target="_blank" href="https://www.tigrisdata.com/beta" >Signup</a> for the Tigris beta and ⭐️ give us a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/tigrisdata/tigris">GitHub</a>`,
+        content: `🚀 <a target="_blank" href="${tigrisConfig.signupUrl}" >Signup</a> for the Tigris beta and ⭐️ give us a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/tigrisdata/tigris">GitHub</a>`,
         backgroundColor: "#5ecbad",
         textColor: "#262b31",
       },
       navbar: {
         hideOnScroll: false,
         logo: {
-          href: "https://www.tigrisdata.com/",
+          href: tigrisConfig.websiteUrl,
           src: "/logo/light.png",
           srcDark: "/logo/dark.png",
           alt: "Tigris Blog",
@@ -93,19 +97,52 @@ const config = {
         },
         items: [
           {
-            href: "https://docs.tigrisdata.com/",
+            href: tigrisConfig.docsUrl,
             label: "Docs",
             position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
           },
           {
-            label: "API Reference",
-            href: "https://docs.tigrisdata.com/apidocs/",
+            label: "Quickstarts",
+            to: `${tigrisConfig.docsUrl}/quickstarts/`,
             position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+          },
+          {
+            label: "Concepts",
+            to: `${tigrisConfig.docsUrl}/concepts/`,
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+          },
+          {
+            label: "SDKs & Tools",
+            to: `${tigrisConfig.docsUrl}/sdkstools/`,
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
           },
           {
             label: "Guides",
-            to: "https://docs.tigrisdata.com/guides/",
+            to: `${tigrisConfig.docsUrl}/guides/`,
             position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+          },
+          {
+            label: "References",
+            to: `${tigrisConfig.docsUrl}/references/`,
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
           },
           {
             label: "Blog",
@@ -113,7 +150,7 @@ const config = {
             position: "left",
           },
           {
-            href: "http://discord.tigrisdata.com",
+            href: tigrisConfig.discordUrl,
             className: "pseudo-icon discord-icon",
             position: "right",
           },
@@ -129,13 +166,13 @@ const config = {
           },
           {
             label: "Sign Up",
-            href: "https://www.tigrisdata.com/beta#signup-form",
+            href: tigrisConfig.signupUrl,
             position: "right",
             className: "wc-portal-signup wc-portal-link",
           },
           {
             label: "Login",
-            href: "https://console.preview.tigrisdata.cloud/",
+            href: tigrisConfig.loginUrl,
             position: "right",
             className: "wc-portal-login wc-portal-link",
           },
@@ -155,7 +192,7 @@ const config = {
             items: [
               {
                 label: "Cloud Console",
-                href: "https://console.preview.tigrisdata.cloud",
+                href: tigrisConfig.consoleUrl,
               },
             ],
           },
@@ -164,15 +201,22 @@ const config = {
             items: [
               {
                 label: "About Us",
-                href: "https://www.tigrisdata.com",
+                href: tigrisConfig.websiteUrl,
+                target: "_self",
+                rel: "",
+                className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Terms of Service",
-                href: "https://www.tigrisdata.com/service-terms",
+                href: `${tigrisConfig.websiteUrl}/service-terms`,
+                rel: "",
+                className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Privacy Policy",
-                href: "https://www.tigrisdata.com/privacy-policy",
+                href: `${tigrisConfig.websiteUrl}/privacy-policy`,
+                rel: "",
+                className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Contact Us",
@@ -185,19 +229,21 @@ const config = {
             items: [
               {
                 label: "Documentation",
-                href: "https://docs.tigrisdata.com",
+                href: tigrisConfig.docsUrl,
+                rel: "",
+                className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Blog",
-                href: "https://blog.tigrisdata.com",
+                href: "/",
               },
               {
                 label: "Videos",
-                href: "https://www.youtube.com/channel/UCsCQ5Nl3JOh71UNCCNZ3q2g",
+                href: tigrisConfig.youTubeUrl,
               },
               {
                 label: "Community",
-                href: "http://discord.tigrisdata.com",
+                href: tigrisConfig.discordUrl,
               },
             ],
           },

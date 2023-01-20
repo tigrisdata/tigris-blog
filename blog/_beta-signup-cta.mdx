@@ -1,3 +1,5 @@
+import tigrisConfig from "@site/tigris.config.js";
+
 _Tigris is the data platform built for developers! Use it as a scalable,
 ACID transactional, real-time backend for your serverless applications.
 Build data-rich features without worrying about slow queries or missing
@@ -5,8 +7,10 @@ indexes. Seamlessly implement search within your applications with its
 embedded search engine. Connect serverless functions with its event streams
 to build highly responsive applications that scale automatically._
 
-[![Sign up for the beta](/img/hand-laptop.png)](https://www.tigrisdata.com/beta#signup-form)
+<a href={tigrisConfig.signupUrl}>
+  <img src={require("@site/static/img/hand-laptop.png").default} />
+</a>
 
-[Get early access](https://www.tigrisdata.com/beta#signup-form) and try out
-Tigris for your next application. Join our
-[Discord](http://discord.tigrisdata.com) community to ask any questions you might have.
+<a href={tigrisConfig.signupUrl}>Get early access</a> and try out Tigris for your
+next application. Join our <a href={tigrisConfig.discordUrl}>Discord</a> community
+to ask any questions you might have.

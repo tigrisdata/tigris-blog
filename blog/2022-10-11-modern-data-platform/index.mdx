@@ -15,6 +15,8 @@ authors: [ot]
 tags: [developer data platform]
 ---
 
+import tigrisConfig from "@site/tigris.config.js";
+
 In our recent blog post [Databases are legacy. It's time to rethink data storage and usage](/databases-are-legacy),
 we explored the current landscape and the need to rethink how we deal with
 data, dropping the legacy definition of a database and instead focusing on the
@@ -45,7 +47,12 @@ Platform purpose-build for Developers with the following characteristics:
 7. Provides control of their data to the users in a secure way that complies
    with laws and regulations.
 
-[![Modern apps need data platform](modern-apps-data-platform.jpg)](https://www.tigrisdata.com/beta#signup-form)
+<a href={tigrisConfig.signupUrl}>
+  <img
+    src={require("./modern-apps-data-platform.jpg").default}
+    alt="Modern apps need data platform"
+  />
+</a>
 
 ## Tigris - the Open Source Developer Data Platform
 
