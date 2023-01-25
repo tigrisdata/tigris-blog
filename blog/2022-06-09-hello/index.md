@@ -22,6 +22,8 @@ multiple different cloud platforms.
 
 ![Complexity to Simplicity with Tigris](./light-bulb.png)
 
+<!--truncate-->
+
 We have personally experienced the pain and financial cost from the complexity.
 We want to make it easier for you to work with data by providing you with a
 unified database that helps quickly and easily structure the data in any way
