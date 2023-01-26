@@ -37,7 +37,6 @@ const config = {
         blog: {
           routeBasePath: "/",
           postsPerPage: 10,
-          editUrl: "https://github.com/tigrisdata/tigris-docs/blob/main",
           blogTitle: "Tigris Blog",
           blogDescription: "A blog dedicated to all things data!",
           blogSidebarTitle: "All our posts",

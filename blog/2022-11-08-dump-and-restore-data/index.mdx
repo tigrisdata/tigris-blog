@@ -9,6 +9,8 @@ authors: [rbarabas]
 tags: [tigris, open source, kubernetes, backup, restore, dump]
 ---
 
+import tigrisConfig from "@site/tigris.config.js";
+
 In this blog we focus on how we can dump and restore data stored in Tigris Server, an Open Source Database, using Tigris CLI. This will
 be demonstrated using our public beta environment.
 
@@ -19,6 +21,8 @@ At a high level the process looks as follows:
 - Setting up Tigris CLI
 - Authentication via the CLI
 - Performing the data dump or restore
+
+<!--truncate-->
 
 # Setting up Tigris CLI
 
@@ -212,7 +216,8 @@ Lastly, load the data into the database:
 
 I hope above process gave you a good enough idea on how to perform data dumps out an into Tigris. If this article piqued your interest and would
 like to read more on operational matters, please let us know on our community interfaces! Join our
-[Tigris Community Discord Server](http://discord.tigrisdata.com)!
+
+<a href={tigrisConfig.discordUrl}>Tigris Community Discord Server</a>!
 
 ---
 
