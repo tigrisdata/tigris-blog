@@ -14,33 +14,17 @@ import createNextAppOutput from "!!raw-loader!./_create_next_app_output";
 import runNextAppOutput from "!!raw-loader!./_run_next_app_output";
 import CodeBlock from "@theme/CodeBlock";
 import TerminalWindow from "@site/src/components/TerminalWindow/index";
+import Installation from "@site/includes/_install_cloud_login.mdx";
+import tigrisConfig from "@site/tigris.config.js";
 
 Happy to announce that [Next.js][nextjs-url] now has an officially supported example for bootstrapping
-your projects using [Tigris][tigris-url]. Creating a project with Next.js and Tigris is as simple as:
+your projects using [Tigris][tigris-url].
 
-```shell
-$ npx create-next-app --example with-tigris
-```
+## Prerequisites
 
-<!--truncate-->
+<Installation />
 
-## Getting started
-
-Next.js allows you to bootstrap Next.js apps using [create-next-app](https://nextjs.org/docs/api-reference/create-next-app)
-utility.
-
-### Install Tigris
-
-- For **macOS**: `brew install tigrisdata/tigris/tigris-cli`
-- Other operating systems: [See installation instructions here](https://docs.tigrisdata.com/cli/installation)
-
-### Startup Tigris dev environment
-
-```shell
-$ tigris dev start
-```
-
-### Initialize your Next.js app
+## Initialize your Next.js app
 
 Use the official [create-next-app](https://nextjs.org/docs/api-reference/create-next-app) utility
 
@@ -55,9 +39,39 @@ $ npx create-next-app --example with-tigris
   </TerminalWindow>
 </details>
 
+## Create Tigris Project
+
+Now create a Tigris project for your Next.js application.
+Click on the `Create a new project` button from the <a href={tigrisConfig.consoleUrl}>Tigris Cloud dashboard</a>.
+
+![The create a project dialog within the Tigris console web application](/img/screenshots/create-new-project-dialog.jpg)
+
+Use `todoStarterApp` as the project name.
+
+Tigris will generate the necessary credentials for your application and provide you with a command to create the application code with Tigris pre-configured.
+
+![The create-tigirs-app terminal command displayed within a dialog within the Tigris web console](/img/screenshots/create-new-project-dialog-2.png)
+
+As you have already created a project using `create-next-app` utility, you don't need to run this command.
+Copy the `project name`, `clientId`, and `clientSecret` from the command shown
+and close the modal.
+
+### Configure environment variables
+
+Now that you have created a Tigris project set up the environment variables
+which will allow your application to connect with Tigris using the `project name`, `clientId`, and `clientSecret` from the previous step.
+
+```dotenv title=.env
+TIGRIS_URI=api.preview.tigrisdata.cloud
+TIGRIS_PROJECT=todoStarterApp
+TIGRIS_CLIENT_ID=ftSUj9B5czFW79s9M6YUkxKE3H4WeRyY
+TIGRIS_CLIENT_SECRET=DOxxx
+TIGRIS_DB_BRANCH=main
+```
+
 ### Run the app
 
-Run the app and see it will automatically create your databases and collections.
+Run the app and see it automatically create your databases and collections.
 
 ```shell
 $ cd my-tigris-app
@@ -70,6 +84,10 @@ $ npm run dev
     <CodeBlock language="shell">{runNextAppOutput}</CodeBlock>
   </TerminalWindow>
 </details>
+
+Go back to the Tigris web console to view your databases and collections.
+
+![The Tigris database and collection created after running the Next.js application](/img/screenshots/tigris-web-console-collections.png)
 
 <!-- MARKDOWN LINKS -->
 
