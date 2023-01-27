@@ -1,0 +1,77 @@
+---
+slug: create-next-app-with-tigris
+title: Bootstrap a Tigris and Next.js project using `create-next-app`
+description: >
+  Easily bootstrap a Next.js app using Tigris with its officially
+  supported utility.
+image: ./bootstrap_next_tigris.jpg
+keywords: [database, nextjs, vercel, typescript]
+authors: adil
+tags: [nextjs, typescript]
+---
+
+import createNextAppOutput from "!!raw-loader!./_create_next_app_output";
+import runNextAppOutput from "!!raw-loader!./_run_next_app_output";
+import CodeBlock from "@theme/CodeBlock";
+import TerminalWindow from "@site/src/components/TerminalWindow/index";
+
+Happy to announce that [Next.js][nextjs-url] now has an officially supported example for bootstrapping
+your projects using [Tigris][tigris-url]. Creating a project with Next.js and Tigris is as simple as:
+
+```shell
+$ npx create-next-app --example with-tigris
+```
+
+<!--truncate-->
+
+## Getting started
+
+Next.js allows you to bootstrap Next.js apps using [create-next-app](https://nextjs.org/docs/api-reference/create-next-app)
+utility.
+
+### Install Tigris
+
+- For **macOS**: `brew install tigrisdata/tigris/tigris-cli`
+- Other operating systems: [See installation instructions here](https://docs.tigrisdata.com/cli/installation)
+
+### Startup Tigris dev environment
+
+```shell
+$ tigris dev start
+```
+
+### Initialize your Next.js app
+
+Use the official [create-next-app](https://nextjs.org/docs/api-reference/create-next-app) utility
+
+```shell
+$ npx create-next-app --example with-tigris
+```
+
+<details>
+  <summary>Output</summary>
+  <TerminalWindow>
+    <CodeBlock language="shell">{createNextAppOutput}</CodeBlock>
+  </TerminalWindow>
+</details>
+
+### Run the app
+
+Run the app and see it will automatically create your databases and collections.
+
+```shell
+$ cd my-tigris-app
+$ npm run dev
+```
+
+<details>
+  <summary>Output</summary>
+  <TerminalWindow>
+    <CodeBlock language="shell">{runNextAppOutput}</CodeBlock>
+  </TerminalWindow>
+</details>
+
+<!-- MARKDOWN LINKS -->
+
+[nextjs-url]: https://nextjs.org/
+[tigris-url]: https://docs.tigrisdata.com/guides/nextjs/
