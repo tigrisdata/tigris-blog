@@ -5,6 +5,6 @@ module.exports = {
   blogUrl: "https://www.tigrisdata.com/blog",
   websiteUrl: "https://www.tigrisdata.com",
   docsUrl: "https://www.tigrisdata.com/docs",
-  discordUrl: "http://www.tigrisdata.com/discord/",
+  discordUrl: "https://www.tigrisdata.com/discord/",
   youTubeUrl: "https://www.youtube.com/channel/UCsCQ5Nl3JOh71UNCCNZ3q2g",
 };
