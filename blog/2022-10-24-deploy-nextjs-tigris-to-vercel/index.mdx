@@ -135,11 +135,11 @@ an optimized binary format. Documents are grouped together in collections.
 
 The to-do list app has a single [collection](https://docs.tigrisdata.com/documents/documents)
 `todoItems` that stores the to-do items. The first thing you would do is
-define the collection.
+define the schema.
 
 Tigris follows the convention of having the model stored in the
 `db/models` directory. Within this directory we have the
-`todoItems.ts` file which defines the collection named `todoItems`:
+`todoItems.ts` file, which defines the model named `TodoItem` and the collection of those models called `todoItems`:
 
 ```ts title=db/models/todoItems.ts
 import {
