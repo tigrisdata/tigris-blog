@@ -137,7 +137,7 @@ To add full-text search to our application, we only need three things:
 2. An async action in the vuex store to call Tigris search serverless function
 3. A search vue component for the search text in the UI
 
-### Step:1 Serverless functions to call Tigris Search
+### Step 1: Serverless functions to call Tigris Search
 
 Let's write a serverless function to add search functionality to the e-commerce store. This
 serverless function will be used by the vuex store to power search functionality for the application.
@@ -179,7 +179,7 @@ export { handler };
 
 The main thing to note in the above serverless function is that we are simply calling `search` on the product collection.
 
-### Step2: Integrate Search Serverless functions in vuex store
+### Step 2: Integrate Search Serverless functions in vuex store
 
 The next step is to integrate the serverless function that we have just added to the vuex store.
 Here we will be adding an async action, `searchProducts`.
@@ -231,7 +231,7 @@ Add a `searchResult` inside getters `export const getters = {...}` to access sea
 searchResult: (state) => state.searchdata;
 ```
 
-### Step3: A search vue component for the search text in the UI
+### Step 3: A search vue component for the search text in the UI
 
 Create a `search.vue` file and add the following code to it:
 
