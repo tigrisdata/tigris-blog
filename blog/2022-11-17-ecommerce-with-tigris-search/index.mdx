@@ -1,8 +1,8 @@
 ---
 slug: ecommerce-store-with-tigris-search
-title: Building an E-commerce store with Nuxt and Tigris Search
+title: Using Tigris Search and Netlify Functions to Add Full-Text Search to an E-commerce Store Built with Nuxt
 description: >
-  Building an E-commerce store with Tigris Search.
+  Using Tigris Search and Netlify Functions to Add Full-Text Search to an E-commerce Store Built with Nuxt
 image: ./tigris_nuxt.png
 keywords: [database, search, nuxtjs, netlify, typescript]
 authors: himank
@@ -15,35 +15,30 @@ import createAppKeyOutput from "!!raw-loader!./_createAppKeyOutput";
 import npmRunLoadOutput from "!!raw-loader!./_npmRunLoadOutput";
 import CodeBlock from "@theme/CodeBlock";
 import TerminalWindow from "@site/src/components/TerminalWindow/index";
+import tigrisConfig from "@site/tigris.config.js";
+import Installation from "@site/includes/_install_cloud_login.mdx";
 
-# Building an E-Commerce Store with Tigris Search
+# Using Tigris Search and Netlify Functions to Add Full-Text Search to an E-commerce Store Built with Nuxt
 
-Search is a fundamental part of an application especially when we build retail and e-commerce applications. Search
-provides your customers a great shopping experience. This blog will demonstrate how [Tigris](https://docs.tigrisdata.com/)
-makes it super easy to add real-time and relevance-based search to your application. Tigris has an embedded search engine
+Search is a fundamental part of an application, especially when we build retail and e-commerce applications. Search
+provides your customers with a great shopping experience. This blog will demonstrate how Tigris
+makes it super easy to add real-time and full-text search to your application using the Tigris embedded search engine,
 which automatically makes all your data searchable.
 
 ![Tigris + NuxtJS](tigris_nuxt.png)
 
 The article will be focusing mainly on integrating full-text search capabilities using Tigris and Nuxt.js and may skip
-over few things like styling etc. which will be pre-generated in the template used for this tutorial.
+over a few things like styling etc., which will be pre-generated in the template used for this tutorial.
 
-[Here is a link](https://nuxt-ecommerce-netlify.netlify.app/) to working example of this e-commerce store
-that you will build. The source code is available on [GitHub repo](https://github.com/tigrisdata/tigris-netlify-ecommerce) if you feel
-like exploring on your own, else follow along the tutorial.
+Checkout the [e-commerce full-text serach demo](https://nuxt-ecommerce-netlify.netlify.app/) for a working example of the
+e-commerce site that we'll build in this tutorial. The [e-commerce full-text search demo source code](https://github.com/tigrisdata/tigris-netlify-ecommerce)
+is available on GitHub if you want to explore the code on your own. Otherwise, follow along with the tutorial.
 
 <!--truncate-->
 
 ## Prerequisites
 
-You'll need a few things installed
-
-- [Node.js](https://nodejs.org/) version 16+
-- [npm](https://www.npmjs.com/) 7 or greater
-- Tigris
-  - For **macOS**: `brew install tigrisdata/tigris/tigris-cli`
-  - Other operating systems: [See installation instructions here](/cli/installation)
-- [Netlify CLI](https://www.npmjs.com/package/netlify-cli)
+<Installation />
 
 ## Getting Started
 
@@ -55,13 +50,13 @@ The first step is to clone the repository that contains the starting source code
 </TerminalWindow>
 ```
 
-`cd` into the project directory
+`cd` into the project directory:
 
 ```shell
 cd tigris-netlify-ecommerce
 ```
 
-The layout of this project is like below.
+The layout of this project is like below:
 
 ```text
 tigris-netlify-ecommerce
@@ -80,10 +75,13 @@ tigris-netlify-ecommerce
     ├── read-all-products.ts
     ├── create-payment-intent.ts
     └── handle-payment-succeeded.ts
-├── models
-│   └── tigris
-│       └── catalog
-│           └── products.ts
+|── lib
+    └── tigris.ts
+├── db
+│   └── models
+|       └── products.ts
+|── scripts
+    └── setup.ts
 └── store
     └── index.js
 ```
@@ -91,58 +89,54 @@ tigris-netlify-ecommerce
 - `package.json` - Configuration for the Node project
 - `pages/` - This is where all the vue files that encapsulate the template, logic, and styling of a Vue component
 - `functions/` - All serverless functions(API endpoints) for the application are defined in this directory
-- `models/tigris/catalog/` - To manage schema of this application. Database is `catalog` and collection is `products`
+- `db/models/products.ts` - Contains the code to define the schema of the `products`. collection.
+- `scripts/setup.ts` - Contains the script that initializes the database branch and creates the collections.
+- `lib/tigris` - This is where the Tigris client is initialized and exported to use across other modules.
 - `store/` - Vuex store
 
-## Create a database, collection and load the dataset
+## Create a Tigris Project
 
-We will connect to Tigris Cloud to run this application. Let's first create an application key for your project to get
-`TIGRIS_CLIENT_ID` and `TIGRIS_CLIENT_SECRET`.
+To obtain the necessary credentials to connect your e-commerce store application with a Tigris database, you need to create a Tigris project.
+To do that, go to your <a href={tigrisConfig.consoleUrl}>Tigris Cloud Console</a> and click on the `Create a new project` button.
+Then use `catalog` as the project name and click on the `Create` button.
 
-```mdx-code-block
-<TerminalWindow>
-<CodeBlock language="shell">tigris create application ecommerce_search "search tutorial"</CodeBlock>
-</TerminalWindow>
+![The create a project dialog within the Tigris console web application](./create-new-project-dialog.jpg)
+
+Select **Go to Project** in the next dialog.
+
+### Configure environment variables
+
+Upon creation of a project, Tigris will automatically generate an application key with the required credentials for your application.
+Select **Application Keys** and click the eye icon on the row for the listed key. This will open a dialog containing the values you
+need to configure your local application with via environment variables:
+
+| Dialog        | Environment variable   |
+| ------------- | ---------------------- |
+| URL           | `TIGRIS_URI`           |
+| Client ID     | `TIGRIS_CLIENT_ID`     |
+| Client Secret | `TIGRIS_CLIENT_SECRET` |
+| Name          | `TIGRIS_PROJECT`       |
+
+Now, create a `.env` file in the root directory of the project folder and copy the values for `TIGRIS_URI`, `TIGRIS_PROJECT`, `TIGRIS_CLIENT_ID`,
+and `TIGRIS_CLIENT_SECRET` from the dialog in the Tigris web console and add them to the file.
+You should also include the `TIGRIS_DB_BRANCH` variable to establish a branch for your Tigris database. It is a good practice to use the `main`
+branch for a production environment and any other branch for development environments.
+
+```dotenv title=.env
+TIGRIS_URI=api.preview.tigrisdata.cloud
+TIGRIS_PROJECT=catalog
+TIGRIS_CLIENT_ID=ftSxxx
+TIGRIS_CLIENT_SECRET=DOxxx
+TIGRIS_DB_BRANCH=main
 ```
-
-<details>
-  <summary>Output</summary>
-  <TerminalWindow>
-    <CodeBlock language="shell">{createAppKeyOutput}</CodeBlock>
-  </TerminalWindow>
-</details>
-
-Once done, you can create a `.env` and copy "id" to `TIGRIS_CLIENT_ID` and "secret" to `TIGRIS_CLIENT_SECRET` from above.
-
-```mdx-code-block
-<TerminalWindow>
-<CodeBlock language="shell">{envFileInput}</CodeBlock>
-</TerminalWindow>
-```
-
-After this just run the `load` target and that will automatically create your database and collection and will load
-the data present [here](https://github.com/tigrisdata/tigris-netlify-ecommerce/blob/ecommerce-search-scaffold/static/storedata.json).
-
-```mdx-code-block
-<TerminalWindow>
-<CodeBlock language="shell">npm run load</CodeBlock>
-</TerminalWindow>
-```
-
-<details>
-  <summary>Output</summary>
-  <TerminalWindow>
-    <CodeBlock language="shell">{npmRunLoadOutput}</CodeBlock>
-  </TerminalWindow>
-</details>
 
 ## Add full-text search capabilities
 
-To add full-text search to our application, we only need to perform three steps:
+To add full-text search to our application, we only need three things:
 
-- Serverless functions to call Tigris search
-- Async action in vuex store to call Tigris search serverless function
-- Search vue to have search text in the UI
+1. Serverless functions to call Tigris search
+2. An async action in the vuex store to call Tigris search serverless function
+3. A search vue component for the search text in the UI
 
 ### Step:1 Serverless functions to call Tigris Search
 
@@ -153,34 +147,18 @@ serverless function will be used by the vuex store to power search functionality
 
 ```ts title=functions/search-products.ts
 import { Handler } from "@netlify/functions";
-import { Tigris } from "@tigrisdata/core";
-import { Product } from "~/models/tigris/catalog/products";
-
-const tigris = new Tigris();
+import tigrisDB from "~/lib/tigris";
+import { Product } from "~/db/models/products";
 
 const handler: Handler = async (event, context) => {
   const searchReq = JSON.parse(event.body);
 
-  if (!searchReq.q) {
-    console.log("search keyword is missing");
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        status: "search keyword is missing",
-      }),
-    };
-  }
-
   try {
-    const products = tigris
-      .getDatabase("catalog")
-      .getCollection<Product>("products");
-
-    const searchResult = await products.search(searchReq);
-
-    const productHits = new Array();
-    for (const hit of searchResult.hits) {
-      productHits.push(hit.document);
+    const products = tigrisDB.getCollection<Product>(Product);
+    const searchResult = await products.search({ q: searchReq.q as string });
+    const productHits = new Array<Product>();
+    for await (const res of searchResult) {
+      res.hits.forEach((hit) => productHits.push(hit.document));
     }
     return {
       statusCode: 200,
@@ -204,11 +182,8 @@ The main thing to note in the above serverless function is that we are simply ca
 
 ### Step2: Integrate Search Serverless functions in vuex store
 
-The next step is to integrate the serverless function that we have just added above in the vuex store.
-Here we will be adding an async action `searchProducts`. As you can notice in the following code that
-this async action is passing the keyword to the serverless function that we have added above. This keyword
-is the text that user wants to search in the application. We will see in Step3 on how the vue is passing the
-text to this async action.
+The next step is to integrate the serverless function that we have just added to the vuex store.
+Here we will be adding an async action, `searchProducts`.
 
 #### ⌲ Add the following code inside actions `export const actions = {...}` in `store/index.ts`
 
@@ -235,6 +210,11 @@ async searchProducts({ commit }, keyword) {
 }
 ```
 
+The `searchProducts` async action is making a `POST` request with a parameter `q` with a value assigned by the `keyword` variable.
+This request calls the serverless function on the path `/.netlify/functions/search-products`. `keyword` is the text the user wants
+to search for within the e-commerce catalog. We will see in Step 3 how the vue is passing the
+text to this async action.
+
 The next step is to update the mutations based on the actions that we have added. Add the `searchProducts` in the
 `export const mutations = {...}` by adding the following code.
 
@@ -252,9 +232,9 @@ Add a `searchResult` inside getters `export const getters = {...}` to access sea
 searchResult: (state) => state.searchdata;
 ```
 
-### Step3: Search vue to have search text in the UI
+### Step3: A search vue component for the search text in the UI
 
-Create a vue file and add the following code to it.
+Create a `search.vue` file and add the following code to it:
 
 ```js title=pages/search.vue
 <template>
@@ -321,7 +301,7 @@ export default {
 </style>
 ```
 
-Now, add this search.vue to the AppNav.vue component.
+Add this `search.vue` to the `AppNav.vue` component.
 
 ```js
 <li>
@@ -329,13 +309,14 @@ Now, add this search.vue to the AppNav.vue component.
 </li>
 ```
 
-At this point, you have successfully integrated Search in your application. You can also check out the full code [here](https://github.com/tigrisdata/tigris-netlify-ecommerce).
+At this point, you have successfully integrated Search into your application. You can also check out the
+[full-text search e-commerce example](https://github.com/tigrisdata/tigris-netlify-ecommerce) on GitHub.
 
 ## Run the app
 
-Let's reap the rewards. Run `netlify dev` using netlify CLI in terminal.
+Let's reap the rewards. Run `netlify dev` using [netlify CLI](https://cli.netlify.com/) in the terminal.
 
-You should see following output:
+You should see the following output:
 
 ```mdx-code-block
 <TerminalWindow>
@@ -350,15 +331,15 @@ You should see following output:
   </TerminalWindow>
 </details>
 
-Voila! there you have it. E-commerce store is accessible on [http://localhost:8888](http://localhost:8888)
-on your browser, go ahead and play around.
+Voila! The e-commerce store is accessible on [http://localhost:8888](http://localhost:8888)
+in your browser, go ahead and play around.
 
 ## Summary
 
-Tigris has an embedded search engine which automatically makes all your data searchable. This blog
+Tigris has an embedded search engine that automatically makes all your data searchable. This blog
 demonstrated that adding search functionality in your application using Tigris search is super easy,
-and everything happened in the code. You can also check out this product catalog in
-Tigris [console](https://console.preview.tigrisdata.cloud/).
+and it's all managed from your codebase. You can also check out this product catalog for your application
+in the [Tigris console](https://console.preview.tigrisdata.cloud/).
 
 <!-- MARKDOWN LINKS -->
 
