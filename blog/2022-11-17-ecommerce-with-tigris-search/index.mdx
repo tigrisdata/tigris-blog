@@ -1,9 +1,9 @@
 ---
 slug: ecommerce-store-with-tigris-search
-title: Using Tigris Search and Netlify Functions to Add Full-Text Search to an E-commerce Store Built with Nuxt
+title: Add Full-Text Search to a Nuxt E-commerce Store with Tigris Search & Netlify Functions
 description: >
-  Using Tigris Search and Netlify Functions to Add Full-Text Search to an E-commerce Store Built with Nuxt
-image: ./tigris_nuxt.png
+  Add Full-Text Search to a Nuxt E-commerce Store with Tigris Search & Netlify Functions
+image: ./full-text-search-ecommerce-nuxt-tigris-netlify.png
 keywords: [database, search, nuxtjs, netlify, typescript]
 authors: himank
 tags: [search, nuxtjs, typescript]
@@ -18,19 +18,18 @@ import TerminalWindow from "@site/src/components/TerminalWindow/index";
 import tigrisConfig from "@site/tigris.config.js";
 import Installation from "@site/includes/_install_cloud_login.mdx";
 
-# Using Tigris Search and Netlify Functions to Add Full-Text Search to an E-commerce Store Built with Nuxt
+# Add Full-Text Search to a Nuxt E-commerce Store with Tigris Search & Netlify Functions
 
 Search is a fundamental part of an application, especially when we build retail and e-commerce applications. Search
 provides your customers with a great shopping experience. This blog will demonstrate how Tigris
 makes it super easy to add real-time and full-text search to your application using the Tigris embedded search engine,
 which automatically makes all your data searchable.
 
-![Tigris + NuxtJS](tigris_nuxt.png)
+![Nuxt, Tigris, and Netlify logos](full-text-search-ecommerce-nuxt-tigris-netlify.png)
 
-The article will be focusing mainly on integrating full-text search capabilities using Tigris and Nuxt.js and may skip
-over a few things like styling etc., which will be pre-generated in the template used for this tutorial.
+The article will focus mainly on integrating full-text search capabilities into an e-commerce store using [Nuxt](https://nuxtjs.org/), [Tigris Search](https://www.tigrisdata.com/docs/concepts/searching/), and [Netlify Functions](https://docs.netlify.com/functions/overview/). It skips over a few things like styling etc., which will be pre-generated in the template used for this tutorial.
 
-Checkout the [e-commerce full-text serach demo](https://nuxt-ecommerce-netlify.netlify.app/) for a working example of the
+Checkout the [e-commerce full-text search demo](https://nuxt-ecommerce-netlify.netlify.app/) for a working example of the
 e-commerce site that we'll build in this tutorial. The [e-commerce full-text search demo source code](https://github.com/tigrisdata/tigris-netlify-ecommerce)
 is available on GitHub if you want to explore the code on your own. Otherwise, follow along with the tutorial.
 
@@ -138,7 +137,7 @@ To add full-text search to our application, we only need three things:
 2. An async action in the vuex store to call Tigris search serverless function
 3. A search vue component for the search text in the UI
 
-### Step:1 Serverless functions to call Tigris Search
+### Step 1: Serverless functions to call Tigris Search
 
 Let's write a serverless function to add search functionality to the e-commerce store. This
 serverless function will be used by the vuex store to power search functionality for the application.
@@ -180,7 +179,7 @@ export { handler };
 
 The main thing to note in the above serverless function is that we are simply calling `search` on the product collection.
 
-### Step2: Integrate Search Serverless functions in vuex store
+### Step 2: Integrate Search Serverless functions in vuex store
 
 The next step is to integrate the serverless function that we have just added to the vuex store.
 Here we will be adding an async action, `searchProducts`.
@@ -232,7 +231,7 @@ Add a `searchResult` inside getters `export const getters = {...}` to access sea
 searchResult: (state) => state.searchdata;
 ```
 
-### Step3: A search vue component for the search text in the UI
+### Step 3: A search vue component for the search text in the UI
 
 Create a `search.vue` file and add the following code to it:
 
