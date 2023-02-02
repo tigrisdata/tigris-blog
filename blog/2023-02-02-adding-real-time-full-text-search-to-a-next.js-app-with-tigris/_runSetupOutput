@@ -1,0 +1,14 @@
+npm run setup      
+
+> my-app@0.1.0 setup
+> npx ts-node ./scripts/setup.ts
+
+Loaded env from /store/.env.local
+info - Using reflection to infer type of Product#name
+info - Using reflection to infer type of Product#price
+info - Using reflection to infer type of Product#star
+info - Using reflection to infer type of Product#tag
+info - Using reflection to infer type of Product#image
+info - Using Tigris at: api.preview.tigrisdata.cloud:443
+event - Creating collection: 'products' in project: 'store'
+Setup complete ...
