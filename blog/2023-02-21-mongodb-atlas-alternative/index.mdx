@@ -2,7 +2,7 @@
 slug: tigris-mongodb-atlas-alternative
 title: Tigris the open source MongoDB Atlas alternative
 description: >
-  Tigris is developer data platform that offers a scalable,
+  Tigris is a developer data platform that offers a scalable,
   cost-efficient, and open source alternative to MongoDB Atlas. This blog post
   demonstrates a quickstart Go application that uses the Go driver for MongoDB
   in a way that is transparent to the application that the data is stored in
@@ -19,50 +19,53 @@ traditional relational databases. One of the most significant advantages is
 its flexible data model, which makes it easier for developers to manage
 their data.
 
-MongoDB Atlas is the cloud-hosted version of MongoDB, including other
+[MongoDB Atlas](https://www.mongodb.com/atlas) is the cloud-hosted version of MongoDB, including other
 proprietary data services such as Search and Analytics. While Atlas provides
 several benefits, there are three major issues associated with it: costs,
 control over data, and operational issues when dealing with large datasets.
 
-In this blog post we discuss Tigris as a scalable, cost-effective, and open
+In this blog post, we discuss Tigris as a scalable, cost-effective, and open
 source alternative to MongoDB Atlas. We will also demonstrate using
 [Go driver for MongoDB](https://github.com/mongodb/mongo-go-driver)
 in a way that is transparent to the application that the data is stored in
 Tigris Cloud database.
 
+The [Tigris Go MongoDB quickstart code](https://github.com/tigrisdata-community/go-mongo-quickstart)
+is available on GitHub.
+
 <!--truncate-->
 
 ## How Tigris differentiates from MongoDB Atlas
 
-At Tigris Data, we have built a developer data platform, “Tigris”, that
-provides a scalable, cost-effective, and open source alternative to MongoDB
+At Tigris Data, we have built an [developer data platform called "Tigris"](https://github.com/tigrisdata/tigris)
+that provides a scalable, cost-effective, and open source alternative to MongoDB
 Atlas. Below are the key differentiators:
 
 - Unlike MongoDB, Tigris follows a modern composable architecture with
   loosely coupled components. Furthermore, compute is separated from storage,
   allowing for independent scaling and a more resilient system.
-- The storage layer is built on FoundationDB, and Tigris inherits the strong
+- The storage layer in Tigris is built on FoundationDB, and Tigris inherits the strong
   consistency guarantees, and the scalability of FoundationDB.
-- Tigris provides automatic database sharding and shard keys are not needed
-  as the data distribution is automatically taken care of. This ensures
+- Tigris provides automatic database sharding, and shard keys are unnecessary
+  as the data distribution is automatically handled. This ensures
   true serverless behavior with no painful transition from a
   non-sharded to a sharded MongoDB cluster.
 - Tigris' open source Kubernetes-native design allows it to be deployed
-  anywhere in the cloud in the user's account ensuring that the user is
+  anywhere in the cloud in the user's account, ensuring that the user is
   always in control of their data.
 - Some other differentiating features include global interactive ACID
   transactions, consistent secondary indexes, and an integrated search platform.
 
 Now that we have gone over the key differentiators when comparing Tigris to
-MongoDB Atlas let’s look at a quickstart application that demonstrates
+MongoDB Atlas, let's look at a quickstart application that demonstrates
 connecting a Go application to Tigris using the
-[Go driver for MongoDB](https://github.com/mongodb/mongo-go-driver).
+Go driver for MongoDB.
 
 ## Connect a Go application to Tigris using the Go driver for MongoDB
 
 This is a simple Go application that uses the Go driver for MongoDB through
-FerretDB in a way that is transparent to the application that the data is
-stored in Tigris.
+[FerretDB](https://www.ferretdb.io/) in a way that is transparent to the application
+that the data is stored in Tigris.
 
 ### Prerequisites
 
@@ -74,13 +77,13 @@ stored in Tigris.
 
 ### Setup
 
-Clone the repo
+Clone the repo:
 
 ```shell
 git clone https://github.com/tigrisdata-community/go-mongo-quickstart.git
 ```
 
-Change into the directory where you cloned the repo
+Change into the directory where you cloned the repo:
 
 ```shell
 cd go-mongo-quickstart
@@ -88,7 +91,7 @@ cd go-mongo-quickstart
 
 ### Create the Tigris project and generate the application key
 
-Login to Tigris Cloud
+Login to Tigris Cloud:
 
 ```shell
 tigris login
@@ -103,7 +106,7 @@ tigris create project go_mongo_quickstart
 tigris create app_key default --project go_mongo_quickstart
 ```
 
-The above command will have an output similar to the following
+The above command will have an output similar to the following:
 
 ```json
 {
@@ -119,8 +122,8 @@ The above command will have an output similar to the following
 ### Setup the `.env` file
 
 This application uses environment variables to store the URI, application
-key and project name. Using the `id`, `secret` and `project` values from the
-output above, create a file named `.env` with the following content
+key, and project name. Using the `id`, `secret`, and `project` values from the
+output above, create a file named `.env` with the following content:
 
 ```shell
 TIGRIS_URI=api.preview.tigrisdata.cloud:443
@@ -131,13 +134,13 @@ TIGRIS_CLIENT_SECRET=your_client_secret
 
 ### Running the quickstart
 
-Run this quickstart application using the following command
+Run this quickstart application using the following command:
 
 ```shell
 go run -tags=ferretdb_tigris main.go
 ```
 
-You should see output similar to the following
+You will see output similar to the following:
 
 ```text
 Using Tigris with URI api.preview.tigrisdata.cloud:443
