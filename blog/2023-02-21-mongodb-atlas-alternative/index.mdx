@@ -19,10 +19,11 @@ traditional relational databases. One of the most significant advantages is
 its flexible data model, which makes it easier for developers to manage
 their data.
 
-[MongoDB Atlas](https://www.mongodb.com/atlas) is the cloud-hosted version of MongoDB, including other
-proprietary data services such as Search and Analytics. While Atlas provides
-several benefits, there are three major issues associated with it: costs,
-control over data, and operational issues when dealing with large datasets.
+[MongoDB Atlas](https://www.mongodb.com/atlas) is the cloud-hosted version
+of MongoDB, including other proprietary data services such as Search and
+Analytics. While Atlas provides several benefits, there are three major
+issues associated with it: costs, control over data, and operational issues
+when dealing with large datasets.
 
 In this blog post, we discuss Tigris as a scalable, cost-effective, and open
 source alternative to MongoDB Atlas. We will also demonstrate using
@@ -37,43 +38,48 @@ is available on GitHub.
 
 ## How Tigris differentiates from MongoDB Atlas
 
-At Tigris Data, we have built an [developer data platform called "Tigris"](https://github.com/tigrisdata/tigris)
+At Tigris Data, we have built a
+[developer data platform called "Tigris"](https://github.com/tigrisdata/tigris)
 that provides a scalable, cost-effective, and open source alternative to MongoDB
 Atlas. Below are the key differentiators:
 
-- Unlike MongoDB, Tigris follows a modern composable architecture with
-  loosely coupled components. Furthermore, compute is separated from storage,
-  allowing for independent scaling and a more resilient system.
-- The storage layer in Tigris is built on FoundationDB, and Tigris inherits the strong
-  consistency guarantees, and the scalability of FoundationDB.
+- Unlike MongoDB, Tigris follows
+  [a modern composable architecture](https://www.tigrisdata.com/docs/concepts/architecture/)
+  with loosely coupled components. Furthermore, compute is separated from
+  storage, allowing for independent scaling and a more resilient system.
+- The storage layer in Tigris is built on FoundationDB, and Tigris inherits the
+  [strong consistency guarantees](https://www.tigrisdata.com/blog/building-a-database-using-foundationdb/#foundationdbs-correctness-and-fault-tolerance),
+  and the scalability of FoundationDB.
 - Tigris provides automatic database sharding, and shard keys are unnecessary
   as the data distribution is automatically handled. This ensures
   true serverless behavior with no painful transition from a
   non-sharded to a sharded MongoDB cluster.
 - Tigris' open source Kubernetes-native design allows it to be deployed
-  anywhere in the cloud in the user's account, ensuring that the user is
-  always in control of their data.
+  [anywhere in the cloud](https://www.tigrisdata.com/docs/concepts/platform/self-host/)
+  in the user's account, ensuring that the user is always in control of
+  their data.
 - Some other differentiating features include global interactive ACID
   transactions, consistent secondary indexes, and an integrated search platform.
 
 Now that we have gone over the key differentiators when comparing Tigris to
 MongoDB Atlas, let's look at a quickstart application that demonstrates
-connecting a Go application to Tigris using the
-Go driver for MongoDB.
+performing CRUD operations on Tigris using the Go driver for MongoDB.
 
 ## Connect a Go application to Tigris using the Go driver for MongoDB
 
 This is a simple Go application that uses the Go driver for MongoDB through
-[FerretDB](https://www.ferretdb.io/) in a way that is transparent to the application
-that the data is stored in Tigris.
+[FerretDB](https://github.com/FerretDB/FerretDB) in a way that is
+transparent to the application that the data is stored in Tigris.
 
 ### Prerequisites
 
-- A Tigris Cloud account. [Create one for free](https://console.preview.tigrisdata.cloud/signup).
+- A Tigris Cloud account.
+  [Create one for free](https://console.preview.tigrisdata.cloud/signup).
 - [Go](https://golang.org/) installed on your computer, and a working
   knowledge of Go.
 - [Git](https://git-scm.com/downloads).
-- Tigris CLI. The installation instructions can be found [here](https://www.tigrisdata.com/docs/sdkstools/cli/installation/).
+- Tigris CLI. The installation instructions can be found
+  [here](https://www.tigrisdata.com/docs/sdkstools/cli/installation/).
 
 ### Setup
 
