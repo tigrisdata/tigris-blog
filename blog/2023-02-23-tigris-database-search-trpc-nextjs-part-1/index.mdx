@@ -1,26 +1,37 @@
 ---
-authors: [leggetter]
+slug: tigris-database-search-trpc-nextjs-part-1
+title: "Using Tigris Database and Search with tRPC and Next.js - Part 1"
+description: >
+  "TODO: update"
 tags: [tigris database, tigris search, nextjs, trpc]
+keywords: [tigris database, tigris search, nextjs, trpc]
+image: /static/tigris-database-search-trpc-nextjs/tigris-trpc-next-js.png
+authors: [leggetter]
 ---
 
 # Using Tigris Database and Search with tRPC and Next.js - Part 1
 
-As we continue to build out our [open source Developer Data Platform](https://github.com/tigrisdata/tigris) with data services such as [Database](https://www.tigrisdata.com/docs/concepts/database/) and [Search](https://www.tigrisdata.com/docs/concepts/searching/), we're constantly exploring ecosystems and their technologies to determine where our platform solves the biggest problems and is a natural fit. One of the very obvious and very big ecosystems is full-stack web application technologies built with JavaScript. When reviewing [the JavaScript Rising Stars most popular projects](https://risingstars.js.org/2022/en#section-all) there are a couple of standout technologies that enable developers to build full-stack web apps:
+As we continue to build out our [open source Developer Data Platform](https://github.com/tigrisdata/tigris) with data services such as [Database](https://www.tigrisdata.com/docs/concepts/database/) and [Search](https://www.tigrisdata.com/docs/concepts/searching/), we're constantly exploring ecosystems and their technologies to determine where our platform solves the biggest problems and is the best fit.
 
-- [Next.js](<[https://nextjs.org/](https://nextjs.org/)>)
-- [tRPC](https://trpc.io)
+[tRPC](https://trpc.io) and [Next.js](https://nextjs.org/) standout in the serverless ecosystem. tRPC's mission of enabling developers to move fast and break nothing via end-to-end typesafe APIs perfectly aligns with our thinking at Tigris Data. In particular, how Tigris Database enables developers to define their data models in TypeScript and use them throughout their application logic, on both client and server.
 
-So, it made a lot of sense to explore using Tigris Database and Search with tRPC and Next.js.
+So, in this tutorial series, we'll build a micro-blogging application called "Stream Social" using Tigris Database, Tigris Search, tRPC, and Next.js.
 
-In this three-part tutorial series, we'll demonstrate how to build a simple social network type application called “Stream Social”.
+[![Tigris, tRPC, and Next.js logo](@site/static/tigris-database-search-trpc-nextjs/tigris-trpc-next-js.png)](./index.mdx)
 
-**// TODO: webm of the completed application to create some level of excitement**
-
-The application will be pre-loaded with 10,000 posts across a number of different users so that we're working with a reasonable dataset. We'll build functionality that lists the posts and allows you to paginate through them. We'll also build functionality that lets you view all posts from a specific user and perform full-text search on all the posts.
+Tigris is a production-grade platform built to handle large datasets and a high volume of reads and writes. So, we'll pre-load the application with a reasonable sample size of 10,000 posts across a number of different users. We'll build functionality that lists the posts and allows you to paginate through them. We'll also add the ability to view all posts from a specific user and perform full-text search on all the posts.
 
 <!-- truncate -->
 
-The series will be broken down as follows:
+Here's an overview video of the app we'll build over these three tutorials:
+
+import overviewVideoUrl from "@site/static/tigris-database-search-trpc-nextjs/stream-social-overview.webm";
+
+<video controls style={{ width: "100%" }}>
+  <source src={overviewVideoUrl} />
+</video>
+
+The series is broken down as follows:
 
 1. An overview of the technology, getting a basic Tigris, tRPC, and Next.js app up and running, defining a schema with TypeScript, and performing a simple read queries with Tigris Database.
 2. Inserting a post document, adding pagination, and querying using a tRPC query with an input and a filtered Tigris Database query
@@ -34,7 +45,7 @@ In the following section, we'll cover some background on tRPC and Tigris (we'll 
 
 ### What is tRPC?
 
-[tRPC](https://trpc.io) stands for TypeScript Remote Procedure Call<sup>†</sup> and is a library that enables type-safe remote procedure calls between client and server. With tRPC you define a procedure on the server, which can be called via client-side code. Thanks to TypeScript, you can be sure that you are calling defined methods and passing strongly typed parameters. You can also use your development tools to refactor code across client and server.
+[tRPC](https://trpc.io) stands for TypeScript Remote Procedure Call<sup>†</sup> and is a library that enables typesafe remote procedure calls between client and server. With tRPC you define a procedure on the server, which can be called via client-side code. Thanks to TypeScript, you can be sure that you are calling defined methods and passing strongly typed parameters. You can also use your development tools to refactor code across client and server.
 
 If this still isn't super-clear, don't worry! We'll start with a very simple example in the tutorial.
 
@@ -50,6 +61,13 @@ Tigris is an [open-source Developer Data Platform](https://github.com/tigrisdata
 The term Developer Data Platform is reasonably new. It refers to a platform that exposes a set of data services such as database, search, message queuing, caching, and client/server pub/sub as a single platform which means you do not need to manage and synchronize multiple separate services. If you choose to use a hosted version of the Developer Data Platform, such as Tigris Cloud, you get all the lovely serverless benefits of having someone else manage those services.
 
 ## Tutorial {#tutorial}
+
+In this tutorial you'll learn how to:
+
+- Create a Tigris project and configure a Next.js application to use Tigris
+- Define a Tigris Database schema using TypeScript
+- Use tRPC `useQuery` to make a remote procedure call from the client to the server
+- Query a collection in a Tigris Database with `collection.findOne` and `collection.findMany`
 
 ### Before you being
 
@@ -93,7 +111,7 @@ We'll focus on the following areas within this codebase:
 4. `scripts/` - there are a couple of helper scripts here already. we'll also add a script to set up our Tigris Database schema.
 5. `db/models` - this directory doesn't yet exist, but we'll create some [Tigris TypeScript data models](https://www.tigrisdata.com/docs/sdkstools/typescript/database/datamodel/) in there shortly.
 
-### Create a Tigris Project and configure the app
+### Create a Tigris Project and configure the Next.js app
 
 Run the following command to create a `.env.development.local` with the variables required to use Tigris within the application.
 
@@ -115,7 +133,7 @@ This configuration assumes that we're going to use Tigris Cloud (`TIGRIS_URI`), 
 
 If you haven't already done so, [signup for a free Tigris Cloud account](https://console.preview.tigrisdata.cloud/signup).
 
-Then, create a new project within the Tigris Web Console. As above, the assumption is that the project will be named “tigris_trpc_nextjs” so if you decide to call your project something else, make sure you update the value in the `.env.development.local` file. You will find your values for `TIGRIS_CLIENT_ID` and `TIGRIS_CLIENT_SECRET` under **Application Keys** for your project.
+Then, create a new project within the Tigris Web Console. As mentioned above, the assumption is that the project will be named “tigris_trpc_nextjs” so if you decide to call your project something else, make sure you update the value in the `.env.development.local` file. You will find your values for `TIGRIS_CLIENT_ID` and `TIGRIS_CLIENT_SECRET` under **Application Keys** for your project.
 
 With the Tigris configuration in place, we can move on to defining the Tigris Database schema.
 
@@ -134,7 +152,7 @@ Let's start by installing the Tigris TypeScript SDK:
 npm install @tigrisdata/core
 ```
 
-Next, define a `Post` model in a new file, `db/models/user.ts`:
+Next, define a `Post` model in a new file, `src/db/models/user.ts`:
 
 ```tsx
 import {
@@ -171,7 +189,7 @@ the official TypeScript documentation.
 
 :::
 
-2. The `id` is the primary key within the collection, indicated by the `@PrimaryKey` decorator. Within that decorator we also set the type (`TigrisDataTypes.INT64`) and passing the additional options of `{ autoGenerate: true, order: 1 }` informs Tigris that this is an auto-generated field, and this is why we've marked it as optional with `?` (note: `order` is only used if there are multiple primary keys, so we can ignore it here). You'll probably notice that although in the database this is an Int64, in TypeScript, we're defining `id` to be of type `string`.
+2. The `id` is the primary key within the collection, indicated by the `@PrimaryKey` decorator. Within that decorator, we also set the type (`TigrisDataTypes.INT64`) and passing the additional options of `{ autoGenerate: true, order: 1 }` informs Tigris that this is an auto-generated field, and this is why we've marked it as optional with `?` (note: `order` is only used if there are multiple primary keys, so we can ignore it here). You'll probably notice that although in the database this is an Int64, in TypeScript, we're defining `id` to be of type `string`.
 3. The `username` property is decorated with a `Field()`. We don't need to set the type within this decorator - although we could - because the TypeScript SDK detects the property type as `string` via reflection. This is the display name for a user within the application and should be set any time a `User` is created and thus is marked as non-null with `!`.
 4. Finally, there's a `createdAt` field. The `@Field({ timestamp: "createdAt" })` informs Tigris that this is a date field and should be auto-populated with a timestamp at the time of creation (note: `updateAt` is another option). Since this field is populated upon creation it flagged as optional with `?`.
 
@@ -242,21 +260,21 @@ main()
 
 In this script, we:
 
-1. Import the Tigris client, and the models we've just created, and finally, load in the environmental variables using the `@next/env` `loadEnvConfig` helper function. The second parameter to `loadEnvConfig` indicates if the development environmental variables should be loaded. When we run this script `process.env.NODE_ENV` will not equal “production”, so `true` will be passed, and the contents of our `.env.development.local` will be loaded.
+1. Import the Tigris client and the models we've just created, and finally, load in the environmental variables using the `@next/env` `loadEnvConfig` helper function. The second parameter to `loadEnvConfig` indicates if the development environmental variables should be loaded. When we run this script, `process.env.NODE_ENV` will not equal “production”, so `true` will be passed, and the contents of our `.env.development.local` will be loaded.
 2. Within the `main` function, we create a new instance of the `Tigris` client, which loads the environment variables from `.env.development.local`.
 3. `await tigrisClient.getDatabase().initializeBranch()` ensures that a branch with the name we've defined in `TIGRIS_DB_BRANCH`, with a value of `develop`, is created and initialized.
 4. `await tigrisClient.registerSchemas([User, Post])` informs Tigris of the two data models we've just defined and have been imported into the script. This results in creating two collections, `users` and `posts`, respectively, with the schema defined in our models.
 
 Update `package.json` to have a `setup` script as follows:
 
-```tsx
+```json {5,6}
 "scripts": {
     "preadd-users": "npm run setup",
     "add-users": "ts-node ./scripts/add-users.ts",
     "preload-mock-data": "npm run setup",
     "load-mock-data": "ts-node ./scripts/load-mock-data.ts",
-    **"setup": "ts-node ./scripts/setup.ts",
-    "predev": "npm run setup",**
+    "setup": "ts-node ./scripts/setup.ts",
+    "predev": "npm run setup",
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint --ext \".js,.ts,.tsx\" --report-unused-disable-directives src",
@@ -277,7 +295,7 @@ Now, run:
 npm run setup
 ```
 
-And you will see output as follows:
+And you will see the output as follows:
 
 ```bash
 $ npm run setup
@@ -394,7 +412,7 @@ With that out of the way, we really can dive into the codebase. The first thing 
 
 The code is already in place to make a remote procedure call to get a statically defined user. Within `src/pages/index.tsx`, you will see the following:
 
-```ts {9-10}
+```ts {9}
 import React from "react";
 import { Typography } from "@mui/material";
 import { Layout } from "~/components/layout";
@@ -404,11 +422,12 @@ import { trpc } from "../utils/trpc";
 
 export default function IndexPage(): JSX.Element {
   const userPayload = trpc.getUser.useQuery();
-  const user = userPayload.data as { username: string };
 
   if (userPayload.data === undefined) {
     return <Loading />;
   }
+
+  const user = userPayload.data as { username: string };
 
   return (
     <Layout username={user.username}>
@@ -593,7 +612,7 @@ Within the `IndexPage` function:
 
 1. `const queryPosts = trpc.getMessages.useQuery();` to call the new `getMessages` procedure.
 2. `const [posts, setPosts] = useState<Post[]>([]);` to store the posts that we retrieve using the procedure and eventually use them in the rendered UI.
-3. We call `useEffect` with `[queryPosts.data](http://queryPosts.data)` as a dependency. This means the effect is only run if the value of `queryPosts.data` changes and this is where the post data is stored. If the `status` of the query is `success` then we call `setPosts(queryPosts.data as Post[]);` to set the value of the `posts`.
+3. We call `useEffect` with `[queryPosts.data](http://queryPosts.data)` as a dependency. This means the effect only runs if the value of `queryPosts.data` changes, and this is where the post data is stored. If the `status` of the query is `success`, then we call `setPosts(queryPosts.data as Post[]);` to set the value of `posts`.
 
 In the definition of the page UI, we make a few changes:
 
@@ -620,8 +639,11 @@ export default function PostsList({ posts }: { posts: Post[] }): JSX.Element {
                 key={post.id}
                 username={post.username}
                 text={post.text}
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                createdAt={post.createdAt!}
+                createdAt={
+                  post.createdAt !== undefined
+                    ? new Date(post.createdAt)
+                    : new Date()
+                }
               />
             );
           })}
@@ -636,11 +658,11 @@ The key points from the `<PostsLists />` component are:
 1. It takes a `posts` prop of type `Post[]` and uses this for the logic to determine what should be rendered.
 2. If `posts.length === 0`, show “No posts yet!
 3. Otherwise, loop through the posts and create a new `<PostCard />` passing the `username`, `text`, and `createdAt` values from the `Post`.
-4. The `createdAt={post.createdAt!}` has an eslint comment because it could be `null` based on the class definition. However, since we've pulled the posts from the Tigris Database where the value is auto-populated, we know it won't be null.
+4. The `createdAt=` assignment and related `undefined` checking logic is in place due to [a bug in the Tigris TypeScript SDK](https://github.com/tigrisdata/tigris-client-ts/issues/245). Once the bug is fixed, the assignment will be simplified to `createdAt={post.createdAt!}` because the posts are from the Tigris Database where the value is auto-populated, so we know it won't be null.
 
-Take a look at the source for `<PostCard />` in `src/components/post-card.tsx` if you like. It uses several MUI components. There's also a few things we don't fully use, such as the like/heart and share icons, but we've left those in to make the app feel more social and as an opportunity for you to add more functionality.
+Take a look at the source for `<PostCard />` in `src/components/post-card.tsx` if you like. It uses several MUI components. There are also a few things we don't fully use, such as the like/heart and share icons, but we've left those in to make the app feel more social and as an opportunity for you to add more functionality.
 
-The Next.js application is now contains a user and posts from the Tigris Database, retrieved using tRPC queries.
+The Next.js application now contains a user and posts from the Tigris Database, retrieved using tRPC queries.
 
 import demoVideoUrl from "@site/static/tigris-database-search-trpc-nextjs/social-stream-tutorial-1-end.webm";
 
@@ -652,7 +674,7 @@ import demoVideoUrl from "@site/static/tigris-database-search-trpc-nextjs/social
 
 In the first part of this Tigris, tRPC, and Next.js tutorial series, we have covered:
 
-1. How to setup a Tigris Project, define a Tigris Database schema using data models defined in TypeScript, and setup a Next.js project to make use of Tigris
+1. How to set up a Tigris Project, define a Tigris Database schema using data models defined in TypeScript, and set up a Next.js project to make use of Tigris
 2. How to use tRPC within Next.js to make remote procedure calls from client to server using `userQuery`, and how to query a Tigris Database and return the results to the client using tRPC
 3. How to render the results of the tRPC and Tigris Database queries in the Next.js UI
 
@@ -660,10 +682,10 @@ In the first part of this Tigris, tRPC, and Next.js tutorial series, we have cov
 You can grab the completed code for this first part of the series in the [part-1 branch](https://github.com/tigrisdata-community/tigris-trpc-nextjs/tree/part-1) on GitHub.
 :::
 
-In the next tutorial in this series, we'll show how to post a message which makes use of passing data from the client to the server using tRPC and [inserting a document](https://www.tigrisdata.com/docs/sdkstools/typescript/database/insert/) into a Tigris Database collection. We'll also add [pagination](https://www.tigrisdata.com/docs/sdkstools/typescript/database/query/#pagination) to the application and add a `/username` page to the app, which will make use of [Tigris Database filtering](https://www.tigrisdata.com/docs/sdkstools/typescript/database/query/#simple-read-query).
+In the next tutorial in this series, we'll show how to post a message by passing data from the client to the server using tRPC and [inserting a document](https://www.tigrisdata.com/docs/sdkstools/typescript/database/insert/) into a Tigris Database collection. We'll also add [pagination](https://www.tigrisdata.com/docs/sdkstools/typescript/database/query/#pagination) to the application and add a `/username` page to the app, which will make use of [Tigris Database filtering](https://www.tigrisdata.com/docs/sdkstools/typescript/database/query/#simple-read-query).
 
-Follow [@TigrisData](https://twitter.com/TigrisData) and/or me, [@leggetter](https://twitter.com/leggetter), on Twitter to ensure you don't miss the next tutorial in this series. You can also follow me on [Mastodon](https://fosstodon.org/@leggetter) and catch me streaming building apps like this on [Twitch](https://www.twitch.tv/leggetter).
+Follow [@TigrisData](https://twitter.com/TigrisData) and/or me, [@leggetter](https://twitter.com/leggetter), on Twitter to ensure you don't miss the next tutorial in this series. You can also follow me on [Mastodon](https://fosstodon.org/@leggetter) and catch me live streaming, building apps like this on [Twitch](https://www.twitch.tv/leggetter).
 
 We'd also love you to join our [Tigris Community Discord](https://www.tigrisdata.com/discord).
 
-And if you haven't yet [signed up for Tigris](https://console.preview.tigrisdata.cloud/signup) yet, you should definitely do that too.
+And if you haven't yet [signed up for Tigris](https://console.preview.tigrisdata.cloud/signup), you should do that too.
