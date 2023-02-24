@@ -12,7 +12,6 @@ export function onRouteDidUpdate({ location }) {
     sidebar.appendChild(backNavEl);
     if (blogPostRegEx.test(location.pathname) === true) {
       // Viewing an individual blog post
-      console.log("in blog/*");
       main.className = "col col--8";
       sidebar.className = "col col--1";
       sidebar.firstChild.style.display = "none";
