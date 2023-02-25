@@ -90,13 +90,9 @@ export function onRouteDidUpdate({ location }) {
 }
 
 // Do not resize on every single event
-let resizeTimeout = null;
 window.addEventListener("resize", () => {
-  if (resizeTimeout) {
-    clearTimeout(resizeTimeout);
-  }
-
-  resizeTimeout = window.setTimeout(() => {
+  // Ensure the components have re-rendered
+  window.setTimeout(() => {
     adjustBlogPostUI(lastLocation);
-  }, 10);
+  }, 0);
 });
