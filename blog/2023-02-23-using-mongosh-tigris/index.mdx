@@ -1,0 +1,179 @@
+---
+slug: using-mongosh-with-tigris
+title: Connecting to Tigris using mongosh
+description: >
+  Tigris is a developer data platform that offers a scalable,
+  cost-efficient, and open source alternative to MongoDB Atlas. This blog post
+  demonstrates connecting to Tigris using mongosh and performing CRUD operations
+  in a way that is transparent to mongosh that the data is stored in
+  Tigris Cloud database.
+image: ./mongosh_crud_ops.jpg
+keywords: [mongodb, mongodb atlas, golang, mongodb alternative]
+authors: [ot]
+tags: [mongodb alternative]
+---
+
+In the [previous blog post](../2023-02-21-mongodb-atlas-alternative/index.mdx)
+we discussed using Tigris as a scalable, cost-effective, and open source
+alternative to MongoDB Atlas. As a continuation of that, this blog post will
+demonstrate using the [MongoDB Shell `mongosh`](https://www.mongodb.com/docs/mongodb-shell/)
+in a way that is transparent to the application that the data is stored in
+Tigris Cloud database.
+
+_Furthermore, there will be no cluster to create and no sharding to worry
+about._
+
+We have also recorded a video if you prefer video content.
+
+import LiteYouTubeEmbed from "react-lite-youtube-embed";
+import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
+
+<LiteYouTubeEmbed
+  id="LaObT9xLFrU"
+  params="autoplay=1&autohide=1&showinfo=0&rel=0"
+  title="Using mongosh to connect to Tigris and perform CRUD operations"
+  poster="maxresdefault"
+/>
+
+<!--truncate-->
+
+## Prerequisites
+
+- A Tigris Cloud account.
+  [Create one for free](https://console.preview.tigrisdata.cloud/signup).
+- [mongosh](https://www.mongodb.com/docs/mongodb-shell/install/) installed on your computer.
+- Tigris CLI. The installation instructions can be found
+  [here](https://www.tigrisdata.com/docs/sdkstools/cli/installation/).
+
+## Create the Tigris project and generate the application key
+
+Login to Tigris Cloud:
+
+```shell
+tigris login
+```
+
+Create a Tigris project and generate the application key. The project name
+will be used as the MongoDB database name. The application key is used to
+authenticate to Tigris.
+
+```shell
+tigris create project go_mongo_quickstart
+tigris create app_key default --project mongosh_quickstart
+```
+
+The above command will have an output similar to the following:
+
+```json
+{
+  "id": "your_client_id",
+  "name": "default",
+  "secret": "your_client_secret",
+  "created_at": 1676857746000,
+  "created_by": "google-oauth2|1111xxx",
+  "project": "mongosh_quickstart"
+}
+```
+
+## Using mongosh
+
+### Connect to Tigris
+
+We will use the `id` and `secret` from the output of the command above as the
+`username` and `password` in our URI. We will use
+`m1k.preview.tigrisdata.cloud` as the deployment to connect to.
+
+:::info
+
+Note how you did not have to create a MongoDB Atlas cluster.
+`m1k.preview.tigrisdata.cloud` is a serverless deployment with builtin
+automatic database sharding, meaning that, unlike MongoDB Atlas, you never have to
+worry about sharding or shard keys, and the data distribution is
+automatically handled.
+
+:::
+
+```shell
+mongosh mongodb://your_client_id:your_client_secret@m1k.preview.tigrisdata.cloud/?authMechanism=PLAIN --quiet
+```
+
+You will see output similar to the following:
+
+```text
+test>
+```
+
+### Create the database
+
+Let's create our database `mongosh_quickstart`
+
+```shell
+use mongosh_quickstart
+```
+
+You will see output similar to following:
+
+```text
+test> use mongosh_quickstart
+switched to db mongosh_quickstart
+```
+
+### Create a collection and insert a document
+
+Let's create the collection `podcasts` and insert a document
+
+```shell
+db.podcasts.insertOne({
+  title: 'The Polyglot Developer Podcast',
+  author: 'Nic Raboy',
+  tags: [ 'development', 'programming', 'coding' ]
+})
+```
+
+This results in the following output:
+
+```text
+mongosh_quickstart> db.podcasts.insertOne({ title: 'The Polyglot Developer Podcast', author: 'Nic Raboy', tags: [ 'development', 'programming', 'coding' ] })
+{
+  acknowledged: true,
+  insertedId: ObjectId("63f8340c6fdb0db31a94bcbf")
+}
+```
+
+We can see that the collection is created:
+
+```shell
+mongosh_quickstart> show collections
+podcasts
+```
+
+### Read all documents in the collection
+
+Let's now read the data in the collection:
+
+```shell
+db.podcasts.find()
+```
+
+This returns all the documents in the collection `podcasts`:
+
+```text
+mongosh_quickstart> db.podcasts.find()
+[
+  {
+    _id: ObjectId("63f8340c6fdb0db31a94bcbf"),
+    title: 'The Polyglot Developer Podcast',
+    author: 'Nic Raboy',
+    tags: [ 'development', 'programming', 'coding' ]
+  }
+]
+```
+
+And that's all. Feel free to explore Deletes and Updates similarly.
+
+---
+
+import OpenSourceCTA from "../_oss-cta.mdx";
+
+<OpenSourceCTA />
+```
