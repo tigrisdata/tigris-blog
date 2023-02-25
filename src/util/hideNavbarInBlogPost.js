@@ -89,10 +89,12 @@ export function onRouteDidUpdate({ location }) {
   adjustBlogPostUI(lastLocation);
 }
 
-// Do not resize on every single event
-window.addEventListener("resize", () => {
-  // Ensure the components have re-rendered
-  window.setTimeout(() => {
-    adjustBlogPostUI(lastLocation);
-  }, 0);
-});
+if (typeof window !== "undefined") {
+  // Do not resize on every single event
+  window.addEventListener("resize", () => {
+    // Ensure the components have re-rendered
+    window.setTimeout(() => {
+      adjustBlogPostUI(lastLocation);
+    }, 0);
+  });
+}
