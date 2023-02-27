@@ -557,7 +557,7 @@ Within the new `getMessages` procedure we do the following:
 3. We pass in a `sort` property and specify that Tigris should sort the results by `createdAt` in descending order (`Order.DESC`).
 4. Finally, we convert the `cursor` to an Array with `await cursor.toArray()` and return the Array of posts to the client.
 
-## Query the new tRPC procedure and add the posts to the UI
+### Query the new tRPC procedure and add the posts to the UI
 
 With the new `getMessages` procedure in place, we can update `src/pages/index.tsx` to make use of it:
 
