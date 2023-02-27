@@ -26,7 +26,10 @@ const config = {
   onBrokenMarkdownLinks: "warn",
   trailingSlash: true,
 
-  clientModules: [require.resolve("./src/util/augmentConsoleLinks.js")],
+  clientModules: [
+    require.resolve("./src/util/augmentConsoleLinks.js"),
+    require.resolve("./src/util/hideNavbarInBlogPost.js"),
+  ],
 
   presets: [
     [
