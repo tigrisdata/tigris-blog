@@ -152,7 +152,7 @@ Let's start by installing the Tigris TypeScript SDK:
 npm install @tigrisdata/core
 ```
 
-Next, define a `Post` model in a new file, `src/db/models/user.ts`:
+Next, define a `User` model in a new file, `src/db/models/user.ts`:
 
 ```tsx
 import {
@@ -195,7 +195,7 @@ the official TypeScript documentation.
 
 We also need a model to store posts. Create a `src/db/models/post.ts` file with the following code:
 
-```tsx
+```ts
 import {
   Field,
   PrimaryKey,
@@ -230,7 +230,7 @@ export default Post;
 
 With the models in place, we need to write a small script in `scripts/setup.ts` to setup the database schema in Tigris:
 
-```tsx
+```ts
 import { Tigris } from "@tigrisdata/core";
 import Post from "../src/db/models/post";
 import User from "../src/db/models/user";
