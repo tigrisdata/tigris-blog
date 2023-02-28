@@ -155,7 +155,7 @@ There can be cases where our embedded objects are very large and we do not need 
 
 We are going to add a new `biography` object in our `user.ts` file so that our `user.ts` file now looks like this:
 
-```ts {19-28}
+```ts {19-29}
 import {
   Field,
   PrimaryKey,
@@ -203,7 +203,7 @@ As you can see, we have defined a new class `Biography` and given it the collect
 
 Change the `index.tx` to look like this:
 
-```ts {33-52}
+```ts {20, 53-73, 86-93}
 import { Tigris } from "@tigrisdata/core";
 import { User, Biography } from "./db/models/user";
 
