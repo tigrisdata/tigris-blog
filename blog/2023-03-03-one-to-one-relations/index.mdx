@@ -12,7 +12,8 @@ tags: [mongodb alternative, relations, relationships]
 
 Tigris provides a transactional semi-structured document database, this allows you to model relations in a few different ways to get the best performance, consistency and ease of use in your application.
 
-In this blog, I show you how to get up and running with Tigris and how to model one-to-one, one-to-many and many-to-many documents using the embedded document and sub-document pattern. We will combine this with Tigris's transactions to make sure that all updates are consistent.
+In this blog, I show you how to get up and running with Tigris and how to model one-to-one using the embedded document and sub-document pattern. We will combine this with Tigris's transactions to make sure that all updates are consistent.
+I will show how to model one-to-many and many-to-many documents in future posts.
 
 <!-- truncate -->
 
@@ -43,6 +44,7 @@ import {
 export class Location {
   @Field()
   country: string;
+
   @Field()
   address: string;
 
@@ -140,15 +142,20 @@ main()
 
 Let's unpack what is happening. In our `setup` function we are setting up the Tigris database, creating our `user` collection and defining the schema for that collection.
 
-Then our `main` function we get the database object and then fetch our `user` collection object so that we can work with our collection. We create 3 new users. And then show how to query for one on line XX or if we want to query many of them based on a filter we do that on line XXX.
+Then our `main` function we get the database object and then fetch our `user` collection object so that we can work with our collection. We create 3 new users. And then show how to query for one on line 48 or if we want to query many of them based on a filter we do that on line 51.
+
+:::tip
+In the above example we are calling the `setup()` function to check the database and update the schema, in a
+production application this only needs to be called when the schema has changed.
+:::
 
 ## Reference one-to-one relationships
 
-There can be cases where our embedded objects are very large and we do not need to load them every time. In these cases, we can split the document into its own collection and fetch it when we need it. Now we can add a short `biography` about the users we have added above and put it in a separate collection so that we can load it when we need to.
+There can be cases where our embedded objects are very large and we do not need to load them every time. In these cases, we can split the document into its own collection and fetch it when we need it. Lets add a short `biography` about the users we have added above and put it in a separate collection so that we can load it when we need to.
 
 We are going to add a new `biography` object in our `user.ts` file so that our `user.ts` file now looks like this:
 
-```ts
+```ts {19-28}
 import {
   Field,
   PrimaryKey,
@@ -159,6 +166,7 @@ import {
 export class Location {
   @Field()
   country: string;
+
   @Field()
   address: string;
 
@@ -195,10 +203,9 @@ As you can see, we have defined a new class `Biography` and given it the collect
 
 Change the `index.tx` to look like this:
 
-```ts
+```ts {33-52}
 import { Tigris } from "@tigrisdata/core";
 import { User, Biography } from "./db/models/user";
-// import { Post } from "./db/models/post";
 
 // setup client
 const tigrisClient = new Tigris();
@@ -269,8 +276,8 @@ async function main() {
     ],
     tx
   );
+  await tx.commit();
 
-  await await tx.commit();
   let user = await userCollection.findOne({ filter: { name: "Eddie Vedder" } });
   console.table(user);
 
@@ -305,4 +312,6 @@ main()
 
 We have added the `biography` as a collection in the `setup` function. Then in the main, we created a transaction before we insert out `user` and `biography`. We pass this transaction to both `insert` functions. We use a transaction here so that both insert operations will either complete successfully or the transaction will roll the inserts back. This makes sure that writing to both collections is safe and consistent. We never have to worry about our data not being accurate or correct.
 
-Now we can read from the two collections. We do this at Line XXX. We start another read transaction and first read from the `userCollection` as we stream those results back we also fetch the `biography` of the user from the `bioCollection`. Again we use a transaction to make sure that we are reading a consistent snapshot of the data and that no modifications will affect the queries.
+Now we can read from the two collections. We do this at Line 33. We start another read transaction and first read from the `userCollection` as we stream those results back we also fetch the `biography` of the user from the `bioCollection`. Again we use a transaction to make sure that we are reading a consistent snapshot of the data and that no modifications will affect the queries.
+
+This blog post is a fast overview of working with one-to-one relations with Tigris. Using the power of Tigris's transactions gives you a few options depending on your use case. In the next blog post I will show how to model one-to-many relations.
