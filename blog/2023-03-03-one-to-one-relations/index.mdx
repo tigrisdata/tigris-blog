@@ -1,19 +1,24 @@
 ---
 slug: modelling-one-to-one-relations
-title: Tigris Flow Part One - Modelling one to one relations
+title: Tigris Data Modeling Series - How to model one-to-one relationships
 description: >
-  Tigris is a developer data platform that offers a scalable,
-  cost-efficient, and open source alternative to MongoDB Atlas. This blog post
-  demonstrates how to model one to one relations using either embedded documents or referencing another collection.
+  This blog post demonstrates how to model one to one relations using either embedded documents or referencing another collection. It shows how to use Tigris's transaction to make updates across collections consistent.
 keywords: [relations, relationships, data modelling, typescript]
 authors: [garren]
-tags: [mongodb alternative, relations, relationships]
+tags:
+  [
+    mongodb alternative,
+    relations,
+    relationships,
+    data modelling,
+    document database design,
+  ]
 ---
 
-Tigris provides a transactional semi-structured document database, this allows you to model relations in a few different ways to get the best performance, consistency and ease of use in your application.
+Tigris provides a transactional document database, this allows you to model relations in a few different ways to get the best performance, consistency and ease of use in your application.
 
-In this blog, I show you how to get up and running with Tigris and how to model one-to-one using the embedded document and sub-document pattern. We will combine this with Tigris's transactions to make sure that all updates are consistent.
-I will show how to model one-to-many and many-to-many documents in future posts.
+In this blog, I show you how to get up and running with Tigris and how to model one-to-one relationships using the embedded document and sub-document pattern. We will combine this with Tigris's transactions to make sure that all updates are consistent.
+I will show how to model one-to-many and many-to-many relationships in future posts.
 
 <!-- truncate -->
 
