@@ -38,7 +38,7 @@ Follow the prompts to add your `clientId` and `clientSecret`
 The first way to model one-to-one relationships between models is to embed the model in the document. Let's do that in Tigris, by modelling a `User` and a `Location`.
 In our project, there is already a `user.ts` file under `src/db/models`. Change that file to contain two classes like this:
 
-```ts
+```ts showLineNumbers
 import {
   Field,
   PrimaryKey,
@@ -160,7 +160,7 @@ There can be cases where our embedded objects are very large and we do not need 
 
 We are going to add a new `biography` object in our `user.ts` so the file now looks like this:
 
-```ts {19-29}
+```ts showLineNumbers {19-29}
 import {
   Field,
   PrimaryKey,
@@ -208,7 +208,7 @@ As you can see, we have defined a new class, `Biography` and given it the collec
 
 Change the `index.tx` to look like this:
 
-```ts {20, 53-73, 86-93} showLineNumbers
+```ts {20,53-73,86-93} showLineNumbers
 import { Tigris } from "@tigrisdata/core";
 import { User, Biography } from "./db/models/user";
 
