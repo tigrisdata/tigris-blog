@@ -65,11 +65,11 @@ export class User {
 }
 ```
 
-This creates a `Location` object which is embedded inside the `User` schema. This allows us to store and read the `Location` and `User` in one query. The User's email address will be the primary key.
+This creates a `Location` object embedded inside the `User` schema. This allows us to store and read the `Location` and `User` in one query. The User's email address is the primary key.
 
 Let's create a few users and query them. In the `src/index.ts` file, let's change the file to look like this:
 
-```ts
+```ts showLineNumbers
 import { Tigris } from "@tigrisdata/core";
 import { User } from "./db/models/user";
 
@@ -142,10 +142,10 @@ main()
 
 Let's unpack what is happening. In our `setup` function we are setting up the Tigris database, creating our `user` collection and defining the schema for that collection.
 
-Then our `main` function we get the database object and then fetch our `user` collection object so that we can work with our collection. We create 3 new users. And then show how to query for one on line 48 or if we want to query many of them based on a filter we do that on line 51.
+Then in our `main` function, we get the database object and then fetch our `user` collection object so that we can work with our collection. We create 3 new users. And then show how to query for one on line 48, or if we want to query many of them based on a filter, we do that on line 51.
 
 :::tip
-In the above example we are calling the `setup()` function to check the database and update the schema, in a
+In the above example, we call the `setup()` function to check the database and update the schema. In a
 production application this only needs to be called when the schema has changed.
 :::
 
@@ -153,7 +153,7 @@ production application this only needs to be called when the schema has changed.
 
 There can be cases where our embedded objects are very large and we do not need to load them every time. In these cases, we can split the document into its own collection and fetch it when we need it. Lets add a short `biography` about the users we have added above and put it in a separate collection so that we can load it when we need to.
 
-We are going to add a new `biography` object in our `user.ts` file so that our `user.ts` file now looks like this:
+We are going to add a new `biography` object in our `user.ts` so the file now looks like this:
 
 ```ts {19-29}
 import {
@@ -199,11 +199,11 @@ export class User {
 }
 ```
 
-As you can see, we have defined a new class `Biography` and given it the collection name `biography`. It also has a field `userId` which is a reference back to the `User` and will contain the user's email address. We can now update our creating and reading of users to include the biography information.
+As you can see, we have defined a new class, `Biography` and given it the collection name `biography`. It also has a field `userId`, which is a reference back to the `User` and will contain the user's email address. We can now update our creating and reading of users to include the biography information.
 
 Change the `index.tx` to look like this:
 
-```ts {20, 53-73, 86-93}
+```ts {20, 53-73, 86-93} showLineNumbers
 import { Tigris } from "@tigrisdata/core";
 import { User, Biography } from "./db/models/user";
 
@@ -310,8 +310,8 @@ main()
   });
 ```
 
-We have added the `biography` as a collection in the `setup` function. Then in the main, we created a transaction before we insert out `user` and `biography`. We pass this transaction to both `insert` functions. We use a transaction here so that both insert operations will either complete successfully or the transaction will roll the inserts back. This makes sure that writing to both collections is safe and consistent. We never have to worry about our data not being accurate or correct.
+We have added the `biography` as a collection in the `setup` function. Then in `main`, we created a transaction before we insert our `user` and `biography` documents. We pass this transaction to both `insert` functions so that both insert operations will either complete successfully, or the transaction will roll the inserts back. This makes sure that writing to both collections is safe and consistent. We never have to worry about our data not being accurate or correct.
 
 Now we can read from the two collections. We do this at Line 33. We start another read transaction and first read from the `userCollection` as we stream those results back we also fetch the `biography` of the user from the `bioCollection`. Again we use a transaction to make sure that we are reading a consistent snapshot of the data and that no modifications will affect the queries.
 
-This blog post is a fast overview of working with one-to-one relations with Tigris. Using the power of Tigris's transactions gives you a few options depending on your use case. In the next blog post I will show how to model one-to-many relations.
+This blog post is a fast overview of working with one-to-one relations with Tigris. Using the power of Tigris's transactions gives you a few options depending on your use case. In the next blog post, I will show how to model one-to-many relations.
