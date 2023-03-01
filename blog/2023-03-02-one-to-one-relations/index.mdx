@@ -1,6 +1,6 @@
 ---
 slug: modelling-one-to-one-relations
-title: Tigris Data Modeling Series - How to model one-to-one relationships
+title: How to model one-to-one relationships - Tigris Data Modeling Series
 description: >
   This blog post demonstrates how to model one to one relations using either embedded documents or referencing another collection. It shows how to use Tigris's transaction to make updates across collections consistent.
 keywords: [relations, relationships, data modelling, typescript]
@@ -323,3 +323,9 @@ We have added the `biography` as a collection in the `setup` function. Then in `
 Now we can read from the two collections. We do this at Line 33. We start another read transaction and first read from the `userCollection` as we stream those results back we also fetch the `biography` of the user from the `bioCollection`. Again we use a transaction to make sure that we are reading a consistent snapshot of the data and that no modifications will affect the queries.
 
 This blog post is a fast overview of working with one-to-one relations with Tigris. Using the power of Tigris's transactions gives you a few options depending on your use case. In the next blog post, I will show how to model one-to-many relations.
+
+---
+
+import OpenSourceCTA from "../_oss-cta.mdx";
+
+<OpenSourceCTA />
