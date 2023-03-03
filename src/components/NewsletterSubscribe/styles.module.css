@@ -1,0 +1,19 @@
+.input {
+  min-width: 300px;
+  max-width: 80%;
+  height: 100%;
+  border: 0.1rem solid rgb(78, 217, 178);
+  padding: 1.2rem;
+  box-sizing: border-box;
+  border-radius: 0.8rem;
+  letter-spacing: 0.02em;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.errors {
+  margin-top: 1em;
+  font-size: 12px;
+}
