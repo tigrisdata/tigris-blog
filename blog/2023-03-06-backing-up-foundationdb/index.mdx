@@ -4,10 +4,10 @@ title: Backing up FoundationDB
 description: >
   Tigris is an open source developer data platform that uses FoundationDB as the underlying storage engine.
   This blog post describes how do we perform backups on FoundationDB, and what options exist for that purpose.
-image: foundationdb-backups.png
-keywords: [foundationdb backup]
+image: ./foundationdb-backups.png
+keywords: [foundationdb, backup]
 authors: [pboros]
-tags: [foundationdb backup]
+tags: [foundationdb, backup]
 ---
 
 We are running FoundationDB with the [official kubernetes operator](https://github.com/FoundationDB/fdb-kubernetes-operator).
@@ -186,7 +186,7 @@ Instead of specifying a version, a timestamp can be specified as well.
 --expire-before-timestamp '2023/03/01.01:00:00+0000'
 ```
 
-In this case, fdbbackup will find a version that is close to this, and will expire the data before that version.
+In this case, `fdbbackup` will find a version that is close to this, and will expire the data before that version.
 
 After expiring, the backup size should reduced. This can be verified with an AWS client.
 
@@ -199,7 +199,7 @@ Total Objects: 5407
 
 ## Restoring backups
 
-Restorations can be triggered with the fdbrestore utility. If no target time or version is specified, `fdbrestore`
+Restorations can be triggered with the `fdbrestore` utility. If no target time or version is specified, `fdbrestore`
 will restore the latest available version.
 
 Exmaple:
@@ -243,7 +243,7 @@ The `backup_agent` is capable of using TLS to talk to the object store. This is 
 By default, it needs a client side certificate (not covered in this blog post). If a self signed certificate is used,
 or if no certificate is used, but still the HTTPS endpoint of the object store is used, the `--tls_verify_peers Check.Valid=0`
 option can be used (mostly useful for testing purposes). With the secure endpoint, in some cases, I need to specify
-`:443` in the blobstore url for the correct protocol to be used (there is no protocol specification because of `blobstore://`.
+`:443` in the blobstore url for the correct protocol to be used (there is no protocol specification because of `blobstore://`).
 
 ### V2 or V4 request headers for object stores
 
@@ -269,6 +269,12 @@ to debug these kind of issues is `--knob_http_verbose_level=4`.
 Having strong backup and disaster recovery capabilities in a database is crucial to ensure that your data is
 safe and secure. FoundationDB provides a robust foundation for Tigris, with excellent backup and disaster recovery
 capabilities.
+
+import NewsletterSubscribe from "../../src/components/NewsletterSubscribe";
+
+<NewsletterSubscribe />
+
+---
 
 import OpenSourceCTA from "../_oss-cta.mdx";
 
