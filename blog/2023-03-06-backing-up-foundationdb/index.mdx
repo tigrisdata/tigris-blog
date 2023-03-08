@@ -10,8 +10,6 @@ authors: [pboros]
 tags: [foundationdb backup]
 ---
 
-## Backups
-
 We are running FoundationDB with the [official kubernetes operator](https://github.com/FoundationDB/fdb-kubernetes-operator).
 FoundationDB supports logical backups (with `backup_agent`) and disaster recovery (with `dr_agent`) through copying
 the database/streaming changes logically. It also supports binary backups through [disk snapshots](https://apple.github.io/foundationdb/disk-snapshot-backup.html).
@@ -19,6 +17,8 @@ the database/streaming changes logically. It also supports binary backups throug
 In this blog post, we will describe how to make a backup of FoundationDB via `backup_agent`. The FoundationDB operator
 supports making logical backups via `backup_agent`, but it does not support running DR with `dr_agent`. We decided to run `backup_agent`
 as a separate deployment to allow a symmetric setup with `dr_agent`.
+
+<!-- truncate -->
 
 In order to run the `backup_agent` pods, we will need a deployment. That deployment will need the following:
 
