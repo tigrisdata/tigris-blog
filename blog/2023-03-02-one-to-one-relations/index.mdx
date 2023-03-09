@@ -6,14 +6,7 @@ description: >
 keywords: [relations, relationships, data modelling, typescript]
 authors: [garren]
 image: ./modeling-one-to-one.png
-tags:
-  [
-    mongodb alternative,
-    relations,
-    relationships,
-    data modeling,
-    document database design,
-  ]
+tags: [relations, relationships, data modeling, document database design]
 ---
 
 Tigris provides a transactional document database, this allows you to model relations in a few different ways to get the best performance, consistency and ease of use in your application.
@@ -36,7 +29,7 @@ $ npx create-tigris-app@latest --project relations --example playground
 
 Follow the prompts to add your `clientId` and `clientSecret`
 
-## Embedded One - to - one
+## Embedded One-to-one
 
 The first way to model one-to-one relationships between models is to embed the model in the document. Let's do that in Tigris, by modelling a `User` and a `Location`.
 In our project, there is already a `user.ts` file under `src/db/models`. Change that file to contain two classes like this:

@@ -8,24 +8,15 @@ keywords:
   [relations, relationships, data modelling, typescript, one-to-many data model]
 authors: [garren]
 image: ./modeling-one-to-many.png
-tags:
-  [
-    mongodb alternative,
-    relations,
-    relationships,
-    data modeling,
-    document database design,
-  ]
+tags: [relations, relationships, data modeling, document database design]
 ---
 
-This is part 2 of the **Tigris Data Modeling Series** and we explore modeling one-to-many relations.
-We look two ways to implement this. The first is using an embedded pattern and then using a separate collection with a relation field. We will also look at when it is best to use either of these designs.
+This is part 2 of the **Tigris Data Modeling Series**. In the first part of the series, we covered [modeling one-to-one relations](../2023-03-02-one-to-one-relations/index.mdx). In this second part of the series, we will explore modeling one-to-many relations.
+We'll look at two ways to implement one-to-many relations. The first uses an embedded pattern, and the second uses a separate collection with a relation field. We will also look at when it is best to use either of these designs.
 
 ![Modeling one-to-many image](modeling-one-to-many.png)
 
 <!--truncate-->
-
-If you missed the first in the series, head over to [modeling one-to-one relations](../2023-03-02-one-to-one-relations)
 
 ## Getting started
 
@@ -36,12 +27,11 @@ The Tigris Docs have a [Quickstart](https://www.tigrisdata.com/docs/quickstarts/
 $ npx create-tigris-app@latest --project relations --example playground
 ```
 
-Follow the prompts to add your `clientId` and `clientSecret`
+Follow the prompts to add your `clientId` and `clientSecret`.
 
 ## Embedded One-to-Many
 
-Let us start with modeling one-to-many relations with an embedded document. In the playground repository that we
-set up, there is a post model. It can be found at `src/db/models/post.ts`.
+Let us start with modeling one-to-many relations with an embedded document. In the playground repository there is a `Post` model defined in `src/db/models/post.ts`.
 For our example we can reduce some of the fields. Edit it so that it looks like this:
 
 ```ts showLineNumbers
@@ -121,8 +111,9 @@ export class Post {
 }
 ```
 
-In the above code, we created a new `Comment` class on line 8. We then embedd this as an array in our `Post` object on `line 39`.
-Now every time there is a new comment we will fetch the post document from Tigris and append the latest comment.
+In the above code, we define a new `Comment` class on line 8. We then embed this as an array in our `Post` object on `line 39`.
+
+When there is a new comment, we will fetch the post document from Tigris and append the latest comment.
 Open up `index.ts` and add the following code to do that:
 
 ```ts showLineNumbers {18-42}
@@ -187,20 +178,20 @@ main()
   });
 ```
 
-The main lines to focus on are `line 18` to `line 43`. Here we create a post and save it to Tigris. Then we add to the `comments` field
+The main lines to focus on are `line 18` to `line 43`. Here we create a post and save it to Tigris. Then we add two comments to the `comments` Array field
 in the document and save it to the server.
-Finally, we find the first document in the collection that matches the title and we print it to the console. This is how you can work with one-to-many relations using the embedded pattern.
+Finally, we find the first document in the collection that matches the title and print it to the console. This is how you can work with one-to-many relations using the embedded pattern.
 
-This pattern works well for documents that do not have a lot of changes to them so there are very few writes of the document to the database.
-However, if there are a lot of writes, we will get a lot of conflicts. We can handle this by either retrying the update or fetching the document
-again, adding the comments and trying to save it again. But this is a very tedious process and is prone to writing over data.
+This pattern works well for documents that do not have a lot of changes to them, so there are very few writes of the document to the database.
+However, if there are a lot of writes, like in the case of a blog post receiving a lot of comments, we will get a lot of conflicts. We can handle this by retrying the update or fetching the document
+again, adding the comments, and trying to save it again. But this is a very tedious process and is prone to writing over data.
 
 Instead, we can solve this by breaking up the comments into their own collection and using Tigris's transactions.
 
 ## Reference one-to-many relations
 
 Breaking up the comments into their own collections avoids any write conflicts but will mean queries will require a read from two
-collections. We will query from the blog collection to get the blog post we want and then from the comments collection to get all the comments
+collections. We will query from the blog collection to get the post we want and then from the comments collection to get all the comments
 for a specific post. Below is what is required to change the Tigris schema to follow this pattern:
 
 ```ts showLineNumbers {8}
@@ -246,7 +237,7 @@ export class Post {
 ```
 
 In the above snippet, we have removed the reference to the comments in `Post` collection and instead have created a new collection
-called comment. Now update the `index.ts` file to support the new collection:
+called `comment`. Now update the `index.ts` file to support the new collection:
 
 ```ts showLineNumbers {2,10,47,69}
 import { Tigris } from "@tigrisdata/core";
@@ -331,18 +322,25 @@ main()
   });
 ```
 
-On `line 2` we import the new collection and add it to our database schema on `line 10`. The main query changes start at `line 33`,
-where we insert each comment individually. In this small example, we could use `insertMany` to
-batch insert the comments, but I've intentionally inserted them individually as if they were inserted by separate requests from web requests.
-On `line 47` we start a transaction so that we can read from the post collection and the comment collection. We create a transaction so that we
+We import the new collection on `line 2` and add it to our database schema on `line 10`.
+
+The main query changes start at `line 33`,
+where we insert each comment individually. In this small example, we could use [`insertMany`](https://www.tigrisdata.com/docs/sdkstools/typescript/database/insert/#insert-multiple-documents) to
+batch insert the comments. However, I've intentionally inserted them individually as if inserted by separate requests triggered via web requests.
+
+On `line 47` we start a transaction to read from the post and comment collection. We create a transaction so that we
 get a single consistent snapshot from the two collections.
-On `line 48` we query for the specific post and then on `line 58` we fetch all comments related to the post.
+On `line 48` we query for the specific post, and then on `line 58` we fetch all comments related to the post.
 This allows us to have a high number of consistent reads and writes for this blog post without causing write conflicts and making sure our data is always consistent.
 
-The two different one-to-many relation design patterns here work well when used correctly. If you are not doing a lot of updates and not adding a lot of documents related to the parent then
-the embedded pattern will be the most efficient. However, if there are a lot of documents being linked to the parent document, then a separate collection will be the best pattern to follow.
+The two different one-to-many relation design patterns work well when used correctly. If you are not doing a lot of updates and not adding a lot of documents related to the parent, then
+the embedded pattern will be the most efficient. However, referencing a separate collection is the best pattern if many documents link to the parent document.
 
 Thanks for following along. The final blog post in this series will cover many-to-many relations.
+
+import NewsletterSubscribe from "../../src/components/NewsletterSubscribe";
+
+<NewsletterSubscribe ctaMessage="Make sure you don't miss the next post in the series by subscribing to the Tigris Newsletter:" />
 
 ---
 
