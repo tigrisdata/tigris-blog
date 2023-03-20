@@ -1,0 +1,28 @@
+---
+slug: fdb-exporter
+title: Monitoring FoundationDB with fdb-exporter
+description: >
+  Tigris is an open source developer data platform that uses FoundationDB as the underlying storage engine.
+  This blog post describes how do we monitor FoundationDB.
+image: ./TODO
+keywords: [foundationdb, monitoring]
+authors: [pboros]
+tags: [foundationdb, monitoring]
+---
+
+We are running FoundationDB in production using the [official kubernetes operator](https://github.com/FoundationDB/fdb-kubernetes-operator)
+, we wanted to monitor FoundationDB
+status. For this purpose, we looked into existing FoundationDB exporters. We found 2 excellent ones,
+[this](https://github.com/aikoven/foundationdb-exporter) and [this](https://github.com/PierreZ/fdb-prometheus-exporter).
+One iswritten in golang, the other one in javascript. After some careful consideration and looking at the simplicity of the
+projects, we decided to make yet another one and make it available to the community.
+
+We decided to write a new exporter from scratch for two reasons.
+
+- Tighter integration with kubernetes operator: we wanted the pod names as tags. For this, we needed to fork/contribute
+  the existing projects. Some of them were not that active.
+- Integration testing: none of the projects have integration testing. Monitoring FoundationDB is a critical piece
+  for us, FoundationDB is at the core of our infrastructure. Nto only we test that `status json` output is parsed correctly,
+  we also test if the correct metrics are emitted with the correct names and tags.
+
+The project is under active development and used in production for Tigris Cloud.
