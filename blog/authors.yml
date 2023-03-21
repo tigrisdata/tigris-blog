@@ -67,8 +67,15 @@ leggetter:
   title: Head of Developer Experience
   url: https://www.linkedin.com/in/leggetter/
   image_url: https://github.com/leggetter.png
+
 garren:
   name: Garren
   title: Database Engineer
   url: https://www.garrensmith.com
   image_url: https://github.com/garrensmith.png
+
+michael:
+  name: Michael Jolley
+  title: Senior Developer Advocate
+  url: https://baldbeardedbuilder.com/
+  image_url: https://s.gravatar.com/avatar/c4761ebd5c213c966896e348b84ca368?s=80

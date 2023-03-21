@@ -1,0 +1,191 @@
+---
+slug: mongodb-compatibility-beta
+title: Tigris MongoDB compatibility now in beta
+description: >
+  MongoDB compatibility has been added to the Tigris open source developer data platform 
+  and is now available on Tigris Cloud, making Tigris a true alternative to MongoDB Atlas
+keywords: [mongodb, mongodb atlas, mongodb alternative]
+authors: [ot, leggetter, michael]
+tags: [mongodb, mongodb atlas, mongodb alternative]
+image: ./tigris-mongodb-compatibility-beta.png
+---
+
+# Tigris MongoDB compatibility now in beta
+
+MongoDB compatibility has been added to the Tigris open source developer data platform
+and is now also available on Tigris Cloud.
+
+The first beta release of Tigris MongoDB compatibility offers support for MongoDB 6.0+
+CRUD and Aggregation operations. Any application that uses the supported MongoDB CRUD
+and Aggregation operations, no matter the programming language, can now use Tigris
+instead of a self-hosted MongoDB instance or MongoDB Atlas.
+
+<center>
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/A8WDwXD4nvE?controls=0"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowFullScreen
+  ></iframe>
+</center>
+
+<!-- truncate -->
+
+## Demonstrating Tigris MongoDB compatibility
+
+CRUD operations for all MongoDB drivers that support MongoDB 6.0+ work with Tigris, so
+all you need to do for your MongoDB application to use the Tigris MongoDB compatibility
+feature is to update the database connection string.
+
+Let's quickly demonstrate this using the official
+[MongoDB TypesScript example](https://github.com/mongodb-developer/mongodb-typescript-example).
+The simplest way to follow along is to
+[signup for a Tigris Cloud account](https://console.preview.tigrisdata.cloud/signup) and create
+your first project, calling it `gamesDB`.
+
+Clone the repo and install the application dependencies:
+
+```tsx
+git clone https://github.com/mongodb-developer/mongodb-typescript-example.git
+cd mongodb-typescript-example
+npm i
+```
+
+Copy the `.env.example` file and create a new `.env` file:
+
+```shell
+cp env.example .env;
+```
+
+Update the `.env` file replacing the contents of the `DB_CONN_STRING` variable with the following:
+
+```tsx
+"mongodb://{TIGRIS_CLIENT_ID}:{TIGRIS_CLIENT_SECRET}@m1k.preview.tigrisdata.cloud:27018?authMechanism=PLAIN&tls=true";
+```
+
+Replace `{TIGRIS_CLIENT_ID}` and `{TIGRIS_CLIENT_SECRET}` within the connection string with the
+application credentials from the project you have created in Tigris Cloud. Finally, Update the
+value of `DB_NAME` with the name of the project you created in Tigris Cloud.
+
+And run the app:
+
+```shell
+npm start
+```
+
+You'll see output similar to the following:
+
+```shell
+[INFO] 15:12:35 ts-node-dev ver. 1.1.8 (using ts-node ver. 9.1.1, typescript ver. 4.3.5)
+Successfully connected to database: gamesDB and collection: games
+Server started at http://localhost:8080
+```
+
+Now, make a few cURL requests to test it out. First, create a resource:
+
+```shell
+curl --location --request POST 'http://localhost:8080/games' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+   "name": "Fable Anniversary",
+   "price": 4.99,
+   "category": "Video Game"
+}'
+```
+
+Then list the resources:
+
+```shell
+curl --location --request GET 'http://localhost:8080/games'
+```
+
+It's that simple! You can check out
+[our MongoDB examples on GitHub](https://github.com/tigrisdata-community?q=mongodb-compatibility&type=all&language=&sort=)
+for more examples.
+
+If you have any questions about using Tigris MongoDB compatibility or have feedback to help
+us prioritize additional compatibility,
+[join the Tigris Discord Community](https://www.tigrisdata.com/discord/), or
+[get in touch](https://www.tigrisdata.com/contact/).
+
+## An open source alternative to MongoDB Atlas
+
+Tigris is an open source alternative to MongoDB Atlas. We've released the MongoDB
+compatibility feature to make it easier for you to migrate MongoDB applications over to
+Tigris and benefit from the following:
+
+- **A truly serverless database**: There's no need for cluster provisioning or
+  capacity planning. Create a project, obtain your application keys, and you're
+  ready to go.
+- **Automatic database sharding**: Tigris provides automatic database sharding, and
+  shard keys are unnecessary as the data distribution is automatically handled.
+  This includes both sharding and optimizing the number of shards. MongoDB Atlas
+  requires you to specify and manage sharding to horizontally scale. With Tigris,
+  you get more time to focus on developing applications for your users.
+- **Cost-efficient and unlimited scalability**: Unlike MongoDB Atlas, Tigris can
+  scale to millions of records read and written per second and petabytes of data
+  storage at a fraction of the cost.
+- **Strong data consistency**: The storage layer is built on FoundationDB, and
+  Tigris inherits the strong consistency guarantees. Tigris provides global,
+  interactive, ACID transactions with strict serializability using optimistic
+  concurrency control. Tigris also provides strongly consistent global secondary
+  indexes that enable powerful querying capabilities by any field.
+- **Global secondary indexes:** Tigris offers transactionally consistent global
+  secondary indexes allowing quick lookups by any field.
+- **Full-text search:** Tigris integrates a database, search engine, and
+  synchronization mechanism in a unified platform. This provides the fastest way
+  to add search capabilities to your applications. Tigris provides a rich query DSL,
+  fuzzy search, custom ranking, fast faceting, and geo search.
+- **Cloud-native architecture**: Tigris follows a modern composable architecture
+  with loosely coupled components. Furthermore, compute is separated from
+  storage, allowing for independent scaling and a more resilient system.
+- **Bring your own cloud**: Tigris' open source Kubernetes-native design allows it
+  to be deployed anywhere in the cloud in your own VPC, so that all the data is
+  contained in your own environment.
+
+## How MongoDB compatibility works and what's next
+
+Tigris leverages the FerretDB library to provide compatibility with the wire protocol
+for MongoDB, which enables transparent compatibility with native MongoDB client SDKs,
+drivers, and tools. Tigris doesn't host the MongoDB database engine. Any
+MongoDB client driver compatible with version 6.0+ should be able to connect
+with no special configuration. We are actively working on testing the
+compatibility with all MongoDB drivers.
+
+![Tigris Architecture](https://www.tigrisdata.com/docs/assets/images/query-engine-0181798ba58e2e633e223f8a657106fb.jpeg)
+
+We plan to improve compatibility beyond the currently supported CRUD and Aggregation
+operations.
+
+For more information, see our
+[MongoDB compatibility docs](https://www.tigrisdata.com/docs/concepts/mongodb-compatibility/).
+For details on the Tigris architecture, see our
+[Architecture docs](https://www.tigrisdata.com/docs/concepts/architecture/).
+
+## Beyond MongoDB and MongoDB Atlas
+
+We're excited that the Tigris MongoDB compatibility feature has moved into beta today,
+but we have a bigger vision that we're working towards.
+
+With that in mind, we recommend that the
+[Tigris SDKs](https://www.tigrisdata.com/docs/sdkstools/), not the MongoDB drivers,
+are used for greenfield applications or new application features. By doing so, you'll
+benefit from the native Tigris functionality, which simplifies the development process
+by enabling a code-first and agile approach to database schema definition and removes
+the need for an ORM/ODM. In addition, by using the native Tigris SDKs, you will also
+benefit from the full value of a data developer platform and get Search and other
+products we launch through a unified API.
+
+## Get started with Tigris
+
+The quickest way to try out the Tigris MongoDB compatibility is to signup for a
+[Tigris Cloud account](https://console.preview.tigrisdata.cloud/signup) and follow one
+of the [Tigris MongoDB compatibility quickstarts](https://www.tigrisdata.com/docs/quickstarts/mongodb-compatibility/).
+
+If you have any questions or you'd like to contribute to the
+[Tigris open source project](https://github.com/tigrisdata/tigris) it would be great to
+see you in the [Tigris Discord Community](https://www.tigrisdata.com/discord/).
+For anything else, [get in touch](https://www.tigrisdata.com/contact/).
