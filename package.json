@@ -8,6 +8,8 @@
     "dev": "docusaurus start",
     "start": "docusaurus start",
     "build": "docusaurus build",
+    "vercel-build": "[ \"$VERCEL\" = 1 ] && docusaurus build --out-dir build/blog && npm run vercel-copy-404",
+    "vercel-copy-404": "[ \"$VERCEL\" = 1 ] && echo \"copying 404\" && cp build/blog/404.html build/",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
