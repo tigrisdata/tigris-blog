@@ -5,7 +5,7 @@ description: >
   MongoDB compatibility has been added to the Tigris open source developer data platform 
   and is now available on Tigris Cloud, making Tigris a true alternative to MongoDB Atlas
 keywords: [mongodb, mongodb atlas, mongodb alternative]
-authors: [ot, leggetter]
+authors: [ot, leggetter, michael]
 tags: [mongodb, mongodb atlas, mongodb alternative]
 ---
 
@@ -18,6 +18,18 @@ The first beta release of Tigris MongoDB compatibility offers support for MongoD
 CRUD and Aggregation operations. Any application that uses the supported MongoDB CRUD
 and Aggregation operations, no matter the programming language, can now use Tigris
 instead of a self-hosted MongoDB instance or MongoDB Atlas.
+
+<center>
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/A8WDwXD4nvE?controls=0"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowFullScreen
+  ></iframe>
+</center>
 
 <!-- truncate -->
 
@@ -110,7 +122,7 @@ Tigris and benefit from the following:
 - **Automatic database sharding**: Tigris provides automatic database sharding, and
   shard keys are unnecessary as the data distribution is automatically handled.
   This includes both sharding and optimizing the number of shards. MongoDB Atlas
-  requires you to specify and manage sharding to horizontally scale. With Tigris
+  requires you to specify and manage sharding to horizontally scale. With Tigris,
   you get more time to focus on developing applications for your users.
 - **Cost-efficient and unlimited scalability**: Unlike MongoDB Atlas, Tigris can
   scale to millions of records read and written per second and petabytes of data
@@ -135,7 +147,7 @@ Tigris and benefit from the following:
 
 ## How MongoDB compatibility works and what's next
 
-Tigris leverages FerretDB library to provide compatibility with the wire protocol
+Tigris leverages the FerretDB library to provide compatibility with the wire protocol
 for MongoDB, which enables transparent compatibility with native MongoDB client SDKs,
 drivers, and tools. Tigris doesn't host the MongoDB database engine. Any
 MongoDB client driver compatible with version 6.0+ should be able to connect
