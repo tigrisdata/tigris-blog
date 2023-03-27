@@ -16,7 +16,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const config = {
   title: "Tigris",
   tagline:
-    "For developers who want to build scalable web and mobile apps fast!",
+    "Tigris is a Serverless NoSQL Database and Search Platform that offers a modern alternative to DynamoDB and MongoDB.",
   url: tigrisConfig.websiteUrl,
   baseUrl: "/blog/",
   favicon: "img/favicon.ico",
