@@ -1,0 +1,58 @@
+---
+slug: foundationdb-meetup-indexes-talk
+title: A developer-driven approach to building secondary indexes presentation
+description: >
+  Building secondary indexes for a nosql database is always about balance. A balance between a system that scales and is easy to manage and an API that is intuitive and delightful for a developer to use. Recently at Tigris Data, we have been adding secondary indexes to our database that runs on top of FoundationDB and have been working hard to achieve a good balance between scale and developer delight.
+  In a recent FoundationDB meetup, I presented on how Tigris looks to get the balance right with our secondary indexes.
+keywords:
+  [
+    indexes,
+    nosql,
+    document database,
+    secondary indexes,
+    querying,
+    developer driven design,
+    nosql,
+  ]
+authors: [garren]
+image: ./foundationdb-talk.png
+tags:
+  [nosql, secondary indexes, document database design, developer driven design]
+---
+
+# A developer-driven approach to building secondary indexes
+
+I did a presentation at the [FoundationDB Monthly Meetup](https://www.meetup.com/foundationdb-online-meetup/).
+The talk is about, how building secondary indexes for a database is always about balance.
+A balance between a system that scales and is easy to manage and an API that is intuitive and delightful for a developer to use.
+Recently at Tigris Data, we have been adding secondary indexes to our database and have been working hard to achieve a good balance between scale and developer delight.
+Tigris is a transactional document database that runs on top of FoundationDB and is compatible with MongoDB.
+In this talk I cover four aspects we had to balance:1. Handling schema changes automatically
+in our secondary indexes so that users don't have to worry about it.
+
+1. The trade-off between auto-indexing all fields and indexing select fields.
+2. Changes we made after performance testing.
+3. How we plan build indexes in the background with minimal conflicts.
+
+<div style={{ position: "relative", "padding-bottom": "56.25%" }}>
+  <iframe
+    style={{
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+    }}
+    src="https://www.youtube.com/embed/qD1h5CyzL0A"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowfullscreen
+  ></iframe>
+</div>
+
+---
+
+import OpenSourceCTA from "../_oss-cta.mdx";
+
+<OpenSourceCTA />

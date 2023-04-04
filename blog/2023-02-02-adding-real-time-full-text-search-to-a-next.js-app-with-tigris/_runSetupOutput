@@ -5,10 +5,14 @@ npm run setup
 
 Loaded env from /store/.env.local
 info - Using reflection to infer type of Product#name
-info - Using reflection to infer type of Product#price
+info - Using reflection to infer type of Product#name
+info - Using reflection to infer type of Product#star
 info - Using reflection to infer type of Product#star
 info - Using reflection to infer type of Product#tag
+info - Using reflection to infer type of Product#tag
 info - Using reflection to infer type of Product#image
-info - Using Tigris at: api.preview.tigrisdata.cloud:443
+info - Using Tigris at: api.dev.tigrisdata.cloud:443
+event - 'develop' branch already exists
+info - Using database branch: 'develop'
 event - Creating collection: 'products' in project: 'store'
 Setup complete ...
