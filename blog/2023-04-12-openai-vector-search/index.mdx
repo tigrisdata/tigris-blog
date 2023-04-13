@@ -226,7 +226,7 @@ export class Review {
 }
 ```
 
-And created with the following code:
+And the index is created with the following code:
 
 ```ts title="scripts/seed.ts"
 // ...
@@ -240,7 +240,9 @@ await search.createOrUpdateIndex(Review);
 // ...
 ```
 
-#### 2. Reads the reviews from the CSV file, generate embeddings, and store reviews and embeddings in Tigris
+#### 2. Reads the reviews from the CSV file AND generates embeddings
+
+The reviews are loaded from the CSV file and embeddings are generated via OpenAI:
 
 ```ts title="scripts/seed.ts"
 // ...
@@ -263,6 +265,13 @@ for await (const doc of readStream.pipe(parse({ columns: true, cast: true }))) {
 
     batch.push(doc as Review);
   }
+}
+
+if (batch.length > 0) {
+  await insertBatch(batch, index);
+
+  numDocsLoaded += batch.length;
+  batch.length = 0;
 }
 // ...
 ```
@@ -293,6 +302,25 @@ const createEmbedding = async (
   });
   return embeddings.data.data[0]?.embedding;
 };
+```
+
+#### 3. Store reviews and embeddings in Tigris
+
+The `insertBatch` function is called, which makes use of the Tigris `createOrReplaceMany` SDK function
+to store the embeddings in the Tigris search index:
+
+```ts title="scripts/seed.ts"
+async function insertBatch(batch: Review[], index: SearchIndex<Review>) {
+  const docStatus = await index.createOrReplaceMany(batch);
+  for (const status of docStatus) {
+    if (status.error) {
+      console.log(status.error);
+      console.log(batch);
+
+      throw new Error("Error creating documents");
+    }
+  }
+}
 ```
 
 Now that the embeddings have been generated and stored in Tigris, we can start the application
