@@ -267,7 +267,7 @@ for await (const doc of readStream.pipe(parse({ columns: true, cast: true }))) {
 // ...
 ```
 
-The `createEmbedding` function uses the OpenAI client to generate embeddings for the review
+The `createEmbedding` function uses the OpenAI client to generate embeddings for the review:
 
 ```ts title="src/utils/openai.ts"
 import { Configuration, OpenAIApi } from "openai";
