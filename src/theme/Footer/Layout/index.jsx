@@ -18,9 +18,9 @@ export default function FooterLayout({ style, links, logo, copyright }) {
           Tigris is a Serverless NoSQL Database and Search Platform that offers
           a modern open source alternative to MongoDB and DynamoDB. Tigris
           allows developers to rapidly build applications with a NoSQL platform
-          that combines database, full-text search, and sync mechanism. Tigris
-          simplifies operations by automatically scaling throughput and storage
-          as application traffic grows, at fraction of the cost of MongoDB and
+          that combines database, search, and sync mechanism. Tigris simplifies
+          operations by automatically scaling throughput and storage as
+          application traffic grows, at fraction of the cost of MongoDB and
           DynamoDB, while providing high availability and data security.
         </p>
         <div className="footer__row">
