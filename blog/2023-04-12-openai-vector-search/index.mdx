@@ -252,7 +252,7 @@ const dataFile = "./scripts/data/reviews.csv";
 // ...
 for await (const doc of readStream.pipe(parse({ columns: true, cast: true }))) {
   if (batch.length >= batchSize) {
-    await index.createOrReplaceMany(batch);
+    await insertBatch(batch, index);
 
     numDocsLoaded += batch.length;
     batch.length = 0;
