@@ -40,6 +40,8 @@ then generates a vector representation of the document. The vector
 representation is a dense vector of floating-point numbers that can be used
 to find similar documents.
 
+For more information, check out the [OpenAI embeddings guide](https://platform.openai.com/docs/guides/embeddings).
+
 ## Vector search workflow with OpenAI and Tigris
 
 The vector search workflow with OpenAI and Tigris works as follows:
@@ -54,7 +56,7 @@ The vector search workflow with OpenAI and Tigris works as follows:
 
 ![Vector Search with Tigris and OpenAI](vector-search-with-openai.jpeg)
 
-Now let's build a vector search application that implements this workflow.
+Now, let's build a vector search application that implements this workflow.
 
 ## Building the vector search application
 
@@ -64,8 +66,8 @@ To follow along with this post, you'll need:
 - A Tigris Cloud account. You can sign up for a free account <a href={tigrisConfig.signupUrl}>here</a>
 - [Node.js 18.13.0](https://nodejs.org/) or newer
 
-Once you have signed up for the Tigris Cloud account, create a new project calling it `vectorsearchapp`.
-Next, make a note of the `clientId` and `clientSecret` which you can get from the **Application Keys**
+Once you have signed up for the Tigris Cloud account, create a new project called `vectorsearchapp`.
+Next, make a note of the `clientId` and `clientSecret`, which you can get from the **Application Keys**
 section of the project.
 
 ### Bootstrap the application
@@ -144,8 +146,8 @@ change into this directory.
 cd vectorsearchapp
 ```
 
-We will need the OpenAI Organization ID and API key to be able to authenticate with OpenAI.
-Visit the [API Keys](https://platform.openai.com/account/api-keys) page to retrieve the API key,
+We will need the OpenAI Organization ID and API key to authenticate with OpenAI.
+Visit the [API Keys](https://platform.openai.com/account/api-keys) page to retrieve the API key
 and the [Org Settings](https://platform.openai.com/account/org-settings) page to retrieve
 the Organization ID.
 
@@ -158,7 +160,7 @@ OPENAI_API_KEY=your_api_key_here
 
 Now we are all set.
 
-Next we will demonstrate how easy it is to store the embeddings in Tigris and then use
+Next, we will demonstrate how simple it is to store the embeddings in Tigris and then use
 the Tigris client to search for similar documents. We will use a subset of reviews from the
 [Amazon fine-food reviews](https://www.kaggle.com/snap/amazon-fine-food-reviews) dataset.
 
@@ -173,8 +175,7 @@ npm run seed
 
 The command performs the following steps:
 
-<details>
-<summary>1. Creates a Tigris Search Index</summary>
+#### 1. Creates a Tigris Search Index
 
 The search index called `reviews` is defined with the following schema:
 
@@ -239,10 +240,7 @@ await search.createOrUpdateIndex(Review);
 // ...
 ```
 
-</details>
-
-<details>
-<summary>2. Reads the reviews from the CSV file, generate embeddings, and store reviews and embeddings in Tigris</summary>
+#### 2. Reads the reviews from the CSV file, generate embeddings, and store reviews and embeddings in Tigris
 
 ```ts title="scripts/seed.ts"
 // ...
@@ -297,14 +295,12 @@ const createEmbedding = async (
 };
 ```
 
-</details>
-
 Now that the embeddings have been generated and stored in Tigris, we can start the application
 and perform searches.
 
 ## Running the vector search application
 
-Let's run the following command to start the application in development mode.
+Let's run the following command to start the application in development mode running on `http://localhost:3000`:
 
 ```bash
 npm run dev
@@ -425,10 +421,7 @@ vector distance is a measure of how similar the search string is to the review t
 closer the vector distance is to 0, the more similar the review text is to the search
 string.
 
-Here is how the code for the vector search API looks like:
-
-<details>
-<summary>Vector Search with Tigris SDK</summary>
+Here is what the code for the vector search API looks like:
 
 ```ts title="src/routes/search.ts"
 // ...
@@ -474,14 +467,12 @@ async (req, res, next) => {
 // ...
 ```
 
-</details>
-
 ## Next Steps
 
-Try out this application, and let us know what other examples of vector search you'd like
-to see.
+Try out this application, and [let us know](https://www.tigrisdata.com/contact/) what
+other examples of vector search you'd like to see.
 
 If you have any questions or you'd like to contribute to the
-[Tigris open source project](https://github.com/tigrisdata/tigris) it would be great to
+[Tigris open source project](https://github.com/tigrisdata/tigris), it would be great to
 see you in the [Tigris Discord Community](https://www.tigrisdata.com/discord/).
 For anything else, [get in touch](https://www.tigrisdata.com/contact/).
