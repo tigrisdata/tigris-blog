@@ -1,0 +1,271 @@
+---
+slug: mern-to-tern
+title: Migrating from MERN to TERN
+description: >
+  Learn how to migrate your MERN (MongoDB, Express.js, React, and Node.js)
+  application to TERN (Tigris, Express.js, React, and Node.js).
+keywords: [mern, tern, mongodb-alternative, react, node.js, express.js]
+authors: [leggetter]
+tags: [mern, tern, mongodb-alternative, react, node.js, express.js]
+image: ./mern-to-tern.png
+---
+
+import tigrisConfig from "@site/tigris.config.js";
+
+# Migrating from MERN to TERN
+
+The MERN Stack - a web technology stack consisting of MongoDB, Express.js,
+React, and Node.js - was introduced around 2018 as a popular set of technologies
+to enable end-to-end development in JavaScript. Although the popularity of
+fullstack frameworks such as Next.js *mean*s that MERN isn't as popular as it
+once was, it's still a viable and productive choice with more flexability that
+you'll get with a fullstack framework.
+
+The **TERN** (**T**igris, **E**xpress.js, **R**eact, and **N**ode.js) stack
+replaces MongoDB with Tigris.
+
+[![Migrating from MERN to TERN](./mern-to-tern.png)](/blog/mern-to-tern/)
+
+In this post you'll learn why you should migrate from MERN to TERN. We'll also
+cover the steps involved in migrating a MERN application to **TERN**
+(**T**igris, **E**xpress.js, **R**eact, and **N**ode.js); first via
+[Tigris MongoDB compatibility](https://www.tigrisdata.com/docs/concepts/mongodb-compatibility/)
+to get your existing application working with Tigris instead of MongoDB without
+any code changes (⚠️ spoiler: it's as simple as updating the MongoDB connection
+string). Then, we'll make a few changes to get the application using the Tigris
+SDK instead of the MongoDB Node.js driver.
+
+<!-- truncate-->
+
+## What is MERN?
+
+**MERN** (**M**ongoDB, **E**xpress.js, **R**eact, and **N**ode.js) is an
+alternative to the MEAN (MongoDB, Express.js, Angular, and Node.js).
+[MEAN was introduced](https://www.mongodb.com/blog/post/the-mean-stack-mongodb-expressjs-angularjs-and)
+in 2013 and MERN followed, as React became increasingly popular, in 2018.
+
+The MERN stack consists of:
+
+- **Browser**: [React](https://react.dev/) with either JavaScript or TypeScript
+  (transpiled to JavaScript)
+- **Server**: [Express.js](https://expressjs.com/) with either JavaScript or
+  TypeScript (transpiled to JavaScript)
+- **Database**: [MongoDB](https://www.mongodb.com/) most likely using the
+  MongoDB Node.js driver, although an ODM such as
+  [Mongoose](https://mongoosejs.com/) maybe used.
+
+import mernStack from "./mern-stack.png";
+
+<center>
+  <img src={mernStack} alt="MERN stack" />
+</center>
+
+## What is TERN?
+
+**TERN** (**T**igris, **E**xpress.js, **R**eact, and **N**ode.js) takes the
+ideas behind MERN and replaces MongoDB with Tigris.
+
+- **Browser**: [React](https://react.dev/) with either JavaScript or TypeScript
+  (transpiled to JavaScript)
+- **Server**: [Express.js](https://expressjs.com/) with either JavaScript or
+  TypeScript (transpiled to JavaScript)
+- **Database**:
+  [Tigris Database](https://www.tigrisdata.com/docs/concepts/database/) using
+  the
+  [Tigris TypeScript SDK](https://www.tigrisdata.com/docs/sdkstools/typescript/)
+  which provides an in-built ODM.
+
+import ternStack from "./tern-stack.png";
+
+<center>
+  <img src={ternStack} alt="TERN stack" />
+</center>
+
+## Why migrate from MERN to TERN?
+
+So, why would you migrate from MERN (MongoDB) to TERN (Tigris)? Tigris is a
+serverless NoSQL database and search platform, and an **alternative to
+MongoDB**. Tigris:
+
+- Takes a code-first approach to
+  [database schema modeling](https://www.tigrisdata.com/docs/sdkstools/typescript/database/datamodel/)
+  and
+  [search index modeling](https://www.tigrisdata.com/docs/sdkstools/typescript/search/datamodel/).
+- Supports
+  [database branching](https://www.tigrisdata.com/docs/sdkstools/typescript/database/branching/)
+  to fit into your development workflow.
+- Removes the need for manual cluster provisioning and shard management.
+- Supports
+  [ACID transactions without caveats](/blog/transaction-internals-tigris/).
+- Provides the same full-text search functionality whether you are using Tigris
+  Cloud or self-hosting Tigris. The
+  [MongoDB text search](https://www.mongodb.com/docs/manual/text-search/)
+  functionality differs between MongoDB Atlas and self-hosted MongoDB.
+- Has been built with a modern cloud-native architecture which means the running
+  costs are lower than MongoDB.
+
+Convinced? If yes, fantastic! If not,
+[let us know why](https://www.tigris.com/contact/).
+
+## How to migrate from MERN to TERN
+
+To follow along, you'll need the following:
+
+- Node.js installed
+- A <a href={tigrisConfig.signUpUrl}>Tigris Cloud account</a> or a
+  [self-hosted instance of Tigris](https://www.tigrisdata.com/docs/concepts/platform/self-host/).
+  This tutorial will assume you're using Tigris Cloud.
+
+For this tutorial, we'll use forked and slightly updated version of the
+[MongoDB MERN example](https://github.com/mongodb-developer/mern-stack-example)
+used in the
+[official MongoDB MERN stack guide](https://www.mongodb.com/languages/mern-stack-tutorial).
+The
+[updates that have been applied](https://github.com/mongodb-developer/mern-stack-example/compare/f321a6c995e4a70561003796440d9c877341be8f...4de923537be5203fa6a91ed6c2d23ad4945dae72)
+are to use the newest version of the MongoDB Node.js driver, update to use
+Promises, define the database name in an environment variable, and add `alt`
+tags to images (I couldn't help myself).
+
+To follow along, clone the updated
+[TERN stack example repo](https://github.com/tigrisdata-community/tern-stack-example)
+and switch to the `mern` branch:
+
+```sh
+git clone https://github.com/tigrisdata-community/tern-stack-example.git
+cd tern-stack-example
+git checkout mern
+```
+
+If you have a MongoDB instance running, you can try the MERN example out by
+following the instructions in the README.
+
+We can now begin the migration.
+
+You can migrate from MERN to TERN (and from any MongoDB application to Tigris)
+in either a one or two-step process.
+
+The two-step process, and the process covered here, is:
+
+1. [Using Tigris MongoDB Compatibility](#mongodb-compatibility)
+2. [Migrating your code to using the Tigris TypeScript SDK](#sdk)
+
+### Using Tigris MongoDB Compatibility {#mongodb-compatibility}
+
+We recently released
+[Tigris MongoDB compatibility in beta](https://www.tigrisdata.com/blog/mongodb-compatibility-beta/)
+which allows you to connect to Tigris using the MongoDB 6.0+ wire protocol. From
+a MERN perspectivie this probably means an application that is using the
+[MongoDB Node.js driver](https://www.mongodb.com/docs/drivers/node/current/).
+
+<p>
+  Updating the application we've just cloned to use Tigris MongoDB Compatibility
+  is as simple as updating the connection string. So, head to the
+  <a href={tigrisConfig.consoleUrl}>Tigris Console</a> and create a new project.
+  You'll then land in the **Getting Started** section of your project. From there,
+  click the **MongoDB Compatibility** tab. Copy the MongoDB connection string that
+  you see on that tab.
+</p>
+
+Either update or create a `mern/server/config.env`, setting the value of
+`ATLAS_URI` to the Tigris MongoDB connection string. Also, set `DATABASE_NAME`
+to the name of Tigris project you just created. Your file will look similar to
+the following:
+
+```title="mern/server/config.env"
+ATLAS_URI=mongodb://{TIGRIS_CLIENT_ID}:{TIGRIS_CLIENT_SECRET}@m1k.preview.tigrisdata.cloud:27018?authMechanism=PLAIN&tls=true
+DATABASE_NAME=mern-to-tern
+```
+
+Then, follow the existing README instructions to start the server and the
+client.
+
+In one terminal start the server with:
+
+```sh
+cd mern/server
+npm install
+npm start
+```
+
+<details>
+<summary>Server command line output</summary>
+
+```sh
+$ npm start
+
+> server@1.0.0 start
+> node server.js
+
+Server is running on port: 5000
+Successfully connected to MongoDB.
+```
+
+</details>
+
+In another terminal start the client with:
+
+```sh
+cd mern/client
+npm install
+npm start
+```
+
+<details>
+<summary>Client command line output</summary>
+
+_Yes, some other dependencies could do with being updated._
+
+```sh
+Compiled with warnings.
+
+Warning
+(3769:3) autoprefixer: Replace color-adjust to print-color-adjust. The color-adjust shorthand is currently deprecated.
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in ./node_modules/bootstrap/dist/css/bootstrap.css (./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[1].oneOf[5].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[1].oneOf[5].use[2]!./node_modules/source-map-loader/dist/cjs.js!./node_modules/bootstrap/dist/css/bootstrap.css)
+Module Warning (from ./node_modules/postcss-loader/dist/cjs.js):
+Warning
+
+(3769:3) autoprefixer: Replace color-adjust to print-color-adjust. The color-adjust shorthand is currently deprecated.
+
+webpack compiled with 1 warning
+```
+
+</details>
+
+When you run the client the browser automatically opens `http://localhost:3000`.
+Try out the application to see it in action.
+
+import mernVideo from "./mern-app.mp4";
+
+<video controls style={{ minWidth: "400px", width: "100%" }}>
+  <source src={mernVideo} />
+</video>
+
+Please remember that all we've done to make this application work with Tigris
+Database is update the connection string to point to Tigris Cloud.
+
+### Migrating from the MongoDB Node.js Driver to the Tigris SDK {#sdk}
+
+Tigris MongoDB compatibility is a great first step in the migration of a MERN
+application. But, to take full advantage of TERN and Tigris, it's recommended
+that the application is updated to use the
+[Tigris TypeScript SDK](https://www.tigrisdata.com/docs/sdkstools/typescript/).
+There's clearly more work required to do this, but the changes are quite small,
+as this section will show.
+
+## Where next?
+
+...
+
+## Next Steps
+
+...
+
+If you have any questions or you'd like to contribute to the
+[Tigris open source project](https://github.com/tigrisdata/tigris) it would be
+great to see you in the
+[Tigris Discord Community](https://www.tigrisdata.com/discord/). For anything
+else, [get in touch](https://www.tigrisdata.com/contact/).
