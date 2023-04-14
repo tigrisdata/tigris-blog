@@ -2,7 +2,7 @@
 slug: modeling-many-to-many-relations-with-search
 title: How to model many-to-many relationships and query with text search - Tigris Data Modeling Series
 description: >
-  This blog post shows how to model many-to-many relations using embedded documents and referencing another collection. 
+  This blog post shows how to model many-to-many relations using embeded documents and referencing another collection. 
   It shows how to use Tigris's transactions to make updates across collections consistent. And recommends when to use either pattern.
   It also shows how to use Text Search for advanced queries.
 keywords:
@@ -31,10 +31,10 @@ tags:
 
 This is part 3 of the **Tigris Data Modeling Series**. In part one of the series, we covered [modeling one-to-one relations](../2023-03-02-one-to-one-relations/index.mdx).
 and in part two we explored [modeling one-to-many relations](../2023-03-09-one-to-many-relations/index.mdx). This is the third and final
-post and we will dive into modeling many-to-many relations. We model many-to-many relations in two ways. As embedded documents
-and as related documents. We will also use full text search to perform advanced queries against our data.
+post and we will dive into modeling many-to-many relations. We model many-to-many relations in two ways. As embeded documents
+and as related documents. We will also use full-text search to perform advanced queries against our data.
 
-![Modeling one-to-many image](modeling-one-to-many.png)
+![Modeling many-to-many image](modeling-many-to-many.png)
 
 <!--truncate-->
 
@@ -49,13 +49,13 @@ $ npx create-tigris-app@latest --project relations --example playground
 
 Follow the prompts to add your `clientId` and `clientSecret`.
 
-## Embedded Many-to-Many
+## embeded Many-to-Many
 
-Let us start with modeling one-to-many relations with an embedded document. To do that we will model a set of courses and students.
+Let us start with modeling many-to-many relations with an embeded document. To do that we will model a set of courses and students.
 There will be many courses with many students in each.
 
 In the playground repository create a new file in the model directory - `src/db/models/courses.ts`.
-In that file create a course collection that will look like the below:
+In that file create a `course` and `student` collection that will look like the below:
 
 ```ts showLineNumbers {29,33}
 import {
@@ -95,12 +95,12 @@ export class Student {
 }
 ```
 
-We have created two models, each in their own collection. The first collection, `course`, contains all the courses.
-The second collection is the `student` collection. In this collection we embedd which courses the student is attending.
+We have created two models, each in its own collection. The first collection, `course`, contains all the courses.
+The second collection is the `student` collection. In this collection, we embed which courses the student is attending.
 On line `29` and `33` we also add a search tag to the `courseIds` and the `interests` array. This will allow us to use
 Tigris' Text Search to query for specific courses.
 
-Now lets change the `index.ts` file so that we can explore this design:
+Now let's change the `index.ts` file so that we can explore this design:
 
 ```ts showLineNumbers{5-10, 19, 69-71}
 import { Tigris } from "@tigrisdata/core";
@@ -195,9 +195,9 @@ main()
   });
 ```
 
-Lines 5 to 10 we setup our database and collections. On line 19 we start a transaction before we add
+Lines `5` to `10` we set up our database and collections. On line 19 we start a transaction before we add
 documents to our collection. This makes sure that the data is consistent across both collections.
-On line 69 we use Tigris' Text search to find all students that are taking the first course and have
+On line `69` we use Tigris' Text search to find all students that are taking the first course and have
 an interest in `"databases"`. Text Search is a great use case for handling complex situations.
 I encourage you at this point to experiment with some more complex queries to really see how well Text Search
 will work.
@@ -205,7 +205,7 @@ will work.
 This design of embedding the id's of the related document works very well and will fix most use cases.
 And I would recommend starting with this design. But there are cases when there are lots of writes to update a document
 concurrently. This could lead to lots of write conflicts. A way to avoid this is to create an intermediate document and collection
-that links a student to a course. Lets do this by editing our `courses.ts` file to look like this:
+that links a student to a course. Let's do this by editing our `courses.ts` file to look like this:
 
 :::note
 I've used the `insertOrReplaceMany` because this is a sort demo and we want to run it
@@ -257,9 +257,9 @@ export class StudentToCourse {
 
 We have removed `courseIds` from the `Student` model and instead created the linking collection `StudentToCourse`.
 Notice that the primary key for `StudentToCourse` is a combination of the `student` email address and the `course` id.
-This forces a unique constraint so that a `student` will only be signed up to a course once.
+This forces a unique constraint so that a `student` will only be signed up for a course once.
 
-Lets add data and explore this model. Change your `index.ts` to look like this:
+Let's add data and explore this model. Change your `index.ts` to look like this:
 
 ```ts showLineNumbers{24, 70, 91}
 import { Tigris } from "@tigrisdata/core";
