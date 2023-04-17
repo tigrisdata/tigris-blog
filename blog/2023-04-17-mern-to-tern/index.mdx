@@ -1,0 +1,711 @@
+---
+slug: tern-stack
+title: Introducing the TERN stack and how to migrate from MERN to TERN
+description: >
+  Introducing the TERN (Tigris, Express.js, React, and Node.js) stack, and how
+  to migrate your MERN (MongoDB, Express.js, React, and Node.js) application to
+  TERN.
+keywords: [mern, tern, mongodb alternative, react, node.js, express.js]
+authors: [leggetter]
+tags: [mern, tern, mongodb alternative, react, node.js, express.js]
+image: ./mern-to-tern.png
+---
+
+import tigrisConfig from "@site/tigris.config.js";
+
+# Introducing the TERN stack and how to migrate from MERN to TERN
+
+The MERN Stack - a web technology stack consisting of MongoDB, Express.js,
+React, and Node.js - was introduced around 2018 as a popular set of technologies
+to enable end-to-end development in JavaScript. Although the popularity of
+fullstack frameworks such as Next.js *mean*s that MERN isn't as popular as it
+once was, it is still a viable and productive choice with its decoupled
+architecture providing more flexibility than you'll get with a fullstack
+framework.
+
+Today, I'd like to introduce the **TERN** (**T**igris, **E**xpress.js,
+**R**eact, and **N**ode.js) stack which replaces MongoDB with Tigris.
+
+[![Migrating from MERN to TERN](./mern-to-tern.png)](/blog/mern-to-tern/)
+
+In this post, you'll learn about MERN and TERN and why you should migrate from
+MERN to TERN. We'll cover all the steps involved in migrating a MERN application
+to **TERN** (**T**igris, **E**xpress.js, **R**eact, and **N**ode.js); first
+using
+[Tigris MongoDB compatibility](https://www.tigrisdata.com/docs/concepts/mongodb-compatibility/)
+to get your existing application working with Tigris instead of MongoDB without
+any code changes (⚠️ spoiler: it's as simple as updating the MongoDB connection
+string). Then, we'll make a few changes to get the application using the Tigris
+SDK instead of the MongoDB Node.js driver, completing the migration.
+
+<!-- truncate-->
+
+## What is MERN?
+
+**MERN** (**M**ongoDB, **E**xpress.js, **R**eact, and **N**ode.js) is an
+alternative to the MEAN (MongoDB, Express.js, Angular, and Node.js).
+[MEAN was introduced](https://www.mongodb.com/blog/post/the-mean-stack-mongodb-expressjs-angularjs-and)
+in 2013 and MERN followed as React became increasingly popular in 2018.
+
+The MERN stack consists of:
+
+- **Browser**: [React](https://react.dev/) with either JavaScript or TypeScript
+  (transpiled to JavaScript)
+- **Server**: [Express.js](https://expressjs.com/) with either JavaScript or
+  TypeScript (transpiled to JavaScript)
+- **Database**: [MongoDB](https://www.mongodb.com/) most likely using the
+  MongoDB Node.js driver, although an ODM such as
+  [Mongoose](https://mongoosejs.com/) maybe used.
+
+import mernStack from "./mern-stack.png";
+
+<center>
+  <img src={mernStack} alt="MERN stack" />
+</center>
+
+## What is TERN?
+
+**TERN** (**T**igris, **E**xpress.js, **R**eact, and **N**ode.js) takes the
+ideas behind MERN and replaces MongoDB with Tigris.
+
+- **Browser**: [React](https://react.dev/) with either JavaScript or TypeScript
+  (transpiled to JavaScript)
+- **Server**: [Express.js](https://expressjs.com/) with either JavaScript or
+  TypeScript (transpiled to JavaScript)
+- **Database**:
+  [Tigris Database](https://www.tigrisdata.com/docs/concepts/database/) using
+  the
+  [Tigris TypeScript SDK](https://www.tigrisdata.com/docs/sdkstools/typescript/)
+  which provides an in-built ODM.
+
+import ternStack from "./tern-stack.png";
+
+<center>
+  <img src={ternStack} alt="TERN stack" />
+</center>
+
+## Why migrate from MERN to TERN?
+
+So, why would you migrate from MERN (MongoDB) to TERN (Tigris)? Tigris is a
+serverless NoSQL database and search platform and an **alternative to MongoDB**.
+
+Tigris has several benefits over MongoDB. Tigris:
+
+- Takes a code-first approach to
+  [database schema modeling](https://www.tigrisdata.com/docs/sdkstools/typescript/database/datamodel/)
+  and
+  [search index modeling](https://www.tigrisdata.com/docs/sdkstools/typescript/search/datamodel/).
+- Supports
+  [database branching](https://www.tigrisdata.com/docs/sdkstools/typescript/database/branching/)
+  to fit into your development workflow.
+- Removes the need for manual cluster provisioning and shard management.
+- Supports
+  [ACID transactions without caveats](/blog/transaction-internals-tigris/).
+- Provides the same full-text search functionality whether you are using Tigris
+  Cloud or self-hosting. The
+  [MongoDB text search](https://www.mongodb.com/docs/manual/text-search/)
+  functionality differs between MongoDB Atlas and self-hosted MongoDB.
+- Has been built with a modern cloud-native architecture, meaning the running
+  costs are lower than MongoDB.
+
+Convinced? If yes, fantastic! If not,
+[let us know why](https://www.tigris.com/contact/).
+
+## How to migrate from MERN to TERN
+
+To follow along, you'll need the following:
+
+- [Node.js LTS or above](https://nodejs.org/en/download) installed
+- A <a href={tigrisConfig.signUpUrl}>Tigris Cloud account</a> or a
+  [self-hosted instance of Tigris](https://www.tigrisdata.com/docs/concepts/platform/self-host/).
+  This tutorial will assume you're using Tigris Cloud.
+
+For this tutorial, we'll use a forked and slightly updated version of the
+[MongoDB MERN example](https://github.com/mongodb-developer/mern-stack-example)
+used in the
+[official MongoDB MERN stack guide](https://www.mongodb.com/languages/mern-stack-tutorial).
+
+The
+[updates that have been applied](https://github.com/mongodb-developer/mern-stack-example/compare/f321a6c995e4a70561003796440d9c877341be8f...829f55aaebbc419c252dbe5419e8733cf9cabe65)
+are to use the newest version of the MongoDB Node.js driver (for MongoDB 6.0+
+wire protocol support), remove the unused Mongoose ODM dependency, update the
+code to use Promises, define the database name in an environment variable, use
+`encodeURIComponent` when passing parameters in URLs from the client, and add
+`alt` tags to images (not essential for this tutorial, but it felt like the
+right thing to do).
+
+To follow along, clone the updated
+[TERN stack example repo](https://github.com/tigrisdata-community/tern-stack-example)
+and switch to the `mern` branch:
+
+```sh
+git clone https://github.com/tigrisdata-community/tern-stack-example.git
+cd tern-stack-example
+git checkout mern
+```
+
+If you have a MongoDB instance running, you can try the MERN example out by
+following the instructions in the README.
+
+We can now begin the migration.
+
+You can migrate from MERN to TERN (and from any MongoDB application to Tigris)
+in either a one or two-step process.
+
+The two-step process, and the process covered here, is:
+
+1. [Start by using Tigris MongoDB Compatibility](#mongodb-compatibility)
+2. [Migrating your code to using the Tigris TypeScript SDK](#sdk)
+
+### Using Tigris MongoDB Compatibility {#mongodb-compatibility}
+
+We recently released
+[Tigris MongoDB compatibility in beta](https://www.tigrisdata.com/blog/mongodb-compatibility-beta/)
+which allows you to connect to Tigris using the MongoDB 6.0+ wire protocol. From
+a MERN perspective, this probably means an application that is using the
+[MongoDB Node.js driver](https://www.mongodb.com/docs/drivers/node/current/).
+
+<p>
+  Updating the application we've just cloned to use Tigris MongoDB Compatibility
+  is as simple as updating the connection string. So, head to the
+  <a href={tigrisConfig.consoleUrl}>Tigris Console</a> and create a new project.
+  You'll then land in your project's **Getting Started** section. From there, click
+  the **MongoDB Compatibility** tab and the MongoDB connection string that you see
+  on that tab.
+</p>
+
+Either update or create a `mern/server/config.env` file, setting the value of
+`ATLAS_URI` to the Tigris MongoDB connection string. Also, set `DATABASE_NAME`
+to the name of the Tigris project you just created. Your file will look similar
+to the following:
+
+```txt title="mern/server/config.env"
+ATLAS_URI=mongodb://{TIGRIS_CLIENT_ID}:{TIGRIS_CLIENT_SECRET}@m1k.preview.tigrisdata.cloud:27018?authMechanism=PLAIN&tls=true
+DATABASE_NAME=mern-to-tern
+```
+
+Then, follow the existing README instructions to start the server and the
+client.
+
+In one terminal, start the server with:
+
+```sh
+cd mern/server
+npm install
+npm start
+```
+
+<details>
+<summary>Server command line output</summary>
+
+```sh
+$ npm start
+
+> server@1.0.0 start
+> node server.js
+
+Server is running on port: 5000
+Successfully connected to MongoDB.
+```
+
+</details>
+
+In another terminal, start the client with:
+
+```sh
+cd mern/client
+npm install
+npm start
+```
+
+<details>
+<summary>Client command line output</summary>
+
+_Note: Some other dependencies could do with being updated._
+
+```sh
+Compiled with warnings.
+
+Warning
+(3769:3) autoprefixer: Replace color-adjust to print-color-adjust. The color-adjust shorthand is currently deprecated.
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in ./node_modules/bootstrap/dist/css/bootstrap.css (./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[1].oneOf[5].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[1].oneOf[5].use[2]!./node_modules/source-map-loader/dist/cjs.js!./node_modules/bootstrap/dist/css/bootstrap.css)
+Module Warning (from ./node_modules/postcss-loader/dist/cjs.js):
+Warning
+
+(3769:3) autoprefixer: Replace color-adjust to print-color-adjust. The color-adjust shorthand is currently deprecated.
+
+webpack compiled with 1 warning
+```
+
+</details>
+
+When you run the client, the browser automatically opens the browser. By
+default, the app will be running on `http://localhost:3000`. Try out the
+application to see it in action.
+
+import mernVideo from "./mern-app.mp4";
+
+<video controls style={{ minWidth: "400px", width: "100%" }}>
+  <source src={mernVideo} />
+</video>
+
+Please remember that all we've done to make this application work with Tigris
+Database is updated the connection string to point to Tigris Cloud.
+
+### Migrating from the MongoDB Node.js Driver to the Tigris SDK {#sdk}
+
+Tigris MongoDB compatibility is a great first step in migrating a MERN
+application. But, to take full advantage of TERN and Tigris, it's recommended
+that the application is updated to use the
+[Tigris TypeScript SDK](https://www.tigrisdata.com/docs/sdkstools/typescript/).
+There's more work required to do this, but the changes are pretty small, as this
+section will show.
+
+Since the client and server are decoupled via the API that the Express.js
+application exposes, we only need to update the code for the Express.js API
+endpoints.
+
+#### Update dependencies
+
+Let's begin by updating the MERN application dependencies to use those required
+by TERN; remove the `mongodb` driver and add `@tigrisdata/core`:
+
+```sh
+npm uninstall monodb
+npm i @tigrisdata/core
+```
+
+#### Add Tigris Configuration
+
+Update the `mern/server/config.env` file to contain additional Tigris config:
+
+```diff title="mern/server/config.env"
+- ATLAS_URI=mongodb+srv://<username>:<password>@sandbox.jadwj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
+- DATABASE_NAME=mern-to-tern
+PORT=5000
++ TIGRIS_CLIENT_ID={TIGRIS_CLIENT_ID}
++ TIGRIS_CLIENT_SECRET={TIGRIS_CLIENT_SECRET}
++ TIGRIS_PROJECT=mern-to-tern
++ TIGRIS_URI=api.preview.tigrisdata.cloud
++ TIGRIS_DB_BRANCH=main
+```
+
+Replacing `{TIGRIS_CLIENT_ID}` and `{TIGRIS_CLIENT_SECRET}` with real values
+from your Tigris project application keys.
+
+#### Define your database schema in TypeScript
+
+Install TypeScript as a development dependency:
+
+```sh
+npm i -D typescript
+```
+
+Add the following to a `mern/server/tsconfig.json`:
+
+```json title="mern/server/tsconfig.json"
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  }
+}
+```
+
+Define a schema in TypeScript to match the auto-generated schema that was
+created when using the application via Tigris MongoDB compatibility:
+
+```ts
+import {
+  Field,
+  PrimaryKey,
+  TigrisCollection,
+  TigrisDataTypes,
+} from "@tigrisdata/core";
+
+@TigrisCollection("records")
+export class Record {
+  @Field({ elements: TigrisDataTypes.STRING })
+  $k?: string[];
+
+  @PrimaryKey(TigrisDataTypes.BYTE_STRING, { order: 1, autoGenerate: true })
+  _id?: string;
+
+  @Field()
+  name!: string;
+
+  @Field()
+  position!: string;
+
+  @Field()
+  level!: string;
+}
+```
+
+The `@TigrisCollection("records")` decorator and supplied `records` value
+informs Tigris that there is a `records` collection of documents of type
+`Record` in the structure defined by that class.
+
+The fields `_id`, `name`, `position`, and `level`, are all used within the
+application. The `$k` field isn't used but is required to allow the application
+to continue to work with the auto-generated MongoDB compatibility schema. As
+you'll see, all the application's fields are of type `string`.
+
+:::tip
+
+You can also grab this schema from the <a href={tigrisConfig.consoleUrl}>Tigris
+Console</a> under **Your Project** -> **Database** -> click on the **records**
+schema -> select **TypeScript** from the drop down:
+
+![The record schema defined in TypeScript within the Tigris Console](./tigris-console-schema.png)
+
+:::
+
+With the schema in place, we need to validate it with Tigris and use it with the
+Tigris TypeScript SDK. To do that, create a `mern/server/script/setup.ts` script
+with the following contents:
+
+```ts title="mern/server/scripts/setup.ts"
+import { Tigris } from "@tigrisdata/core";
+import { Record } from "../db/record";
+
+import dotenv from "dotenv";
+dotenv.config({ path: "./config.env" });
+
+async function main() {
+  // setup client
+  const tigrisClient = new Tigris();
+  // ensure branch exists, create it if it needs to be created dynamically
+  await tigrisClient.getDatabase().initializeBranch();
+  // register schemas
+  await tigrisClient.registerSchemas([Record]);
+}
+
+main()
+  .then(async () => {
+    console.log("Setup complete ...");
+    process.exit(0);
+  })
+  .catch(async (e) => {
+    console.error(e);
+    process.exit(1);
+  });
+```
+
+In the above code, the config is loaded using `dotenv`, and a `Tigris` client is
+instantiated and assigned to the `tigrisClient` variable, which uses the loaded
+environment variables. Then, the database and database branch are initialized by
+`tigrisClient.getDatabase().initializeBranch()`. Finally, register the `Record`
+schema via `tigrisClient.registerSchemas([Record])`.
+
+Update the `package.json` to make use of the setup script:
+
+```diff
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
++   "setup": "npx ts-node scripts/setup.ts",
++   "prestart": "npm run setup",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
++   "@tigrisdata/core": "^1.0.0-beta.44",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+-   "mongodb": "5.2",
+-   "mongoose": "^5.12.4"
++   "reflect-metadata": "^0.1.13"
++ },
++ "devDependencies": {
++   "typescript": "^5.0.4"
+  }
+}
+```
+
+This adds a `setup` NPM script utilized by `prestart`, which is automatically
+before the script defined in the `start` NPM script.
+
+_Note: the above diff also shows the other changed dependencies._
+
+With the schema defined, we can move on to updating the application code.
+
+#### Update the connection code
+
+Next, update the connection code defined in `mern/server/db/conn.js` by removing
+the MongoDB Node.js driver and updating the code to use the Tigris TypeScript
+SDK:
+
+```diff title="mern/server/db/conn.js"
+- const { MongoClient } = require("mongodb");
+- const Db = process.env.ATLAS_URI;
++ const { Tigris } = require("@tigrisdata/core");
+
+- const client = new MongoClient(Db, {
+-   useNewUrlParser: true,
+-   useUnifiedTopology: true,
+- });
++ const client = new Tigris();
+
+var _db;
+
+module.exports = {
+  connectToServer: async function (callback) {
+    try {
+-     const db = await client.connect();
+-     _db = db.db(process.ENV.DATABASE_NAME);
+-     console.log("Successfully connected to MongoDB.");
++     _db = await client.getDatabase();
++     console.log("Successfully connected to Tigris.");
+      return callback();
+    } catch (err) {
+      return callback(err);
+```
+
+The `Tigris` client is instantiated and automatically uses the environment
+variables we've defined in the `mern/server/config.env` file.
+
+The other difference worth pointing out is that we don't name the database that
+is being used in `client.getDatabase()` since each Tigris Project has only one
+database.
+
+#### Common MERN to TERN code changes
+
+A consistent difference across all of the Express.js route changes are:
+
+1. The MongoDB `ObjectId` is no longer used
+1. The query contains a `filter` to identify the document. So, from
+   `{ _id: new ObjectId(req.params.id) }` to
+   `{ filter: { _id: req.params.id } }` is a consistent code change in all
+   routes
+1. Collections are accessed via `getCollection(collectionName)` instead of
+   `collection(collectionName)`
+
+#### Migrate MERN database read to TERN database read
+
+Update the `GET /record` route:
+
+```diff title="mern/server/routes/record.js"
+- const ObjectId = require("mongodb").ObjectId;
+
+// This section will help you get a list of all the records.
+recordRoutes.route("/record").get(async function (req, res) {
+- let db_connect = dbo.getDb("employees");
+- const result = await db_connect.collection("records").find({}).toArray();
++ let db_connect = dbo.getDb();
++ const result = await db_connect.getCollection("records").findMany().toArray();
+
+  return res.json(result);
+});
+```
+
+To retrieve multiple documents using the Tigris SDK use
+[`findMany`](https://www.tigrisdata.com/docs/sdkstools/typescript/database/query/#find-many),
+passing no parameters. This returns a cursor that exposes a `toArray` function
+to get an `Array` of results.
+
+If you restart the server application, you'll see the main application page
+displaying the employees but via a call to `GET /record` which now uses the
+Tigris SDK.
+
+#### Migrate MERN database create to TERN database create
+
+Update the `POST /record/add` route:
+
+_Note: To be more faithful to REST, this should be `POST /record`_
+
+```diff title="mern/server/routes/record.js"
+recordRoutes.route("/record/add").post(async function (req, res) {
+  let db_connect = dbo.getDb();
+  let myobj = {
+    name: req.body.name,
+    position: req.body.position,
+    level: req.body.level,
+  };
+
+- const result = db_connect.collection("records").insertOne(myobj);
++ const result = await db_connect.getCollection("records").insertOne(myobj);
+  res.json(result);
+});
+```
+
+In this case, the method signature for
+[`insertOne`](https://www.tigrisdata.com/docs/sdkstools/typescript/database/insert/#insert-a-single-document)
+stays the same.
+
+#### Migrate MERN database update to TERN database update
+
+Change the `POST /update/:id` route:
+
+_Note: To be more RESTful, this should be `PATCH /record/:id` or
+`PATCH /record/:id` if it replaces the whole resource._
+
+```diff title="mern/server/routes/record.js"
+recordRoutes.route("/update/:id").post(async function (req, res) {
+  let db_connect = dbo.getDb();
+- let myquery = { _id: new ObjectId(req.params.id) };
+- let newvalues = {
++ const myquery = {
++   filter: { _id: req.params.id },
++   fields: {
+      $set: {
+        name: req.body.name,
+        position: req.body.position,
+        level: req.body.level,
+      },
++   },
+  };
+- const result = await db_connect
+-   .collection("records")
+-   .updateOne(myquery, newvalues);
++ const result = await db_connect.getCollection("records").updateOne(myquery);
+
+  console.log("1 document updated");
+  res.json(result);
+});
+```
+
+The
+[`updateOne`](https://www.tigrisdata.com/docs/sdkstools/typescript/database/update/#update-one)
+Tigris SDK function differs from the MongoDB Node.js driver in that, it takes a
+single parameter with the following properties to achieve the same result:
+
+1. `filter` the filter used to find the single document to be updated
+2. `fields` where this property can use the `$set` syntax supported by the
+   MongoDB driver.
+
+#### Migrate MERN database delete to TERN database delete
+
+Finally, update the `DELETE /:id` route:
+
+_Note: REST police: this should be `DELETE /record/:id`_
+
+```diff title="mern/server/routes/record.js"
+recordRoutes.route("/:id").delete(async (req, res) => {
+  let db_connect = dbo.getDb();
+- let myquery = { _id: new ObjectId(req.params.id) };
+- const result = await db_connect.collection("records").deleteOne(myquery);
++ let myquery = { filter: { _id: req.params.id } };
++ const result = await db_connect.getCollection("records").deleteOne(myquery);
+
+  res.json(result);
+});
+```
+
+As discussed, the only change here is the `filter` required by the Tigris SDK.
+
+#### Update the logo
+
+Let's add the Tigris logo 😄 Grab the
+[Tigris green logo](https://tigrisdata.notion.site/Tigris-logo-green-f2ea7a90123749e88c1b78040902f88f),
+save it to `tern/client/public` and update
+`mern/client/src/components/navbar.js` as follows:
+
+```diff title="mern/client/src/components/navbar.js"
+<NavLink className="navbar-brand" to="/">
+  <img
+-   alt="MongoDB logo"
++   alt="Tigris logo"
+    style={{ width: 25 + "%" }}
+-   src="https://d3cy9zhslanhfa.cloudfront.net/media/3800C044-6298-4575-A05D5C6B7623EE37/4B45D0EC-3482-4759-82DA37D8EA07D229/webimage-8A27671A-8A53-45DC-89D7BF8537F15A0D.png"
++   src="/tigris-logo-green.png"
+  ></img>
+</NavLink>
+```
+
+#### Run the TERN application
+
+And with those updates applied, the MERN application is converted to the TERN
+stack 🎉
+
+Since there are no functional changes to the front-end (only the logo update),
+you only need to stop and start the server only to see the changes in action:
+
+```sh
+npm start
+```
+
+And you'll see the following output:
+
+```sh
+npm start
+
+> server@1.0.0 prestart
+> npm run setup
+
+
+> server@1.0.0 setup
+> npx ts-node scripts/setup.ts
+
+info - Using reflection to infer type of Record#$k
+info - Using reflection to infer type of Record#name
+info - Using reflection to infer type of Record#position
+info - Using reflection to infer type of Record#level
+info - Using Tigris at: api.preview.tigrisdata.cloud:443
+info - Using database branch: 'main'
+event - Creating collection: 'records' in project: 'mern-to-tern'
+Setup complete ...
+
+> server@1.0.0 start
+> node server.js
+
+info - Using Tigris at: api.preview.tigrisdata.cloud:443
+Server is running on port: 5000
+Successfully connected to Tigris.
+```
+
+Navigate to the client URL, which by default is `http://localhost:3000`, and try
+out the TERN app (we did refresh the client so the Tigris logo is present in
+this video):
+
+import ternVideo from "./tern-app.mp4";
+
+<video controls style={{ minWidth: "400px", width: "100%" }}>
+  <source src={ternVideo} />
+</video>
+
+If you have a look at the <a href={tigrisConfig.consoleUrl}>Tigris Console</a>
+and explore the data, as shown in the video, you'll see the `_id` values are
+structured differently, and the `$k` value is not populated for documents
+created via the Tigris SDK.
+
+Besides the logo, the application looks and performs exactly as the MERN
+application did. However, as the intro outlines, you can now also take advantage
+of the benefits of using Tigris.
+
+You can find all the code changes applied to migrate the MongoDB MERN
+application to TERN in
+[this diff](https://github.com/tigrisdata-community/tern-stack-example/compare/mern...b483e24?w=1).
+
+## Next Steps
+
+How about raising a pull request to add full-text search to the TERN application
+using
+[Tigris Search](https://www.tigrisdata.com/docs/sdkstools/typescript/search/)?
+
+What should we call the Tigris version of MEAN? No, I've got it; it has to be
+**NEAT**!
+
+Join the <a href={tigrisConfig.discordUrl}>Tigris Discord</a> and let us know
+what you think of TERN and the process of migrating a MERN (or any other
+MongoDB) application over to TERN.
+
+Tigris is an open-source serverless NoSQL database and search platform. If you
+have any questions, or you'd like to contribute to the
+[Tigris open source project](https://github.com/tigrisdata/tigris).
