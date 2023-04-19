@@ -1,3 +1,10 @@
 {
-  "trailingSlash": true
+  "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/blog/tags/data-modeling/",
+      "destination": "/blog/tags/nosql-data-modeling-series/",
+      "permanent": true
+    }
+  ]
 }

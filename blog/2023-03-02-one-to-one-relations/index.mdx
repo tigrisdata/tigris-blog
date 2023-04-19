@@ -1,42 +1,68 @@
 ---
 slug: modelling-one-to-one-relations
-title: How to model one-to-one relationships - Tigris Data Modeling Series
+title: How to model NoSQL one-to-one relationships
 description: >
-  This blog post demonstrates how to model one to one relations using either embedded documents or referencing another collection. It shows how to use Tigris's transaction to make updates across collections consistent.
-keywords: [relations, relationships, data modelling, typescript]
+  This blog post demonstrates how to model NoSQL one-to-one relations using
+  either embedded documents or referencing another collection. It shows how to
+  use Tigris's transaction to make updates across collections consistent.
+keywords:
+  [
+    nosql,
+    nosql data modeling,
+    nosql design pattern,
+    nosql database,
+    nosql one-to-one data model,
+    nosql database design,
+    database relationships,
+    typescript,
+  ]
 authors: [garren]
 image: ./modeling-one-to-one.png
-tags: [relations, relationships, data modeling, document database design]
+tags: [nosql data modeling, nosql database design, nosql data modeling series]
 ---
 
 <head>
   <meta name="twitter:creator" content="@GarrenSmith" />
 </head>
 
-Tigris provides a transactional document database, this allows you to model relations in a few different ways to get the best performance, consistency and ease of use in your application.
+Tigris provides a transactional NoSQL document database, this allows you to
+create NoSQL data models representing relations in a few different ways to get
+the best performance, consistency and ease of use in your application.
 
-In this blog, I show you how to get up and running with Tigris and how to model one-to-one relationships using the embedded document and sub-document pattern. We will combine this with Tigris's transactions to make sure that all updates are consistent.
-I will show how to model one-to-many and many-to-many relationships in future posts.
+In this blog, I show you how to model NoSQL one-to-one relationships using the
+embedded document and sub-document NoSQL design pattern. We'll get hands-on with
+Tigris to achieve this, however the NoSQL data modeling design patterns are
+applicable to other NoSQL databases. We will combine this with Tigris's
+transactions to make sure that all updates are consistent. I will show how to
+model NoSQL one-to-many and NoSQL many-to-many relationships in future posts as
+part of the
+[NoSQL Data Modeling Series](/blog/tags/nosql-data-modeling-series/).
 
-![Modeling one-to-one image](modeling-one-to-one.png)
+![NoSQL one-to-one data modeling](modeling-one-to-one.png)
 
 <!--truncate-->
 
 ## Getting started
 
-To follow along, you will need to get set up with Tigris. This is a quick and easy process.
-The Tigris Docs have a [Quickstart](https://www.tigrisdata.com/docs/quickstarts/) to show you how to sign up. Once you have signed up and created a new project, let's create a new template to get started.
+To follow along, you will need to get set up with Tigris. This is a quick and
+easy process. The Tigris Docs have a
+[Quickstart](https://www.tigrisdata.com/docs/quickstarts/) to show you how to
+sign up. Once you have signed up, create a new project called `relations`. Once
+created, run the following command to create a local application that we can use
+throughout this guide:
 
 ```
 $ npx create-tigris-app@latest --project relations --example playground
 ```
 
-Follow the prompts to add your `clientId` and `clientSecret`
+Follow the prompts to add your `clientId` and `clientSecret`.
 
-## Embedded One-to-one
+## Embedded one-to-one NoSQL data modeling
 
-The first way to model one-to-one relationships between models is to embed the model in the document. Let's do that in Tigris, by modelling a `User` and a `Location`.
-In our project, there is already a `user.ts` file under `src/db/models`. Change that file to contain two classes like this:
+The first way to model NoSQL one-to-one relationships between models is to embed
+the model in the document. Let's do that in Tigris, by modeling a `User` and a
+`Location`. In our project, there is already a `user.ts` file under
+`src/db/models`. Change that file to contain two classes like this:
 
 ```ts showLineNumbers
 import {
@@ -70,9 +96,12 @@ export class User {
 }
 ```
 
-This creates a `Location` object embedded inside the `User` schema. This allows us to store and read the `Location` and `User` in one query. The User's email address is the primary key.
+This creates a `Location` object embedded inside the `User` schema. This allows
+us to store and read the `Location` and `User` in one query. The User's email
+address is the primary key.
 
-Let's create a few users and query them. In the `src/index.ts` file, let's change the file to look like this:
+Let's create a few users and query them. In the `src/index.ts` file, let's
+change the file to look like this:
 
 ```ts showLineNumbers
 import { Tigris } from "@tigrisdata/core";
@@ -145,20 +174,33 @@ main()
   });
 ```
 
-Let's unpack what is happening. In our `setup` function we are setting up the Tigris database, creating our `user` collection and defining the schema for that collection.
+Let's unpack what is happening. In our `setup` function we are setting up the
+Tigris NoSQL database, creating our `user` collection and defining the schema
+for that collection.
 
-Then in our `main` function, we get the database object and then fetch our `user` collection object so that we can work with our collection. We create 3 new users. And then show how to query for one on line 48, or if we want to query many of them based on a filter, we do that on line 51.
+Then in our `main` function, we get the database object and then fetch our
+`user` collection object so that we can work with our collection. We create 3
+new users. And then show how to query for one on line 48, or if we want to query
+many of them based on a filter, we do that on line 51.
 
 :::tip
-In the above example, we call the `setup()` function to check the database and update the schema. In a
-production application this only needs to be called when the schema has changed.
+
+In the above example, we call the `setup()` function to check the database and
+update the schema. In a production application this only needs to be called when
+the schema has changed.
+
 :::
 
-## Reference one-to-one relationships
+## Reference one-to-one NoSQL relationships
 
-There can be cases where our embedded objects are very large and we do not need to load them every time. In these cases, we can split the document into its own collection and fetch it when we need it. Lets add a short `biography` about the users we have added above and put it in a separate collection so that we can load it when we need to.
+There can be cases where our embedded objects are very large and we do not need
+to load them every time. In these cases, we can split the document into its own
+collection and fetch it when we need it. Lets add a short `biography` about the
+users we have added above and put it in a separate collection so that we can
+load it when we need to.
 
-We are going to add a new `biography` object in our `user.ts` so the file now looks like this:
+We are going to add a new `biography` object in our `user.ts` so the file now
+looks like this:
 
 ```ts showLineNumbers {19-29}
 import {
@@ -204,7 +246,10 @@ export class User {
 }
 ```
 
-As you can see, we have defined a new class, `Biography` and given it the collection name `biography`. It also has a field `userId`, which is a reference back to the `User` and will contain the user's email address. We can now update our creating and reading of users to include the biography information.
+As you can see, we have defined a new class, `Biography` and given it the
+collection name `biography`. It also has a field `userId`, which is a reference
+back to the `User` and will contain the user's email address. We can now update
+our creating and reading of users to include the biography information.
 
 Change the `index.tx` to look like this:
 
@@ -315,11 +360,28 @@ main()
   });
 ```
 
-We have added the `biography` as a collection in the `setup` function. Then in `main`, we created a transaction before we insert our `user` and `biography` documents. We pass this transaction to both `insert` functions so that both insert operations will either complete successfully, or the transaction will roll the inserts back. This makes sure that writing to both collections is safe and consistent. We never have to worry about our data not being accurate or correct.
+We have added the `biography` as a collection in the `setup` function. Then in
+`main`, we created a transaction before we insert our `user` and `biography`
+documents. We pass this transaction to both `insert` functions so that both
+insert operations will either complete successfully, or the transaction will
+roll the inserts back. This makes sure that writing to both collections is safe
+and consistent. We never have to worry about our data not being accurate or
+correct.
 
-Now we can read from the two collections. We do this at Line 33. We start another read transaction and first read from the `userCollection` as we stream those results back we also fetch the `biography` of the user from the `bioCollection`. Again we use a transaction to make sure that we are reading a consistent snapshot of the data and that no modifications will affect the queries.
+Now we can read from the two collections. We do this at Line 33. We start
+another read transaction and first read from the `userCollection` as we stream
+those results back we also fetch the `biography` of the user from the
+`bioCollection`. Again we use a transaction to make sure that we are reading a
+consistent snapshot of the data and that no modifications will affect the
+queries.
 
-This blog post is a fast overview of working with one-to-one relations with Tigris. Using the power of Tigris's transactions gives you a few options depending on your use case. In the next blog post, I will show how to model one-to-many relations.
+This blog post is a fast overview of NoSQL data modeling approaches to
+one-to-one relations. We also demonstrated using the power of Tigris's
+transactions to give you a few options depending on your use case. In the next
+blog post, I will show how to
+[model NoSQL one-to-many relations](/blog/modeling-one-to-many-relations/).
+
+---
 
 import NewsletterSubscribe from "../../src/components/NewsletterSubscribe";
 
