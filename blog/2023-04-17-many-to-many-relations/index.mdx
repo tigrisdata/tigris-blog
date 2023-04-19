@@ -1,9 +1,7 @@
 ---
 slug: nosql-modeling-many-to-many-relations-with-search
 date: 2023-04-19T10:00
-title:
-  Modeling NoSQL many-to-many relationships and quering with full text search -
-  NoSQL data modeling series
+title: Modeling NoSQL many-to-many relationships and quering with full-text search
 description: >
   This blog post shows how to model many-to-many relations using embeded
   documents and referencing another collection.  It shows how to use Tigris's
@@ -12,44 +10,41 @@ description: >
   advanced queries.
 keywords:
   [
+    nosql,
     nosql data modeling,
     nosql design pattern,
-    typescript,
-    one-to-many data model,
-    nosql,
     nosql database,
+    many-to-many data model,
     nosql database design,
+    database relationships,
     full-text search,
-    relations,
-    relationships,
+    typescript,
   ]
 authors: [garren]
 image: ./modeling-many-to-many.png
-tags:
-  [
-    nosql data modeling,
-    nosql database design,
-    tull-text search,
-    relations,
-    relationships,
-  ]
+tags: [nosql data modeling, nosql database design, full-text search]
 ---
 
 <head>
   <meta name="twitter:creator" content="@GarrenSmith" />
 </head>
 
-This is part 3 of the **Tigris Data Modeling Series**. In part one of the
-series, we covered
+This is part 3 of the
+[NoSQL Data Modeling Series](/blog/tags/nosql-data-modeling/). In part one of
+the series, we covered
 [modeling NoSQL one-to-one relations](../2023-03-02-one-to-one-relations/index.mdx).
 and in part two we explored
 [modeling NoSQL one-to-many relations](../2023-03-09-one-to-many-relations/index.mdx).
-This is the third and final post and we will dive into modeling NoSQL
-many-to-many relations. We model NoSQL many-to-many relations in two ways:
+This is the third and final post and we will dive into **modeling NoSQL
+many-to-many relations**.
 
-1. As embeded documents
-2. As related documents and will use full-text search to perform advanced
-   queries against our data
+We model NoSQL many-to-many relations in two ways:
+
+1. [Embeded many-to-many NoSQL data modeling](/blog/nosql-modeling-many-to-many-relations-with-search/#embeded)
+2. [Many-to-many using a joining collection NoSQL data modeling](/blog/nosql-modeling-many-to-many-relations-with-search/#joining)
+
+For the second example we'll use related documents and demonstrate full-text
+search to perform advanced queries against our data.
 
 ![Modeling NoSQL many-to-many image](modeling-many-to-many.png)
 
@@ -72,7 +67,7 @@ $ npx create-tigris-app@latest --project relations --example playground
 
 Follow the prompts to add your `clientId` and `clientSecret`.
 
-## Embeded Many-to-Many NoSQL data modeling
+## Embeded many-to-many NoSQL data modeling {#embeded}
 
 Let us start with modeling NoSQL many-to-many relations with an embeded
 document. To do that we will model a set of courses and students. There will be
@@ -259,6 +254,8 @@ run it many times. But in production, typically you would choose `insertMany`.
 
 :::
 
+## Many-to-many using a joining collection NoSQL data modeling {#joining}
+
 The embedded approach to NoSQL many-to-many data modeling using the id's of the
 related document works very well and will work in most use cases. And I would
 recommend starting with this design. But there are cases when there are lots of
@@ -319,7 +316,7 @@ signed up for a course once.
 
 Let's add data and explore this model. Change your `index.ts` to look like this:
 
-```ts showLineNumbers{24,70,91}
+```ts showLineNumbers{24,70,91} title="src/index.ts"
 import { Tigris } from "@tigrisdata/core";
 import { Student, Course, StudentToCourse } from "./db/models/courses";
 
@@ -329,7 +326,7 @@ async function setup() {
   // ensure branch exists, create it if it needs to be created dynamically
   const db = await tigrisClient.getDatabase();
   db.initializeBranch();
-  // await db.dropAllCollections();
+  await db.dropAllCollections();
   // register schemas
   await tigrisClient.registerSchemas([Student, Course, StudentToCourse]);
 }
@@ -411,12 +408,12 @@ async function main() {
   await tx.commit();
 
   tx = await db.beginTransaction();
-  let iter = await studentToCourseCollection.findMany({
+  const iter = await studentToCourseCollection.findMany({
     filter: { courseId: 3 },
   });
 
-  for await (let linkDoc of iter) {
-    let student = await studentCollection.findOne({
+  for await (const linkDoc of iter) {
+    const student = await studentCollection.findOne({
       filter: { email: linkDoc.studentEmail },
     });
     console.log(student.name);
@@ -424,7 +421,7 @@ async function main() {
       filter: { studentEmail: student.email },
     });
 
-    for await (let courseLink of iter2) {
+    for await (const courseLink of iter2) {
       const course = await courseCollection.findOne({
         filter: { id: courseLink.courseId },
       });
@@ -454,13 +451,41 @@ website. Finally on line `91`, we do a query. We look for all the students
 taking the course with id `3` and then we query for what other courses they are
 doing and print all their courses to the console.
 
+Run the example with:
+
+```sh
+npx ts-node ./src/index.ts
+```
+
+And you'll see the following output:
+
+```sh
+info - Using reflection to infer type of Course#title
+info - Using reflection to infer type of Course#description
+info - Using reflection to infer type of Student#name
+info - Using Tigris at: api.preview.tigrisdata.cloud:443
+info - Using database branch: 'main'
+event - Creating collection: 'student' in project: 'relations'
+event - Creating collection: 'course' in project: 'relations'
+event - Creating collection: 'studentToCourse' in project: 'relations'
+Charlotte Hale
+course: Kubernetes is awesome
+course: Next.js to the MAX!!!
+Dolores Abernathy
+course: Kubernetes is awesome
+course: I tried these 10 things with a databases and you won't guess what happened next
+Complete ...
+```
+
 Play around with the querying options to find students and courses in different
 ways. One idea would be to search for a specific interest and then see which
 courses those students are taking.
 
-This completes the relationship modeling series. This series covered the three
-main ways to model relationships. How to model each one in a few different ways
-to fit your needs and most importantly how to do that safely with transactions.
+This completes the
+[NoSQL data modeling series](/blog/tags/nosql-data-modeling/). This series
+covered the three main ways to model relationships. How to model each one in a
+few different ways to fit your needs and most importantly how to do that safely
+with transactions.
 
 ## Next Steps
 
