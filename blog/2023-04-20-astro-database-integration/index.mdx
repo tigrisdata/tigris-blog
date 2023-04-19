@@ -1,0 +1,176 @@
+---
+slug: astro-database-integration
+title: Adding NoSQL to Your Astro Site
+description: >
+  Introducing the Tigris Data integration for Astro, and how to add your NoSQL
+  data to your static or server rendered websites.
+keywords: [jamstack, nosql]
+authors: [michael]
+tags: [jamstack, nosql]
+image: ./mern-to-tern.png
+---
+
+<head>
+  <meta name="twitter:creator" content="@michaeljolley" />
+</head>
+
+import tigrisConfig from "@site/tigris.config.js";
+
+[Astro](https://astro.build/) bills itself as "the all-in-one web framework
+designed for speed," allowing you to "pull your content from anywhere." Their
+integration ecosystem helps you build performant, accessible, and SEO-friendly
+sites. Having built several sites with Astro, I can attest to the breadth
+of options to get your site up and running quickly.
+
+But there was one noticeable gap in the ecosystem: database access. This
+is understandable because most Astro sites are built to be static. That's not to
+say you couldn't use a database with an Astro site, but it lacked the ease of
+use that their other integrations provide.
+
+That's why we're excited to announce the official Tigris Data integration
+([@tigrisdata/astro](https://npmjs.org/package/@tigrisdata/astro)) for Astro.
+This integration allows you to use Tigris Data as your database, and pull your
+data into your Astro site. This means you can build a static site with Astro,
+and use Tigris Data to power your content.
+
+<!-- truncate-->
+
+## How to Use the Tigris Data Integration for Astro
+
+The Tigris Data integration for Astro is available on npm. To install it, run:
+
+```bash
+npm install @tigrisdata/astro
+```
+
+Once installed, you'll need to configure your Tigris Data connection in your
+`astro.config.mjs` file. An example is shown below:
+
+```ts title=astro.config.mjs
+import { defineConfig } from "astro/config";
+import tigris from "@tigrisdata/astro";
+
+export default defineConfig({
+  integrations: [
+    tigris({
+      branch: "main",
+      projectName: "YOUR_TIGRIS_PROJECT_NAME",
+      clientId: "YOUR_TIGRIS_CLIENT_ID",
+      clientSecret: "YOUR_TIGRIS_CLIENT_SECRET",
+    }),
+  ],
+});
+```
+
+:::tip
+If you add the following environment variables, the config options aren't required
+in the astro.config.mjs:
+
+- TIGRIS_PROJECT
+- TIGRIS_CLIENT_ID
+- TIGRIS_CLIENT_SECRET
+- TIGRIS_DB_BRANCH
+
+:::
+
+### Get Hooked on Data
+
+Once the integration is configured, you can use the `useTigrisCollection` hook
+to perform CRUD operations on your Tigris Data collections.
+
+```tsx
+---
+import { useTigrisCollection } from "@tigrisdata/astro";
+
+class Comment {
+  id: string;
+  slug: string;
+  name: string;
+  message: string;
+  createdAt: Date;
+}
+
+const { slug } = Astro.props;
+
+const commentCollection = await useTigrisCollection<Comment>("comments");
+const postCommentsCursor = await commentCollection.findMany({
+  filter: { slug },
+  sort: [{ field: "createdAt", order: "$desc" }],
+});
+
+const comments = await postCommentsCursor.toArray();
+---
+
+  {
+    comments.map((comment) => {
+      return (
+        <div class="comment" id={`comment${comment.id}`}>
+          <p>{comment.message}</p>
+          <h4>{comment.name}</h4>
+          <time>{new Date(comment.createdAt).toLocaleString()}</time>
+        </div>
+      );
+    })
+  }
+```
+
+:::info **Did you see that!?**
+That code not only pulled data from a "comments" collection but also did it in
+a type-safe way. That's right! Even though Tigris is a NoSQL database, your
+data can still be typed and validated.
+:::
+
+## What Could I Build with Tigris and Astro?
+
+The short answer is "don't let your dreams be dreams." 😁 The long answer is
+the possibilities are nearly endless. Here are a few ideas (and a sample app)
+to get you started:
+
+- Product reviews & ratings
+- Traffic analytics
+- User profiles
+- Blog comments
+
+Hey, speaking of blog comments, let's see how it could be done.
+
+### Blog Comments with Tigris and Astro
+
+I won't go through all the steps to add blog comments to your site, because I
+already covered it in a
+[sample repo on GitHub](https://github.com/tigrisdata-community/astro-comments).
+
+Basically, I use the base Astro blog template and added:
+
+- A `Comments` component to add on each blog post to render comments for the post
+- A `NewComment` component that displays an HTML form that submits to a Netlify
+  function
+- A `newcomment` Netlify function that adds the comment to the Tigris collection
+
+:::info See it in action
+You can see a live demo of the app at https://papaya-llama-a9697a.netlify.app/
+:::
+
+### Hey! Where Are My Comments?
+
+Great question! That's because the Astro site is static. The next time the site
+is built, the comments will appear. Of course, you'll probably want to moderate
+submissions to ensure they're not spam. Speaking of...
+
+## Next Steps
+
+There are several things we could add to the sample app, like:
+
+- Adding a honeypot to the `NewComment` component to help prevent spam
+- Add error checking in the `newcomment.ts` function
+- Adding comment counts to the blog post list
+
+If you have additional ideas or want to tackle one of these, jump on over to
+the [GitHub repo](https://github.com/tigrisdata-community/astro-comments) and
+submit a PR. We'd love to see what you come up with.
+
+Join the <a href={tigrisConfig.discordUrl}>Tigris Discord</a> and let us know
+what you think of the Astro integration.
+
+Tigris is an open-source serverless NoSQL database and search platform. If you
+have any questions, or you'd like to contribute to the
+[Tigris open-source project](https://github.com/tigrisdata/tigris).
