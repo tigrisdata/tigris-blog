@@ -1,38 +1,65 @@
 ---
 slug: modeling-one-to-many-relations
-title: How to model one-to-many relationships - Tigris Data Modeling Series
+title: How to model NoSQL one-to-many relationships
 description: >
-  This blog post shows how to model one-to-many relations using embedded documents and referencing another collection. 
-  It shows how to use Tigris's transactions to make updates across collections consistent. And recommends when to use either pattern
+  This blog post shows how to model NoSQL one-to-many relations using embedded
+  documents and referencing another collection in a NoSQL database. It shows how
+  to use Tigris's transactions to make updates across collections consistent.
+  And recommends when to use either NoSQL design pattern
 keywords:
-  [relations, relationships, data modeling, typescript, one-to-many data model]
+  [
+    nosql,
+    nosql data modeling,
+    nosql design pattern,
+    nosql database,
+    nosql one-to-many data model,
+    nosql database design,
+    database relationships,
+    typescript,
+  ]
 authors: [garren]
 image: ./modeling-one-to-many.png
-tags: [relations, relationships, data modeling, document database design]
+tags: [nosql data modeling, nosql database design, nosql data modeling series]
 ---
 
-This is part 2 of the **Tigris Data Modeling Series**. In the first part of the series, we covered [modeling one-to-one relations](../2023-03-02-one-to-one-relations/index.mdx). In this second part of the series, we will explore modeling one-to-many relations.
-We'll look at two ways to implement one-to-many relations. The first uses an embedded pattern, and the second uses a separate collection with a relation field. We will also look at when it is best to use either of these designs.
+<head>
+  <meta name="twitter:creator" content="@GarrenSmith" />
+</head>
 
-![Modeling one-to-many image](modeling-one-to-many.png)
+This is part 2 of the
+[NoSQL Data Modeling Series](/blog/tags/nosql-data-modeling-series/). In the
+first part of the series, we covered
+[modeling NoSQL one-to-one relations](../2023-03-02-one-to-one-relations/index.mdx).
+In this second part of the series, we will explore modeling NoSQL one-to-many
+relations. We'll look at two ways to implement NoSQL one-to-many relations. The
+first uses an embedded NoSQL design pattern, and the second uses a separate
+collection with a relation field. We will also look at when it is best to use
+either of these designs.
+
+![Modeling NoSQL one-to-many image](modeling-one-to-many.png)
 
 <!--truncate-->
 
 ## Getting started
 
-To follow along, you will need to get set up with Tigris. This is a quick and easy process.
-The Tigris Docs have a [Quickstart](https://www.tigrisdata.com/docs/quickstarts/) to show you how to sign up. Once you have signed up and created a new project, let's create a new template to get started.
+To follow along, you will need to get set up with Tigris. This is a quick and
+easy process. The Tigris Docs have a
+[Quickstart](https://www.tigrisdata.com/docs/quickstarts/) to show you how to
+sign up. Once you have signed up, create a new project called **relations**.
+Then, create a new local application from a Tigris template to get started.
 
-```
+```sh
 $ npx create-tigris-app@latest --project relations --example playground
 ```
 
 Follow the prompts to add your `clientId` and `clientSecret`.
 
-## Embedded One-to-Many
+## Embedded NoSQL one-to-many
 
-Let us start with modeling one-to-many relations with an embedded document. In the playground repository there is a `Post` model defined in `src/db/models/post.ts`.
-For our example we can reduce some of the fields. Edit it so that it looks like this:
+Let us start with modeling NoSQL one-to-many relations with an embedded
+document. In the playground repository there is a `Post` model defined in
+`src/db/models/post.ts`. For our example we can reduce some of the fields. Edit
+it so that it looks like this:
 
 ```ts showLineNumbers
 import {
@@ -64,8 +91,8 @@ export class Post {
 }
 ```
 
-This is a simplified model we will use to model blog posts. Next, add an embedded comments object to keep track of all the comments
-for this blog post.
+This is a simplified model we will use to model blog posts. Next, add an
+embedded comments object to keep track of all the comments for this blog post.
 
 ```ts showLineNumbers {8-17,39-40}
 import {
@@ -111,10 +138,12 @@ export class Post {
 }
 ```
 
-In the above code, we define a new `Comment` class on line 8. We then embed this as an array in our `Post` object on `line 39`.
+In the above code, we define a new `Comment` class on line 8. We then embed this
+as an array in our `Post` object on `line 39`.
 
-When there is a new comment, we will fetch the post document from Tigris and append the latest comment.
-Open up `index.ts` and add the following code to do that:
+When there is a new comment, we will fetch the post document from Tigris and
+append the latest comment. Open up `index.ts` and add the following code to do
+that:
 
 ```ts showLineNumbers {18-42}
 import { Tigris } from "@tigrisdata/core";
@@ -140,7 +169,7 @@ async function main() {
         Design Data-intensive Applications by Martin Kleppmann is a must read
         for anyone that loves learning about databases and build distributed systems.
         It covers a large range of topics on the complexity of building distributed systems.
-        It is one of my favourite technical books.
+        It is one of my favorite technical books.
     `,
     comments: [],
   });
@@ -178,21 +207,30 @@ main()
   });
 ```
 
-The main lines to focus on are `line 18` to `line 43`. Here we create a post and save it to Tigris. Then we add two comments to the `comments` Array field
-in the document and save it to the server.
-Finally, we find the first document in the collection that matches the title and print it to the console. This is how you can work with one-to-many relations using the embedded pattern.
+The main lines to focus on are `line 18` to `line 43`. Here we create a post and
+save it to Tigris. Then we add two comments to the `comments` Array field in the
+document and save it to the server. Finally, we find the first document in the
+collection that matches the title and print it to the console. This is how you
+can work with one-to-many NoSQL relations using the embedded NoSQL design
+pattern.
 
-This pattern works well for documents that do not have a lot of changes to them, so there are very few writes of the document to the database.
-However, if there are a lot of writes, like in the case of a blog post receiving a lot of comments, we will get a lot of conflicts. We can handle this by retrying the update or fetching the document
-again, adding the comments, and trying to save it again. But this is a very tedious process and is prone to writing over data.
+This pattern works well for documents that do not have a lot of changes to them,
+so there are very few writes of the document to the NoSQL database. However, if
+there are a lot of writes, like in the case of a blog post receiving a lot of
+comments, we will get a lot of conflicts. We can handle this by retrying the
+update or fetching the document again, adding the comments, and trying to save
+it again. But this is a very tedious process and is prone to writing over data.
 
-Instead, we can solve this by breaking up the comments into their own collection and using Tigris's transactions.
+Instead, we can solve this by breaking up the comments into their own collection
+and using Tigris's transactions.
 
-## Reference one-to-many relations
+## Reference one-to-many NoSQL relations
 
-Breaking up the comments into their own collections avoids any write conflicts but will mean queries will require a read from two
-collections. We will query from the blog collection to get the post we want and then from the comments collection to get all the comments
-for a specific post. Below is what is required to change the Tigris schema to follow this pattern:
+Breaking up the comments into their own collections avoids any write conflicts
+but will mean queries will require a read from two collections. We will query
+from the blog collection to get the post we want and then from the comments
+collection to get all the comments for a specific post. Below is what is
+required to change the Tigris schema to follow this NoSQL design pattern:
 
 ```ts showLineNumbers {8}
 import {
@@ -236,8 +274,9 @@ export class Post {
 }
 ```
 
-In the above snippet, we have removed the reference to the comments in `Post` collection and instead have created a new collection
-called `comment`. Now update the `index.ts` file to support the new collection:
+In the above snippet, we have removed the reference to the comments in `Post`
+collection and instead have created a new collection called `comment`. Now
+update the `index.ts` file to support the new collection:
 
 ```ts showLineNumbers {2,10,47,69}
 import { Tigris } from "@tigrisdata/core";
@@ -264,7 +303,7 @@ async function main() {
         Design Data-intensive Applications by Martin Kleppmann is a must read
         for anyone that loves learning about databases and build distributed systems.
         It covers a large range of topics on the complexity of building distributed systems.
-        It is one of my favourite technical books.
+        It is one of my favorite technical books.
     `,
   });
 
@@ -322,21 +361,34 @@ main()
   });
 ```
 
-We import the new collection on `line 2` and add it to our database schema on `line 10`.
+We import the new collection on `line 2` and add it to our NoSQL database schema
+on `line 10`.
 
-The main query changes start at `line 33`,
-where we insert each comment individually. In this small example, we could use [`insertMany`](https://www.tigrisdata.com/docs/sdkstools/typescript/database/insert/#insert-multiple-documents) to
-batch insert the comments. However, I've intentionally inserted them individually as if inserted by separate requests triggered via web requests.
+The main query changes start at `line 33`, where we insert each comment
+individually. In this small example, we could use
+[`insertMany`](https://www.tigrisdata.com/docs/sdkstools/typescript/database/insert/#insert-multiple-documents)
+to batch insert the comments. However, I've intentionally inserted them
+individually as if inserted by separate requests triggered via web requests.
 
-On `line 47` we start a transaction to read from the post and comment collection. We create a transaction so that we
-get a single consistent snapshot from the two collections.
-On `line 48` we query for the specific post, and then on `line 58` we fetch all comments related to the post.
-This allows us to have a high number of consistent reads and writes for this blog post without causing write conflicts and making sure our data is always consistent.
+On `line 47` we start a transaction to read from the post and comment
+collection. We create a transaction so that we get a single consistent snapshot
+from the two collections. On `line 48` we query for the specific post, and then
+on `line 58` we fetch all comments related to the post. This allows us to have a
+high number of consistent reads and writes for this blog post without causing
+write conflicts and making sure our data is always consistent.
 
-The two different one-to-many relation design patterns work well when used correctly. If you are not doing a lot of updates and not adding a lot of documents related to the parent, then
-the embedded pattern will be the most efficient. However, referencing a separate collection is the best pattern if many documents link to the parent document.
+The two different NoSQL one-to-many relation design patterns work well when used
+correctly. If you are not doing a lot of updates and not adding a lot of
+documents related to the parent, then the embedded NoSQL design pattern will be
+the most efficient. However, referencing a separate collection is the best
+pattern if many documents link to the parent document.
 
-Thanks for following along. The final blog post in this series will cover many-to-many relations.
+Thanks for following along. The final blog post in the
+[NoSQL Data Modeling Series](/blog/tags/nosql-data-modeling-series/) series will
+cover
+[NoSQL many-to-many relations](/blog/nosql-modeling-many-to-many-relations-with-search/).
+
+---
 
 import NewsletterSubscribe from "../../src/components/NewsletterSubscribe";
 

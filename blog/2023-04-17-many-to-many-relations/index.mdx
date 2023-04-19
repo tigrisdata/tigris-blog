@@ -1,20 +1,22 @@
 ---
 slug: nosql-modeling-many-to-many-relations-with-search
 date: 2023-04-19T10:00
-title: Modeling NoSQL many-to-many relationships and quering with full-text search
+title:
+  "How to model NoSQL many-to-many relationships (and querying with full-text
+  search)"
 description: >
-  This blog post shows how to model many-to-many relations using embeded
-  documents and referencing another collection.  It shows how to use Tigris's
-  transactions to make updates across collections consistent. And recommends
-  when to use either pattern. It also shows how to use full-text Search for
-  advanced queries.
+  This blog post shows how to model NoSQL many-to-many relations using embeded
+  documents and referencing another collection in a NoSQL database. It shows how
+  to use Tigris's transactions to make updates across collections consistent.
+  And recommends when to use either NoSQL design pattern. It also shows how to
+  use full-text Search for advanced queries.
 keywords:
   [
     nosql,
     nosql data modeling,
     nosql design pattern,
     nosql database,
-    many-to-many data model,
+    nosql many-to-many data model,
     nosql database design,
     database relationships,
     full-text search,
@@ -22,7 +24,13 @@ keywords:
   ]
 authors: [garren]
 image: ./modeling-many-to-many.png
-tags: [nosql data modeling, nosql database design, full-text search]
+tags:
+  [
+    nosql data modeling,
+    nosql database design,
+    full-text search,
+    nosql data modeling series,
+  ]
 ---
 
 <head>
@@ -30,8 +38,8 @@ tags: [nosql data modeling, nosql database design, full-text search]
 </head>
 
 This is part 3 of the
-[NoSQL Data Modeling Series](/blog/tags/nosql-data-modeling/). In part one of
-the series, we covered
+[NoSQL Data Modeling Series](/blog/tags/nosql-data-modeling-series/). In part
+one of the series, we covered
 [modeling NoSQL one-to-one relations](../2023-03-02-one-to-one-relations/index.mdx).
 and in part two we explored
 [modeling NoSQL one-to-many relations](../2023-03-09-one-to-many-relations/index.mdx).
@@ -482,10 +490,10 @@ ways. One idea would be to search for a specific interest and then see which
 courses those students are taking.
 
 This completes the
-[NoSQL data modeling series](/blog/tags/nosql-data-modeling/). This series
-covered the three main ways to model relationships. How to model each one in a
-few different ways to fit your needs and most importantly how to do that safely
-with transactions.
+[NoSQL data modeling series](/blog/tags/nosql-data-modeling-series/). This
+series covered the three main ways to model relationships. How to model each one
+in a few different ways to fit your needs and most importantly how to do that
+safely with transactions.
 
 ## Next Steps
 
