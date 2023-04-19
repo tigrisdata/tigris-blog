@@ -1,63 +1,88 @@
 ---
-slug: modeling-many-to-many-relations-with-search
-title: How to model many-to-many relationships and quering with full text search - Tigris Data Modeling Series
+slug: nosql-modeling-many-to-many-relations-with-search
+date: 2023-04-19T10:00
+title:
+  Modeling NoSQL many-to-many relationships and quering with full text search -
+  NoSQL data modeling series
 description: >
-  This blog post shows how to model many-to-many relations using embeded documents and referencing another collection. 
-  It shows how to use Tigris's transactions to make updates across collections consistent. And recommends when to use either pattern.
-  It also shows how to use Text Search for advanced queries.
+  This blog post shows how to model many-to-many relations using embeded
+  documents and referencing another collection.  It shows how to use Tigris's
+  transactions to make updates across collections consistent. And recommends
+  when to use either pattern. It also shows how to use full-text Search for
+  advanced queries.
 keywords:
   [
-    relations,
-    relationships,
-    data modeling,
+    nosql data modeling,
+    nosql design pattern,
     typescript,
     one-to-many data model,
     nosql,
-    mongodb,
-    document database,
-    text search,
+    nosql database,
+    nosql database design,
+    full-text search,
+    relations,
+    relationships,
   ]
 authors: [garren]
 image: ./modeling-many-to-many.png
 tags:
   [
+    nosql data modeling,
+    nosql database design,
+    tull-text search,
     relations,
     relationships,
-    data modeling,
-    document database design,
-    text search,
   ]
 ---
 
-This is part 3 of the **Tigris Data Modeling Series**. In part one of the series, we covered [modeling one-to-one relations](../2023-03-02-one-to-one-relations/index.mdx).
-and in part two we explored [modeling one-to-many relations](../2023-03-09-one-to-many-relations/index.mdx). This is the third and final
-post and we will dive into modeling many-to-many relations. We model many-to-many relations in two ways. As embeded documents
-and as related documents and will use full-text search to perform advanced queries against our data.
+<head>
+  <meta name="twitter:creator" content="@GarrenSmith" />
+</head>
 
-![Modeling many-to-many image](modeling-many-to-many.png)
+This is part 3 of the **Tigris Data Modeling Series**. In part one of the
+series, we covered
+[modeling NoSQL one-to-one relations](../2023-03-02-one-to-one-relations/index.mdx).
+and in part two we explored
+[modeling NoSQL one-to-many relations](../2023-03-09-one-to-many-relations/index.mdx).
+This is the third and final post and we will dive into modeling NoSQL
+many-to-many relations. We model NoSQL many-to-many relations in two ways:
+
+1. As embeded documents
+2. As related documents and will use full-text search to perform advanced
+   queries against our data
+
+![Modeling NoSQL many-to-many image](modeling-many-to-many.png)
 
 <!--truncate-->
 
 ## Getting started
 
-To follow along, you will need to get set up with Tigris. This is a quick and easy process.
-The Tigris Docs have a [Quickstart](https://www.tigrisdata.com/docs/quickstarts/) to show you how to sign up. Once you have signed up and created a new project, let's create a new template to get started.
+The principles outlined here are applicable to any NoSQL database. However, to
+follow along, you will need to get set up with Tigris. This is a quick and easy
+process. The Tigris Docs have a
+[Quickstart](https://www.tigrisdata.com/docs/quickstarts/) to show you how to
+sign up.
 
-```
+Once you have signed up, create a new project called **relations** and then
+create a new local application from a Tigris template to get started:
+
+```sh
 $ npx create-tigris-app@latest --project relations --example playground
 ```
 
 Follow the prompts to add your `clientId` and `clientSecret`.
 
-## Embeded Many-to-Many
+## Embeded Many-to-Many NoSQL data modeling
 
-Let us start with modeling many-to-many relations with an embeded document. To do that we will model a set of courses and students.
-There will be many courses with many students in each.
+Let us start with modeling NoSQL many-to-many relations with an embeded
+document. To do that we will model a set of courses and students. There will be
+many courses with many students in each.
 
-In the playground repository create a new file in the model directory - `src/db/models/courses.ts`.
-In that file create a `course` and `student` collection that will look like the below:
+In the playground repository create a new file in the model directory -
+`src/db/models/courses.ts`. In that file create a `course` and `student`
+collection that will look like the below:
 
-```ts showLineNumbers {29,33}
+```ts showLineNumbers {29,33} title="src/db/models/courses.ts"
 import {
   Field,
   PrimaryKey,
@@ -95,14 +120,18 @@ export class Student {
 }
 ```
 
-We have created two models, each in its own collection. The first collection, `course`, will contains all the courses a student can take.
-The second collection is the `student` collection and will contain a list of students, we will aslo embed the courses the student is attending in the student document.
-On line `29` and `33` we also add a search tag to the `courseIds` and the `interests` array. This will allow us to use
-Tigris' Text Search to query for specific courses.
+We have created two models, each in its own collection. The first collection,
+`course`, will contains all the courses a student can take. The second
+collection is the `student` collection and will contain a list of students, we
+will also embed the courses the student is attending in the student document. On
+line `29` and `33` we also add a search tag to the `courseIds` and the
+`interests` array. This will allow us to use Tigris' full-text Search to query
+for specific courses.
 
-Now let's change the `index.ts` file so that we can explore this design:
+Now let's change the `index.ts` file so that we can explore this NoSQL design
+pattern:
 
-```ts showLineNumbers{5-13,19,71-73}
+```ts showLineNumbers{5-13,19,71-73} title="src/index.ts"
 import { Tigris } from "@tigrisdata/core";
 import { Student, Course } from "./db/models/courses";
 
@@ -110,9 +139,9 @@ import { Student, Course } from "./db/models/courses";
 const tigrisClient = new Tigris();
 async function setup() {
   // ensure branch exists, create it if it needs to be created dynamically
-  let db = await tigrisClient.getDatabase();
+  const db = await tigrisClient.getDatabase();
   await db.initializeBranch();
-  await db.dropCollection();
+  await db.dropAllCollections();
   // register schemas
   await tigrisClient.registerSchemas([Student, Course]);
 }
@@ -177,8 +206,8 @@ async function main() {
     filter: { courseIds: 1, interests: "databases" },
   });
 
-  for await (let resultPage of iterator) {
-    for (let student of resultPage.hits) {
+  for await (const resultPage of iterator) {
+    for (const student of resultPage.hits) {
       console.log(student.document.name);
     }
   }
@@ -195,24 +224,50 @@ main()
   });
 ```
 
-Lines `5` to `13` we set up our database and collections. On line 19 we start a transaction and add
-documents to our collection in that transaction. This makes sure that the data is consistent across both collections.
-On line `71` we use Tigris' Text search to find all students that are taking the first course and have
-an interest in `"databases"`. Text Search is a great use case for handling complex situations.
-I encourage you at this point to experiment with some more complex queries to really see how well Text Search
-will work.
+Lines `5` to `13` we set up our database and collections. On line 19 we start a
+transaction and add documents to our collection in that transaction. This makes
+sure that the data is consistent across both collections. On line `71` we use
+Tigris' full-text search to find all students that are taking the first course
+and have an interest in `"databases"`. Full-text Search is a great use case for
+handling complex situations. I encourage you at this point to experiment with
+some more complex queries to really see how well full-text Search will work.
+
+Run `src/index.ts` as follows:
+
+```sh
+$ npx ts-node ./src/index.ts
+```
+
+And you'll see the following output:
+
+```sh
+info - Using reflection to infer type of Course#title
+info - Using reflection to infer type of Course#description
+info - Using reflection to infer type of Student#name
+info - Using Tigris at: api.preview.tigrisdata.cloud:443
+info - Using database branch: 'main'
+event - Creating collection: 'student' in project: 'relations'
+event - Creating collection: 'course' in project: 'relations'
+Dolores Abernathy
+Complete ...
+```
 
 :::note
-I've used the `insertOrReplaceMany` because this is a sort demo and we want to run it
-many times. But in production, typically you would choose `insertMany`.
+
+I've used the `insertOrReplaceMany` because this is a sort demo and we want to
+run it many times. But in production, typically you would choose `insertMany`.
+
 :::
 
-This design of embedding the id's of the related document works very well and will work in most use cases.
-And I would recommend starting with this design. But there are cases when there are lots of writes to update a document
-concurrently. This could lead to lots of write conflicts. A way to avoid this is to create an intermediate document and collection
-that links a student to a course. Let's do this by editing our `courses.ts` file to look like this:
+The embedded approach to NoSQL many-to-many data modeling using the id's of the
+related document works very well and will work in most use cases. And I would
+recommend starting with this design. But there are cases when there are lots of
+writes to update a document concurrently. This could lead to lots of write
+conflicts. A way to avoid this is to create an intermediate document and
+collection that links a student to a course. Let's do this by editing our
+`courses.ts` file to look like this:
 
-```ts showLineNumbers{34-41}
+```ts showLineNumbers{34-41} title="src/db/models/courses.ts"
 import {
   Field,
   PrimaryKey,
@@ -256,9 +311,11 @@ export class StudentToCourse {
 }
 ```
 
-We have removed `courseIds` from the `Student` model and instead created the linking collection `StudentToCourse`.
-Notice that the primary key for `StudentToCourse` is a combination of the `student` email address and the `course` id.
-This forces a unique constraint so that a `student` will only be signed up for a course once.
+We have removed `courseIds` from the `Student` model and instead created the
+linking collection `StudentToCourse`. Notice that the primary key for
+`StudentToCourse` is a combination of the `student` email address and the
+`course` id. This forces a unique constraint so that a `student` will only be
+signed up for a course once.
 
 Let's add data and explore this model. Change your `index.ts` to look like this:
 
@@ -389,16 +446,21 @@ main()
   });
 ```
 
-On line `24` we create a transaction and add the students and courses. But there is no association yet between `students` and `courses`.
-We then create another transaction, on line `70`. We have added this in a different transaction to simulate what would happen when a student
-would sign up for a course via a website. Finally on line `91`, we do a query. We look for all the students taking the course with id `3`
-and then we query for what other courses they are doing and print all their courses to the console.
+On line `24` we create a transaction and add the students and courses. But there
+is no association yet between `students` and `courses`. We then create another
+transaction, on line `70`. We have added this in a different transaction to
+simulate what would happen when a student would sign up for a course via a
+website. Finally on line `91`, we do a query. We look for all the students
+taking the course with id `3` and then we query for what other courses they are
+doing and print all their courses to the console.
 
-Play around with the querying options to find students and courses in different ways. One idea would be to search for a specific interest and
-then see which courses those students are taking.
+Play around with the querying options to find students and courses in different
+ways. One idea would be to search for a specific interest and then see which
+courses those students are taking.
 
-This completes the relationship modeling series. This series covered the three main ways to model relationships. How to model each one in a few
-different ways to fit your needs and most importantly how to do that safely with transactions.
+This completes the relationship modeling series. This series covered the three
+main ways to model relationships. How to model each one in a few different ways
+to fit your needs and most importantly how to do that safely with transactions.
 
 ## Next Steps
 
@@ -406,9 +468,10 @@ Try out this demo, and [let us know](https://www.tigrisdata.com/contact/) what
 other data modeling help you'd like to see.
 
 If you have any questions or you'd like to contribute to the
-[Tigris open source project](https://github.com/tigrisdata/tigris), it would be great to
-see you in the [Tigris Discord Community](https://www.tigrisdata.com/discord/).
-For anything else, [get in touch](https://www.tigrisdata.com/contact/).
+[Tigris open source project](https://github.com/tigrisdata/tigris), it would be
+great to see you in the
+[Tigris Discord Community](https://www.tigrisdata.com/discord/). For anything
+else, [get in touch](https://www.tigrisdata.com/contact/).
 
 ---
 
