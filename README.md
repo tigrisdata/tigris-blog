@@ -7,8 +7,8 @@ static website generator.
 
 ## Prerequisites
 
-[Node.js](https://nodejs.org/en/download/) version >= 14 or above (which can
-be checked by running node -v).
+[Node.js](https://nodejs.org/en/download/) version >= 14 or above (which can be
+checked by running node -v).
 
 ## Installation
 
@@ -32,6 +32,23 @@ npm run start
 
 This command starts a local development server and opens up a browser window.
 Most changes are reflected live without having to restart the server.
+
+### Testing newsletter subscription
+
+Newsletters subscriptions make a POST request to
+http://www.tigrisdata.com/api/newsletter/
+
+This works in production because the blog is served from the same
+www.tigrisdata.com domain. It will not work in other scenarios where a
+cross-domain request is attempted since CORS is not enabled on the newsletter
+subscription API endpoint.
+
+So to test this locally, you'll need to use a local proxy. To support this, you
+can change the base URL of the newsletter subscription API endpoint using
+`NEXT_NEWSLETTER_API_BASE_URL` in the `.env.local` file.
+
+If you use <https://github.com/garmeeh/local-cors-proxy>, you can then set
+`NEXT_NEWSLETTER_API_BASE_URL` to `http://localhost:8010/proxy`.
 
 ## Build
 
@@ -57,8 +74,8 @@ enforced by [Eslint](https://eslint.org)
 
 ## 2. Git Hooks
 
-We use [pre-commit](https://pre-commit.com/index.html) to automatically
-setup and run git hooks.
+We use [pre-commit](https://pre-commit.com/index.html) to automatically setup
+and run git hooks.
 
 On every `git commit` we check the code quality using prettier and eslint.
 

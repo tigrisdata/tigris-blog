@@ -31,6 +31,10 @@ const config = {
     require.resolve("./src/util/hideNavbarInBlogPost.js"),
   ],
 
+  customFields: {
+    newsletterApiBaseUrl: process.env.NEXT_NEWSLETTER_API_BASE_URL || "",
+  },
+
   presets: [
     [
       "classic",

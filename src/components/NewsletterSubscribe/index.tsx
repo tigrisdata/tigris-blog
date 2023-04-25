@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import styles from "./styles.module.css";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
 declare global {
   interface Window {
@@ -12,9 +13,6 @@ declare global {
 type FormData = {
   email: string;
 };
-
-const PORTAL_ID = "21744444";
-const FORM_ID = "492f54ba-0137-4c28-bd38-1e43340ef45c";
 
 const ERRORS: { [field: string]: string } = {
   email_required: "Email is required",
@@ -41,19 +39,22 @@ export default function NewsletterSubscribe(
     setShowSuccessModal(isSubmitSuccessful);
   }, [isSubmitSuccessful]);
 
+  const {
+    siteConfig: { customFields },
+  } = useDocusaurusContext();
+
   const onSubmit = handleSubmit((data) =>
-    fetch(
-      `https://api.hsforms.com/submissions/v3/integration/submit/${PORTAL_ID}/${FORM_ID}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fields: [{ objectTypeId: "0-1", name: "email", value: data.email }],
-        }),
-      }
-    )
+    // This is a submission to https://www.tigrisdata.com/api/newsletter
+    // in production
+    fetch(`${customFields?.newsletterApiBaseUrl}/api/newsletter/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: data.email,
+      }),
+    })
       .then(() => {
         const posthog = window.posthog;
         if (!posthog) {
