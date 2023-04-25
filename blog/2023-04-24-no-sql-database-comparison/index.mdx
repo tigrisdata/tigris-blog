@@ -23,16 +23,25 @@ image: ./mongodb-vs-dynamodb-vs-tigris-nosql-comparison.png
 
 import tigrisConfig from "@site/tigris.config.js";
 
+export const CloudLink = ({ text = "Tigris Cloud" }) => {
+  return <a href={tigrisConfig.signupUrl}>{text}</a>;
+};
+
+export const GitHubLink = ({
+  text = "open source NoSQL database and search platform",
+}) => {
+  return <a href={tigrisConfig.gitHubUrl}>{text}</a>;
+};
+
 Choosing how your app stores and manages data is one of those foundational
 decisions that will impact just about every other step you take. But with so
 much variety, how do you make the right call?
 
-Tigris is an open source NoSQL database and search platform that you can run in
-any cloud, on your own hardware, or have managed for you in
-
-<a href={tigrisConfig.signupUrl}>Tigris Cloud</a>. Here we'll look at how Tigris
-compares both to MongoDB and DynamoDB, as well as providing an overview of some
-of the features and tradeoffs you'll need to consider.
+Tigris is an <GitHubLink /> that you can run in any cloud, on your own hardware,
+or have it managed for you via <CloudLink />. Here we'll look at how Tigris
+compares both to [MongoDB](https://www.mongodb.com/) and
+[DynamoDB](https://aws.amazon.com/dynamodb/), as well as providing an overview
+of some of the features and tradeoffs you'll need to consider.
 
 [![Banner for MongoDB vs DynamoDB vs Tigris - a NoSQL Database Comparison](./mongodb-vs-dynamodb-vs-tigris-nosql-comparison.png)](/blog/mongodb-vs-dynamodb-vs-tigris-nosql-comparison/)
 
@@ -301,13 +310,15 @@ of the above criteria into account. Here's how each of them compares.
     <td>
       <strong>Cloud-native Architecture</strong>
     </td>
-    <td>yes</td>
+    <td>
+      <a href="https://www.tigrisdata.com/docs/concepts/architecture/">yes</a>
+    </td>
     <td>yes</td>
     <td>no</td>
   </tr>
   <tr>
     <td>
-      <strong>Data Hosting with Customer</strong>
+      <strong>Self managed data</strong>
     </td>
     <td>yes</td>
     <td>yes</td>
@@ -341,7 +352,15 @@ MongoDB and DynamoDB, Tigris gives you:
 - **Lower total cost of ownership:** Tigris costs less to run, even at petabyte
   scales.
 
-<a href={tigrisConfig.signupUrl}>Sign up for a free Tigris Cloud account</a> to see
-the benefits of our serverlesss NoSQL Database and Search platform.
+<p>
+  <CloudLink text="Sign up for a free Tigris Cloud account" /> to see the
+  benefits of our serverlesss NoSQL Database and Search platform.
+</p>
 
-Have questions? [Get in touch](https://www.tigrisdata.com/contact/).
+Have questions? <a href="https://www.tigrisdata.com/contact/">Get in touch</a>.
+
+---
+
+import NewsletterSubscribe from "../../src/components/NewsletterSubscribe";
+
+<NewsletterSubscribe />
