@@ -24,6 +24,9 @@ image: ./mongodb-vs-dynamodb-vs-tigris-nosql-comparison.png
 
 import tigrisConfig from "@site/tigris.config.js";
 
+import Check from "@site/src/icons/check";
+import Cross from "@site/src/icons/cross";
+
 export const CloudLink = ({ text = "Tigris Cloud" }) => {
   return <a href={tigrisConfig.signupUrl}>{text}</a>;
 };
@@ -242,88 +245,145 @@ of the above criteria into account. Here's how each of them compares.
     <td>DynamoDB</td>
     <td>MongoDB</td>
   </tr>
-  <tr>
+  <tr vAlign="top">
     <td>
       <strong>Interactive ACID Transactions</strong>
     </td>
     <td>
+      <div>
+        <Check />
+      </div>
       <a href="https://www.tigrisdata.com/docs/concepts/database/transaction/">
-        yes
+        Find out more about the Tigris ACID transactions
       </a>
     </td>
-    <td>no</td>
     <td>
-      yes (
-      <a href="https://www.mongodb.com/docs/manual/reference/read-concern-linearizable/#performance-comparisons">
-        blocking reads
-      </a>
-      ,<a href="https://www.mongodb.com/docs/manual/core/transactions-sharded-clusters/#performance">
-        {" "}
-        significant performance cost
-      </a> for cross-shard transactions, read/write concern)
+      <Cross />
+    </td>
+    <td>
+      <div>
+        <Check color="#FDDC7B" />
+      </div>
+      See:
+      <ul>
+        <li>
+          <a href="https://www.mongodb.com/docs/manual/reference/read-concern-linearizable/#performance-comparisons">
+            Blocking reads
+          </a>
+        </li>
+        <li>
+          <a href="https://www.mongodb.com/docs/manual/core/transactions-sharded-clusters/#performance">
+            {" "}
+            Significant performance cost
+          </a>{" "}
+          for cross-shard transactions, read/write concern
+        </li>
+      </ul>
     </td>
   </tr>
-  <tr>
+  <tr vAlign="top">
     <td>
       <strong>Strongly Consistent Global Secondary Indexes</strong>
     </td>
-    <td>yes</td>
-    <td>no</td>
     <td>
+      <Check />
+    </td>
+    <td>
+      <Cross />
+    </td>
+    <td>
+      <div>
+        <Cross />
+      </div>
       <a href="https://www.mongodb.com/community/forums/t/indexes-on-sharded-collection/152795/2">
-        no
+        See this MongoDB forum thread
       </a>
     </td>
   </tr>
-  <tr>
+  <tr vAlign="top">
     <td>
       <strong>Database Branching</strong>
     </td>
     <td>
+      <div>
+        <Check />
+      </div>
       <a href="https://www.tigrisdata.com/docs/concepts/database/branching/">
-        yes
+        Find out more about the Tigris Database branching
       </a>
     </td>
-    <td>no</td>
-    <td>no</td>
+    <td>
+      <Cross />
+    </td>
+    <td>
+      <Cross />
+    </td>
   </tr>
-  <tr>
+  <tr vAlign="top">
     <td>
       <strong>Integrated Full Text Search</strong>
     </td>
     <td>
+      <div>
+        <Check />
+      </div>
       <a href="https://www.tigrisdata.com/docs/concepts/database/search/">
-        yes
+        Find out more about the Tigris full-text search
       </a>
     </td>
-    <td>no</td>
-    <td>yes</td>
+    <td>
+      <Cross />
+    </td>
+    <td>
+      <Check />
+    </td>
   </tr>
-  <tr>
+  <tr vAlign="top">
     <td>
       <strong>Automatic Database Sharding</strong>
     </td>
-    <td>yes</td>
-    <td>yes</td>
-    <td>no</td>
+    <td>
+      <Check />
+    </td>
+    <td>
+      <Check />
+    </td>
+    <td>
+      <Cross />
+    </td>
   </tr>
-  <tr>
+  <tr vAlign="top">
     <td>
       <strong>Cloud-native Architecture</strong>
     </td>
     <td>
-      <a href="https://www.tigrisdata.com/docs/concepts/architecture/">yes</a>
+      <div>
+        <Check />
+      </div>
+      <a href="https://www.tigrisdata.com/docs/concepts/architecture/">
+        Find out more about the Tigris cloud-native architecture
+      </a>
     </td>
-    <td>yes</td>
-    <td>no</td>
+    <td>
+      <Check />
+    </td>
+    <td>
+      <Cross />
+    </td>
   </tr>
-  <tr>
+  <tr vAlign="top">
     <td>
       <strong>Self-managed Data hosting</strong>
     </td>
-    <td>yes</td>
-    <td>no</td>
-    <td>no</td>
+    <td>
+      <Check />
+    </td>
+    <td>
+      <Cross />
+    </td>
+    <td>
+      <Cross />
+    </td>
   </tr>
 </table>
 
