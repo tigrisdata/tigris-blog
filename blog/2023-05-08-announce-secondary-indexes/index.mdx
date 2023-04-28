@@ -1,0 +1,91 @@
+---
+slug: announcing-secondary-indexes-available
+date: 2023-04-19T10:00
+title: "Global secondary indexes are now available"
+description: >
+  This blog post shows how to model NoSQL many-to-many relations using embeded
+  documents and referencing another collection in a NoSQL database. It shows how
+  to use Tigris's transactions to make updates across collections consistent.
+  And recommends when to use either NoSQL design pattern. It also shows how to
+  use full-text Search for advanced queries.
+keywords:
+  [
+    nosql,
+    nosql secondary index,
+    nosql global secondary index,
+    nosql database,
+    nosql querying,
+  ]
+authors: [garren]
+tags:
+  [
+    nosql data modeling,
+    nosql database design,
+    full-text search,
+    nosql data modeling series,
+  ]
+---
+
+<head>
+  <meta name="twitter:creator" content="@GarrenSmith" />
+</head>
+
+Global Secondary indexes have been added to the Tigris opensource NoSQL database and is available on Tigris Cloud.
+Secondary indexes allow for fast and efficient querying of documents in a database's collection. Tigris now supports
+both full-text search and secondary indexes allowing for comprehensive and very efficient querying of your data.
+
+## TODO MAYBE HAVE A VIDEO HERE
+
+<!--truncate-->
+
+## Getting started
+
+To add a secondary index to a field, update the collections schema and add a `index:true` to the field that you want indexed:
+
+```typescript
+@TigrisCollection("catalog")
+export class Catalog {
+  @PrimaryKey({ order: 1, autogenerate: true })
+  id?: number;
+
+  @Field()
+  name: string;
+
+  @Field({ index: true })
+  price: number;
+
+  @Field()
+  brand: string;
+}
+
+const tigrisClient = new Tigris();
+// ensure branch exists, create it if it needs to be created dynamically
+await tigrisClient.getDatabase().initializeBranch();
+// register schemas
+await tigrisClient.registerSchemas([Catalog]);
+```
+
+If the collection is a new collection the indexes will be immediately ready to be used, if it is an existing index,
+then log into the Tigris Cloud Web Console to update the collection and build the secondary indexes.
+
+Tigris will choose the best secondary index to serve queries against a collection.
+
+```typescript
+const cursor = await users.findMany({ filter: { price: { $gt: 100 } } });
+```
+
+## Next steps
+
+Learn more about secondary indexes in our [documentation](https://tigrisdata.com/docs/concepts/database/indexes/).
+Take a look at our [Typescript SDK](https://tigrisdata.com/docs/sdkstools/typescript/database/indexes/) or [Go SDK](https://tigrisdata.com/docs/sdkstools/golang/database/indexes/) to see how to use secondary indexes in your preferred languaged.
+
+---
+
+import OpenSourceCTA from "../_oss-cta.mdx";
+
+<OpenSourceCTA />
+
+import NewsletterSubscribe from "../../src/components/NewsletterSubscribe";
+
+<NewsletterSubscribe ctaMessage="Make sure you don't miss the next post in the series by subscribing to the Tigris Newsletter:" />
+``` ```` `````
