@@ -1,6 +1,6 @@
 [![Code Style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 
-# blog.tigrisdata.com
+# tigrisdata.com/blog
 
 This website is built using [Docusaurus 2](https://docusaurus.io/), a modern
 static website generator.
@@ -32,6 +32,17 @@ npm run start
 
 This command starts a local development server and opens up a browser window.
 Most changes are reflected live without having to restart the server.
+
+### Creating a blog post
+
+To scaffold a blog post run:
+
+```sh
+npm run npm run blog:new --slug={slug for your post}
+```
+
+This will create a directory in the format `{current date}-{slug}` with a
+`index.mdx`. Update `index.mdx` with your blog post content.
 
 ### Testing newsletter subscription
 
