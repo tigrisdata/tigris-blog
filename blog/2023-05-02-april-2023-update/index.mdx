@@ -55,7 +55,43 @@ Stay tuned for much more on our Vector Search feature.
 ecosystem of integrations. But, we were particularly pleased to be the first
 [Astro database integration](/blog/astro-tigris-integration/).
 
-[![Tigris Astro integration](./astro-tigris-integration.png)](/blog/astro-tigris-integration/)
+Here's a taster of what the Tigris Astro integration makes possible:
+
+```ts
+---
+import { useTigrisCollection } from "@tigrisdata/astro";
+
+class Comment {
+  id: string;
+  slug: string;
+  name: string;
+  message: string;
+  createdAt: Date;
+}
+
+const { slug } = Astro.props;
+
+const commentCollection = await useTigrisCollection<Comment>("comments");
+const postCommentsCursor = await commentCollection.findMany({
+  filter: { slug },
+  sort: [{ field: "createdAt", order: "$desc" }],
+});
+
+const comments = await postCommentsCursor.toArray();
+---
+
+  {
+    comments.map((comment) => {
+      return (
+        <div class="comment" id={`comment${comment.id}`}>
+          <p>{comment.message}</p>
+          <h4>{comment.name}</h4>
+          <time>{new Date(comment.createdAt).toLocaleString()}</time>
+        </div>
+      );
+    })
+  }
+```
 
 You can also find the integration over on the
 [official Astro integrations page](https://astro.build/integrations?search=tigris).
