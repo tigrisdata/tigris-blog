@@ -470,3 +470,7 @@ table th {
 .disable-external-icon svg {
   display: none;
 }
+
+html {
+  scroll-behavior: smooth;
+}

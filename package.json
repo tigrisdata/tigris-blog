@@ -15,7 +15,8 @@
     "clear": "docusaurus clear",
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
-    "write-heading-ids": "docusaurus write-heading-ids"
+    "write-heading-ids": "docusaurus write-heading-ids",
+    "blog:new": "NOW=$(date +\"%Y-%m-%d\") && mkdir ./blog/$NOW-$npm_config_title && cp ./templates/blog-post/* ./blog/$NOW-$npm_config_title/"
   },
   "dependencies": {
     "@docusaurus/core": "^2.4.0",
