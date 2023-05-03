@@ -20,6 +20,7 @@ const ERRORS: { [field: string]: string } = {
 };
 
 interface NewsletterSubscribeProps {
+  headerText?: string;
   ctaMessage?: string;
 }
 
@@ -76,7 +77,8 @@ export default function NewsletterSubscribe(
         <div>👍 Thanks for subscribing to the Tigris newsletter</div>
       ) : (
         <>
-          <h3>Stay connected</h3>
+          {props.headerText === undefined && <h3>Stay connected</h3>}
+          {props.headerText !== "" && <h3>{props.headerText}</h3>}
           <p>{props.ctaMessage ?? "Subscribe to the Tigris Newsletter:"}</p>
           <form onSubmit={onSubmit}>
             <input
