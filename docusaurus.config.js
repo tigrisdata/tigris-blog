@@ -70,6 +70,7 @@ const config = {
       "posthog-docusaurus",
       {
         apiKey: process.env.NEXT_POSTHOG_APIKEY,
+        appUrl: process.env.NEXT_PUBLIC_POSTHOG_HOST,
         enableInDevelopment: process.env.USE_POSTHOG_IN_DEVELOPMENT === "true",
       },
     ],
