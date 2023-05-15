@@ -38,7 +38,7 @@ Most changes are reflected live without having to restart the server.
 To scaffold a blog post run:
 
 ```sh
-npm run npm run blog:new --slug={slug for your post}
+npm run blog:new --slug={slug for your post}
 ```
 
 This will create a directory in the format `{current date}-{slug}` with a
