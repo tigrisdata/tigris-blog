@@ -77,16 +77,13 @@ application. We will use this tool to create an application with Tigris and Open
 configured.
 
 ```bash
-npx create-tigris-app@latest --project vectorsearchapp --example vector-search-openai
+npx create-tigris-app@latest --project vectorsearchapp --uri api.preview.tigrisdata.cloud --example vector-search-openai
 ```
 
 <details>
 <summary>Command output</summary>
 
 ```bash
-Need to install the following packages:
-  create-tigris-app@1.0.0-beta.17
-Ok to proceed? (y) y
 ✔ What is the clientId? … client_id_here
 ✔ What is the clientSecret? … *******************************************************
 Creating a new app in /Users/ovaistariq/projects/vectorsearchapp.
@@ -99,23 +96,18 @@ Initializing project with template: vector-search-openai
 Using npm.
 
 Installing dependencies:
-- @tigrisdata/core: ^1.0.0-beta.43
-- csv-parse: ^5.3.6
-- dotenv: ^16.0.3
+- @tigrisdata/vector: 1.1.0
 - express: 4.18.2
-- openai: ^3.2.1
-- reflect-metadata: ^0.1.13
-- zod: ^3.19.1
+- openai: 3.2.1
 
 
-added 410 packages, and audited 411 packages in 12s
+added 245 packages, and audited 246 packages in 5s
 
-111 packages are looking for funding
+35 packages are looking for funding
   run `npm fund` for details
 
 found 0 vulnerabilities
 Initialized a git repository.
-
 
 Success! Created vectorsearchapp at /Users/ovaistariq/projects/vectorsearchapp
 
@@ -175,156 +167,102 @@ npm run seed
 
 The command performs the following steps:
 
-#### 1. Creates a Tigris Search Index
+#### 1. Creates the Vector Database client
 
-The search index called `reviews` is defined with the following schema:
-
-```ts title="src/search/models/review.ts"
-import {
-  SearchField,
-  TigrisDataTypes,
-  TigrisSearchIndex,
-} from "@tigrisdata/core";
-
-export const REVIEW_INDEX_NAME = "reviews";
-
-@TigrisSearchIndex(REVIEW_INDEX_NAME)
-export class Review {
-  @SearchField(TigrisDataTypes.INT64)
-  Id: string;
-
-  @SearchField({ sort: true, facet: true })
-  ProductId: string;
-
-  @SearchField()
-  UserId: string;
-
-  @SearchField()
-  ProfileName: string;
-
-  @SearchField(TigrisDataTypes.INT64)
-  HelpfulnessNumerator: number;
-
-  @SearchField(TigrisDataTypes.INT64)
-  HelpfulnessDenominator: number;
-
-  @SearchField(TigrisDataTypes.INT64, { sort: true, facet: true })
-  Score: number;
-
-  @SearchField(TigrisDataTypes.INT64, { sort: true })
-  Time: number;
-
-  @SearchField()
-  Summary: string;
-
-  @SearchField()
-  Text: string;
-
-  // 1536 floats total for ada-002
-  @SearchField({ dimensions: 1536 })
-  vector: number[];
-}
-```
-
-And the index is created with the following code:
+We will use the project name, clientId and clientSecret from the previous step to
+create the vector database client.
 
 ```ts title="scripts/seed.ts"
-// ...
-import { Review, REVIEW_INDEX_NAME } from "../src/search/models/review";
-import { Tigris } from "@tigrisdata/core";
-// ...
+import { VectorDocumentStore } from "@tigrisdata/vector";
 
-const tigrisClient = new Tigris();
-const search = tigrisClient.getSearch();
-await search.createOrUpdateIndex(Review);
-// ...
+const vectorDocStore = new VectorDocumentStore({
+  connection: {
+    serverUrl: "api.preview.tigrisdata.cloud",
+    projectName: "vectorsearchapp",
+    clientId: "clientId_here",
+    clientSecret: "clientSecret_here",
+  },
+  indexName: "reviews",
+  numDimensions: 1536, // 1536 floats total for ada-002
+});
 ```
 
-#### 2. Reads the reviews from the CSV file AND generates embeddings
+Here, we have created a new VectorDocumentStore instance that connects to the
+Tigris Vector Database. The indexName is the name of the index that will store
+your embeddings, documents, and any additional metadata. You can use any name
+you like for the index. The numDimensions is the number of dimensions of the
+vector embeddings.
+
+#### 2. Store reviews and embeddings in Tigris
 
 The reviews are loaded from the CSV file and embeddings are generated via OpenAI:
 
 ```ts title="scripts/seed.ts"
 // ...
-const index = await search.getIndex<Review>(REVIEW_INDEX_NAME);
+// setup OpenAI client
+const openai = getOpenaiClient();
 
-const dataFile = "./scripts/data/reviews.csv";
-// ...
-for await (const doc of readStream.pipe(parse({ columns: true, cast: true }))) {
-  if (batch.length >= batchSize) {
-    await insertBatch(batch, index);
+let numDocsLoaded = 0;
 
-    numDocsLoaded += batch.length;
-    batch.length = 0;
-  } else {
-    const embeddings = await createEmbedding(
-      openai,
-      `${doc.Summary} ${doc.Text}`
-    );
-    doc.vector = embeddings;
+const ids: string[] = [];
+const documents: Document[] = [];
+const contents: string[] = [];
+for await (let doc of readStream.pipe(parse({ columns: true, cast: true }))) {
+  doc = doc as Review;
 
-    batch.push(doc as Review);
+  ids.push(`${doc.Id}`);
+  documents.push({
+    content: doc.Text,
+    metadata: {
+      ProductId: doc.ProductId,
+      UserId: doc.UserId,
+      ProfileName: doc.ProfileName,
+      HelpfulnessNumerator: doc.HelpfulnessNumerator,
+      HelpfulnessDenominator: doc.HelpfulnessDenominator,
+      Score: doc.Score,
+      Time: doc.Time,
+      Summary: doc.Summary,
+    },
+  });
+
+  contents.push(`${doc.Summary} ${doc.Text}`);
+
+  if (documents.length >= BATCH_SIZE) {
+    await storeDocuments(ids, documents, contents, store, openai);
+
+    numDocsLoaded += documents.length;
+    ids.length = 0;
+    documents.length = 0;
+    contents.length = 0;
   }
 }
-
-if (batch.length > 0) {
-  await insertBatch(batch, index);
-
-  numDocsLoaded += batch.length;
-  batch.length = 0;
-}
 // ...
 ```
 
-The `createEmbedding` function uses the OpenAI client to generate embeddings for the review:
-
-```ts title="src/utils/openai.ts"
-import { Configuration, OpenAIApi } from "openai";
-
-const MODEL = "text-embedding-ada-002";
-
-const getOpenaiClient = (): OpenAIApi => {
-  // setup OpenAI client
-  const config = new Configuration({
-    organization: process.env.OPENAI_ORG,
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-  return new OpenAIApi(config);
-};
-
-const createEmbedding = async (
-  openai: OpenAIApi,
-  input: string
-): Promise<number[]> => {
-  const embeddings = await openai.createEmbedding({
-    model: MODEL,
-    input: input,
-  });
-  return embeddings.data.data[0]?.embedding;
-};
-```
-
-#### 3. Store reviews and embeddings in Tigris
-
-The `insertBatch` function is called, which makes use of the Tigris `createOrReplaceMany` SDK function
-to store the embeddings in the Tigris search index:
+The `storeDocuments` function uses the OpenAI client to generate embeddings and
+stores the documents and embeddings:
 
 ```ts title="scripts/seed.ts"
-async function insertBatch(batch: Review[], index: SearchIndex<Review>) {
-  const docStatus = await index.createOrReplaceMany(batch);
-  for (const status of docStatus) {
-    if (status.error) {
-      console.log(status.error);
-      console.log(batch);
+async function storeDocuments(
+  ids: string[],
+  documents: Document[],
+  contents: string[],
+  store: VectorDocumentStore,
+  openai: OpenAIApi
+) {
+  const embeddingsResponse = await createEmbeddings(openai, contents);
+  const embeddings = embeddingsResponse.data.map((e) => e.embedding);
 
-      throw new Error("Error creating documents");
-    }
-  }
+  await store.addDocumentsWithVectors({
+    ids,
+    embeddings,
+    documents,
+  });
 }
 ```
 
-Now that the embeddings have been generated and stored in Tigris, we can start the application
-and perform searches.
+Now that the embeddings have been generated and stored in Tigris, we can start the
+application and perform searches.
 
 ## Running the vector search application
 
@@ -334,48 +272,9 @@ Let's run the following command to start the application in development mode run
 npm run dev
 ```
 
-<details>
-<summary>Command Output</summary>
-
-```bash
-> vectorsearchapp@0.1.0 predev
-> npm run setup
-
-
-> vectorsearchapp@0.1.0 setup
-> npx ts-node scripts/setup.ts
-
-info - Using reflection to infer type of Review#ProductId
-info - Using reflection to infer type of Review#UserId
-info - Using reflection to infer type of Review#ProfileName
-info - Using reflection to infer type of Review#Summary
-info - Using reflection to infer type of Review#Text
-info - Using reflection to infer type of Review#vector
-info - Using Tigris at: api.preview.tigrisdata.cloud:443
-Created index:
-Setup complete ...
-
-> vectorsearchapp@0.1.0 dev
-> npx nodemon
-
-[nodemon] 2.0.22
-[nodemon] to restart at any time, enter `rs`
-[nodemon] watching path(s): src/**/*
-[nodemon] watching extensions: ts
-[nodemon] starting `npx ts-node ./src/index.ts`
-info - Using reflection to infer type of Review#ProductId
-info - Using reflection to infer type of Review#UserId
-info - Using reflection to infer type of Review#ProfileName
-info - Using reflection to infer type of Review#Summary
-info - Using reflection to infer type of Review#Text
-info - Using reflection to infer type of Review#vector
-info - Using Tigris at: api.preview.tigrisdata.cloud:443
-
-🚀 Server ready at: http://localhost:3000 ⭐️
-
-```
-
-</details>
+The server is now running on `http://localhost:3000`. You can now run the API
+requests, e.g.
+[http://localhost:3000/search](http://localhost:3000/search).
 
 ### Searching for similar reviews
 
@@ -383,7 +282,7 @@ Let's perform some searches now.
 
 ```bash
 curl \
-  'http://localhost:3000/search?searchString=hot%20sauce&size=5' \
+  'http://localhost:3000/search?searchString=hot%20sauce&k=5' \
   -H 'Content-Type: application/json'
 ```
 
@@ -444,53 +343,35 @@ This returns the following results:
 ]
 ```
 
-We have searched for "hot sauce" and the results are sorted by the vector distance. The
-vector distance is a measure of how similar the search string is to the review text. The
-closer the vector distance is to 0, the more similar the review text is to the search
-string.
+We have searched for "hot sauce" and the results are sorted by the vector distance.
+The vector distance is a measure of how similar the search string is to the review
+text. The closer the vector distance is to 0, the more similar the review text is
+to the search string.
 
 Here is what the code for the vector search API looks like:
 
 ```ts title="src/routes/search.ts"
 // ...
-import { Search, SearchQuery } from "@tigrisdata/core";
-import middlewares from "../utils/middlewares";
-import { Review, REVIEW_INDEX_NAME } from "../search/models/review";
+import { Router } from "express";
+import { OpenAIApi } from "openai";
 import { createEmbedding } from "../utils/openai";
+import { VectorDocumentStore } from "@tigrisdata/vector";
 // ...
 async (req, res, next) => {
-  const { searchString, page, size } = req.query;
+  const { searchString, k } = req.query;
 
-  const index = await searchClient.getIndex<Review>(REVIEW_INDEX_NAME);
-  const embeddings = await createEmbedding(openai, searchString as string);
+  try {
+    const embeddings = await createEmbedding(openai, searchString as string);
 
-  const request: SearchQuery<Review> = {
-    vectorQuery: {
-      vector: embeddings,
-    },
-    facets: ["ProductId", "Score"],
-    hitsPerPage: Number(size) || 10,
-  };
+    const results = await vectorStore.similaritySearchVectorWithScore({
+      query: embeddings,
+      k: Number(k) || 10,
+    });
 
-  index
-    .search(request, Number(page) || 1)
-    .then((results) => {
-      const docs = [];
-      for (const hit of results.hits) {
-        docs.push({
-          Id: hit.document.Id,
-          ProductId: hit.document.ProductId,
-          UserId: hit.document.UserId,
-          ProfileName: hit.document.ProfileName,
-          Score: hit.document.Score,
-          Summary: hit.document.Summary,
-          Text: hit.document.Text,
-          VectorDistance: hit.meta.textMatch.vectorDistance,
-        });
-      }
-      res.json(docs);
-    })
-    .catch((error) => next(error));
+    res.json(results);
+  } catch (error) {
+    next(error);
+  }
 };
 // ...
 ```
@@ -500,10 +381,8 @@ async (req, res, next) => {
 Try out this application, and [let us know](https://www.tigrisdata.com/contact/) what
 other examples of vector search you'd like to see.
 
-If you have any questions or you'd like to contribute to the
-[Tigris open source project](https://github.com/tigrisdata/tigris), it would be great to
-see you in the [Tigris Discord Community](https://www.tigrisdata.com/discord/).
-For anything else, [get in touch](https://www.tigrisdata.com/contact/).
+Continue to the [Getting Started](https://www.tigrisdata.com/docs/concepts/vector-search/getting-started/)
+guide to learn how to get started with Vector Search using Tigris.
 
 ---
 
