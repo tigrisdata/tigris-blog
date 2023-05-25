@@ -1,0 +1,352 @@
+---
+slug: tigris-standalone-search
+title: Enabling awesome search experiences with Tigris Standalone Search
+description: >
+  Enabling awesome search experiences with Tigris Standalone Search
+keywords: [nosql search, standalone search, search engine]
+authors: [leggetter]
+tags: [nosql search, standalone search]
+image: "./tigris-standalone-search.png"
+---
+
+<head>
+  <meta name="twitter:creator" content="@leggetter" />
+</head>
+
+import tigrisConfig from "@site/tigris.config.js";
+
+export const CloudLink = ({ text = "Tigris Cloud" }) => {
+  return <a href={tigrisConfig.signupUrl}>{text}</a>;
+};
+
+Database search is okay, at best. To build awesome search experiences you need a
+dedicated search product.
+
+Earlier this month we
+[released Tigris Search in BETA](/blog/tigris-database-search-sync-beta/) and
+covered how it supports automatic syncronization between Tigris Database and
+Tigris Search, which improves developer productivity through enabling the team
+to focus on shipping features and not setting up and managing database-to-search
+syncronization infrastructure.
+
+But, migrating your existing database to a new database such as Tigris Database
+can be a big challenge for a number of reasons. And, although some of our
+customers have done just that, it's not for everyone and you may just need a
+search product right now. Or, you may not store your data in a database; maybe
+you've got all your data in S3, or you've got a statically generated site driven
+by a number of data files stored in your source control.
+
+Whatever the reason, Tigris Standalone Search can help if you're looking for a
+search solution.
+
+[![Enabling awesome search experiences with Tigris Standalone Search](./tigris-standalone-search.png)](/blog/tigris-standalone-search/)
+
+<!-- truncate -->
+
+## Tigris Standalone Search is available with Tigris Search BETA
+
+As part of our release of Tigris Search BETA we also made it possible for your
+to take advantage of
+[Tigris Search as a standalone feature](https://www.tigrisdata.com/docs/concepts/searching/#standalone-search).
+
+Tigris Standalone Search can be used with any existing data store via
+integrating with our APIs and SDKs. This gives you full control to determine
+which indexes you create and maintain. Here are some examples in TypeScript that
+demonstrate how to use Tigris Standalone Search. For a more in-depth example and
+a demo, checkout the [search demo](#search-demo) below.
+
+Define your Search data model:
+
+```ts
+export const CATALOG_INDEX_NAME = "catalog";
+
+@TigrisSearchIndex(CATALOG_INDEX_NAME)
+export class Catalog {
+  @SearchField({ sort: true })
+  name: string;
+
+  @SearchField({ sort: true })
+  price: number;
+
+  @SearchField({ facet: true })
+  brand: string;
+
+  @SearchField({ elements: TigrisDataTypes.STRING, facet: true })
+  @Field({ elements: TigrisDataTypes.STRING })
+  tags: Array<string>;
+}
+```
+
+Create your search index for the data model:
+
+```ts
+const client = new Tigris();
+const search = client.getSearch();
+const catalog = await search.createOrUpdateIndex<Catalog>(CATALOG_INDEX_NAME);
+```
+
+Insert a document in the search index:
+
+```ts
+const result = await catalog.createOne({
+  name: "fiona handbag",
+  price: 99.9,
+  brand: "michael kors",
+  tags: "purses",
+});
+```
+
+That's it!
+
+For more information including indexing multiple documents, updating indexed
+documents, and deleted indexed douments, see the
+[TypeScript Standalone Search docs](https://www.tigrisdata.com/docs/sdkstools/typescript/search/).
+
+## Awesome search demo with Resend &amp; Tigris Search {#search-demo}
+
+To demonstrate Tigris Search we've created a demo application with Resend - an
+API platform that enables developers to build, test, and deliver transactional
+APIs at scale - that simulates a series of onboarding emails to be sent across
+during the onboarding journey.
+
+1. Signed up = welcome
+2. After trigger X or Y amount of time = join the community
+3. After trigger X or Y amount of time = request feedback
+
+import templateSelection from "./template-selection.mp4";
+
+<video controls style={{ width: "100%" }}>
+  <source src={templateSelection} />
+</video>
+
+After sending the emails they are stored in a Tigris Search index. As the status
+of the emails changes (delivered, bounced, complained, opened, clicked), Resend
+triggers a webhook which updates the Tigris search index with the updated email
+status. You can then search across all the attributes of an email document
+within the Tigris Search index using:
+
+- Full-text real-time search with fuzzy matching across all fields (status, to,
+  from, subject, created [date], and email body)
+- Filtering on email status
+- Sorting by date
+- Browsing via pagination
+
+import search from "./search.mp4";
+
+<video controls style={{ width: "100%" }}>
+  <source src={search} />
+</video>
+
+It's a simple but powerful use case of Tigris standalone search.
+
+You can try out the
+[Awesome Email Search demo](https://awesome-email-search.vercel.app/), grab the
+[Awesome Email Search code on GitHub](https://github.com/tigrisdata-community/awesome-email-search),
+or read through the code walk-through, below.
+
+## How to send transactional email with Resend
+
+The demo application is building using Next.js and makes use of the
+[Next.js 13 App Router](https://nextjs.org/docs/app/building-your-application/routing).
+
+When the Send email form is submitted, a route handles the `POST` request.
+
+```ts
+export async function POST(request: Request) {
+  let emailIndex;
+  let errorStatus = 400;
+  try {
+    const formData = await request.formData();
+    const stage = formData.get('stage');
+    if (!stage) {
+      throw new Error('"stage" is a required search parameter');
+    }
+
+    ...
+```
+
+In the code above we grab the form data from the `POST` request and extract the
+`stage` value. `stage` maps to the email we'll send: Welcome, Join the
+community, or Request feedback. The code also checks that the stage exists.
+
+Next, we lookup the Resend email template and create the email:
+
+```ts
+    if (!stage) {
+      throw new Error('"stage" is a required search parameter');
+    }
+
+    const emailTemplate = EmailTemplates[stage as string];
+
+    if (!emailTemplate) {
+      throw new Error(`Could not find email template for stage "${stage}"`);
+    }
+
+    const body = emailTemplate.template({
+      name: formData.get('name')?.valueOf() as string,
+      link: formData.get('link')?.valueOf() as string,
+    })!;
+    log('created email');
+
+    ...
+```
+
+Here, we perform a lookup based on the `stage` value and get a reference to the
+email template details. The `template` property is a react component - yep,
+Resend allows you to create emails in React - and we create the body of the
+email, passing in `name` and `link` values that have been submitted via the
+`POST` request.
+
+Now that we have the email contents, we can send the email:
+
+```ts
+    log('created email');
+
+    const testEmailStatus = formData.get('testEmailStatus')
+      ? TestEmailStatus[
+          formData.get('testEmailStatus') as unknown as TestEmailStatus
+        ]
+      : '';
+    log(
+      'testEmailStatus',
+      testEmailStatus,
+      `[${formData.get('testEmailStatus')}]`
+    );
+    const sendEmailRequest: SendEmailData = {
+      from: process.env.DEFAULT_EMAIL as string,
+      to: [getToEmail(testEmailStatus)],
+      subject: emailTemplate.emailSubject,
+      react: body,
+    };
+    const sendResponse = await resend.sendEmail(sendEmailRequest);
+    log('sent email');
+    statusCode = 201;
+
+    ...
+```
+
+Resend provide a number of test email addresses you can use to test sending
+emails. We map the `testEmailStatus` form data to a `to` email address in the
+`TestEmailStatus` lookup, create a
+
+## How to index emails with Tigris Search
+
+```ts
+    log('sent email');
+    statusCode = 201;
+
+    const bodyString = reactElementToJSXString(body);
+    log('created body string', bodyString);
+
+    emailIndex = {
+      to: sendEmailRequest.to as string[],
+      firstTo: sendEmailRequest.to[0] as string,
+      from: sendEmailRequest.from,
+      status: EmailStatus.Pending,
+      subject: emailTemplate.emailSubject,
+      body: bodyString,
+      createdAt: new Date(),
+      id: (sendResponse as EmailResponse).id,
+    };
+
+    log('creating index', emailIndex);
+    const emails = await search.getIndex<Email>(EMAIL_INDEX_NAME);
+    const createResult = await emails.createOne(emailIndex);
+
+    if (createResult.error) {
+      console.error('Error occurred saving search index', createResult.error);
+    } else {
+      log('Index created', createResult);
+    }
+
+    ...
+```
+
+```ts
+    if (createResult.error) {
+      console.error('Error occurred saving search index', createResult.error);
+    } else {
+      log('Index created', createResult);
+    }
+  } catch (ex: any) {
+    console.error(ex);
+    return NextResponse.json({ error: ex.toString() }, { status: statusCode });
+  }
+
+  return NextResponse.json(emailIndex, { status: statusCode });
+}
+```
+
+## How Resend webhooks trigger Tigris Search index updates
+
+```ts
+export async function POST(request: Request) {
+  let errorStatusCode = 500;
+  try {
+    // TODO request signing
+
+    const body = (await request.json()) as ResendWebhook;
+    log('WebHook', JSON.stringify(body, null, 2));
+    const newStatus: EmailStatus = WebHookToEmailStatusLookup[body.type];
+    log(`Updating status to`, newStatus);
+
+    ...
+```
+
+```ts
+    log(`Updating status to`, newStatus);
+
+    log('getting index and document');
+    const emailsIndex = await search.getIndex<Email>(EMAIL_INDEX_NAME);
+    const toUpdate = await emailsIndex.getOne(body.data.email_id);
+    log('found document', JSON.stringify(toUpdate, null, 2));
+
+    if (toUpdate === undefined) {
+      errorStatusCode = 404;
+      throw new Error(
+        `Could not find document in index for Email with id ${body.data.email_id}`
+      );
+    }
+
+    ...
+```
+
+```ts
+    if (toUpdate === undefined) {
+      errorStatusCode = 404;
+      throw new Error(
+        `Could not find document in index for Email with id ${body.data.email_id}`
+      );
+    }
+
+    toUpdate.document.status = newStatus;
+    const updateStatus = await emailsIndex.updateOne(toUpdate.document);
+    log('Update result', JSON.stringify(updateStatus, null, 2));
+
+    if (updateStatus.error) {
+      const msg = 'Error updating indexed document:' + updateStatus.error;
+      console.error(msg);
+      throw new Error(msg);
+    }
+
+    return NextResponse.json({}, { status: 200 });
+  } catch (ex) {
+    return NextResponse.json({}, { status: errorStatusCode });
+  }
+}
+```
+
+Consider ending on a CTA... A few examples below:
+
+<p>
+  <CloudLink text="Sign up for a free Tigris Cloud account" /> to see the
+  benefits of our serverlesss NoSQL Database and Search platform.
+</p>
+
+Have questions? <a href="https://www.tigrisdata.com/contact/">Get in touch</a>.
+
+---
+
+import NewsletterSubscribe from "../../src/components/NewsletterSubscribe";
+
+<NewsletterSubscribe />
