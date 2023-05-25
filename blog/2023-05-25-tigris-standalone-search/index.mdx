@@ -29,12 +29,11 @@ Tigris Search, which improves developer productivity through enabling the team
 to focus on shipping features and not setting up and managing database-to-search
 syncronization infrastructure.
 
-But, migrating your existing database to a new database such as Tigris Database
-can be a big challenge for a number of reasons. And, although some of our
-customers have done just that, it's not for everyone and you may just need a
-search product right now. Or, you may not store your data in a database; maybe
-you've got all your data in S3, or you've got a statically generated site driven
-by a number of data files stored in your source control.
+But, you many not yet be in the position to migrate all your data over to Tigris
+and you may have a more pressing need to enhance your product with a great
+search experience. Or, you may not store your data in a database; maybe you've
+got all your data in S3, or you've got a statically generated site driven by a
+number of data files stored in your source control.
 
 Whatever the reason, Tigris Standalone Search can help if you're looking for a
 search solution.
@@ -102,7 +101,7 @@ For more information including indexing multiple documents, updating indexed
 documents, and deleted indexed douments, see the
 [TypeScript Standalone Search docs](https://www.tigrisdata.com/docs/sdkstools/typescript/search/).
 
-## Awesome search demo with Resend &amp; Tigris Search {#search-demo}
+## Awesome email search demo with Resend &amp; Tigris Search {#search-demo}
 
 To demonstrate Tigris Search we've created a demo application with Resend - an
 API platform that enables developers to build, test, and deliver transactional
@@ -151,10 +150,10 @@ The demo application is building using Next.js and makes use of the
 
 When the Send email form is submitted, a route handles the `POST` request.
 
-```ts
+```ts title=src/app/api/email/route.tsx
 export async function POST(request: Request) {
   let emailIndex;
-  let errorStatus = 400;
+  let statusCode = 400;
   try {
     const formData = await request.formData();
     const stage = formData.get('stage');
@@ -165,13 +164,16 @@ export async function POST(request: Request) {
     ...
 ```
 
-In the code above we grab the form data from the `POST` request and extract the
-`stage` value. `stage` maps to the email we'll send: Welcome, Join the
-community, or Request feedback. The code also checks that the stage exists.
+In the code above we define a `emailIndex` variable represending the Tigris
+Search index we're going to create and also `statusCode` variable to hold the
+status code to be used in the `POST` response. We grab the form data from the
+`POST` request and extract the `stage` value. `stage` maps to the email we'll
+send: Welcome, Join the community, or Request feedback. The code also checks
+that the stage exists.
 
 Next, we lookup the Resend email template and create the email:
 
-```ts
+```ts title=src/app/api/email/route.tsx
     if (!stage) {
       throw new Error('"stage" is a required search parameter');
     }
@@ -199,7 +201,7 @@ email, passing in `name` and `link` values that have been submitted via the
 
 Now that we have the email contents, we can send the email:
 
-```ts
+```ts title=src/app/api/email/route.tsx
     log('created email');
 
     const testEmailStatus = formData.get('testEmailStatus')
@@ -225,20 +227,96 @@ Now that we have the email contents, we can send the email:
     ...
 ```
 
-Resend provide a number of test email addresses you can use to test sending
-emails. We map the `testEmailStatus` form data to a `to` email address in the
-`TestEmailStatus` lookup, create a
+Resend provides a number of
+[test email addresses](https://resend.com/docs/dashboard/emails/send-test-emails)
+(e.g. `bounced@resend.dev`) you can use to test sending emails. We map the
+`testEmailStatus` form data to a `to` email address via the `TestEmailStatus`
+lookup, create a `SendEmailData` payload including `from`, `to`, `subject` and
+`body` information, and make a request to send the email via
+`await resend.sendEmail`. Finally, we set a `statusCode` variable value of `201`
+to indicate the resource has been created.
 
 ## How to index emails with Tigris Search
 
-```ts
+Before we continue with the `POST` handling code, let's look at how we define
+our
+[Search data model](https://www.tigrisdata.com/docs/sdkstools/typescript/database/datamodel/)
+and create the search index.
+
+First, we define an `Email` class:
+
+```ts title=src/db/models/email.ts
+export const EMAIL_INDEX_NAME = "emails";
+
+@TigrisSearchIndex(EMAIL_INDEX_NAME)
+export class Email implements EmailResult {
+  @SearchField({ id: true })
+  id?: string;
+
+  @SearchField({ sort: true })
+  firstTo!: string;
+
+  @SearchField({ elements: TigrisDataTypes.STRING })
+  to!: string[];
+
+  @SearchField({ sort: true })
+  from!: string;
+
+  @SearchField({ sort: true })
+  subject!: string;
+
+  @SearchField()
+  body!: string;
+
+  @SearchField({ sort: true, facet: true })
+  status!: EmailStatus;
+
+  @SearchField({ sort: true })
+  createdAt!: Date;
+}
+```
+
+The `Email` class defines the Search document model to be created in an index
+called `email`. Fields to be indexed are marked with a `@SearchField` decorator,
+if they are to be sortable `sort` is set in the decorator, if they are a
+potential `facet` they are also marked as such. Where possible, data types are
+inferred. Since `to` is an Array, `{ elements: TigrisDataTypes.STRING }` must be
+passed to the decorator.
+
+With the Search data model defined, we need to create the Search index:
+
+```ts title=scripts/setup.ts
+import { Email } from "../src/db/models/email";
+import { Tigris } from "@tigrisdata/core";
+
+const main = async () => {
+  const client = new Tigris();
+  const search = client.getSearch();
+  await search.createOrUpdateIndex<Email>(Email);
+};
+
+main();
+```
+
+This simple script should be run whenever the application starts, code data
+model code is changed, or the application is built. It informs Tigris of the
+Search Model structure and to create a Search index via the async call to
+`search.createOrUpdateIndex<Email>(Email)`.
+
+Now that we've created the Search index, we can head back to the `POST` handling
+function.
+
+With the email sent, we can create the email document in the search index.
+
+```ts title=src/app/api/email/route.tsx
+    const sendResponse = await resend.sendEmail(sendEmailRequest);
     log('sent email');
     statusCode = 201;
 
     const bodyString = reactElementToJSXString(body);
     log('created body string', bodyString);
 
-    emailIndex = {
+    emailIndex: Email = {
       to: sendEmailRequest.to as string[],
       firstTo: sendEmailRequest.to[0] as string,
       from: sendEmailRequest.from,
@@ -262,7 +340,24 @@ emails. We map the `testEmailStatus` form data to a `to` email address in the
     ...
 ```
 
-```ts
+The `emailIndex` variable is assigned a structure that matches the `Email` class
+data model that we've defined. We then get the `emails` index using
+`await search.getIndex<Email>(EMAIL_INDEX_NAME)` and then create the email
+document within the index with `await emails.createOne(emailIndex)`. Finally, we
+check the result and log success or failure
+
+:::note A `201` even if the index creation fails?
+
+I made the decision to still return a `201` if the email is sent but the search
+index insertion fails. This is an interesting point for discussion.
+
+:::
+
+With the email sent and the document inserted into the Search index, we return
+the email index to the client if everything has gone as expected. Otherwise, we
+return a status code of 400 along with the error message.
+
+```ts title=src/app/api/email/route.tsx
     if (createResult.error) {
       console.error('Error occurred saving search index', createResult.error);
     } else {
@@ -274,6 +369,85 @@ emails. We map the `testEmailStatus` form data to a `to` email address in the
   }
 
   return NextResponse.json(emailIndex, { status: statusCode });
+}
+```
+
+Here's the what the sending experience looks like which makes use of the `POST`
+endpoint:
+
+import sendingEmail from "./sending-email.mp4";
+
+<video controls style={{ width: "100%" }}>
+  <source src={sendingEmail} />
+</video>
+
+## How to search with Tigris Search
+
+```ts title=src/app/api/email/route.tsx
+export async function GET(request: Request) {
+  const response: SearchResponse = {
+    results: [],
+    meta: undefined,
+    error: undefined,
+  };
+  const { searchParams } = new URL(request.url);
+  log('searchParams', searchParams);
+  try {
+    const query = searchParams.get('search') || undefined;
+    const statuses = searchParams.get('statuses') || undefined;
+    const sortOrder = toSortOrder(searchParams.get('sortdir'));
+
+    // Number(null) = 0
+    const page = Number(searchParams.get('page'));
+    if (page <= 0) {
+      throw new Error(
+        '"page" is a required search parameter and must be a number greater than 0'
+      );
+    }
+
+    ...
+```
+
+```ts title=src/app/api/email/route.tsx
+    const emails = await search.getIndex<Email>(EMAIL_INDEX_NAME);
+    const searchQuery: SearchQuery<Email> = {
+      q: query,
+      hitsPerPage: PAGE_SIZE,
+      sort: sortOrder,
+    };
+    if (statuses) {
+      const orFilter: Filter<Email>[] = statuses.split(',').map((status) => {
+        const enumAsStr = status as unknown as EmailStatus;
+        const asEnum = EmailStatus[enumAsStr];
+        log('map', status, enumAsStr, asEnum);
+        return {
+          status: asEnum,
+        } as Filter<Email>;
+      });
+      if (orFilter.length > 1) {
+        searchQuery.filter = {
+          $or: orFilter,
+        };
+      } else {
+        searchQuery.filter = orFilter[0];
+      }
+    }
+    log('searchQuery', JSON.stringify(searchQuery, null, 2));
+    const queryResult = await emails.search(searchQuery, page);
+    log('queryResult', queryResult);
+
+    ...
+```
+
+```ts title=src/app/api/email/route.tsx
+    response.results = queryResult.hits.map((hit) => hit.document);
+    response.meta = queryResult.meta;
+  } catch (ex) {
+    console.error(ex);
+    response.error = ex as string;
+  }
+
+  return NextResponse.json(response);
 }
 ```
 
@@ -335,6 +509,8 @@ export async function POST(request: Request) {
   }
 }
 ```
+
+## Try the demo to get start with Tigris Search and Resend
 
 Consider ending on a CTA... A few examples below:
 
