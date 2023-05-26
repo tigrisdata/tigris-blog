@@ -8,4 +8,5 @@ module.exports = {
   discordUrl: "https://www.tigrisdata.com/discord/",
   youTubeUrl: "https://www.youtube.com/channel/UCsCQ5Nl3JOh71UNCCNZ3q2g",
   gitHubUrl: "https://github.com/tigrisdata/tigris",
+  twitterUrl: "https://twitter.com/TigrisData",
 };
