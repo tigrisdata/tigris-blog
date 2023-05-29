@@ -1,0 +1,171 @@
+---
+slug: nice-slug-goes-here
+title: Put your awesome title here
+description: >
+  Put your meta description here
+keywords: [key phrases, go here]
+authors: [leggetter]
+tags: [tags, go here]
+image: "https://vercel-og-tigris.vercel.app/api/param?title=Put%20your%20awesome%20title%20here"
+---
+
+<!-- update "image" above to a custom image as a preference. The Vercel OG hosted version is a fallback -->
+
+<head>
+  <meta name="twitter:creator" content="@leggetter" />
+</head>
+
+import tigrisConfig from "@site/tigris.config.js";
+
+export const CloudLink = ({ text = "Tigris Cloud" }) => {
+  return <a href={tigrisConfig.signupUrl}>{text}</a>;
+};
+
+## Why you need a dedicated search product
+
+### Less formal
+
+Database search serves its purpose when it comes to retrieving specific
+information from structured datasets. However, it does come with certain
+limitations that make dedicated search products a more favorable choice in many
+scenarios. Let's delve into why utilizing a dedicated search product is
+advantageous:
+
+First and foremost, database search has its fair share of constraints. It
+typically relies on structured query languages like SQL, demanding precise
+keyword matching and exact criteria. This poses challenges when dealing with
+complex search scenarios involving natural language queries, fuzzy matching,
+relevance ranking, or unstructured data, as it is not well-suited for such
+tasks.
+
+Furthermore, scalability can become an issue with database search. As datasets
+grow in size and complexity, performance can suffer, leading to slower search
+results and increased processing overhead. This can impede efficiency and hinder
+time-sensitive operations.
+
+Moreover, databases are primarily designed for structured data, making it
+challenging to handle unstructured or semi-structured data types such as text
+documents, multimedia files, or web content. To effectively search through such
+data, additional processing and indexing capabilities are required, which are
+not inherently present in traditional databases.
+
+In contrast, dedicated search products offer distinct advantages. They are
+purpose-built to address these limitations and provide advanced search
+functionality. Consider the following benefits:
+
+1. Enhanced search capabilities: Dedicated search products employ sophisticated
+   search algorithms and techniques, including full-text search, relevance
+   ranking, faceted search, spell correction, and semantic analysis. These
+   capabilities enable more accurate and comprehensive retrieval of information,
+   particularly when dealing with unstructured or complex data.
+
+2. Scalability and performance: Search products are designed to handle
+   large-scale datasets efficiently. They utilize distributed architectures,
+   indexing mechanisms, caching strategies, and parallel processing to deliver
+   fast and scalable search results, even when dealing with massive amounts of
+   data.
+
+3. Support for diverse data types: Dedicated search products excel in handling
+   various data types, encompassing unstructured and semi-structured data. They
+   provide tools for data ingestion, preprocessing, and indexing, enabling
+   effective search across multiple formats and sources.
+
+4. Advanced analytics and insights: Many search products offer additional
+   features such as data visualization, statistical analysis, and integration
+   with machine learning capabilities. These functionalities empower businesses
+   to derive deeper insights from their data, uncovering patterns or trends that
+   may not be readily apparent through traditional database search methods.
+
+5. User-friendly interfaces: Dedicated search products often come equipped with
+   user-friendly interfaces, query builders, and search APIs, simplifying user
+   interactions with the search system. This accessibility enables non-technical
+   users to perform complex searches and obtain relevant results more
+   effectively.
+
+In summary, while database search serves its purpose for structured data
+retrieval, dedicated search products outshine it in terms of handling diverse
+data types, providing advanced search capabilities, ensuring scalability, and
+offering additional features that enhance search experiences and enable deeper
+insights.
+
+### Format
+
+While database search can be useful for retrieving specific information from
+structured datasets, it does have certain shortfalls that make dedicated search
+products preferable in many cases. Here are some limitations of database search:
+
+1. Limited search capabilities: Traditional database search typically relies on
+   structured query languages (e.g., SQL) that require precise matching of
+   keywords or exact criteria. This makes it difficult to handle more complex
+   search scenarios involving natural language queries, fuzzy matching,
+   relevance ranking, and handling unstructured data.
+2. Lack of scalability: Database search may struggle with scalability as the
+   size of the dataset grows. As the number of records and complexity of
+   relationships increase, performance can degrade, leading to slower search
+   results and increased processing overhead.
+3. Inability to handle diverse data types: Databases are designed for structured
+   data, which means they may struggle with unstructured or semi-structured data
+   types such as text documents, multimedia files, or web content. Searching
+   through such data effectively requires additional processing and indexing
+   capabilities not inherent in traditional databases.
+4. Limited text search features: While databases often support basic text search
+   capabilities, they may lack advanced features like full-text indexing,
+   stemming, synonym matching, or linguistic analysis. These features are
+   essential for performing accurate and comprehensive searches over textual
+   data.
+
+Dedicated search products, on the other hand, are specifically designed to
+address these limitations and provide advanced search functionality. Here are
+some advantages of using dedicated search products:
+
+1. Enhanced search capabilities: Dedicated search products offer sophisticated
+   search algorithms and techniques, including full-text search, relevance
+   ranking, faceted search, spell correction, and semantic analysis. These
+   capabilities enable more accurate and comprehensive retrieval of information,
+   especially in scenarios involving unstructured or complex data.
+2. Scalability and performance: Search products are built to handle large-scale
+   data sets efficiently. They employ distributed architectures, indexing
+   mechanisms, caching strategies, and parallel processing to deliver fast and
+   scalable search results, even with massive amounts of data.
+3. Support for diverse data types: Dedicated search products can handle various
+   data types, including unstructured and semi-structured data. They provide
+   tools for data ingestion, preprocessing, and indexing, allowing effective
+   search across multiple formats and sources.
+4. Advanced analytics and insights: Many search products offer additional
+   features such as data visualization, statistical analysis, and machine
+   learning integration. These capabilities enable businesses to gain deeper
+   insights from their data and uncover patterns or trends that may not be
+   apparent through traditional database search.
+5. User-friendly interfaces: Dedicated search products often come with
+   user-friendly interfaces, query builders, and search APIs, making it easier
+   for users to interact with the search system. This accessibility empowers
+   non-technical users to perform complex searches and obtain relevant results
+   more effectively.
+
+So, while database search serves its purpose for structured data retrieval,
+dedicated search products such as Tigris Search are better for handling diverse
+data types, providing advanced search capabilities, ensuring scalability, and
+offering additional features that enhance search experiences and enable deeper
+insights.
+
+Introductory section that will appear on /blog as well as within the single post
+page.
+
+<!-- truncate -->
+
+Content goes here...
+
+Consider ending on a CTA... A few examples below:
+
+<p>
+  <CloudLink text="Sign up for a free Tigris Cloud account" /> to see the
+  benefits of our serverlesss NoSQL Database and Search platform.
+</p>
+
+Have questions? <a href="https://www.tigrisdata.com/contact/">Get in touch</a>.
+
+---
+
+import NewsletterSubscribe from "../../src/components/NewsletterSubscribe";
+
+<NewsletterSubscribe />
