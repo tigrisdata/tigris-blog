@@ -88,12 +88,12 @@ const config = {
           hideable: true,
         },
       },
-      announcementBar: {
-        id: "announcementBar-2", // increment on change
-        content: `🚀 <a target="_blank" href="${tigrisConfig.signupUrl}">Signup</a> for our new public beta &nbsp; &nbsp; ⭐️ Star Tigris on <a target="_blank" rel="noopener noreferrer" href="https://github.com/tigrisdata/tigris">GitHub</a>`,
-        backgroundColor: "#5ecbad",
-        textColor: "#262b31",
-      },
+      // announcementBar: {
+      //   id: "announcementBar-2", // increment on change
+      //   content: `🚀 <a target="_blank" href="${tigrisConfig.signupUrl}">Signup</a> for our new public beta &nbsp; &nbsp; ⭐️ Star Tigris on <a target="_blank" rel="noopener noreferrer" href="https://github.com/tigrisdata/tigris">GitHub</a>`,
+      //   backgroundColor: "#5ecbad",
+      //   textColor: "#262b31",
+      // },
       navbar: {
         hideOnScroll: false,
         logo: {
