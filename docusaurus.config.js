@@ -102,6 +102,7 @@ const config = {
           srcDark: "/logo/dark.png",
           alt: "Tigris Blog",
           height: "26px",
+          target: "_self",
         },
         items: [
           {
