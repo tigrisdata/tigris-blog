@@ -15,8 +15,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "Tigris",
-  tagline:
-    "Tigris is a Serverless NoSQL Database and Search Platform that offers a modern alternative to DynamoDB and MongoDB.",
+  tagline: "Tigris is the storage platform for real-time apps.",
   url: tigrisConfig.websiteUrl,
   baseUrl: "/blog/",
   favicon: "img/favicon.ico",
@@ -164,27 +163,22 @@ const config = {
             position: "right",
           },
           {
-            href: "https://github.com/tigrisdata/tigris",
-            className: "pseudo-icon github-icon",
-            position: "right",
-          },
-          {
             href: "https://twitter.com/TigrisData",
             className: "pseudo-icon twitter-icon",
             position: "right",
           },
-          {
-            label: "Sign Up",
-            href: tigrisConfig.signupUrl,
-            position: "right",
-            className: "wc-portal-signup wc-portal-link",
-          },
-          {
-            label: "Login",
-            href: tigrisConfig.loginUrl,
-            position: "right",
-            className: "wc-portal-login wc-portal-link",
-          },
+          // {
+          //   label: "Sign Up",
+          //   href: tigrisConfig.signupUrl,
+          //   position: "right",
+          //   className: "wc-portal-signup wc-portal-link",
+          // },
+          // {
+          //   label: "Login",
+          //   href: tigrisConfig.loginUrl,
+          //   position: "right",
+          //   className: "wc-portal-login wc-portal-link",
+          // },
         ],
       },
       footer: {
@@ -196,15 +190,15 @@ const config = {
           height: "26px",
         },
         links: [
-          {
-            title: "Product",
-            items: [
-              {
-                label: "Cloud Console",
-                href: tigrisConfig.consoleUrl,
-              },
-            ],
-          },
+          // {
+          //   title: "Product",
+          //   items: [
+          //     {
+          //       label: "Cloud Console",
+          //       href: tigrisConfig.consoleUrl,
+          //     },
+          //   ],
+          // },
           {
             title: "Company",
             items: [
@@ -236,12 +230,6 @@ const config = {
           {
             title: "Resources",
             items: [
-              {
-                label: "Documentation",
-                href: tigrisConfig.docsUrl,
-                rel: "",
-                className: "footer__link-item disable-external-icon",
-              },
               {
                 label: "Blog",
                 href: "/",
