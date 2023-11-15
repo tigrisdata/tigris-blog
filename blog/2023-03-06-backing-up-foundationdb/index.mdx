@@ -2,51 +2,64 @@
 slug: backing-up-foundationdb
 title: Backing up FoundationDB
 description: >
-  Tigris is an open source developer data platform that uses FoundationDB as the underlying storage engine.
-  This blog post describes how do we perform backups on FoundationDB, and what options exist for that purpose.
+  Tigris is a globally available, S3 compatible object storage service that uses
+  FoundationDB for its metadata storage. This blog post describes how do we
+  perform backups on FoundationDB, and what options exist for that purpose.
 image: ./foundationdb-backups.png
 keywords: [foundationdb, backup]
 authors: [pboros]
 tags: [foundationdb, backup]
 ---
 
-We are running FoundationDB with the [official kubernetes operator](https://github.com/FoundationDB/fdb-kubernetes-operator).
-FoundationDB supports logical backups (with `backup_agent`) and disaster recovery (with `dr_agent`) through copying
-the database/streaming changes logically. It also supports binary backups through [disk snapshots](https://apple.github.io/foundationdb/disk-snapshot-backup.html).
+We are running FoundationDB with the
+[official kubernetes operator](https://github.com/FoundationDB/fdb-kubernetes-operator).
+FoundationDB supports logical backups (with `backup_agent`) and disaster
+recovery (with `dr_agent`) through copying the database/streaming changes
+logically. It also supports binary backups through
+[disk snapshots](https://apple.github.io/foundationdb/disk-snapshot-backup.html).
 
-In this blog post, we will describe how to make a backup of FoundationDB via `backup_agent`. The FoundationDB operator
-supports making logical backups via `backup_agent`, but it does not support running DR with `dr_agent`. We decided to run `backup_agent`
-as a separate deployment to allow a symmetric setup with `dr_agent`.
+In this blog post, we will describe how to make a backup of FoundationDB via
+`backup_agent`. The FoundationDB operator supports making logical backups via
+`backup_agent`, but it does not support running DR with `dr_agent`. We decided
+to run `backup_agent` as a separate deployment to allow a symmetric setup with
+`dr_agent`.
 
 <!-- truncate-->
 
-In order to run the `backup_agent` pods, we will need a deployment. That deployment will need the following:
+In order to run the `backup_agent` pods, we will need a deployment. That
+deployment will need the following:
 
 - Network level access to the FoundationDB cluster
-- The cluster file to use. This is provided from the config volume that is exposed from the operator. In the setup
-  described below, the cluster file will be available at `/mnt/fdb-config-volume/cluster-file`.
-- If the backup destination is S3 or a similar object store, the secrets are needed to connect to it. In the example
-  below, it is coming from an external secret.
-- If the backup destination is not object store, supply a volume for the backup agents where the backup will be stored.
+- The cluster file to use. This is provided from the config volume that is
+  exposed from the operator. In the setup described below, the cluster file will
+  be available at `/mnt/fdb-config-volume/cluster-file`.
+- If the backup destination is S3 or a similar object store, the secrets are
+  needed to connect to it. In the example below, it is coming from an external
+  secret.
+- If the backup destination is not object store, supply a volume for the backup
+  agents where the backup will be stored.
 
 ![Architecture](./fdb-backup-architecture.png)
 
-There is no limit to the number of backup agents that can connect to a cluster, each one will be responsible for a
-range of keys, which they will either store locally (or in the case of Kubernetes on the attached volumes), or stream
-to the object store.
-If the backup is stored locally and the database is for example 4 GiB, and there are 4 backup agents available,
-each of them will roughly store 1 GiB worth of data. If the backup destination is an object store, the number of backup
-agents will mostly determine the degree of parallelism both for reading the data and for writing the streamed data to
-the object store. This blog post will focus on the backups being stored on an object store, which I assume most of the
-Tigris users will do.
+There is no limit to the number of backup agents that can connect to a cluster,
+each one will be responsible for a range of keys, which they will either store
+locally (or in the case of Kubernetes on the attached volumes), or stream to the
+object store. If the backup is stored locally and the database is for example 4
+GiB, and there are 4 backup agents available, each of them will roughly store 1
+GiB worth of data. If the backup destination is an object store, the number of
+backup agents will mostly determine the degree of parallelism both for reading
+the data and for writing the streamed data to the object store. This blog post
+will focus on the backups being stored on an object store, which I assume most
+of the Tigris users will do.
 
-:::note
-When using an object storage like S3, versioning should be disabled (FoundationDB will do the versioning), and there
-should not be any automatic deletion/archival policy on the bucket. Only fdbbackup has a way to know what key range is still
-needed. Deleting old backups should be done with the expire subcommand of fdbbackup.
-:::
+:::note When using an object storage like S3, versioning should be disabled
+(FoundationDB will do the versioning), and there should not be any automatic
+deletion/archival policy on the bucket. Only fdbbackup has a way to know what
+key range is still needed. Deleting old backups should be done with the expire
+subcommand of fdbbackup. :::
 
-Below is an example of `backup_agent` as a kubernetes deployment with 4 replicas.
+Below is an example of `backup_agent` as a kubernetes deployment with 4
+replicas.
 
 ```shell
 apiVersion: apps/v1
@@ -106,8 +119,9 @@ spec:
 
 ```
 
-A continuous backup pushes multiple logs and inconsistent snapshots to the destination. At restore time, the changes
-will be used to "roll forward" the database.
+A continuous backup pushes multiple logs and inconsistent snapshots to the
+destination. At restore time, the changes will be used to "roll forward" the
+database.
 
 Backup command example:
 
@@ -115,9 +129,10 @@ Backup command example:
 fdbbackup start -t sample-test -z -s 7200 -C /mnt/fdb-config-volume/cluster-file -d 'blobstore://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@s3.us-east-2.amazonaws.com:443/path/to/backup/backup_name?bucket=sample-bucket&sc=1' --knob_http_request_aws_v4_header=true --log
 ```
 
-The `fdbbackup` itself is a client utility (can be used from the backup agent pods) for managing backup jobs.
-Once the job level manipulation is done, the `fdbbackup` process itself will exit, the actual work is done by
-the `backup_agent` processes.
+The `fdbbackup` itself is a client utility (can be used from the backup agent
+pods) for managing backup jobs. Once the job level manipulation is done, the
+`fdbbackup` process itself will exit, the actual work is done by the
+`backup_agent` processes.
 
 Those are quite a lot of parameters, let me explain them.
 
@@ -125,20 +140,24 @@ Those are quite a lot of parameters, let me explain them.
 -t TAG_NAME
 ```
 
-Specifies the tag that the backup will use. By default this is `default`. This will appear in the tags part of `status json` output.
+Specifies the tag that the backup will use. By default this is `default`. This
+will appear in the tags part of `status json` output.
 
 ```shell
 -z
 ```
 
-Specifies that the backup is continuous. Without this, the backup is just made as a one off. The fdbbackup
+Specifies that the backup is continuous. Without this, the backup is just made
+as a one off. The fdbbackup
 
 ```shell
 -s 7200
 ```
 
-Specifies the snapshot interval, which determines how often a new snapshot should be made. Please note that 7200 is way
-too low for production settings, but for the purpose of this blog post, and showing the status output based on this, it's perfect.
+Specifies the snapshot interval, which determines how often a new snapshot
+should be made. Please note that 7200 is way too low for production settings,
+but for the purpose of this blog post, and showing the status output based on
+this, it's perfect.
 
 ```shell
 [root@sample-fdb-backup-agent-776ff99c68-5xztw /]# fdbbackup status -C /mnt/fdb-config-volume/cluster-file -t conttest
@@ -157,22 +176,28 @@ Details:
  Backup supposed to stop at next snapshot completion - No
 ```
 
-This means that the status output above was captured at 17:32, the consistent time for the previous snapshot was 16:39,
-the expected consistent timestamp of the next snapshot will be 18:40 (so there are 2 hours in between).
+This means that the status output above was captured at 17:32, the consistent
+time for the previous snapshot was 16:39, the expected consistent timestamp of
+the next snapshot will be 18:40 (so there are 2 hours in between).
 
-Because a continuous backup contains snapshots and mutations, any database version can be restored, which is covered.
-In the example above, this means that any transaction can be restored from the first complete snapshot (not in the status output)
-to `2023/02/28.17:32:15+0000`. This means that such a continuous backup can protect from accidental data deletion as well.
+Because a continuous backup contains snapshots and mutations, any database
+version can be restored, which is covered. In the example above, this means that
+any transaction can be restored from the first complete snapshot (not in the
+status output) to `2023/02/28.17:32:15+0000`. This means that such a continuous
+backup can protect from accidental data deletion as well.
 
 ## Expiring backups
 
-Because a continuous backup has all the changes that ever happened to the database, the size of the backup can grow
-over time. For example, updating a value to something different, but the same size (for example updating a timestamp
-or an integer) does not increase the total database size at the FoundationDB level, it will increase the size of
-the continuous backup permanently. While being able to restore any transaction is a very powerful, people rarely need
-to restore data that is for example more than 1 month old.
+Because a continuous backup has all the changes that ever happened to the
+database, the size of the backup can grow over time. For example, updating a
+value to something different, but the same size (for example updating a
+timestamp or an integer) does not increase the total database size at the
+FoundationDB level, it will increase the size of the continuous backup
+permanently. While being able to restore any transaction is a very powerful,
+people rarely need to restore data that is for example more than 1 month old.
 
-For this reason, the `fdbbackup` utility that manages the backups has a way to expire old data.
+For this reason, the `fdbbackup` utility that manages the backups has a way to
+expire old data.
 
 ```shell
 [root@sample-fdb-backup-agent-776ff99c68-5xztw /]#  fdbbackup expire -C /mnt/fdb-config-volume/cluster-file -d 'blobstore://CREDS:HERE@s3.us-east-2.amazonaws.com:443/path/to/backup/backup_name?bucket=sample-bucket&sc=1' --expire_before_version 25500608280 --knob_http_request_aws_v4_header=true --log
@@ -186,9 +211,11 @@ Instead of specifying a version, a timestamp can be specified as well.
 --expire-before-timestamp '2023/03/01.01:00:00+0000'
 ```
 
-In this case, `fdbbackup` will find a version that is close to this, and will expire the data before that version.
+In this case, `fdbbackup` will find a version that is close to this, and will
+expire the data before that version.
 
-After expiring, the backup size should reduced. This can be verified with an AWS client.
+After expiring, the backup size should reduced. This can be verified with an AWS
+client.
 
 ```shell
 aws s3 ls s3://sample-bucket/path/to/backup/backup_name/ --recursive --human-readable --summarize
@@ -199,8 +226,8 @@ Total Objects: 5407
 
 ## Restoring backups
 
-Restorations can be triggered with the `fdbrestore` utility. If no target time or version is specified, `fdbrestore`
-will restore the latest available version.
+Restorations can be triggered with the `fdbrestore` utility. If no target time
+or version is specified, `fdbrestore` will restore the latest available version.
 
 Exmaple:
 
@@ -225,7 +252,8 @@ MaxRestorableVersion:    86927163669 (maxLogEnd -0.00 days)
 Restoring backup to version: 86927163669
 ```
 
-After this, the status and the progress can be checked with the status subcommand.
+After this, the status and the progress can be checked with the status
+subcommand.
 
 ```shell
 [root@sample-fdb-backup-agent-776ff99c68-dcpxr /]# fdbrestore status --dest-cluster-file /mnt/fdb-config-volume/cluster-file
@@ -239,37 +267,41 @@ The restore process itself is using a single commit proxy.
 
 ### TLS and ports
 
-The `backup_agent` is capable of using TLS to talk to the object store. This is something desirable for most deployments.
-By default, it needs a client side certificate (not covered in this blog post). If a self signed certificate is used,
-or if no certificate is used, but still the HTTPS endpoint of the object store is used, the `--tls_verify_peers Check.Valid=0`
-option can be used (mostly useful for testing purposes). With the secure endpoint, in some cases, I need to specify
-`:443` in the blobstore url for the correct protocol to be used (there is no protocol specification because of `blobstore://`).
+The `backup_agent` is capable of using TLS to talk to the object store. This is
+something desirable for most deployments. By default, it needs a client side
+certificate (not covered in this blog post). If a self signed certificate is
+used, or if no certificate is used, but still the HTTPS endpoint of the object
+store is used, the `--tls_verify_peers Check.Valid=0` option can be used (mostly
+useful for testing purposes). With the secure endpoint, in some cases, I need to
+specify `:443` in the blobstore url for the correct protocol to be used (there
+is no protocol specification because of `blobstore://`).
 
 ### V2 or V4 request headers for object stores
 
-This blog post is written in 2023, so use v4 request headers (v2 request headers are marked as deprecated for a long time).
-Earlier FoundationDB supported only v2, but as of today, v4 is available across the board. In order to use those,
+This blog post is written in 2023, so use v4 request headers (v2 request headers
+are marked as deprecated for a long time). Earlier FoundationDB supported only
+v2, but as of today, v4 is available across the board. In order to use those,
 specify the `--knob_http_request_aws_v4_header=true` option.
 
 ### Using different object stores
 
-FoundationDB 7.1 can be backed up and restored with the demonstrated methods in this blog post. There is a change in
-FoundationDB 7.2: the `&region=REGION_HERE` parameter becomes mandatory in the blobstore URL. As of 7.1,
-FoundationDB parses the region from the domain in the url (it is important to use the region specific URL for S3 not
-the bucket specific one for this reason). In 7.2, the region becomes a mandatory parameter, which allows more types
-of blob stores to be used.
+FoundationDB 7.1 can be backed up and restored with the demonstrated methods in
+this blog post. There is a change in FoundationDB 7.2: the `&region=REGION_HERE`
+parameter becomes mandatory in the blobstore URL. As of 7.1, FoundationDB parses
+the region from the domain in the url (it is important to use the region
+specific URL for S3 not the bucket specific one for this reason). In 7.2, the
+region becomes a mandatory parameter, which allows more types of blob stores to
+be used.
 
 ### Accessing S3 via IAM role
 
-We had trouble accessing S3 via an IAM role (and with a service account in k8s). The `fdbbackup` utility will always
-get 403 Forbidden as a response. In order to use S3, create an IAM user (not an assumed role), which can be tied down
-to be able to access only specific buckets, and give those credentials to the `backup_agent` pods. A useful knob
-to debug these kind of issues is `--knob_http_verbose_level=4`.
+We had trouble accessing S3 via an IAM role (and with a service account in k8s).
+The `fdbbackup` utility will always get 403 Forbidden as a response. In order to
+use S3, create an IAM user (not an assumed role), which can be tied down to be
+able to access only specific buckets, and give those credentials to the
+`backup_agent` pods. A useful knob to debug these kind of issues is
+`--knob_http_verbose_level=4`.
 
-Having strong backup and disaster recovery capabilities in a database is crucial to ensure that your data is
-safe and secure. FoundationDB provides a robust foundation for Tigris, with excellent backup and disaster recovery
-capabilities.
-
-import NewsletterSubscribe from "../../src/components/NewsletterSubscribe";
-
-<NewsletterSubscribe />
+Having strong backup and disaster recovery capabilities in a database is crucial
+to ensure that your data is safe and secure. FoundationDB provides a robust
+foundation for Tigris, with excellent backup and disaster recovery capabilities.
