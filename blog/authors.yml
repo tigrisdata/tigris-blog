@@ -16,22 +16,6 @@ firsov:
   url: https://www.linkedin.com/in/efirsov/
   image_url: https://github.com/efirs.png
 
-anshuman:
-  name: Anshuman Bhardwaj
-  title: Dev Advocate @commercetools
-  url: https://twitter.com/sun_anshuman
-  image_url: https://github.com/Anshuman71.png
-
-gouravsb:
-  name: Gourav Singh Bais
-  title: Data Scientist @Allianz
-  url: https://www.linkedin.com/in/gourav-singh-bais/
-
-mdu_sibisi:
-  name: Mdu Sibisi
-  title: Software Developer
-  url: https://portal.draft.dev/writers/recyCNn8nCOHqFJ56
-
 pboros:
   name: Peter Boros
   title: Founding Engineer
@@ -56,35 +40,11 @@ tkhan:
   url: https://linkedin.com/in/taha0khan/
   image_url: https://github.com/tahakhan.png
 
-clinton:
-  name: Ekekenta Clinton
-  title: Developer Advocate
-  url: https://twitter.com/codev206
-  image_url: https://avatars.githubusercontent.com/u/60361247?v=4
-
-leggetter:
-  name: Phil Leggetter
-  title: Head of Developer Experience
-  url: https://www.linkedin.com/in/leggetter/
-  image_url: https://github.com/leggetter.png
-
 garren:
   name: Garren
   title: Database Engineer
   url: https://www.garrensmith.com
   image_url: https://github.com/garrensmith.png
-
-michael:
-  name: Michael Jolley
-  title: Senior Developer Advocate
-  url: https://baldbeardedbuilder.com/
-  image_url: https://s.gravatar.com/avatar/c4761ebd5c213c966896e348b84ca368?s=80
-
-matthew-revell:
-  name: Matthew Revell
-  title: DX Consultant
-  url: https://www.linkedin.com/in/matthewrevell/
-  image_url: https://s.gravatar.com/avatar/137692b3bef1d0dc8451fe505b830462?s=80
 
 jmj:
   name: Jigar Joshi
