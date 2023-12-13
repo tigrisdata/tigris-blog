@@ -15,8 +15,8 @@ export default function FooterLayout({ style, links, logo, copyright }) {
       <div className="container container-fluid">
         {logo && <div className="margin-bottom--sm">{logo}</div>}
         <p className="footer__description">
-          Tigris is a globally available, S3 compatible object storage service
-          that provides low-latency anywhere in the world. Tigris enables
+          Tigris is a globally distributed S3-compatible object storage service
+          that provides low latency anywhere in the world. Tigris enables
           developers to quickly and easily store and access any amount of data
           for a wide range of use cases.
         </p>
