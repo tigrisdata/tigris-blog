@@ -105,7 +105,7 @@ const config = {
         },
         items: [
           {
-            href: tigrisConfig.docsUrl,
+            href: `${tigrisConfig.docsUrl}/`,
             label: "Docs",
             position: "left",
             target: "_self",
@@ -149,6 +149,14 @@ const config = {
             to: "/",
             position: "left",
           },
+          {
+            href: `${tigrisConfig.docsUrl}/pricing/`,
+            label: "Pricing",
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+          },
           // {
           //   href: tigrisConfig.discordUrl,
           //   className: "pseudo-icon discord-icon",
@@ -182,15 +190,6 @@ const config = {
           height: "26px",
         },
         links: [
-          // {
-          //   title: "Product",
-          //   items: [
-          //     {
-          //       label: "Cloud Console",
-          //       href: tigrisConfig.consoleUrl,
-          //     },
-          //   ],
-          // },
           {
             title: "Company",
             items: [
@@ -223,8 +222,26 @@ const config = {
             title: "Resources",
             items: [
               {
+                href: `${tigrisConfig.docsUrl}/`,
+                label: "Docs",
+                target: "_self",
+                rel: "",
+                className: "disable-external-icon",
+              },
+              {
                 label: "Blog",
                 href: "/",
+              },
+              {
+                label: "Early Access",
+                href: tigrisConfig.earlyAccessUrl,
+              },
+              {
+                href: `${tigrisConfig.docsUrl}/pricing/`,
+                label: "Pricing",
+                target: "_self",
+                rel: "",
+                className: "disable-external-icon",
               },
               // {
               //   label: "Videos",

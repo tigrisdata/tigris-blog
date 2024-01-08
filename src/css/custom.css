@@ -145,8 +145,8 @@ html[data-theme="dark"] {
   --ifm-tabs-color-active-border: #66debd;
   --ifm-tabs-color-active: #66debd;
 
-  --ifm-footer-background-color: #142229;
-  --ifm-background-surface-color: #142229;
+  --ifm-footer-background-color: #0b181e;
+  --ifm-background-surface-color: #0b181e;
   --ifm-toc-border-color: #2a3731;
 
   --ifm-color-content: #e7e7e7;
@@ -508,7 +508,6 @@ table td {
 #hero {
   padding: 2rem 0 1.5rem 0;
   margin-bottom: 4rem;
-  border-bottom: 1px solid var(--docs-color-border);
 }
 
 #hero h2 {
@@ -517,6 +516,12 @@ table td {
 
 #hero p {
   color: var(--docs-color-text-100);
+  margin-bottom: 0;
+}
+
+#hero img {
+  margin: 0 auto;
+  align-self: center;
 }
 
 .homepage-button {
