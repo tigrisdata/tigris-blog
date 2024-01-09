@@ -203,12 +203,14 @@ const config = {
               {
                 label: "Terms of Service",
                 href: `${tigrisConfig.websiteUrl}/service-terms`,
+                target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Privacy Policy",
                 href: `${tigrisConfig.websiteUrl}/privacy-policy`,
+                target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
               },
