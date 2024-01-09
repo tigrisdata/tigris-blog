@@ -4,7 +4,7 @@ module.exports = {
   earlyAccessUrl: "https://hello.tigrisdata.com/forms/early-access/",
   consoleUrl: "https://console.tigris.dev/",
   blogUrl: "https://www.tigrisdata.com/blog/",
-  websiteUrl: "https://www.tigrisdata.com/",
+  websiteUrl: "https://www.tigrisdata.com",
   discordUrl: "https://www.tigrisdata.com/discord/",
   docsUrl: "https://www.tigrisdata.com/dev",
   twitterUrl: "https://twitter.com/TigrisData",
