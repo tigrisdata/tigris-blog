@@ -27,6 +27,24 @@
 }
 
 @font-face {
+  font-family: Hanken Grotesk;
+  font-weight: 100;
+  font-display: block;
+  font-style: normal;
+  font-named-instance: "Regular";
+  src: url(/fonts/HankenGrotesk-Regular.ttf);
+}
+
+@font-face {
+  font-family: Hanken Grotesk;
+  font-weight: 100 900;
+  font-display: block;
+  font-style: italic;
+  font-named-instance: "Italic";
+  src: url(/fonts/HankenGrotesk-Italic.ttf);
+}
+
+@font-face {
   font-family: Fira Code VF;
   font-weight: 300 700;
   font-style: normal;
@@ -41,13 +59,15 @@ code {
 :root {
   --ifm-spacing-horizontal: 1.5rem;
 
-  --ifm-font-family-base: "Poppins", system-ui, -apple-system, Segoe UI, Roboto,
-    Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, "Segoe UI",
-    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol";
+  --ifm-font-family-base: "Hanken Grotesk", system-ui, -apple-system, Segoe UI,
+    Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont,
+    "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol";
 
   --ifm-font-family-monospace: "Fira Code VF", SFMono-Regular, Menlo, Monaco,
     Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --ifm-font-weight-bold: 900;
 
   --ifm-color-primary: #38ac8c;
   --ifm-color-primary-dark: #329b7e;
@@ -56,6 +76,16 @@ code {
   --ifm-color-primary-light: #3ebd9a;
   --ifm-color-primary-lighter: #44c29f;
   --ifm-color-primary-lightest: #5ecbad;
+
+  --ifm-color-gray-200: #ebedf0;
+  --ifm-color-gray-300: #dadde1;
+
+  --ifm-color-emphasis-200: var(--ifm-color-gray-200);
+
+  --ifm-global-radius: 0.4rem;
+  --ifm-global-shadow-lw: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  --ifm-leading-desktop: 1.25;
+  --ifm-leading: calc(var(--ifm-leading-desktop) * 1rem);
 
   --ifm-navbar-shadow: none;
   --ifm-toc-border-color: #dedede;
@@ -66,9 +96,9 @@ code {
   --ifm-code-font-size: 85%;
   --docusaurus-highlighted-code-line-bg: rgba(147, 178, 244, 0.38);
 
-  --docs-color-primary: rgba(78, 217, 178);
-  --docs-color-primary-100: #3ebd9a;
-  --docs-color-primary-tint: rgba(47, 59, 56, 0.16);
+  --docs-color-primary: #62feb5;
+  --docs-color-primary-100: #44f1a0;
+  --docs-color-primary-tint: #142229;
   --docs-color-primary-tint-light: rgba(47 59 56/0.24);
 
   --docs-color-border: #dadde1;
@@ -89,7 +119,7 @@ code {
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
-[data-theme="dark"] {
+html[data-theme="dark"] {
   --ifm-color-primary: #4ed9b2;
   --ifm-color-primary-dark: #36d4a7;
   --ifm-color-primary-darker: #2ccea1;
@@ -97,27 +127,27 @@ code {
   --ifm-color-primary-light: #66debd;
   --ifm-color-primary-lighter: #72e1c2;
   --ifm-color-primary-lightest: #97e9d2;
-  --ifm-background-color: #0f2832;
+  --ifm-background-color: #0b181e;
 
-  --docs-color-border: #2e2e2e;
+  --docs-color-border: #2a3731;
 
   --docs-color-text: #ffffff;
-  --docs-color-text-100: #b4b4b4;
+  --docs-color-text-100: #bac1be;
 
   --docs-color-background: #161616;
-  --docs-color-background-100: #1c1c1c;
+  --docs-color-background-100: #142229;
   --docs-color-background-200: #2a2a2a;
   --docs-color-background-300: #2e2e2e;
 
   --docs-color-code-background: #1e1e1e;
 
-  --ifm-link-color: #2ccea1;
+  --ifm-link-color: #62feb5;
   --ifm-tabs-color-active-border: #66debd;
   --ifm-tabs-color-active: #66debd;
 
-  --ifm-footer-background-color: #1c1c1c;
-  --ifm-background-surface-color: #161616;
-  --ifm-toc-border-color: #2e2e2e;
+  --ifm-footer-background-color: #0b181e;
+  --ifm-background-surface-color: #0b181e;
+  --ifm-toc-border-color: #2a3731;
 
   --ifm-color-content: #e7e7e7;
 
@@ -182,7 +212,7 @@ nav.menu {
 
 .footer__description {
   color: var(--docs-color-text-100);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .footer__copyright {
@@ -211,13 +241,13 @@ nav.menu {
   padding: 0.25rem 1.5rem;
   border-radius: 4px;
   background-color: var(--docs-color-primary);
-  color: #0f2832;
+  color: #000000;
   text-decoration: none;
 }
 
 .footer__cta a:hover {
-  background-color: var(--ifm-color-primary-darkest);
-  color: #0f2832;
+  background-color: var(--docs-color-primary-100);
+  color: #000000;
 }
 
 .footer__data {
@@ -229,7 +259,7 @@ nav.menu {
 }
 
 .footer__title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: normal;
   color: var(--docs-color-text-100);
   margin-bottom: 0.5rem;
@@ -243,6 +273,10 @@ nav.menu {
 
 .footer__link-item:hover {
   text-decoration: none;
+}
+
+.footer__logo {
+  height: 26px !important;
 }
 
 .navbar-sidebar__item {
@@ -342,12 +376,12 @@ html[data-theme="dark"] .discord-icon::before {
 .wc-portal-signup {
   --ifm-link-hover-color: #fff;
   --ifm-navbar-link-hover-color: #fff;
-  color: #0f2832;
+  color: #000000;
 }
 
 .wc-portal-signup:hover {
-  background-color: var(--ifm-color-primary-darkest);
-  color: #0f2832;
+  background-color: var(--docs-color-primary-100);
+  color: #000000;
 }
 
 .wc-portal-login {
@@ -436,6 +470,10 @@ table th {
   color: var(--docs-color-text-100);
 }
 
+table td {
+  vertical-align: top;
+}
+
 .tabs {
   border-bottom: 1px solid var(--docs-color-border);
 }
@@ -449,6 +487,168 @@ table th {
 
 .tabs__item--active {
   border-bottom: 2px solid var(--docs-color-primary-100);
+}
+
+/* Customization of home page and cards */
+.pad {
+  padding: 0 1rem;
+}
+
+.center {
+  width: 100%;
+  max-width: 1080px;
+  margin: 1rem auto;
+  min-height: 400px;
+}
+
+.homepage-content {
+  padding-bottom: 6rem;
+}
+
+#hero {
+  padding: 2rem 0 1.5rem 0;
+  margin-bottom: 4rem;
+}
+
+#hero h2 {
+  font-size: 36px;
+}
+
+#hero p {
+  color: var(--docs-color-text-100);
+  margin-bottom: 0;
+}
+
+#hero img {
+  margin: 0 auto;
+  align-self: center;
+}
+
+.homepage-button {
+  --ifm-link-hover-color: #fff;
+  --ifm-link-hover-decoration: none;
+  --ifm-navbar-link-hover-color: #fff;
+  background-color: var(--docs-color-primary);
+  border-radius: 4px;
+  transition-property: all;
+  color: #0f2832;
+  font-size: 14px;
+  display: inline-block;
+  padding: var(--ifm-navbar-item-padding-vertical)
+    var(--ifm-navbar-item-padding-horizontal);
+}
+
+.homepage-button:hover {
+  background-color: var(--ifm-color-primary-darkest);
+  color: #0f2832;
+}
+
+.section-content {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.two-cols .section-content {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.has-sub-sections > h3 {
+  margin-bottom: 1.5rem;
+}
+
+.has-sub-sections > .section-content {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.has-sub-sections > .section-content > .homepage-section {
+  margin-bottom: 1rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.homepage-section {
+  margin-bottom: 3rem;
+}
+
+.homepage-section h3 {
+  font-weight: 600;
+}
+
+.section-description {
+  color: var(--docs-color-text-100);
+  margin: 0rem 0 1.25rem 0;
+  margin-top: -0.5rem;
+}
+
+.has-sub-sections > .section-content .section-description {
+  font-size: 14px;
+}
+
+.homepage-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0.75rem;
+  text-decoration: none;
+  color: var(--docs-color-text);
+
+  --ifm-link-hover-decoration: none;
+  --ifm-link-hover-color: inherit;
+  cursor: pointer;
+
+  transition-property: background-color, color;
+
+  border: 1px solid var(--docs-color-border);
+  border-radius: 8px;
+}
+
+.homepage-card:hover {
+  background-color: var(--docs-color-background-100);
+}
+
+.icon svg {
+  width: auto;
+  height: 100%;
+}
+
+.homepage-card .icon {
+  width: 48px;
+  height: 48px;
+  /* background-color: #262626;
+  border-radius: 8px; */
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-content .title {
+  font-size: 16px;
+  letter-spacing: -0.5px;
+  font-weight: 600;
+}
+
+.card-content .description {
+  font-size: 14px;
+  color: var(--docs-color-text-100);
+  line-height: 1.5;
+}
+
+.picture-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 0.75rem;
+  text-decoration: none;
+  color: var(--docs-color-text);
+
+  transition-property: background-color, color;
+
+  border: 1px solid var(--docs-color-border);
+  border-radius: 8px;
 }
 
 @media screen and (max-width: 1160px) {
@@ -469,8 +669,4 @@ table th {
 
 .disable-external-icon svg {
   display: none;
-}
-
-html {
-  scroll-behavior: smooth;
 }

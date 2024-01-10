@@ -14,15 +14,15 @@ const darkCodeTheme = require("prism-react-renderer").themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Tigris",
-  tagline: "Tigris is the storage platform for real-time apps.",
+  title: "Tigris Object Storage",
+  tagline: "Globally Distributed S3-Compatible Object Storage",
   url: tigrisConfig.websiteUrl,
   baseUrl: "/blog/",
   favicon: "img/favicon.ico",
   organizationName: "tigrisdata",
   projectName: "blog",
-  onBrokenLinks: "ignore",
-  onBrokenMarkdownLinks: "warn",
+  onBrokenLinks: "throw",
+  onBrokenMarkdownLinks: "throw",
   trailingSlash: true,
 
   clientModules: [
@@ -105,9 +105,57 @@ const config = {
         },
         items: [
           {
+            href: `${tigrisConfig.docsUrl}/`,
+            label: "Docs",
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+          },
+          {
+            href: `${tigrisConfig.docsUrl}/overview/`,
+            label: "Overview",
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+          },
+          {
+            href: `${tigrisConfig.docsUrl}/about/`,
+            label: "About",
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+          },
+          {
+            href: `${tigrisConfig.docsUrl}/get-started/`,
+            label: "Get Started",
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+          },
+          {
+            href: `${tigrisConfig.docsUrl}/sdks/s3/`,
+            label: "AWS S3 SDKs",
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+          },
+          {
             label: "Blog",
             to: "/",
             position: "left",
+          },
+          {
+            href: `${tigrisConfig.docsUrl}/pricing/`,
+            label: "Pricing",
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
           },
           // {
           //   href: tigrisConfig.discordUrl,
@@ -119,12 +167,12 @@ const config = {
             className: "pseudo-icon twitter-icon",
             position: "right",
           },
-          // {
-          //   label: "Sign Up",
-          //   href: tigrisConfig.signupUrl,
-          //   position: "right",
-          //   className: "wc-portal-signup wc-portal-link",
-          // },
+          {
+            label: "Early Access",
+            href: tigrisConfig.earlyAccessUrl,
+            position: "right",
+            className: "wc-portal-signup wc-portal-link",
+          },
           // {
           //   label: "Login",
           //   href: tigrisConfig.loginUrl,
@@ -142,34 +190,27 @@ const config = {
           height: "26px",
         },
         links: [
-          // {
-          //   title: "Product",
-          //   items: [
-          //     {
-          //       label: "Cloud Console",
-          //       href: tigrisConfig.consoleUrl,
-          //     },
-          //   ],
-          // },
           {
             title: "Company",
             items: [
               {
-                label: "About Us",
-                href: tigrisConfig.websiteUrl,
+                label: "About",
+                href: `${tigrisConfig.docsUrl}/about/`,
                 target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Terms of Service",
-                href: `${tigrisConfig.websiteUrl}/service-terms`,
+                href: `${tigrisConfig.docsUrl}/legal/service-terms/`,
+                target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Privacy Policy",
-                href: `${tigrisConfig.websiteUrl}/privacy-policy`,
+                href: `${tigrisConfig.docsUrl}/legal/privacy-policy/`,
+                target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
               },
@@ -183,8 +224,26 @@ const config = {
             title: "Resources",
             items: [
               {
+                href: `${tigrisConfig.docsUrl}/`,
+                label: "Docs",
+                target: "_self",
+                rel: "",
+                className: "disable-external-icon",
+              },
+              {
                 label: "Blog",
                 href: "/",
+              },
+              {
+                label: "Early Access",
+                href: tigrisConfig.earlyAccessUrl,
+              },
+              {
+                href: `${tigrisConfig.docsUrl}/pricing/`,
+                label: "Pricing",
+                target: "_self",
+                rel: "",
+                className: "disable-external-icon",
               },
               // {
               //   label: "Videos",
@@ -202,7 +261,14 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-        additionalLanguages: ["java", "scala"],
+        additionalLanguages: [
+          "java",
+          "scala",
+          "php",
+          "csharp",
+          "ruby",
+          "elixir",
+        ],
       },
     }),
 };
