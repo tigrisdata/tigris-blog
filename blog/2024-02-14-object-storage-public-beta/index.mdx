@@ -1,0 +1,110 @@
+---
+slug: object-storage-public-beta
+title: Tigris, the globally distributed S3-compatible object storage
+description: >
+  Tigris is a globally distributed object storage service that provides low
+  latency anywhere in the world, enabling developers like you to store and
+  access any amount of data using the S3 libraries you're already using in
+  production. Today, we're launching our public beta on top of Fly.io.
+keywords: [object storage, blob storage, s3, launch]
+authors: [ot]
+tags: [object storage, blob storage, s3, launch, open beta]
+---
+
+# Tigris, the globally distributed S3-compatible object storage
+
+Hello, world! We're Tigris Data, and today we're announcing the public beta of
+Tigris. Tigris is a globally distributed object storage service that provides
+low latency anywhere in the world, enabling developers like you to store and
+access any amount of data using the S3 libraries you're already using in
+production. Today, we're launching our public beta on top of Fly.io.
+
+## The backstory
+
+Before founding Tigris, my co-founders Himank, Yevgeniy, and I spearheaded the
+storage platform teams at Uber. Over six years, we built and operated Uber's
+global storage infrastructure, supporting millions of users per day across the
+Uber Rides and Uber Eats apps.
+
+Our projects, such as
+[Docstore](https://www.uber.com/en-US/blog/schemaless-sql-database/),
+[Herb](https://www.uber.com/en-PK/blog/herb-datacenter-replication/), and
+[DBEvents](https://www.uber.com/en-PK/blog/dbevents-ingestion-framework/),
+empowered thousands of internal developers to focus on their applications while
+we handled storage for them. This was great for the developers inside Uber, but
+we wanted to think bigger. We wanted anyone to be able to benefit from this kind
+of platform, even if you didn't work at Uber. After a lot of deliberation we
+ended up with Tigris: Globally distributed object storage for everyone.
+
+In April 2023, I met with [Kurt](https://twitter.com/mrkurt) and the Fly.io
+team. Kurt's
+"[two-hour problem](https://fly.io/blog/we-raised-a-bunch-of-money/)" philosophy
+resonated with me. There isn't really any reason why it should take more than
+two hours to make my app run in more data centers at the same time. It's hard.
+Really hard. Entire venture-funded startups are designed around doing it and
+developers know it. They don't even try because they've been conditioned to give
+up and rightly so.
+
+Fly.io makes it dead simple to run your application close to your users. They
+solved “being real-time” within a two-hour window for developers by enabling
+them to deploy their application on six continents using the same command they
+use to deploy it to one data center.
+
+At Tigris, we share the same vision: storing objects globally shouldn't take
+more than two hours. It should be the default. Tigris takes care of the hard
+parts for you. It allows an application to read and write data globally with
+zero configuration. You can write objects in San Jose and then seamlessly fetch
+them from Sydney, all while getting local-read performance. You can even write
+conflicting updates in multiple regions simultaneously, and Tigris will resolve
+the conflicts and give a consistent global view of the data. It is a truly
+global active-active storage platform.
+
+One of the main blockers for moving applications wholesale to a modern cloud
+such as Fly.io is storage. Many applications are forced to keep their storage on
+a traditional cloud like Amazon S3 or Google Cloud Storage because nobody really
+wants to mess with it once everything is configured to work. Tigris makes this
+turnkey.
+
+**That's why we're so excited to launch global object storage on Fly.io's
+platform [across their 35+ locations](https://fly.io/docs/reference/regions/).**
+
+_Today, Tigris is deployed in FRA, GRU, IAD, JNB, LHR, MAD, ORD, SIN, SJC, and
+SYD. We're working on deploying across the rest of Fly.io's regions._
+
+## How do I get started?
+
+To use Tigris, you need a [Fly.io](https://fly.io/) account. If you don't have
+one, you can get yourself one [here](https://fly.io/app/sign-up). Then it's as
+simple as `fly storage create`:
+
+```bash
+$ fly storage create
+? Choose a name, use the default, or leave blank to generate one: demo-bucket
+Your  project (demo-bucket) is ready. See details and next steps with:
+
+Setting the following secrets on ot-demo:
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+BUCKET_NAME
+AWS_ENDPOINT_URL_S3
+```
+
+Fill in the bucket name and the configuration for AWS S3 SDK will be injected
+into your application. All you need to do now is write objects into your bucket
+and they're globally available. Instantly.
+
+## A note on pricing
+
+During the public beta starting today, we will not be charging for usage. We
+want to take this time to iron out any additional issues and make Tigris as
+polished as we can before we feel comfortable charging you for it. We will
+update you with pricing information as it becomes available. Don't worry though,
+everything will go into your Fly.io bill. We don't want to make your life harder
+with your accounting department in the process of making your life easier with
+cloud storage.
+
+We hope you have fun building with Tigris and we would love to see what you
+build. Reach out to us on
+[X (formerly Twitter)](https://twitter.com/TigrisData), or on the
+[Fly.io community](https://community.fly.io/tag/storage) forum and let us know
+your feedback.
