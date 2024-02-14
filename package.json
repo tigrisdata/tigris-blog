@@ -19,8 +19,8 @@
     "blog:new": "NOW=$(date +\"%Y-%m-%d\") && mkdir ./blog/$NOW-$npm_config_slug && cp ./templates/blog-post/* ./blog/$NOW-$npm_config_slug/"
   },
   "dependencies": {
-    "@docusaurus/core": "3.0.0",
-    "@docusaurus/preset-classic": "3.0.0",
+    "@docusaurus/core": "^3.1.1",
+    "@docusaurus/preset-classic": "^3.1.1",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^1.1.1",
     "dotenv": "^16.0.2",
@@ -33,9 +33,9 @@
     "react-lite-youtube-embed": "^2.3.1"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.0.0",
-    "@docusaurus/tsconfig": "3.0.0",
-    "@docusaurus/types": "3.0.0",
+    "@docusaurus/module-type-aliases": "^3.1.1",
+    "@docusaurus/tsconfig": "^3.1.1",
+    "@docusaurus/types": "^3.1.1",
     "@types/react": "^18.2.29",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
     "@typescript-eslint/parser": "^6.0.0",
