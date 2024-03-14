@@ -6,12 +6,18 @@ description: >
   latency anywhere in the world, enabling developers like you to store and
   access any amount of data using the S3 libraries you're already using in
   production. Today, we're announcing our seed round led by Andreessen Horowitz.
+image: ./tigris-river.jpeg
 keywords: [object storage, blob storage, s3, funding, a16z]
 authors: [ot]
 tags: [object storage, blob storage, s3, funding]
 ---
 
 # Announcing our Seed Round led by Andreessen Horowitz
+
+<span align="center">
+  ![Tigris globally distributed object
+  storage](tigris-river.jpeg) [src: [playground.com](https://playground.com/feed)]
+</span>
 
 Eighteen years ago today, Amazon completely changed how developers work with
 data storage by giving us Simple Storage Service (S3).
