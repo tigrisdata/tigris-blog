@@ -64,12 +64,13 @@ step through what happens when it’s called.
 It will start by checking to see if there are any jobs with a status of
 `pending (0)`:
 
-```
-  let res = await db.select()
-    .from(jobs)
-    .where(eq(jobs.status, 0))
-    .limit(1)
-    .execute();
+```jsx
+let res = await db
+  .select()
+  .from(jobs)
+  .where(eq(jobs.status, 0))
+  .limit(1)
+  .execute();
 ```
 
 If a job is found, the status is set to `in progress (1)`. This prevents other
