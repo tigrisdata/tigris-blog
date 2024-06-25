@@ -121,7 +121,7 @@ uploaded gets spread across a decent chunk of the world. This is possible by
 setting the bucket accelerate configuration. I would try this for bucket
 intended to do HTTP Live Streaming (HLS) where latency can really matter or for
 podcast recordings where you might expect a lot of geographically distributed
-clients will request the. thing at once.
+clients will request the thing at once.
 
 With AWS CLI it looks like this, unfortunately ExAws doesn't expose a way to do
 this so far:
