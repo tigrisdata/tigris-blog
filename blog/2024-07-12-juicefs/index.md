@@ -232,13 +232,9 @@ but on n>1 starts you should see it pulling the model from JuiceFS instead of
 the registry, which gives increased performance and also doesn't have rate
 limits or shared bandwidth like Ollama's registry does.
 
-For your next project, what else can you use your newly found storage for? Other
-types of AI models? Multimedia storage? Let's talk about it on the TODO TODO
-TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-TODO TODO TODO TODO TODO TODO
+You can find the full code for this example
+[here](https://github.com/tigrisdata-community/juicefs-ollama).
 
-DELETE THIS DELETE THIS DELETE THIS DELETE THIS If you have any questions, or
-have found a way to improve performance further, discuss it on the
-[Fly Community](https://community.fly.io/). We'd love to hear about your apps or
-any friction you find with running AI workloads on Fly.io. DELETE THIS DELETE
-THIS DELETE THIS DELETE THIS
+For your next project, what else can you use your newly found storage for? Other
+types of AI models? Multimedia storage? Tell us about it on
+[X](https://twitter.com/TigrisData)!
