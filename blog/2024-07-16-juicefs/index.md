@@ -89,6 +89,8 @@ VERSION	IP                	TYPE   	REGION	CREATED AT
 v6     	fdaa:0:d400:0:1::6	private	global	1m15s ago
 ```
 
+Your Ollama API is now private and only accessible from within your private network.
+
 # The real problem
 
 Now that we have the Ollama API up and running on a Machine, we can skip forward
@@ -108,9 +110,9 @@ If only there was a way to _share_ our stored models between Machines...
 Getting started using JuiceFS on Fly.io is actually pretty easy. JuiceFS needs
 two things to function:
 
-- A "metadata engine", which is a "normal" DB like Redis, MariaDB, PostgreSQL,
+- A metadata database, which is a "normal" DB like Redis, MariaDB, PostgreSQL,
   etc.
-- A "data storage", which is blob storage like S3 or Ceph.
+- A place to put all of your data, usually using blob storage like S3 or Ceph.
 
 We're going to use [Supabase Postgres](https://fly.io/docs/reference/supabase/)
 for our metadata engine, and [Tigris](https://fly.io/docs/reference/tigris/) for
@@ -142,8 +144,8 @@ DATABASE_POOLER_URL   ...
 DATABASE_URL          ...
 ```
 
-Now, we have to install JuiceFS in our docker image. To do this, we'll switch
-from deploying the premade `ollama/ollama` image to using our own Dockerfile.
+Next, install JuiceFS in your docker image. In order to do this, you'll need to
+build your own Ollama docker image that includes JuiceFS.
 
 In `fly.toml`, remove the `[build]` section:
 
@@ -220,7 +222,7 @@ We can test if our install is working using an ephemeral Fly Machine:
 ```
 $ fly m run -e OLLAMA_HOST=http://<your app name>.flycast --shell ollama/ollama
 ...
-$ ollama run llama3 hello ollama!
+$ ollama run llama3 "hello ollama!"
 ...
 Hello there! I'm OLLAMA, your friendly AI companion! It's great to meet you! What brings you here today? Do you have a specific topic or question in mind, or are you just looking for some fun
 conversation? Let me know, and I'll do my best to help!
@@ -235,6 +237,7 @@ limits or shared bandwidth like Ollama's registry does.
 You can find the full code for this example
 [here](https://github.com/tigrisdata-community/juicefs-ollama).
 
-For your next project, what else can you use your newly found storage for? Other
-types of AI models? Multimedia storage? Tell us about it on
-[X](https://twitter.com/TigrisData)!
+What are some of the things you've been using object storage for in your
+projects? What AI models are you using? Are you storing video or pictures?
+Tell us about it on [X (Twitter)](https://twitter.com/TigrisData) or chat
+us up on [the Fly.io community forum](https://community.fly.io/tag/storage)!
