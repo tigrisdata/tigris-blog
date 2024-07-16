@@ -89,7 +89,8 @@ VERSION	IP                	TYPE   	REGION	CREATED AT
 v6     	fdaa:0:d400:0:1::6	private	global	1m15s ago
 ```
 
-Your Ollama API is now private and only accessible from within your private network.
+Your Ollama API is now private and only accessible from within your private
+network.
 
 # The real problem
 
@@ -112,7 +113,7 @@ two things to function:
 
 - A metadata database, which is a "normal" DB like Redis, MariaDB, PostgreSQL,
   etc.
-- A place to put all of your data, usually using blob storage like S3 or Ceph.
+- A place to put all of your data, usually using object storage.
 
 We're going to use [Supabase Postgres](https://fly.io/docs/reference/supabase/)
 for our metadata engine, and [Tigris](https://fly.io/docs/reference/tigris/) for
@@ -238,6 +239,6 @@ You can find the full code for this example
 [here](https://github.com/tigrisdata-community/juicefs-ollama).
 
 What are some of the things you've been using object storage for in your
-projects? What AI models are you using? Are you storing video or pictures?
-Tell us about it on [X (Twitter)](https://twitter.com/TigrisData) or chat
-us up on [the Fly.io community forum](https://community.fly.io/tag/storage)!
+projects? What AI models are you using? Are you storing video or pictures? Tell
+us about it on [X (Twitter)](https://twitter.com/TigrisData) or chat us up on
+[the Fly.io community forum](https://community.fly.io/tag/storage)!
