@@ -1,5 +1,5 @@
 ---
-slug: eager-and-lazy-caching
+slug: metadata-quering-with-elixir
 title: Metadata Querying for Object Storage feat. Elixir
 description: >
   Now we get to the significantly more disruptive stuff. The things that while
