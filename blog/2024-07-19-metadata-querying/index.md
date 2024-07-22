@@ -7,6 +7,7 @@ description: >
   new use-cases and push the boundaries of what you can do with object storage.
   Let's see if we can't set your internal constraint-solver aflame with
   possibilities.
+image: ./little-cute-mouse-sitting-on-the-ground.jpeg
 keywords: [object storage, querying, elixir, distributed systems]
 authors: [lw]
 tags: [object storage, querying, elixir, distributed systems]
@@ -23,6 +24,11 @@ significantly more disruptive stuff. The things that while Tigris is an
 S3-compatible API it also provides features that enable entirely new use-cases
 and push the boundaries of what you can do with object storage. Let's see if we
 can't set your internal constraint-solver aflame with possibilities.
+
+<span align="center">
+  ![Tigris globally distributed object
+  storage](little-cute-mouse-sitting-on-the-ground.jpeg)
+</span>
 
 First a bit of setup. Again, this post is also
 [a Livebook](https://livebook.dev/run/?url=https://github.com/lawik/tigris-blogs/blob/main/2-metadata-querying.livemd)
