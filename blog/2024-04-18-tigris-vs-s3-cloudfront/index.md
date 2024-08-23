@@ -26,6 +26,8 @@ your object storage, so typically you’d need to make use of a content delivery
 network (CDN) to cache your data in multiple regions, which helps reduce
 latency. When using Amazon S3, Cloudfront is the CDN most often used.
 
+<!-- truncate -->
+
 **With Tigris, you don’t need a CDN at all** because your data is available in
 all regions from the start. Global distribution means that the same bucket can
 store data in many different locations. You can effectively have a CDN-like

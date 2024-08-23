@@ -29,6 +29,8 @@ frequent flyer miles you're getting.
 
 It's time to move to the cloud.
 
+<!-- truncate -->
+
 # Getting Ollama up and running on Fly.io
 
 Getting up and running on Fly.io isn't very complex, we have
