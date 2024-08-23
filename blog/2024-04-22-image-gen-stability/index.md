@@ -27,6 +27,8 @@ In this article, you’ll learn how to deploy an app to [Fly.io](http://Fly.io)
 that will allow you to generate images using the Stability API and automatically
 store them in a Tigris bucket.
 
+<!-- truncate -->
+
 <aside>
 💡 Before you can follow this guide, make sure you have a [Fly.io](http://Fly.io) account and the `fly` CLI installed on your computer.
 

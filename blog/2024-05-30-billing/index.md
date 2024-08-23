@@ -36,6 +36,8 @@ expected from a highly reliable production-ready platform. Check out our
 [SLA page](https://www.tigrisdata.com/docs/legal/sla/) for details about our
 uptime commitment.
 
+<!-- truncate -->
+
 TL;DR:
 
 - Data storage is $0.02 per GB

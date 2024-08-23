@@ -25,6 +25,8 @@ S3-compatible API it also provides features that enable entirely new use-cases
 and push the boundaries of what you can do with object storage. Let's see if we
 can't set your internal constraint-solver aflame with possibilities.
 
+<!-- truncate -->
+
 <span align="center">
   ![Tigris globally distributed object
   storage](little-cute-mouse-sitting-on-the-ground.jpeg)
