@@ -75,3 +75,9 @@ jt:
   title: Fly.io Devreller
   url: https://endigma.dev
   image_url: https://github.com/endigma.png
+
+bmi:
+  name: Benjamin Milde
+  title: Another Elixirist
+  url: https://kobrakai.de
+  image_url: https://kobrakai.de/images/avatar.jpg
