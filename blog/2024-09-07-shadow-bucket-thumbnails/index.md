@@ -7,6 +7,7 @@ description: >
   elixir service will generate thumbnails, where source files as well as
   generated thumbnails are stored on Tigris, while making use of the included
   CDN features of Tigris.
+image: ./a-pair-of-scissors-cutting-a-photograph.jpg
 keywords: [object storage, blob storage, s3, thumbnail, images, cloudfront, cdn]
 authors: [bmi]
 tags: [object storage, blob storage, s3, thumbnail, images, cloudfront, cdn]
