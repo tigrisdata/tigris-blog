@@ -1,5 +1,5 @@
 module.exports = {
-  signupUrl: "https://console.tigris.dev/",
+  dashboardUrl: "https://console.tigris.dev/",
   loginUrl: "https://console.tigris.dev/",
   earlyAccessUrl: "https://hello.tigrisdata.com/forms/early-access/",
   consoleUrl: "https://console.tigris.dev/",
@@ -7,6 +7,5 @@ module.exports = {
   websiteUrl: "https://www.tigrisdata.com",
   discordUrl: "https://www.tigrisdata.com/discord/",
   docsUrl: "https://www.tigrisdata.com/docs",
-  twitterUrl: "https://twitter.com/TigrisData",
   statusPageUrl: "https://status.tigris.dev/",
 };
