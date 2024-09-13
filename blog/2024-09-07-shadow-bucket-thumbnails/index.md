@@ -37,6 +37,10 @@ buckets configured Tigris will fetch files, which do not existing in a bucket,
 from another S3-compatible source - which poses to be an interesting option for
 a bit of a different approach to image thumbnail generation.
 
+<span align="center">
+  ![Tigris globally distributed object storage](a-pair-of-scissors-cutting-a-photograph.jpg)
+</span>
+
 ## The Setup
 
 The Shadow Buckets feature will be used to query for non-existant thumbnails
