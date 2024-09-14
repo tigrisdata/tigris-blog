@@ -15,28 +15,30 @@ tags: [object storage, blob storage, s3, thumbnail, images, cloudfront, cdn]
 
 # Using Shadow Buckets for Fun and Thumbnails
 
-Generating thumbnails of images has historically been a problem that needed to
-involve a number of infrastructure pieces working together - especially if it
-was meant to happen on demand. You'd need:
+Making thumbnails load reasonably quickly is surprisingly complex for such a
+common problem. With
+[Shadow Buckets](https://www.tigrisdata.com/docs/migration/), Tigris can take
+over much of the heavy lifting for you. Don't worry about who is reading your
+sandwich review blog around the world - we'll make sure your thumbnails are
+right there when you need them, from Chicago to Singapore.
+
+Doing this the old way, you'd need:
 
 - A URL format to define the expected operation and the source file to apply
   them to
-- Storage where source files are kept
+- A storage solution to keep source files around
 - A server running accepting requests, fetching sources and applying operations
 - A cache to retain results and serve them for futher requests to the same URL
 - Distribute caches to locations close to users for optimal latency serving them
 
-A common approach for setting this up is having a CDN sit in front of a
-thumbnailing server, which then further needs access to some storage holding
-source files. More recently those thumbnailing servers are often implemented as
-serverless components.
+In a common setup a CDN would be placed in front of a thumbnailing server, which
+then further needs access to some storage holding source files. More recently,
+developers tend to implement those thumbnailing servers as serverless
+components.
 
-There's a bunch of existing tools, which could fill those various roles, but
-Tigris has a feature called
-[Shadow Buckets](https://www.tigrisdata.com/docs/migration/). With shadow
-buckets configured Tigris will fetch files, which do not existing in a bucket,
-from another S3-compatible source - which poses to be an interesting option for
-a bit of a different approach to image thumbnail generation.
+There's a bunch of existing pieces, which could can be combined to fill those
+various roles, but in this blog post we'll explore using Shadow Buckets to
+simplify that setup.
 
 <span align="center">
   ![Tigris globally distributed object storage](a-pair-of-scissors-cutting-a-photograph.jpg)
@@ -44,20 +46,21 @@ a bit of a different approach to image thumbnail generation.
 
 ## The Setup
 
-The Shadow Buckets feature will be used to query for non-existant thumbnails
-caching them for later requests. By storing thumbnails in a Tigris bucket we get
-access to the [CDN features](https://www.tigrisdata.com/docs/objects/caching/)
-of Tigris, which will not just cache thumbnails, but also distribute them to
-regions close to users for fast access to those thumbnails.
+Let's see how Shadow Buckets can make your life easier! With Shadow Buckets
+enabled Tigris will fetch files, which do not exist in a bucket, from another
+S3-compatible source, caching them for later requests. By storing thumbnails in
+a Tigris bucket we get access to the
+[CDN features](https://www.tigrisdata.com/docs/objects/caching/) of Tigris,
+which will not just cache thumbnails, but also distribute them to regions close
+to users for fast access to those thumbnails.
 
-Source files will also be stored on Tigis buckets. While source files might not
-be accessible directly to end users they still benefit from the same
-distribution across regions.
+Tigris buckets will also store source files. While end users might not directly
+access source files they still benefit from the same distribution across
+regions.
 
-If a source file is already present in a nearby region then generating a
-thumbnail can happen in a close, if not the same, region as well – especially if
-the service to generate the thumbnail is also hosted on [Fly](https://fly.io)
-like Tigris.
+If a nearby region already has the source file then generating a thumbnail can
+happen in a close, if not the same, region as well – especially if the service
+to generate the thumbnail is also hosted on [Fly](https://fly.io) like Tigris.
 
 Where users can upload sources it's also likely they'd trigger the generation of
 thumbnails on those sources, which would all happen close to their location,
@@ -71,24 +74,25 @@ the S3 API would handle both.
 
 Given the Shadow Bucket feature is primarily meant to reach into another S3
 based storage the target for it needs to be somewhat "S3-compatible". Luckily
-that's not too difficult, given only a small subset of that API is actually used
-for the feature to work.
+that's not too difficult, given the feature actually uses only a small subset of
+that API to work.
 
-`ListObject` is currently used to confirm that an endpoint configured as Shadow
-Bucket is reachable and at least to a degree conforms to the expectation of
-being S3-compatible. The thumbnailing service can return a static dummy response
-and that should make the configuration succeed.
+`ListObject` is currently used to confirm Tigris can reach an endpoint
+configured as Shadow Bucket and at least to a degree conforms to the expectation
+of being S3-compatible. The thumbnailing service can return a static dummy
+response and that should make the configuration succeed.
 
 `GetObject` is the more interesting one, given that's the API call used to
 retrive any non-existant files. That one is not that special though given it's
 for the most part a plain http request for a file – but with some additional S3
-specific headers, which can be ignored for this use-case :) These routes when
-accessed would use the provided path to get details about the requested
-thumbnail and return it once generated.
+specific headers, which you can ignore for this use-case :) When accessed, these
+routes will use the provided path to get details about the requested thumbnail
+and return it once generated.
 
 ## The Implementation
 
-So how would this look in practice?
+Ready to see how this magic works in practice? Don't worry, we'll walk you
+through it step by step!
 
 To test this out I deployed an Elixir service using Phoenix on Fly together with
 a fresh Tigris bucket. I also enabled the Shadow Bucket feature pointing it
@@ -101,12 +105,12 @@ a source and various attributes around thumbnailing like `size`:
 <.image src="example.jpg" size={{640, 0}} />
 ```
 
-Those attibutes are then turned into an URL pointing to the related Tigris
-bucket, which the function component continues to use as the source on the
-rendered `<img />` tag.
+The function component then turns those attributes into a URL pointing to the
+related Tigris bucket, which the function component continues to use as the
+source on the rendered `<img />` tag.
 
-For this implementation I chose the format used by Thumbor. Thumbor is a python
-tool for thumbnail generation - for which I happened to have a URL
+For this implementation I chose the format defined by Thumbor. Thumbor is a
+python tool for thumbnail generation - for which I happened to have a URL
 builder/parser around from a project I maintain.
 
 ```elixir
@@ -134,13 +138,13 @@ https://shade-scale.fly.storage.tigris.dev
 A user visiting the homepage would then request that file from the host being
 the Tigris bucket.
 
-If the file exists in the bucket it would be served by Tigris directly - so 🎉.
+If the file exists in the bucket Tigris would serve it directly - so 🎉.
 
 If not a `GetObject` would be made to the Elixir service requesting the file
 using that thumbor-formatted path. Given there's a few steps to handling those
-requests they're forwarded to a plug by the Phoenix router, which takes care of
-those steps one by one. `Plug.Builder` does a great job composing individual
-plugs per step to one module, which also implements the plug interface.
+requests the Phoenix router forwards them to a plug, which takes care of those
+steps one by one. `Plug.Builder` does a great job composing individual plugs per
+step to one module, which also implements the plug interface.
 
 The first step is a check that the path is a valid one, which has not been
 tampered with and if so stores the parsed data on the `conn.assigns`:
@@ -159,7 +163,7 @@ defp check_hmac(conn, _) do
 end
 ```
 
-In the next step the source is fetch from the Tigris bucket:
+In the next step the system fetches the source from the Tigris bucket:
 
 ```elixir
 defp fetch_from_source(conn, _) do
@@ -203,7 +207,7 @@ end
 ```
 
 The response is then forwarded to the initial requesting user by Tigris and
-cached for further requests of that thumbnail – again 🎉.
+caches it for further requests of that thumbnail – again 🎉.
 
 ## Considerations
 
@@ -217,21 +221,25 @@ started. It runs locally with your app server and by skipping the caching - make
 the app server be the host for images - you get quite a bit of "full stack"
 capabilities just using your app.
 
-But that setup isn't common for reasons. Once there's many thumbnails to be
-generated that takes quite a bit of resources away from an app server. For
+But that setup isn't common for reasons. Once you need to generate many
+thumbnails that takes quite a bit of resources away from an app server. For
 Elixir and Phoenix specifically however I might eventually look at FLAME to
 scale that service. By pushing the thumbnail generation portion to additional
 nodes the resource requirements might be fine in production, while retaining the
 benefits of running everything "inline" for local development.
 
 The other concern to talk about would be granular caching durations. Using the
-Shadow Bucket feature means thumbnails will be cached for as long as their
+Shadow Bucket feature means the system will cache thumbnails for as long as
+their
 [files stay on the bucket](https://www.tigrisdata.com/docs/buckets/objects-expiration/).
 CDN services commonly deal with cache headers provided by the downstream
-endpoint and expire cached files according to those headers. Having a better
-answer to that concern is something that might also be explored more closely at
-a later time. For now the implementation makes use of the common "immutable"
-approach of "never delete a cached thumbnail unless asked for".
+endpoint and expire cached files according to those headers. We might also
+explore a better answer to that concern more closely at a later time. For now
+the implementation makes use of the common "immutable" approach of "never delete
+a cached thumbnail unless asked for".
+
+There you have it - a powerful, globally distributed thumbnail system that's
+surprisingly easy to set up. Give it a try and watch those load times plummet!
 
 Repo:
 [https://github.com/LostKobrakai/shade_scale](https://github.com/LostKobrakai/shade_scale)
