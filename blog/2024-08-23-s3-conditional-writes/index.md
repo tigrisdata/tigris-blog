@@ -16,11 +16,6 @@ tags: [object storage, conditional writes, distributed systems]
 
 # What’s the Big Deal with Conditional Writes Support in S3?
 
-_We’re Tigris, a globally distributed object storage platform built for
-high-performance workloads. It’s designed to work seamlessly across clouds,
-countries, and continents, making it simple and efficient for developers.
-[Try it out, you’ll be up and running in a minute.](https://storage.new/)_
-
 Twitter has been lit (well, not exactly lit, but let’s say there is a lot of
 enthusiasm) with posts about the recent announcement by AWS about support for
 [Conditional Writes in S3](https://aws.amazon.com/about-aws/whats-new/2024/08/amazon-s3-conditional-writes/).

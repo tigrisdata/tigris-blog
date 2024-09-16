@@ -10,10 +10,15 @@ description: >
 image: ./a-pair-of-scissors-cutting-a-photograph.jpg
 keywords: [object storage, blob storage, s3, thumbnail, images, cloudfront, cdn]
 authors: [bmi]
-tags: [object storage, blob storage, s3, thumbnail, images, cloudfront, cdn]
+tags: [object storage, s3, thumbnail, images, cdn]
 ---
 
 # Using Shadow Buckets for Fun and Thumbnails
+
+_We’re Tigris, a globally distributed object storage platform built for
+high-performance workloads. It’s designed to work seamlessly across clouds,
+countries, and continents, making it simple and efficient for developers.
+[Try it out, you’ll be up and running in a minute.](https://storage.new/)_
 
 Making thumbnails load reasonably quickly is surprisingly complex for such a
 common problem. With
@@ -21,6 +26,8 @@ common problem. With
 over much of the heavy lifting for you. Don't worry about who is reading your
 sandwich review blog around the world - we'll make sure your thumbnails are
 right there when you need them, from Chicago to Singapore.
+
+<!-- truncate -->
 
 Doing this the old way, you'd need:
 
