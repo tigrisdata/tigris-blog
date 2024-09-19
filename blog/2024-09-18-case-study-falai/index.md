@@ -52,7 +52,7 @@ for task precision, reliability, and reduced generation time. Every extra
 millisecond is shaved off, making fal.ai an order of magnitude more performant
 than their competitors for many generative ai tasks.
 
-:::tip[Quote]
+:::info[Quote]
 
 fal.ai has built custom infrastructure and optimized the model inference to make
 sure these models are served to the end user as fast as possible. fal.ai has a
@@ -77,7 +77,7 @@ downloads, and intermittent 500 errors made it impossible to guarantee their
 diffusion endpoints could process requests in real time. After partnering with
 Tigris, fal.ai didn’t need to choose between performance, reliability, and cost.
 
-:::tip[Quote]
+:::info[Quote]
 
 have been using @TigrisData at @fal for the last 2 months. ingested 10s of TBs
 of data in mere hours while storing 100 TB+ without any hassle. much much more
@@ -97,7 +97,7 @@ unclear which models can keep up with a production deployment. fal.ai is a
 unified hub for integrating these models as reliable utilities. They’ve already
 selected the best model, and delivered it in the fastest way possible.
 
-:::tip[Quote]
+:::info[Quote]
 
 You wanna go to production? Let's go to production. --Burkay Gur, Co-founder
 fal.ai
