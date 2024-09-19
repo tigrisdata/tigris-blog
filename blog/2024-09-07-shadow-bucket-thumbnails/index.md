@@ -15,11 +15,6 @@ tags: [object storage, s3, thumbnail, images, cdn]
 
 # Using Shadow Buckets for Fun and Thumbnails
 
-_We’re Tigris, a globally distributed object storage platform built for
-high-performance workloads. It’s designed to work seamlessly across clouds,
-countries, and continents, making it simple and efficient for developers.
-[Try it out, you’ll be up and running in a minute.](https://storage.new/)_
-
 Making thumbnails load reasonably quickly is surprisingly complex for such a
 common problem. With
 [Shadow Buckets](https://www.tigrisdata.com/docs/migration/), Tigris can take
