@@ -7,7 +7,7 @@ description: >
   out our live dashboard and see how we're providing 99.99% global availability.
   We're pretty sure we're the first to share this type of live production data
   publicly.
-image: ./availability-graph.png
+image: ./strong-oak-tree.jpeg
 keywords:
   [
     object storage,
