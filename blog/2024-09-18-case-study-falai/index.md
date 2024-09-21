@@ -27,11 +27,6 @@ tags: [object storage, s3, ai, case study]
 
 # How fal.ai offers the fastest generative ai in the world
 
-_We’re Tigris, a globally distributed object storage platform built for
-high-performance workloads. It’s designed to work seamlessly across clouds,
-countries, and continents, making it simple and efficient for developers.
-[Try it out, you’ll be up and running in a minute.](https://storage.new/)_
-
 [fal.ai’s](https://fal.ai/) team set an ambitious goal: host the fastest
 diffusion inference endpoints in the world without passing the bill onto their
 users. Their platform needed to remain affordable for individual developers, all
