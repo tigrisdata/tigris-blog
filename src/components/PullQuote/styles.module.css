@@ -1,0 +1,27 @@
+:root {
+  --pull-quote-border-color: #007acc; /* Default primary color */
+  --pull-quote-background-color: #f9f9f9; /* Light grey background */
+  --pull-quote-text-color: #333; /* Dark grey text color */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pull-quote-border-color: #1e90ff; /* Light blue for dark mode */
+    --pull-quote-background-color: #333; /* Dark grey background */
+    --pull-quote-text-color: #f9f9f9; /* Light grey text color */
+  }
+}
+
+.pullQuote {
+  border-left: 4px solid var(--pull-quote-border-color);
+  padding: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  background-color: var(--pull-quote-background-color);
+  color: var(--pull-quote-text-color);
+  font-size: large;
+}
+
+.pullQuote p {
+  margin: 0;
+}
