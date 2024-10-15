@@ -1,0 +1,259 @@
+---
+slug: docker-registry-at-home
+title: Becoming your own Docker Registry with Tigris
+description: >
+  Tigris lets you store your objects around the world so that you beat the speed
+  of light getting your data to your users faster. Sometimes those include
+  Docker images so that you can spin up more GPU time without having to download
+  or manage your models separately. Join on in and learn how you can become your
+  own Docker registry!
+image: ./clouds.jpg
+keywords:
+  [
+    object storage,
+    blob storage,
+    s3,
+    ai,
+    docker,
+    docker registry,
+    model storage,
+    performance,
+    cost,
+  ]
+authors: [xe]
+tags: [object storage, s3, ai, docker registry]
+---
+
+Docker is the universal package format of the internet. When you deploy software
+to your computers, chances are you build your app into a container image and
+deploy it through either Docker or something that understands the same formats
+that Docker uses. However, this is where they get you: Docker image storage in
+the cloud is not free. Docker registries also have strict image size limits and
+will charge you egress fees based on the size of your images.
+
+What if you could host your own registry though? What if when doing it you could
+actually get a better experience than you get with the hosted registries on the
+big cloud.
+
+![A sea of scattered clouds covers the land beneath.](./clouds.jpg)
+
+<center>
+  <small>
+    <em>
+      A sea of scattered clouds covers the land beneath. Photo by Xe Iaso,
+      iPhone 15 Pro Max @ 22mm.
+    </em>
+  </small>
+</center>
+
+{/* truncate */}
+
+Thankfully, the
+[Docker Registry](https://distribution.github.io/distribution/about/) program
+can be self-hosted, and one of the storage backends it supports is S3. You can
+use Tigris instead of S3 to pull images as fast as possible.
+
+Today, we'll be setting up a Docker registry backed by Tigris so you can push
+Docker images of any size into the cloud.
+
+## Making your own Docker Registry on fly.io
+
+In order to make the registry, you need a fly.io account.
+[Sign up](https://fly.io/app/sign-up) and then use
+[this link](https://fly.io/hello/tigris?utm_campaign=docker-registry) to get $50
+of compute credit on us.
+
+Make a new folder in your code folder for the registry:
+
+```text
+mkdir -p registry && cd registry
+```
+
+Then set up our template with `fly launch`:
+
+```text
+fly launch --from=https://github.com/tigrisdata-community/docker-registry --no-deploy
+```
+
+You won't need to tweak the settings.
+
+Create a tigris bucket using `fly storage create`:
+
+```text
+fly storage create
+```
+
+Let Tigris pick a bucket name and then copy the secrets to your notes. You
+should get output like this:
+
+```text
+Your Tigris project (adjective-noun-1234) is ready. See details and next steps with: https://fly.io/docs/reference/tigris/
+
+Setting the following secrets on tigris-registry:
+AWS_ACCESS_KEY_ID: tid_AzureDiamond
+AWS_ENDPOINT_URL_S3: https://fly.storage.tigris.dev
+AWS_REGION: auto
+AWS_SECRET_ACCESS_KEY: tsec_hunter2hunter2hunter2
+BUCKET_NAME: delicate-sea-639
+```
+
+Copy the variables over according to this table:
+
+| Fly storage create secret |  →  | Environment variable in `.env`  |
+| ------------------------: | :-: | :------------------------------ |
+|             `BUCKET_NAME` |  →  | `REGISTRY_STORAGE_S3_BUCKET`    |
+|       `AWS_ACCESS_KEY_ID` |  →  | `REGISTRY_STORAGE_S3_ACCESSKEY` |
+|   `AWS_SECRET_ACCESS_KEY` |  →  | `REGISTRY_STORAGE_S3_SECRETKEY` |
+
+```shell
+# Change these settings
+REGISTRY_STORAGE_S3_BUCKET=bucketName
+REGISTRY_STORAGE_S3_ACCESSKEY=tid_accessKey
+REGISTRY_STORAGE_S3_SECRETKEY=tsec_secretAccessKey
+
+# Don't change these settings
+REGISTRY_STORAGE=s3
+REGISTRY_STORAGE_S3_REGION=auto
+REGISTRY_STORAGE_S3_REGIONENDPOINT=https://fly.storage.tigris.dev
+REGISTRY_STORAGE_S3_FORCEPATHSTYLE=false
+REGISTRY_STORAGE_S3_ENCRYPT=false
+REGISTRY_STORAGE_S3_SECURE=true
+REGISTRY_STORAGE_S3_V4AUTH=true
+REGISTRY_STORAGE_S3_CHUNKSIZE=5242880
+REGISTRY_STORAGE_S3_ROOTDIRECTORY=/
+```
+
+Write this to `.env` in your current working directory.
+
+Then import the secrets into your app:
+
+```shell
+fly secrets import < .env
+```
+
+And add a randomly generated HTTP secret:
+
+```shell
+fly secret set REGISTRY_HTTP_SECRET=$(uuidgen || uuid)
+```
+
+Now you can deploy it:
+
+```shell
+fly deploy --no-ha
+```
+
+Once it’s up, you can push and pull like normal.
+
+## Storing models in images
+
+Now that we have a private Docker registry, let's give it a whirl with smollm.
+Clone the example models repo and build smollm:
+
+```
+docker build -t your-registry.fly.dev/models/smollm/135m:q4 https://raw.githubusercontent.com/tigrisdata-community/models-in-docker/refs/heads/main/smollm/Dockerfile
+```
+
+Then push it to your registry:
+
+```
+docker push your-registry.fly.dev/models/smollm/135m:q4
+```
+
+Then try to launch it with `fly machine run`:
+
+```text
+fly machine run \
+  -r sea \
+  --vm-size l40s \
+  --vm-gpu-kind l40s \
+  your-registry.fly.dev/models/smollm:135m-q4
+```
+
+Copy the IP address to your clipboard (it should look like this:
+`fdaa:0:641b:a7b:29b:b5b0:2009:2`) and run `fly proxy` to get to it:
+
+```text
+fly proxy 8000 fdaa:0:641b:a7b:29b:b5b0:2009:2
+```
+
+Then open [http://localhost:8000](http://localhost:8000) and try it out!
+
+Once you're done, make sure to destroy the machine with `fly machine destroy`:
+
+```text
+fly machine destroy
+```
+
+Select the one in Seattle that's marked as running. Your registry should have
+went to sleep while you were experimenting.
+
+## Securing the registry
+
+Right now this registry is open for anyone in the world to pull from and push to
+it. This is not ideal. In lack of a better option, we're going to use htpasswd
+authentication for the registry. In order to get this set up, we need to shut
+down the registry for a moment:
+
+```
+fly scale count 0
+```
+
+And then start an ephemeral Alpine Machine with the htpasswd volume mounted:
+
+```
+fly machine run --shell --command /bin/sh alpine
+```
+
+Once you're in, install the apache2-utils package to get the htpasswd command:
+
+```
+apk -U add apache2-utils
+```
+
+Then create a password for your administrator user:
+
+```
+htpasswd -B -c /data/htpasswd admin
+```
+
+It'll ask you for your password and write the result to `/data/htpasswd`. Repeat
+this for every person or bot that needs access to the registry. Make sure to
+save these passwords to a password manager as you will not be able to recover
+them later.
+
+Once you're done, exit out of the Alpine Machine and configure these secrets so
+that the Docker registry server will use that shiny new htpasswd file:
+
+```
+fly secrets set REGISTRY_AUTH=htpasswd REGISTRY_AUTH_HTPASSWD_REALM=basic-realm REGISTRY_AUTH_HTPASSWD_PATH=/data/htpasswd
+```
+
+Then turn the registry back on:
+
+```
+fly scale count 1
+```
+
+Finally, log into your registry with docker login:
+
+```
+docker login tigris-registry.fly.dev -u admin
+```
+
+Paste your password, hit enter, and you're in\!
+
+Here's what people without authentication will see:
+
+```
+$ docker run --rm -it tigris-registry.fly.dev/alpine
+Unable to find image 'tigris-registry.fly.dev/alpine:latest' locally
+docker: Error response from daemon: failed to resolve reference "tigris-registry.fly.dev/alpine:latest": pull access denied, repository does not exist or may require authorization: authorization failed: no basic auth credentials.
+See 'docker run --help'.
+```
+
+## Conclusion
+
+Today we learned how to make your own Docker image repository. You can use this
+to store anything (not just large language model inference servers). Plop it
+into your CI flows and see what it does!
