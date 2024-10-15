@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "[ \"$VERCEL\" = 1 ] && echo \"Skipping postinstall\" && exit 0;pip install pre-commit && pre-commit install",
     "docusaurus": "docusaurus",
     "dev": "docusaurus start",
     "start": "docusaurus start",
