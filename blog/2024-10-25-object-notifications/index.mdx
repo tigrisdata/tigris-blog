@@ -24,10 +24,12 @@ tags: [object storage, s3, event streaming, changes, notifications]
 
 # How We Built Object Notifications in Tigris
 
-Tigris now supports object notifications! Object notifications are a way of
-receiving events for changes in a bucket. Think of it as your bucket's way of
-saying, "Hey, something happened! Come check it out!" These notifications can be
-helpful for keeping track of what's going on in your application.
+Tigris now supports object notifications! Object notifications are how you
+receive events every time something changes in a bucket. Think of it as your
+bucket's way of saying "Hey, something happened! Come check it out!",
+much like the [inotify](https://en.wikipedia.org/wiki/Inotify) subsystem in Linux.
+These notifications can be helpful for keeping track of what's going on in your
+application.
 
 ## Use Case: Automatic Image Processing
 
