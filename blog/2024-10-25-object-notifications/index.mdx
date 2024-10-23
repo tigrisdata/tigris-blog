@@ -2,7 +2,9 @@
 slug: how-we-built-object-notifications
 title: How we built object notifications in Tigris
 description: >
-  A deep dive into the implementation of object notifications in Tigris.
+  Tigris now supports object notifications! Object notifications are how you
+  receive events every time something changes in a bucket. This post is a deep
+  dive into the implementation of object notifications in Tigris.
 
 image: ./trees.jpg
 keywords:
@@ -26,14 +28,13 @@ tags: [object storage, s3, event streaming, changes, notifications]
 
 Tigris now supports object notifications! Object notifications are how you
 receive events every time something changes in a bucket. Think of it as your
-bucket's way of saying "Hey, something happened! Come check it out!",
-much like the [inotify](https://en.wikipedia.org/wiki/Inotify) subsystem in Linux.
-These notifications can be helpful for keeping track of what's going on in your
+bucket's way of saying "Hey, something happened! Come check it out!", much like
+the [inotify](https://en.wikipedia.org/wiki/Inotify) subsystem in Linux. These
+notifications can be helpful for keeping track of what's going on in your
 application.
 
 ## Use Case: Automatic Image Processing
 
-A simple use case for object notifications is to automatically process images.
 Imagine you're building a photo-sharing app. Every time a user uploads a new
 picture, you want to automatically generate a thumbnail and maybe even run it
 through an AI to detect any inappropriate content. With object notifications,
@@ -54,7 +55,6 @@ Now, let's pull back the curtain and see how we built this feature and a few
 tricky situations we had to handle. Grab your hard hat, because we're going on a
 little tour of Tigris's inner workings!
 
-
 Tigris isn't just any object store – it's a global object store. This means that
 objects can be changed in multiple regions around the world. This makes them
 available in multiple regions, always ready when you need them. But means we
@@ -63,11 +63,11 @@ where replication comes in.
 
 ### Replication: Keeping Everyone in the Loop
 
-To make sure everything stays in sync, we replicate metadata changes to multiple
-regions. This ensures high availability and improved redundancy of our objects.
+To make sure everything stays in sync, we replicate changes to multiple regions.
+This ensures high availability and improved redundancy of our objects.
 
-The caveat to this is that Replication is a background task, and the speed at
-which an object is replicated from one region to another can be affect by many
+The caveat to this is that replication is a background task, and the speed at
+which an object is replicated from one region to another can be affected by many
 external factors.
 
 To solve this, when a change is received at a region it looks at the
@@ -78,10 +78,10 @@ discard the change if it is old.
 ### The Object Notification Hub
 
 When object notifications are enabled for a bucket, we assign one region to be
-the object notification hub. This region gets the important job of keeping track
-of all the changes. We create a a special index in that regions FoundationDB for
-this. It is very similar to a secondary index. We order the changes by the
-FoundationDB
+the object notification hub for that bucket. This region gets the important job
+of keeping track of all the changes. We create a special index which is very
+similar to a secondary index in that region's FoundationDB. We order the changes
+by FoundationDB
 [Versionstamp](https://apple.github.io/foundationdb/data-modeling.html#versionstamps),
 when the change is added to the index, and `Last Modified` timestamp of object
 metadata.
@@ -90,7 +90,7 @@ The `Versionstamp` helps the worker keep track of which events it has seen and
 processed.
 
 Why one region you may ask? If we didn't do this, we end up with multiple
-regions sending the same events to the webhook, hello friendly ddos attack, or
+regions sending the same events to the webhook, hello friendly DDos attack, or
 having to build a complex system to try and co-ordinate the regions so they
 don't send duplicate events.
 
@@ -105,12 +105,12 @@ The worker will also keep track of the last processed change and will retry a
 few times if the request failed. Finally it will remove old changes from the
 index that have already been processed.
 
-### Why we can't guarantee ordered events
+### Why We Can't Guarantee Ordered Events
 
 We talked about how object changes replicated from many regions can take
-different times. The problem comes in that when the worker is ready to send the
-latest events an object it has no way of knowing if all changes for an object
-have been replicated to its region. It could in theory contact every region and
+different times. The problem arises when the worker is ready to send the latest
+events for an object. It has no way of knowing if all changes for an object have
+been replicated to its region. It could in theory contact every region and
 check, but this would be prohibitively expensive. And still not a complete
 guarantee.
 
