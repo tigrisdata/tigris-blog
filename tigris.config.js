@@ -8,4 +8,5 @@ module.exports = {
   discordUrl: "https://www.tigrisdata.com/discord/",
   docsUrl: "https://www.tigrisdata.com/docs",
   statusPageUrl: "https://status.tigris.dev/",
+  getStartedUrl: "https://www.tigrisdata.com/docs/get-started/",
 };
