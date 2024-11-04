@@ -13,6 +13,8 @@ authors: [garren]
 tags: [object storage, s3, event streaming, changes, notifications]
 ---
 
+import InlineCta from "@site/src/components/InlineCta";
+
 ![Autumn trees on a dusty road in Magoebaskloof, South Africa](./trees.jpg)
 
 <center>
@@ -74,6 +76,12 @@ To solve this, when a change is received at a region it looks at the
 `Last Modified` timestamp of the metadata to determine if the change is new and
 needs to be applied or if the region has already seen a newer change. It will
 discard the change if it is old.
+
+<InlineCta
+  title={"Want to try it out?"}
+  subtitle={"Make a global bucket with no egress fees"}
+  button={"Get Started"}
+/>
 
 ### The Object Notification Hub
 

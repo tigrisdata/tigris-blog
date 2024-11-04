@@ -23,6 +23,7 @@ authors: [ks, xe]
 tags: [object storage, reliability, performance]
 ---
 
+import InlineCta from "@site/src/components/InlineCta";
 import PullQuote from "@site/src/components/PullQuote";
 
 At Tigris Data, we provide object storage to our users. People put bytes into
@@ -113,6 +114,12 @@ Under our definition, an authentication failure (401) or a file not found (404)
 is still a successful request (as the system is correctly denying access or not
 finding a file that may not exist), but an internal server error (500) would be
 a failed request and thus count against us.
+
+<InlineCta
+  title={"Want to try it out?"}
+  subtitle={"Make a global bucket with no egress fees"}
+  button={"Get Started"}
+/>
 
 ## Why these metrics matter
 
