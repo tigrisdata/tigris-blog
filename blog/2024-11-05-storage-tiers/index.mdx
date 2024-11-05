@@ -147,29 +147,47 @@ print(f"File {file_name} uploaded to tigris://{bucket_name}/{object_name} with s
 ```go
 // assumes that ctx is of type context.Context and in scope
 
-const ( bucketName = "your-bucket-name" objectName = "your-object-name" )
+const (
+  bucketName = "your-bucket-name"
+  objectName = "your-object-name"
+)
 
-sdkConfig, err := config.LoadDefaultConfig(ctx) if err != nil { panic(err) }
+sdkConfig, err := config.LoadDefaultConfig(ctx)
+if err != nil {
+	panic(err)
+}
 
-cli := s3.NewFromConfig(sdkConfig, func(o \*s3.Options) { o.BaseEndpoint =
-aws.String("https://fly.storage.tigris.dev") o.Region = "auto" })
+cli := s3.NewFromConfig(sdkConfig, func(o *s3.Options) {
+	o.BaseEndpoint = aws.String("https://fly.storage.tigris.dev")
+	o.Region = "auto"
+})
 
-fin, err := os.Open("path/to/your/file") if err != nil { return
-fmt.Errorf("can't open file: %w", err) } defer fin.Close()
+fin, err := os.Open("path/to/your/file")
+if err != nil {
+	return fmt.Errorf("can't open file: %w", err)
+}
+defer fin.Close()
 
-st, err := fin.Stat() if err != nil { return fmt.Errorf("can't stat %s: %w",
-fin.Name(), err) }
+st, err := fin.Stat()
+if err != nil {
+	return fmt.Errorf("can't stat %s: %w", fin.Name(), err)
+}
 
 contentType := mime.TypeByExtension(filepath.Ext(fin.Name()))
 
-if \_, err := cli.PutObject(ctx, &s3.PutObjectInput{ Bucket:
-aws.String(bucketName), Key: aws.String(objectName), Body: fin, ContentType:
-aws.String(mime.TypeByExtension(filepath.Ext(fin.Name()))), ContentLength:
-aws.Int64(st.Size()), // use infrequent access tier StorageClass:
-types.StorageClassStandardIa, // use archive tier //StorageClass:
-types.StorageGlacier, }); err != nil { return fmt.Errorf("can't upload %s to
-tigris://%s/%s: %w", fin.Name(), bucketName, objectName, err) }
-
+if _, err := cli.PutObject(ctx, &s3.PutObjectInput{
+	Bucket:        aws.String(bucketName),
+	Key:           aws.String(objectName),
+	Body:          fin,
+	ContentType:   aws.String(mime.TypeByExtension(filepath.Ext(fin.Name()))),
+	ContentLength: aws.Int64(st.Size()),
+	// use infrequent access tier
+	StorageClass: types.StorageClassStandardIa,
+	// use archive tier
+	//StorageClass: types.StorageGlacier,
+}); err != nil {
+	return fmt.Errorf("can't upload %s to tigris://%s/%s: %w", fin.Name(), bucketName, objectName, err)
+}
 ```
 </TabItem>
 </Tabs>
