@@ -724,6 +724,10 @@ table td {
   display: flex;
 }
 
+.icon-margin {
+  margin-left: .3rem;
+}
+
 .cta-link {
   font-weight: 500;
   font-variation-settings: "wght" 500;
