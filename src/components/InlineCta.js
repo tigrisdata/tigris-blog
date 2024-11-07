@@ -22,7 +22,7 @@ function InlineCta(props) {
                       height="13.5"
                       aria-hidden="true"
                       viewBox="0 0 24 24"
-                      className="iconExternalLink_node_modules-@docusaurus-theme-classNameic-lib-theme-Icon-ExternalLink-styles-module"
+                      className="icon-margin iconExternalLink_node_modules-@docusaurus-theme-classNameic-lib-theme-Icon-ExternalLink-styles-module"
                     >
                       <path
                         fill="currentColor"
