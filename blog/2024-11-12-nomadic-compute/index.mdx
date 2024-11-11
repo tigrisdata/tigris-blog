@@ -159,11 +159,6 @@ tier ends. However, thanks to the idea of Taco Bell infrastructure design, you
 can reduce the risk of lock-in and increase flexibility between providers so you
 can lower your burn rate.
 
-Let’s be real, dependencies aren’t fundamentally bad things to have. All of us
-have a hard dependency on the Internet, amd64 CPUs, water, and storage.
-Everything’s a tradeoff. The potentially harmful part comes in when your
-dependency locks you in so you can’t switch away easily.
-
 In many platforms, data ingress is free. Data _egress_ is where they get you.
 It’s such a problem for businesses that the
 [EU has had to step in and tell providers that people need an easy way out](https://commission.europa.eu/news/data-act-enters-force-what-it-means-you-2024-01-11_en).
@@ -184,6 +179,20 @@ and you’ll happily take an additional measly 5% discount on top of the 10%
 discount you negotiated last year. We all know that the actual cost of running
 the service is 15% of even that cost; but the capitalism machine has to eat
 somehow, right?
+
+## On the nature of dependencies
+
+Let’s be real, dependencies aren’t fundamentally bad things to have. All of us
+have a hard dependency on the Internet, amd64 CPUs, water, and storage.
+Everything’s a tradeoff. The potentially harmful part comes in when your
+dependency locks you in so you can’t switch away easily.
+
+This is normally pretty bad with traditional compute setups, but can be extra
+insidious with AI workloads. AI workloads make cloud companies staggering
+amounts of money, so they want to make sure that you keep your AI workloads on
+their servers as much as possible so they can extract as much revenue out of you
+as possible. Combine this with the big red number disadvantage in negotiations,
+and you can find yourself backed into a corner.
 
 ### Strategic dependency choice
 
