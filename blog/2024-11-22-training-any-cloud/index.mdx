@@ -113,8 +113,8 @@ configuration. In essence, you give it a short description that says you need an
 some python packages, and then run whatever you want:
 
 ```yaml
-# frobnicate.yaml
-name: frobnicate-some-stuff-up
+# get-rich-quick.yaml
+name: get-rich-quick
 
 workdir: .
 
@@ -125,15 +125,15 @@ setup: |
   pip install -r requirements.txt
 
 run: |
-  python frobnicate.py \
+  python get-rich-quick.py \
     --input SomeUser/StockMarketRecords \
     --output Xe/FoolproofInvestmentStrategy
 ```
 
-Then you run `sky up -n get-rich-quick frobnicate.yaml`, and then SkyPilot will
-make sure that you have a T4 ready for you, install whatever dependencies you
-need, and then run your script. It'll even go out of its way to compare prices
-between cloud providers so that you get the best deal possible.
+Then you run `sky up -n get-rich-quick get-rich-quick.yaml`, and then SkyPilot
+will make sure that you have a T4 ready for you, install whatever dependencies
+you need, and then run your script. It'll even go out of its way to compare
+prices between cloud providers so that you get the best deal possible.
 
 This is all well and good (really, when this all works it's absolute magic), but
 then once the rush of getting your script to run on a GPU wears off, you realize
