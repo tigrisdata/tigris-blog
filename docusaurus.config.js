@@ -33,7 +33,12 @@ const config = {
   customFields: {
     newsletterApiBaseUrl: process.env.NEXT_NEWSLETTER_API_BASE_URL || "",
   },
-
+  scripts: [
+    {
+      src: "scripts.js",
+      defer: true,
+    },
+  ],
   presets: [
     [
       "classic",
