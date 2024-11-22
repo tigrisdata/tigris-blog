@@ -59,12 +59,14 @@ big risks:
 
 - You're going to depend on the things that are critical to your business being
   hosted by someone else on a platform that doesn't have a public SLA
-  (Service-Level Agreement).
-- Your dataset will grow beyond what you can fit into ram, and you'll have to
-  start sharding it into chunks that are smaller than ram.
+  (Service-Level Agreement, or commitment to uptime with financial penalties
+  when it is violated).
+- Your dataset will grow beyond what you can fit into ram (or even your hard
+  disk), and you'll have to start sharding it into chunks that are smaller than
+  ram.
 
 Most of the stuff you'll find online deals with the "happy path" of training AI
-models, but the real world is not quite as kind as this happy path. Your data
+models, but the real world is not quite as kind as this happy path is. Your data
 will be bigger than ram. You will end up needing to make your own copies of
 datasets and models because they will be taken offline without warning. You will
 need to be able to move your work between providers because price hikes will
@@ -78,8 +80,8 @@ models, and how to use
 [SkyPilot](https://skypilot.readthedocs.io/en/latest/docs/index.html) to
 abstract away the compute layer so that you can focus on the actual work of
 training models. This will help you reduce the risk involved with training AI
-models on custom datasets by importing that data once, and then always using
-that cached data for training and inference.
+models on custom datasets by importing those datasets and models once, and then
+always using that copy for training and inference.
 
 {/* truncate */}
 
@@ -157,15 +159,15 @@ the dataset you're importing from suddenly vanishes a-la
 2016? What if the model you're using to train with is deprecated and removed
 from the Hugging Face Hub? What if the cloud provider you're using decides to
 change their pricing structure, you are hit disproportionately hard by the
-change, and you need to move off of a cloud provider in a hurry? What if your
+change, and you need to move off of that cloud provider in a hurry? What if your
 dataset is just too big to fit on a single machine?
 
 This is why you'd want to use Tigris. Tigris is a cloud-agnostic storage layer
 that lets you decouple your storage from your compute. You can import your
 models and datasets into Tigris, and then when you need to use them you can pull
 them from storage that is closest to your compute. No more having to wait for
-the entire state of the world to be transferred from one building in Virginia
-even though you're running your compute in Europe.
+the entire state of the world to be transferred from one building in Northern
+Virginia even though you're running your compute in Europe.
 
 ### The ideal AI training and inference lifecycle with Tigris
 
@@ -273,14 +275,15 @@ where the magic happens, and where the training run actually takes place. It
 does this by running a series of scripts in sequence:
 
 1. `import-dataset.py`: Downloads the dataset from Hugging Face and copies it to
-   Tigris in shards of up to 5 million examples. Each shard is saved to Tigris
-   unmodified, then standardized so that the model can understand it.
+   Tigris in shards of up to 5 million examples per shard. Each shard is saved
+   to Tigris unmodified, then standardized so it can be trained upon.
 2. `import-model.py`: Downloads the model weights from Hugging Face and copies
    them to Tigris for permanent storage.
 3. `pretokenize.py`: Loads each shard of the dataset from Tigris and uses the
    model's tokenization formatting to pre-chew it for training.
-4. `dotrain.py`: Trains the model on each shard of the dataset for one epoch and
-   saves the resulting weights to Tigris.
+4. `dotrain.py`: Trains the model on each shard of the dataset for one epoch
+   (one look over the entire dataset shard) and saves the resulting weights to
+   Tigris.
 
 All of these run in sequence and you end up with a trained model in about 15
 minutes. This is a very simple example (for one, I'm using a model that's very
@@ -320,10 +323,10 @@ dataset = load_dataset(dataset_name, split="train", streaming=True)
 
 However, doing this presents additional problems, because when you pass
 `streaming=True`, you don't get access to the `save_to_disk` method that you
-would normally use to save the dataset to disk. Instead, you have to iterate
-over the dataset in chunks and save each
-[shard](<https://en.wikipedia.org/wiki/Shard_(database_architecture)>) to disk
-manually:
+would normally use to save the dataset to disk. Instead, you have to break the
+(potentially much bigger than ram) dataset into
+[shards](<https://en.wikipedia.org/wiki/Shard_(database_architecture)>) and then
+save each shard to Tigris:
 
 ```python
 for shard in dataset.iter(5_000_000):
@@ -336,8 +339,8 @@ value has all of the data for that shard in CPU ram. You may need to adjust the
 shard size to fit your memory capacity. Experimentation is required, but 5
 million examples is a good starting point.
 
-Once you have the dataset saved to disk, you have to standardize it because the
-data can and will come in whatever format the dataset author thought was
+Once you have the dataset saved to Tigris, you have to standardize it because
+the data can and will come in whatever format the dataset author thought was
 reasonable:
 
 ```python
@@ -353,7 +356,7 @@ ds.save_to_disk(f"s3://{bucket_name}/standardized/{dataset_name}/{shard_id}", st
 There's some additional accounting that's done to keep track of the biggest
 shard ID, but that's the gist of it. You take a dataset that can be too big to
 fit into memory, break it into chunks that can fit into memory, save them to
-Tigris, standardize them, and then save the standardized form to Tigris.
+Tigris, standardize them, and then save the standardized form back to Tigris.
 
 :::note
 
@@ -370,7 +373,7 @@ Face's CDN and then written to Tigris:
 
 ```python
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = model_name,
+    model_name = model_name, # Qwen/Qwen2.5-0.5B
     max_seq_length = 4096,
     dtype = None, # auto detection
     load_in_4bit = False, # If True, use 4bit quantization to reduce memory usage
@@ -386,13 +389,13 @@ disk? I thought it was going to Tigris, Tigris isn't a filesystem, it's object
 storage". You're right. Tigris normally is not a filesystem, but S3 (the
 technology/API signature that Tigris is built upon) has many semantics that can
 somewhat-cleanly-if-you-squint-enough be mapped to the normal Unix filesystem
-calls.
+API.
 
 In order to fit the square peg of Tigris into the round hole of the POSIX
 filesystem interface, we use a tool called
 [geesefs](https://github.com/yandex-cloud/geesefs). GeeseFS uses the Linux
 Kernel's [FUSE](https://www.kernel.org/doc/html/latest/filesystems/fuse.html)
-(Filesystem in USErspace) subsystem to mount an S3 bucket as if it was a
+(Filesystem in Userrspace) subsystem to mount an S3 bucket as if it was a
 filesystem. This allows you to use the normal filesystem calls to interact with
 Tigris, which is very useful for AI workloads that assume data is accessible via
 a filesystem. We have to do this because the Hugging Face transformers library
@@ -430,15 +433,9 @@ formatting function to pre-chew the dataset, and then saving the results back to
 Tigris:
 
 ```python
-biggest = -1
 for shard_id, shard in enumerate(shards_for(bucket_name, dataset_name, storage_options)):
     ds = ds.map(prechew, batched=True)
     ds.save_to_disk(f"s3://{bucket_name}/model-ready/{model_name}/{dataset_name}/{shard_id}", storage_options=storage_options)
-    biggest = shard_id
-
-assert biggest != -1, "No examples were found in the dataset. Are you sure you imported the dataset correctly?"
-
-tigris.write_text(f"/{bucket_name}/model-ready/{model_name}/{dataset_name}/info.json", json.dumps({"count": shard_id}))
 ```
 
 The `prechew` function is a simple wrapper around the model's tokenization
@@ -451,9 +448,7 @@ def prechew(examples):
     return { "text" : texts, }
 ```
 
-It takes an example, extracts the conversation text from it, and then uses the
-model's tokenizer to convert that conversation text into the raw token form that
-the model was trained on. In essence, it goes from this:
+In essence, it goes from this:
 
 ```json
 {
@@ -470,7 +465,7 @@ the model was trained on. In essence, it goes from this:
 }
 ```
 
-And then turns them into something like this:
+And then turns the conversation messages into something like this:
 
 ```text
 <|im_start|>system
@@ -491,10 +486,10 @@ to know when a new message starts and ends.
 Without these tokens the model would go catastrophically off the rails and start
 spouting out nonsense that matches the word frequency patterns it was trained
 on. This is because the model doesn't actually understand language, it just
-knows how to predict the next word in a sequence of words. The `<|im_end|>`
-token also has special meaning to the inference runtime because it means that
-the model has finished generating a response and is ready to emit it to the
-user.
+knows how to predict the next token in a finite sequence of tokens (also known
+as the "context window"). The `<|im_end|>` token also has special meaning to the
+inference runtime because it means that the model has finished generating a
+response and is ready to emit it to the user.
 
 ### Actually training the model
 
@@ -507,14 +502,14 @@ model = FastLanguageModel.from_pretrained(f"{home_folder}/tigris/models/{model_n
 
 And then we stack a new [LoRA](https://github.com/microsoft/LoRA) (Low-Rank
 Adaptation) model on top of it. We use a LoRA adapter here because this requires
-much less system resources to train than doing a full-blown finetuing run on the
-dataset. When you use a LoRA, you freeze most of the weights in the original
-model and only train a few weights that are stacked on top of the original
-model. This allows you to train models on much larger datasets without having to
-worry about running out of GPU memory or cloud credits.
+much less system resources to train than doing a full-blown finetuning run on
+the dataset. When you train a LoRA, you freeze most of the weights in the
+original model and then you only train a smaller number of weights that get
+stacked on top. This allows you to train models on much larger datasets without
+having to worry about running out of GPU memory or cloud credits.
 
 There are tradeoffs in using LoRA adapters instead of doing a full fine-tuning
-run, however in practice having LoRA models in the mix gives you more
+run, however in practice having LoRA adapters in the mix gives you more
 flexibility because you can freeze and ship the base model to your datacenters
 (or even cache it in a docker image) and then only have to worry about
 distributing the LoRA adapter weights. The full model weights can be in the tens
@@ -523,11 +518,11 @@ megabytes at most.
 
 :::note
 
-This doesn't always matter with Tigris because
+This size difference doesn't always matter with Tigris because
 [Tigris has no egress fees](https://www.tigrisdata.com/docs/pricing/), but
 depending on the unique facts and circumstances of your deployment, it may be
 ideal to have a smaller model to ship around on top of a known quantity. This
-can also make updates easier in some environments.
+can also make updates easier in some environments. Everything's a tradeoff.
 
 :::
 
@@ -547,7 +542,7 @@ model = FastLanguageModel.get_peft_model(model, ...) # other generic LoRA parame
 ```
 
 Finally, the LoRA adapter is trained on each shard of the dataset for one epoch
-and the resulting weights are saved to Tigris:
+(pass over the shard) and the resulting weights are saved to Tigris:
 
 ```python
 # For every dataset shard:
@@ -581,14 +576,14 @@ is going on, it will emit information about the loss function, the learning
 rate, and other things that are useful for debugging. Interpreting these
 statistics is a bit of an art (less than reading tea leaves, but more than
 reading tarot), but in general you want to see the loss function decreasing over
-time and the learning rate decreasing over time. Consult your local data
+time and the learning rate increasing over time. Consult your local data
 scientist for more information and life advice as appropriate.
 
 In this example, we save two products:
 
 - The LoRA weights themselves, which aren't useful without the base model
 - The LoRA weights fused with the base model, which is what you use for
-  inference with tools like [vllm](https://docs.vllm.ai/en/latest/)
+  standalone inference with tools like [vllm](https://docs.vllm.ai/en/latest/)
 
 ```python
 # Save the LoRA model for later use
@@ -613,11 +608,12 @@ the model. The instance will shut down automatically after 15 minutes of
 inactivity to save you money.
 
 In theory, this example can run on any nVidia GPU with at least 16 GB of vram
-and in an environment with the FUSE character device `/dev/fuse` usable. If you
-can't use FUSE for some reason, you will need to write custom python code to
-interact with Tigris directly. This is left as an exercise for the reader. Hint:
-use the `multiprocessing` module to parallelize the model weight loading and
-saving steps.
+(it probably can work on smaller GPUs, but 16GB is the smallest GPU I had access
+to when testing this) and in an environment with the FUSE character device
+`/dev/fuse` usable. If you can't use FUSE for some reason, you will need to
+write custom python code to interact with Tigris directly. This is left as an
+exercise for the reader. Hint: use the `multiprocessing` module to parallelize
+the model weight loading and saving steps.
 
 :::note
 
