@@ -8,7 +8,7 @@ description: >
   weights across clouds. Tools like SkyPilot that abstract cloud providers and
   operating system configuration simplifies the compute layer, allowing for
   seamless data transfer between clouds using Tigris.
-image: ./cloud-hime.jpg
+image: ./ukiyo-e-tiger.jpg
 keywords:
   [
     object storage,
@@ -28,7 +28,7 @@ tags: [object storage, ai, training, finetuning]
 import InlineCta from "@site/src/components/InlineCta";
 import PullQuote from "@site/src/components/PullQuote";
 
-![A brown haired smiling anime woman just absolutely enjoying life in a limited pallete CGA vaporwave sky, effortlessly flitting from cloud to cloud as the winds of cost demand.](./cloud-hime.jpg)
+![A blue tiger surfs the internet waves, object storage in tow. The image has an ukiyo-e style with flat pastel colors and thick outlines.](./ukiyo-e-tiger.jpg)
 
 <div
   style={{
@@ -40,9 +40,9 @@ import PullQuote from "@site/src/components/PullQuote";
     marginRight: "auto",
   }}
 >
-  A brown haired smiling anime woman just absolutely enjoying life in a limited
-  pallete CGA vaporwave sky, effortlessly flitting from cloud to cloud as the
-  winds of cost demand. <div style={{ marginTop: "0.5rem" }} />{" "}
+  A blue tiger surfs the internet waves, object storage in tow. The image has an
+  ukiyo-e style with flat pastel colors and thick outlines.{" "}
+  <div style={{ marginTop: "0.5rem" }} />{" "}
   <details>
     <summary style={{ fontWeight: "600" }}>Generation details</summary>
     Generated using [Counterfeit v3.0](https://civitai.com/models/4468/counterfeit-v30)
@@ -52,49 +52,43 @@ import PullQuote from "@site/src/components/PullQuote";
   </details>
 </div>
 
-Let’s face it, we’ve all got data in our life. Sometimes that data is bigger
-than RAM, sometimes the data is smaller than RAM. Life is short; runway is even
-shorter, and we all have better things to do than make sure that the right Linux
-incantations are being made to indoctrinate your node with the hivemind and then
-dole out AI tasks to it.
+When you get started with finetuning AI models, you typically pull the datasets
+and models from somewhere like the Hugging Face Hub. This is generally fine, but
+as your usecase grows and gets more complicated, you're going to run into two
+big risks:
 
-Every workload requires compute, network, and storage. The compute layer is
-infinitely flexible, you can run your workloads on Kubernetes just about
-anywhere and when you can’t, you can at least run them on Docker. Networking is
-also infinitely flexible, over the last 50 or so years people have figured out
-how to make networks do anything you can imagine, even
-[Rick-roll people over reverse DNS records](https://ewpratten.com/blog/rickrolling-the-internet/).
-The sticky part is storage. For all of the evolution that the rest of the stack
-has done, there’s no real “Kubernetes” or “VPC” for storage that provides
-flexibility. Storage is also the one factor that The Big Cloud™️ will use to
-make sure you stay within the clutches of its walled garden lest you pay the
-egress fee ransom.
+- You're going to depend on the things that are critical to your business being
+  hosted by someone else on a platform that doesn't have a public SLA
+  (Service-Level Agreement).
+- Your dataset will grow beyond what you can fit into ram, and you'll have to
+  start sharding it into chunks that are smaller than ram.
+
+Most of the stuff you'll find online deals with the "happy path" of training AI
+models, but the real world is not quite as kind as this happy path. Your data
+will be bigger than ram. You will end up needing to make your own copies of
+datasets and models because they will be taken offline without warning. You will
+need to be able to move your work between providers because price hikes will
+happen.
+
+The unfortunate part is that this is the place where you're left to figure it
+out on your own. Let's break down how to do this in the real world with a flow
+that can expand to any dataset, model, or cloud provider with minimal changes
+required. We're going to show you how to use Tigris to store your datasets and
+models, and how to use
+[SkyPilot](https://skypilot.readthedocs.io/en/latest/docs/index.html) to
+abstract away the compute layer so that you can focus on the actual work of
+training models. This will help you reduce the risk involved with training AI
+models on custom datasets by importing that data once, and then always using
+that cached data for training and inference.
 
 {/* truncate */}
-
-Storage shouldn’t be something you worry about. The costs to move around your
-data shouldn’t keep you from using the exact GPU that’s best for your workload.
-And you shouldn’t have to design around performance bottlenecks across regions
-and clouds. Your data should be exactly where you need it, when you need it,
-without endless configuration and tuning. We’re an entire company dedicated to
-making sure that you have the best experience possible with storage.
-Importantly, your storage should be decoupled from the specifics of any compute
-environment or network system that you use as long as it can speak the lingua
-franca of the Internet: HTTP requests.
-
-You want to be flexible between providers. I want you to be flexible between
-providers. Today we’re gonna cover a more concrete example of how you can
-architect your AI model training flow so that you can shunt tasks between clouds
-as cheaply as possible. This is all made possible by using Tigris to store your
-training data and model weights between clouds so you don’t have to think about
-the details of what is being stored where.
 
 :::note
 
 At the highest level, this flow is optimized for AI training, but the
 metapattern I spell out here is also applicable to any other environment where
 you can spin up compute with just an API call. If you're not training AI models,
-you can still use the general metapattern to make your mulitlcloud life easier
+you can still use the general metapattern to make your multi-cloud life easier
 by storing your state or needed data files in Tigris.
 
 :::
@@ -211,10 +205,6 @@ the best responses in my next blogpost.
 :::
 
 ## The flow
-
-TODO(Xe): bridge this with the SkyPilot example, talk about the overall flow and
-say that this is implemented with SkyPilot in the example repo as an example of
-how to do this in practice.
 
 I made
 [an example](https://github.com/tigrisdata-community/skypilot-training-demo)
@@ -537,10 +527,18 @@ This doesn't always matter with Tigris because
 [Tigris has no egress fees](https://www.tigrisdata.com/docs/pricing/), but
 depending on the unique facts and circumstances of your deployment, it may be
 ideal to have a smaller model to ship around on top of a known quantity. This
-can also make updates easier in some enviroments. Consult your local SRE for
-more life advice that may be helpful in your situation.
+can also make updates easier in some environments.
 
 :::
+
+This technique is used by Apple as a cornerstone of
+[how Apple Intelligence works](https://machinelearning.apple.com/research/introducing-apple-foundation-models).
+The foundation model is shipped with the core OS image and then the adapter
+weights are downloaded as needed. This allows the on-device model to be given
+new capabilities without having to re-download the entire model. When Apple
+Intelligence summarizes a webpage, notifications, or removes distracting parts
+from the background of an image, it's using separate adapters for each of those
+tasks on top of the same foundation model.
 
 ```python
 # Make a LoRA model stacked on top of the base model, this is what we train and
