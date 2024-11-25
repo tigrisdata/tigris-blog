@@ -49,10 +49,10 @@ need to be able to move your work between providers because price hikes will
 happen.
 
 The unfortunate part is that this is the place where you're left to figure it
-out on your own. Let's break down how to do this in the real world with a flow
-that can expand to any dataset, model, or cloud provider with minimal changes
-required. We're going to show you how to use Tigris to store your datasets and
-models, and how to use
+out on your own. Let's break down how to do larger scale model training in the
+real world with a flow that can expand to any dataset, model, or cloud provider
+with minimal changes required. We're going to show you how to use Tigris to
+store your datasets and models, and how to use
 [SkyPilot](https://skypilot.readthedocs.io/en/latest/docs/index.html) to
 abstract away the compute layer so that you can focus on the actual work of
 training models. This will help you reduce the risk involved with training AI
@@ -99,7 +99,7 @@ by storing your state or needed data files in Tigris.
 
 It’s kinda remarkable that we’ve ended up in a situation where compute is so
 fungible, but in order to get to the point that you can do anything with it you
-need to introduce so much undefined state and just hope that things work out.
+need to introduce a bunch of undefined state and just hope that things work out.
 Cloud providers have done a great job of giving you templates that let you start
 out from clean Ubuntu installs, but the rest is handwaved off as an exercise for
 the reader.
@@ -109,8 +109,9 @@ This is where
 SkyPilot lets you abstract cloud providers away from the underlying system
 configuration and also abstracts away having to manage the operating system
 configuration. In essence, you give it a short description that says you need an
-[nVidia T4](https://www.techpowerup.com/gpu-specs/tesla-t4.c3316), to install
-some python packages, and then run whatever you want:
+[Nvidia T4](https://www.techpowerup.com/gpu-specs/tesla-t4.c3316) (or an L4,
+A100, L40, or L40s depending on which is more available/cheap), to install some
+python packages, and then run whatever you want:
 
 ```yaml
 # get-rich-quick.yaml
@@ -119,7 +120,8 @@ name: get-rich-quick
 workdir: .
 
 resources:
-  accelerator: T4:1
+  accelerator: [T4:1, L4:1, A100:1, A100:8, L40:1, L40s:1]
+  cloud: aws # or gcp, azure, kubernetes, oci, lambda, paperspace, runpod, cudo, fluidstack, ibm
 
 setup: |
   pip install -r requirements.txt
@@ -221,7 +223,7 @@ and kicked off `sky launch`. Here's what's going on:
 
 SkyPilot queries the pricing endpoints for all the cloud providers you have set
 up and finds the cheapest deal for a GPU instance with an
-[nVidia T4](https://www.techpowerup.com/gpu-specs/tesla-t4.c3316). When it finds
+[Nvidia T4](https://www.techpowerup.com/gpu-specs/tesla-t4.c3316). When it finds
 the options, it presents them to you as a list so you can make an informed
 pricing decision:
 
@@ -274,16 +276,19 @@ the setup script returns a 0 exit code), it kicks off the `run` script. This is
 where the magic happens, and where the training run actually takes place. It
 does this by running a series of scripts in sequence:
 
-1. `import-dataset.py`: Downloads the dataset from Hugging Face and copies it to
-   Tigris in shards of up to 5 million examples per shard. Each shard is saved
-   to Tigris unmodified, then standardized so it can be trained upon.
-2. `import-model.py`: Downloads the model weights from Hugging Face and copies
-   them to Tigris for permanent storage.
-3. `pretokenize.py`: Loads each shard of the dataset from Tigris and uses the
-   model's tokenization formatting to pre-chew it for training.
-4. `dotrain.py`: Trains the model on each shard of the dataset for one epoch
-   (one look over the entire dataset shard) and saves the resulting weights to
-   Tigris.
+1. [`import-dataset.py`](https://github.com/tigrisdata-community/skypilot-training-demo/blob/main/import-dataset.py):
+   Downloads the dataset from Hugging Face and copies it to Tigris in shards of
+   up to 5 million examples per shard. Each shard is saved to Tigris unmodified,
+   then standardized so it can be trained upon.
+2. [`import-model.py`](https://github.com/tigrisdata-community/skypilot-training-demo/blob/main/import-model.py):
+   Downloads the model weights from Hugging Face and copies them to Tigris for
+   permanent storage.
+3. [`pretokenize.py`](https://github.com/tigrisdata-community/skypilot-training-demo/blob/main/pretokenize.py):
+   Loads each shard of the dataset from Tigris and uses the model's tokenization
+   formatting to pre-chew it for training.
+4. [`dotrain.py`](https://github.com/tigrisdata-community/skypilot-training-demo/blob/main/dotrain.py):
+   Trains the model on each shard of the dataset for one epoch (one look over
+   the entire dataset shard) and saves the resulting weights to Tigris.
 
 All of these run in sequence and you end up with a trained model in about 15
 minutes. This is a very simple example (for one, I'm using a model that's very
@@ -607,8 +612,8 @@ saving it to Tigris, loading the model, pre-chewing the dataset, and training
 the model. The instance will shut down automatically after 15 minutes of
 inactivity to save you money.
 
-In theory, this example can run on any nVidia GPU with at least 16 GB of vram
-(it probably can work on smaller GPUs, but 16GB is the smallest GPU I had access
+In theory, this example can run on any Nvidia GPU with at least 16 GB of vram
+(likely, it can work on smaller GPUs, but 16GB is the smallest GPU I had access
 to when testing this) and in an environment with the FUSE character device
 `/dev/fuse` usable. If you can't use FUSE for some reason, you will need to
 write custom python code to interact with Tigris directly. This is left as an
