@@ -265,11 +265,9 @@ but not limited to:
 - [Unsloth](https://docs.unsloth.ai/) -- a library that makes finetuning models
   faster, use less ram, and easier by abstracting away a lot of the boilerplate
   code that you would normally have to write.
-- [geesefs](https://github.com/yandex-cloud/geesefs) -- a FUSE filesystem that
-  lets you mount an S3 bucket as if it was a normal filesystem. This is used to
-  make the Hugging Face transformers library load model weights from Tigris
-  because that library assumes that the model weights are on the filesystem, not
-  in object storage.
+- The [AWS CLI](https://aws.amazon.com/cli/) -- a command line interface to
+  various AWS APIs and services. Tigris is compatible with S3, so you can use
+  all the normal S3 commands to interact with Tigris.
 
 Once everything is set up (determined by the very scientific method of seeing if
 the setup script returns a 0 exit code), it kicks off the `run` script. This is
@@ -384,38 +382,20 @@ model, tokenizer = FastLanguageModel.from_pretrained(
     load_in_4bit = False, # If True, use 4bit quantization to reduce memory usage
 )
 
-# Save the model to Tigris
-model.save_pretrained(f"{home_dir}/tigris/models/{model_name}")
-tokenizer.save_pretrained(f"{home_dir}/tigris/models/{model_name}")
+# Save the model to disk
+model.save_pretrained(f"{home_dir}/models/{model_name}")
+tokenizer.save_pretrained(f"{home_dir}/models/{model_name}")
+
+# Import to Tigris
+os.system(f"aws s3 sync {home_dir}/models/{model_name} s3://{bucket_name}/models/{model_name}")
 ```
 
-You may be asking yourself something like "Wait, why are you saving it to the
-disk? I thought it was going to Tigris, Tigris isn't a filesystem, it's object
-storage". You're right. Tigris normally is not a filesystem, but S3 (the
-technology/API signature that Tigris is built upon) has many semantics that can
-somewhat-cleanly-if-you-squint-enough be mapped to the normal Unix filesystem
-API.
-
-In order to fit the square peg of Tigris into the round hole of the POSIX
-filesystem interface, we use a tool called
-[geesefs](https://github.com/yandex-cloud/geesefs). GeeseFS uses the Linux
-Kernel's [FUSE](https://www.kernel.org/doc/html/latest/filesystems/fuse.html)
-(Filesystem in Userrspace) subsystem to mount an S3 bucket as if it was a
-filesystem. This allows you to use the normal filesystem calls to interact with
-Tigris, which is very useful for AI workloads that assume data is accessible via
-a filesystem. We have to do this because the Hugging Face transformers library
-assumes that the model weights are on the filesystem, not in object storage.
-
-:::note
-
-APIs are the lies we tell eachother to make us all sleep at night. In a
-perfectly spherical cow scenario, replacing the underlying transport for a given
-filesystem folder would be really easy (in fact, in Plan 9 and GNU HURD this is
-actually that easy; to the point that you don't need to extract archives because
-you can just mount them instead), but that isn't the timeline we ended up in. We
-gotta ship the bodge to prod because we have no other choice.
-
-:::
+This downloads the model, writes it to disk in the `models` folder, and then
+uses the `aws s3 sync` command to push the weights up to Tigris. This is a very
+simple way to get the model weights into Tigris, but it's effective and works
+well for small and large models. We would push models directly into S3 like we
+did with the dataset, but the library we're forced to use to load/inference
+models doesn't support that. Oh well.
 
 The model has two main components that we care about:
 
@@ -502,7 +482,11 @@ Once the dataset is pre-chewed and everything else is ready in Tigris, the real
 fun can begin. The model is loaded from Tigris:
 
 ```python
-model = FastLanguageModel.from_pretrained(f"{home_folder}/tigris/models/{model_name}", ...)
+# Load the model from Tigris if it's not already on disk
+os.system(f"aws s3 sync s3://{bucket_name}/models/{model_name} {home_dir}/models/{model_name}")
+
+# Load the model from disk into GPU vram
+model = FastLanguageModel.from_pretrained(f"{home_folder}/models/{model_name}", ...)
 ```
 
 And then we stack a new [LoRA](https://github.com/microsoft/LoRA) (Low-Rank
@@ -523,7 +507,7 @@ megabytes at most.
 
 :::note
 
-This size difference doesn't always matter with Tigris because
+Pedantically, this size difference doesn't always matter with Tigris because
 [Tigris has no egress fees](https://www.tigrisdata.com/docs/pricing/), but
 depending on the unique facts and circumstances of your deployment, it may be
 ideal to have a smaller model to ship around on top of a known quantity. This
@@ -592,11 +576,14 @@ In this example, we save two products:
 
 ```python
 # Save the LoRA model for later use
-model.save_pretrained(f"{home_dir}/tigris/done/{model_name}/{dataset_name}/lora_model")
-tokenizer.save_pretrained(f"{home_dir}/tigris/done/{model_name}/{dataset_name}/lora_model")
+model.save_pretrained(f"{home_dir}/done/{model_name}/{dataset_name}/lora_model")
+tokenizer.save_pretrained(f"{home_dir}/done/{model_name}/{dataset_name}/lora_model")
 
 # Save the LoRA fused to the base model for inference with vllm
-model.save_pretrained_merged(f"{home_dir}/tigris/done/{model_name}/{dataset_name}/fused", tokenizer, save_method="merged_16bit")
+model.save_pretrained_merged(f"{home_dir}/done/{model_name}/{dataset_name}/fused", tokenizer, save_method="merged_16bit")
+
+# Push to Tigris
+os.system(f"aws s3 sync {home_dir}/done/{model_name}/{dataset_name} s3://{bucket_name}/done/{model_name}")
 ```
 
 ### Other things to have in mind
@@ -614,19 +601,8 @@ inactivity to save you money.
 
 In theory, this example can run on any Nvidia GPU with at least 16 GB of vram
 (likely, it can work on smaller GPUs, but 16GB is the smallest GPU I had access
-to when testing this) and in an environment with the FUSE character device
-`/dev/fuse` usable. If you can't use FUSE for some reason, you will need to
-write custom python code to interact with Tigris directly. This is left as an
-exercise for the reader. Hint: use the `multiprocessing` module to parallelize
-the model weight loading and saving steps.
-
-:::note
-
-The FUSE concept in the Linux kernel is different than the concept of fusing a
-LoRA adapter to a base model. It is unfortunate that the two things are so
-similar, but such is life.
-
-:::
+to when testing this). The scripts are designed to be as cloud-agnostic as
+possible.
 
 ## Conclusion
 
