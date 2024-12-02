@@ -143,5 +143,8 @@ Storage should just work :tm: and be consistent across clouds. He said, “I fel
 much more comfortable knowing that we’re using a product where the team just
 does object storage all day.”
 
-<InlineCta title={"Want to try it out?"} subtitle={"Make a global bucket with no
-egress fees"} button={"Get Started"} />
+<InlineCta
+  title={"Want to try it out?"}
+  subtitle={"Make a global bucket with no egress fees"}
+  button={"Get Started"}
+/>
