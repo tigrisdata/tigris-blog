@@ -106,9 +106,9 @@ the reader.
 
 This is where
 [SkyPilot](https://skypilot.readthedocs.io/en/latest/docs/index.html) comes in.
-SkyPilot lets you abstract cloud providers away from the underlying system
-configuration and also abstracts away having to manage the operating system
-configuration. In essence, you give it a short description that says you need an
+SkyPilot lets you abstract cloud providers and managing the operating system
+configuration out of the equation. In essence, you give it a short description
+that says you need an
 [Nvidia T4](https://www.techpowerup.com/gpu-specs/tesla-t4.c3316) (or an L4,
 A100, L40, or L40s depending on which is more available/cheap), to install some
 python packages, and then run whatever you want:
@@ -132,10 +132,10 @@ run: |
     --output Xe/FoolproofInvestmentStrategy
 ```
 
-Then you run `sky up -n get-rich-quick get-rich-quick.yaml`, and then SkyPilot
-will make sure that you have a T4 ready for you, install whatever dependencies
-you need, and then run your script. It'll even go out of its way to compare
-prices between cloud providers so that you get the best deal possible.
+Then you run `sky up get-rich-quick.yaml`, and then SkyPilot will make sure that
+you have a T4 ready for you, install whatever dependencies you need, and then
+run your script. It'll even go out of its way to compare prices between cloud
+providers so that you get the best deal possible.
 
 This is all well and good (really, when this all works it's absolute magic), but
 then once the rush of getting your script to run on a GPU wears off, you realize
@@ -588,10 +588,10 @@ os.system(f"aws s3 sync {home_dir}/done/{model_name}/{dataset_name} s3://{bucket
 
 ### Other things to have in mind
 
-Each of the scripts that run in the instance are designed to be idempotent and
-are intended to run in sequence, but `import-dataset.py` and `import-model.py`
-can be run in parallel. This is because they don't depend on eachother and end
-up feeding into inputs at the prechewing and training steps.
+Each of the scripts in this example are designed to be idempotent and are
+intended to run in sequence, but `import-dataset.py` and `import-model.py` can
+be run in parallel. This is because they don't depend on eachother and end up
+feeding into inputs at the prechewing and training steps.
 
 Training this LoRA adapter on a dataset of 100k examples takes about 15 minutes
 including downloading the dataset, standardizing it, downloading the model,
