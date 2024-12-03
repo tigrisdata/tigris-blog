@@ -1,0 +1,635 @@
+---
+slug: training-any-cloud
+title: Training with Big Data on Any Cloud
+description: >
+  Training AI models on Big Data can be challenging due to the need for flexible
+  storage and compute. Tigris, a cloud-agnostic storage layer, enables
+  decoupling of storage from compute, making it easier to manage data and model
+  weights across clouds. Tools like SkyPilot that abstract cloud providers and
+  operating system configuration simplifies the compute layer, allowing for
+  seamless data transfer between clouds using Tigris.
+image: ./ukiyo-e-tiger.jpg
+keywords:
+  [
+    object storage,
+    blob storage,
+    s3,
+    ai,
+    training,
+    finetuning,
+    lora,
+    cloud,
+    big data,
+  ]
+authors: [xe]
+tags: [object storage, ai, training, finetuning]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import PullQuote from "@site/src/components/PullQuote";
+
+When you get started with finetuning AI models, you typically pull the datasets
+and models from somewhere like the Hugging Face Hub. This is generally fine, but
+as your usecase grows and gets more complicated, you're going to run into two
+big risks:
+
+- You're going to depend on the things that are critical to your business being
+  hosted by someone else on a platform that doesn't have a public SLA
+  (Service-Level Agreement, or commitment to uptime with financial penalties
+  when it is violated).
+- Your dataset will grow beyond what you can fit into ram (or even your hard
+  disk), and you'll have to start sharding it into chunks that are smaller than
+  ram.
+
+Most of the stuff you'll find online deals with the "happy path" of training AI
+models, but the real world is not quite as kind as this happy path is. Your data
+will be bigger than ram. You will end up needing to make your own copies of
+datasets and models because they will be taken offline without warning. You will
+need to be able to move your work between providers because price hikes will
+happen.
+
+The unfortunate part is that this is the place where you're left to figure it
+out on your own. Let's break down how to do larger scale model training in the
+real world with a flow that can expand to any dataset, model, or cloud provider
+with minimal changes required. We're going to show you how to use Tigris to
+store your datasets and models, and how to use
+[SkyPilot](https://skypilot.readthedocs.io/en/latest/docs/index.html) to
+abstract away the compute layer so that you can focus on the actual work of
+training models. This will help you reduce the risk involved with training AI
+models on custom datasets by importing those datasets and models once, and then
+always using that copy for training and inference.
+
+![A blue tiger surfs the internet waves, object storage in tow. The image has an ukiyo-e style with flat pastel colors and thick outlines.](./ukiyo-e-tiger.jpg)
+
+<div
+  style={{
+    fontSize: "0.75rem",
+    textAlign: "center",
+    padding: "2rem",
+    maxWidth: "65ch",
+    marginLeft: "auto",
+    marginRight: "auto",
+  }}
+>
+  A blue tiger surfs the internet waves, object storage in tow. The image has an
+  ukiyo-e style with flat pastel colors and thick outlines.{" "}
+  <div style={{ marginTop: "0.5rem" }} />{" "}
+  <details>
+    <summary style={{ fontWeight: "600" }}>Generation details</summary>
+    Generated using [Counterfeit v3.0](https://civitai.com/models/4468/counterfeit-v30)
+    using a [ComfyUI](https://www.comfy.org/en/) flow stacking several LoRA adapters
+    as well as four rounds of upscaling and denoising. Originally a sketch by Xe
+    Iaso.
+  </details>
+</div>
+
+{/* truncate */}
+
+:::note
+
+At the highest level, this flow is optimized for AI training, but the
+metapattern I spell out here is also applicable to any other environment where
+you can spin up compute with just an API call. If you're not training AI models,
+you can still use the general metapattern to make your multi-cloud life easier
+by storing your state or needed data files in Tigris.
+
+:::
+
+## Non-fungible compute
+
+It’s kinda remarkable that we’ve ended up in a situation where compute is so
+fungible, but in order to get to the point that you can do anything with it you
+need to introduce a bunch of undefined state and just hope that things work out.
+Cloud providers have done a great job of giving you templates that let you start
+out from clean Ubuntu installs, but the rest is handwaved off as an exercise for
+the reader.
+
+This is where
+[SkyPilot](https://skypilot.readthedocs.io/en/latest/docs/index.html) comes in.
+SkyPilot lets you abstract cloud providers and managing the operating system
+configuration out of the equation. In essence, you give it a short description
+that says you need an
+[Nvidia T4](https://www.techpowerup.com/gpu-specs/tesla-t4.c3316) (or an L4,
+A100, L40, or L40s depending on which is more available/cheap), to install some
+python packages, and then run whatever you want:
+
+```yaml
+# get-rich-quick.yaml
+name: get-rich-quick
+
+workdir: .
+
+resources:
+  accelerator: [T4:1, L4:1, A100:1, A100:8, L40:1, L40s:1]
+  cloud: aws # or gcp, azure, kubernetes, oci, lambda, paperspace, runpod, cudo, fluidstack, ibm
+
+setup: |
+  pip install -r requirements.txt
+
+run: |
+  python get-rich-quick.py \
+    --input SomeUser/StockMarketRecords \
+    --output Xe/FoolproofInvestmentStrategy
+```
+
+Then you run `sky launch get-rich-quick.yaml`, and then SkyPilot will make sure
+that you have a T4 ready for you, install whatever dependencies you need, and
+then run your script. It'll even go out of its way to compare prices between
+cloud providers so that you get the best deal possible.
+
+This is all well and good (really, when this all works it's absolute magic), but
+then once the rush of getting your script to run on a GPU wears off, you realize
+that you need to get your data to the cloud. This is where Tigris comes in.
+
+<PullQuote>
+  SkyPilot makes your compute layer fungible. Tigris makes your storage layer
+  fungible.
+</PullQuote>
+
+### The ideal AI training and inference lifecycle
+
+When you're doing AI training, you're effectively creating a pipeline that has
+you take data in on one end, mangle it in just the right way, and then put the
+resulting series of floating point numbers somewhere convenient so you can grab
+them when it's time to use them. It looks something like this in practice:
+
+![The ideal AI training and inference](./ideal-ai-flow.webp)
+
+However, there's a lot missing from there that you need to worry about. What if
+the dataset you're importing from suddenly vanishes a-la
+[the left-pad fiasco](https://en.wikipedia.org/wiki/Npm_left-pad_incident) from
+2016? What if the model you're using to train with is deprecated and removed
+from the Hugging Face Hub? What if the cloud provider you're using decides to
+change their pricing structure, you are hit disproportionately hard by the
+change, and you need to move off of that cloud provider in a hurry? What if your
+dataset is just too big to fit on a single machine?
+
+This is why you'd want to use Tigris. Tigris is a cloud-agnostic storage layer
+that lets you decouple your storage from your compute. You can import your
+models and datasets into Tigris, and then when you need to use them you can pull
+them from storage that is closest to your compute. No more having to wait for
+the entire state of the world to be transferred from one building in Northern
+Virginia even though you're running your compute in Europe.
+
+### The ideal AI training and inference lifecycle with Tigris
+
+When you're using Tigris, the flow looks something like this:
+
+![Training pipeline diagram](./overall-flow.webp)
+
+This looks a lot more complicated than it is, but each of these steps is
+designed to take the concrete needs of this flow and make them as simple and
+idempotent as possible. Each of these steps can be independently retried should
+they fail without affecting the rest of the pipeline. This is very important
+with AI training because you're dealing with a lot of data, a lot of moving
+parts, and the GPUs that everything is predicated upon are shockingly
+unreliable.
+
+Overall this makes the entire process as stateless and monadic as possible. Each
+step's outputs form the inputs to the next steps, and in many cases you can
+divide this out further and parallelize out many parts of this. This is the
+ideal state of affairs for AI training because it means that you can run this on
+a single machine or on a cluster of machines and it will work the same way.
+
+:::note
+
+If you're not a Haskeller, "monadic" is a fancy math word that refers to a
+computation that has well-defined inputs (datasets, models, etc.), outputs
+(consistently mangled datasets, finetuned models, etc.), and side effects
+(requests made to the outside world or changes done to object storage). In this
+context, it means that each step in the pipeline is well-defined and can be run
+in parallel with the other steps without affecting their inputs, outputs, or
+side effects.
+
+If you are a Haskeller, I'm sorry for the abuse of the term "monadic" here. I'm
+using it in more of a colloquial sense, not the mathematical sense. Please argue
+with me [on Bluesky](https://bsky.app/profile/xeiaso.net) about this. I'll post
+the best responses in my next blogpost.
+
+:::
+
+## The flow
+
+I made
+[an example](https://github.com/tigrisdata-community/skypilot-training-demo)
+using SkyPilot that trains a
+[LoRA (Low-Rank Adaptation)](https://arxiv.org/abs/2106.09685) adapter on top of
+[Qwen 2.5](https://qwenlm.github.io/blog/qwen2.5/) 0.5B on the
+[FineTome 100k](https://huggingface.co/mlabonne/FineTome-100k) dataset.
+
+Let's say you've installed SkyPilot,
+[followed our docs for training with SkyPilot](https://www.tigrisdata.com/docs/training/big-data-skypilot/),
+and kicked off `sky launch`. Here's what's going on:
+
+SkyPilot queries the pricing endpoints for all the cloud providers you have set
+up and finds the cheapest deal for a GPU instance with an
+[Nvidia T4](https://www.techpowerup.com/gpu-specs/tesla-t4.c3316). When it finds
+the options, it presents them to you as a list so you can make an informed
+pricing decision:
+
+```text
+Using user-specified accelerators list (will be tried in the listed order): <Cloud>({'T4': 1}), <Cloud>({'A100-80GB': 1}), <Cloud>({'A100-80GB': 8})
+Considered resources (1 node):
+--------------------------------------------------------------------------------------------------------------
+ CLOUD        INSTANCE                vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE        COST ($)   CHOSEN
+--------------------------------------------------------------------------------------------------------------
+ AWS          g4dn.xlarge             4       16        T4:1           us-east-1          0.53          ✔
+ Fluidstack   A100_PCIE_80GB::1       28      120       A100-80GB:1    CANADA             1.80
+ RunPod       1x_A100-80GB_SECURE     8       80        A100-80GB:1    CA                 1.99
+ Paperspace   A100-80G                12      80        A100-80GB:1    East Coast (NY2)   3.18
+ Lambda       gpu_8x_a100_80gb_sxm4   240     1800      A100-80GB:8    us-east-1          14.32
+ Fluidstack   A100_PCIE_80GB::8       252     1440      A100-80GB:8    CANADA             14.40
+ RunPod       8x_A100-80GB_SECURE     64      640       A100-80GB:8    CA                 15.92
+ Paperspace   A100-80Gx8              96      640       A100-80GB:8    East Coast (NY2)   25.44
+ AWS          p4de.24xlarge           96      1152      A100-80GB:8    us-east-1          40.97
+--------------------------------------------------------------------------------------------------------------
+Multiple AWS instances satisfy T4:1. The cheapest AWS(g4dn.xlarge, {'T4': 1}) is considered among:
+['g4dn.xlarge', 'g4dn.2xlarge', 'g4dn.4xlarge', 'g4dn.8xlarge', 'g4dn.16xlarge'].
+To list more details, run: sky show-gpus T4
+```
+
+You choose the cheapest option, and SkyPilot spins up a new instance in the
+cloud. Once the instance responds over SSH, SkyPilot starts setting itself up
+and assimilating the machine. It installs
+[Conda](https://docs.anaconda.com/miniconda/) so that you can manage your
+dependencies and then runs the `setup` script in the `allatonce.yaml` file. This
+script installs all the necessary dependencies for the training run, including
+but not limited to:
+
+- [Hugging Face Transformers](https://huggingface.co/docs/transformers/) -- the
+  library underpinning nearly every AI model training and inference run in the
+  Python ecosystem.
+- [Hugging Face Datasets](https://huggingface.co/docs/datasets/) -- the library
+  that lets you download and manage datasets from the Hugging Face Hub, as well
+  as being a convenient vendor-neutral interface for your own datasets.
+- [Unsloth](https://docs.unsloth.ai/) -- a library that makes finetuning models
+  faster, use less ram, and easier by abstracting away a lot of the boilerplate
+  code that you would normally have to write.
+- The [AWS CLI](https://aws.amazon.com/cli/) -- a command line interface to
+  various AWS APIs and services. Tigris is compatible with S3, so you can use
+  all the normal S3 commands to interact with Tigris.
+
+Once everything is set up (determined by the very scientific method of seeing if
+the setup script returns a 0 exit code), it kicks off the `run` script. This is
+where the magic happens, and where the training run actually takes place. It
+does this by running a series of scripts in sequence:
+
+1. [`import-dataset.py`](https://github.com/tigrisdata-community/skypilot-training-demo/blob/main/import-dataset.py):
+   Downloads the dataset from Hugging Face and copies it to Tigris in shards of
+   up to 5 million examples per shard. Each shard is saved to Tigris unmodified,
+   then standardized so it can be trained upon.
+2. [`import-model.py`](https://github.com/tigrisdata-community/skypilot-training-demo/blob/main/import-model.py):
+   Downloads the model weights from Hugging Face and copies them to Tigris for
+   permanent storage.
+3. [`pretokenize.py`](https://github.com/tigrisdata-community/skypilot-training-demo/blob/main/pretokenize.py):
+   Loads each shard of the dataset from Tigris and uses the model's tokenization
+   formatting to pre-chew it for training.
+4. [`dotrain.py`](https://github.com/tigrisdata-community/skypilot-training-demo/blob/main/dotrain.py):
+   Trains the model on each shard of the dataset for one epoch (one look over
+   the entire dataset shard) and saves the resulting weights to Tigris.
+
+All of these run in sequence and you end up with a trained model in about 15
+minutes. This is a very simple example (for one, I'm using a model that's very
+very small, only 500 million parameters), but it's a good starting point for
+understanding the flow at work here and how you would go about customizing it
+for your own needs.
+
+Here's some of the most relevant code from each script. You can find the full
+scripts in the
+[example repo](https://github.com/tigrisdata-community/skypilot-training-demo),
+but for these snippets assume the following variables exist and have values that
+make sense as relevant:
+
+```python
+bucket_name = "mybucket"
+dataset_name = "mlabonne/FineTome-100k"
+model_name = "Qwen/Qwen2.5-0.5B"
+storage_options = { secrets_from_getenv }
+```
+
+### Importing and sharding the dataset
+
+One of the biggest things that's hard with managing training data with AI stuff
+is dealing with data that is larger than ram. Most of the time when you load a
+dataset with the
+[`load_dataset` function](https://huggingface.co/docs/datasets/loading), it
+downloads all of the data files to the disk and then loads them directly into
+memory. This is generally useful for many things, but it means that your dataset
+has to be smaller than your memory capacity (minus what your OS needs to exist).
+
+This example works around this problem by using the `streaming=True` option in
+`load_dataset`:
+
+```python
+dataset = load_dataset(dataset_name, split="train", streaming=True)
+```
+
+However, doing this presents additional problems, because when you pass
+`streaming=True`, you don't get access to the `save_to_disk` method that you
+would normally use to save the dataset to disk. Instead, you have to break the
+(potentially much bigger than ram) dataset into
+[shards](<https://en.wikipedia.org/wiki/Shard_(database_architecture)>) and then
+save each shard to Tigris:
+
+```python
+for shard in dataset.iter(5_000_000):
+    dataset = Dataset.from_dict(shard, features=dataset.features)
+    ds.save_to_disk(f"s3://{bucket_name}/raw/{dataset_name}/{shard_id}", storage_options=storage_options)
+```
+
+It's worth noting that when you iterate through things like this, each `shard`
+value has all of the data for that shard in CPU ram. You may need to adjust the
+shard size to fit your memory capacity. Experimentation is required, but 5
+million examples is a good starting point.
+
+Once you have the dataset saved to Tigris, you have to standardize it because
+the data can and will come in whatever format the dataset author thought was
+reasonable:
+
+```python
+ds = standardize_dataset(ds)
+```
+
+After that, you can save the standardized dataset to Tigris:
+
+```python
+ds.save_to_disk(f"s3://{bucket_name}/standardized/{dataset_name}/{shard_id}", storage_options=storage_options)
+```
+
+There's some additional accounting that's done to keep track of the biggest
+shard ID, but that's the gist of it. You take a dataset that can be too big to
+fit into memory, break it into chunks that can fit into memory, save them to
+Tigris, standardize them, and then save the standardized form back to Tigris.
+
+:::note
+
+In very large scale deployments, you may want to move the standardization step
+into another discrete stage of this pipeline. Refactoring this into the setup is
+therefore trivial and thus left as an exercise for the reader.
+
+:::
+
+### Importing the model
+
+Once all of the data is imported, the model weights are fetched from Hugging
+Face's CDN and then written to Tigris:
+
+```python
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = model_name, # Qwen/Qwen2.5-0.5B
+    max_seq_length = 4096,
+    dtype = None, # auto detection
+    load_in_4bit = False, # If True, use 4bit quantization to reduce memory usage
+)
+
+# Save the model to disk
+model.save_pretrained(f"{home_dir}/models/{model_name}")
+tokenizer.save_pretrained(f"{home_dir}/models/{model_name}")
+
+# Import to Tigris
+os.system(f"aws s3 sync {home_dir}/models/{model_name} s3://{bucket_name}/models/{model_name}")
+```
+
+This downloads the model, writes it to disk in the `models` folder, and then
+uses the `aws s3 sync` command to push the weights up to Tigris. This is a very
+simple way to get the model weights into Tigris, but it's effective and works
+well for small and large models. We would push models directly into S3 like we
+did with the dataset, but the library we're forced to use to load/inference
+models doesn't support that. Oh well.
+
+The model has two main components that we care about:
+
+- The floating-point model weights themselves, these are the weights that get
+  loaded into GPU ram and used to inference results based on input data.
+- The tokenizer model for that model in particular. This is used to convert text
+  into the format that the model understands beneath the hood. Among other
+  things, this also provides a string templating function that turns chat
+  messages into the raw token form that the model was trained on.
+
+Both of those are stored in Tigris for later use.
+
+### Pre-chewing the dataset
+
+Once the model is saved into Tigris, we have up to `n` shards of up to `m`
+examples per shard. All of these examples are in a standard-ish format, but
+still needs to be pre-chewed so that training can be super efficient. This is
+done by loading each shard from Tigris, using the model's chat tokenization
+formatting function to pre-chew the dataset, and then saving the results back to
+Tigris:
+
+```python
+for shard_id, shard in enumerate(shards_for(bucket_name, dataset_name, storage_options)):
+    ds = ds.map(prechew, batched=True)
+    ds.save_to_disk(f"s3://{bucket_name}/model-ready/{model_name}/{dataset_name}/{shard_id}", storage_options=storage_options)
+```
+
+The `prechew` function is a simple wrapper around the model's tokenization
+formatting function:
+
+```python
+def prechew(examples):
+    convos = examples["conversations"]
+    texts = [tokenizer.apply_chat_template(convo, tokenize = False, add_generation_prompt = False) for convo in convos]
+    return { "text" : texts, }
+```
+
+In essence, it goes from this:
+
+```json
+{
+  "conversations": [
+    {
+      "role": "user",
+      "content": "Hello, computer, how many r's are in the word 'strawberry'?"
+    },
+    {
+      "role": "assistant",
+      "content": "There are three r's in the word 'strawberry'."
+    }
+  ]
+}
+```
+
+And then turns the conversation messages into something like this:
+
+```text
+<|im_start|>system
+You are a helpful assistant that will make sure that the user gets the correct answer to their question. You are an expert at counting letters in words.
+<|im_end|>
+<|im_start|>user
+Hello, computer, how many r's are in the word 'strawberry'?
+<|im_end|>
+<|im_start|>assistant
+There are three r's in the word 'strawberry'.
+<|im_end|>
+```
+
+This is what the model actually sees under the hood. Those `<|im_start|>` and
+`<|im_end|>` tokens are special tokens that the model and inference runtime use
+to know when a new message starts and ends.
+
+Without these tokens the model would go catastrophically off the rails and start
+spouting out nonsense that matches the word frequency patterns it was trained
+on. This is because the model doesn't actually understand language, it just
+knows how to predict the next token in a finite sequence of tokens (also known
+as the "context window"). The `<|im_end|>` token also has special meaning to the
+inference runtime because it means that the model has finished generating a
+response and is ready to emit it to the user.
+
+### Actually training the model
+
+Once the dataset is pre-chewed and everything else is ready in Tigris, the real
+fun can begin. The model is loaded from Tigris:
+
+```python
+# Load the model from Tigris if it's not already on disk
+os.system(f"aws s3 sync s3://{bucket_name}/models/{model_name} {home_dir}/models/{model_name}")
+
+# Load the model from disk into GPU vram
+model = FastLanguageModel.from_pretrained(f"{home_folder}/models/{model_name}", ...)
+```
+
+And then we stack a new [LoRA](https://github.com/microsoft/LoRA) (Low-Rank
+Adaptation) model on top of it. We use a LoRA adapter here because this requires
+much less system resources to train than doing a full-blown finetuning run on
+the dataset. When you train a LoRA, you freeze most of the weights in the
+original model and then you only train a smaller number of weights that get
+stacked on top. This allows you to train models on much larger datasets without
+having to worry about running out of GPU memory or cloud credits.
+
+There are tradeoffs in using LoRA adapters instead of doing a full fine-tuning
+run, however in practice having LoRA adapters in the mix gives you more
+flexibility because you can freeze and ship the base model to your datacenters
+(or even cache it in a docker image) and then only have to worry about
+distributing the LoRA adapter weights. The full model weights can be in the tens
+of gigabytes, while the LoRA adapter weights are usually in the hundreds of
+megabytes at most.
+
+:::note
+
+Pedantically, this size difference doesn't always matter with Tigris because
+[Tigris has no egress fees](https://www.tigrisdata.com/docs/pricing/), but
+depending on the unique facts and circumstances of your deployment, it may be
+ideal to have a smaller model to ship around on top of a known quantity. This
+can also make updates easier in some environments. Everything's a tradeoff.
+
+:::
+
+This technique is used by Apple as a cornerstone of
+[how Apple Intelligence works](https://machinelearning.apple.com/research/introducing-apple-foundation-models).
+The foundation model is shipped with the core OS image and then the adapter
+weights are downloaded as needed. This allows the on-device model to be given
+new capabilities without having to re-download the entire model. When Apple
+Intelligence summarizes a webpage, notifications, or removes distracting parts
+from the background of an image, it's using separate adapters for each of those
+tasks on top of the same foundation model.
+
+```python
+# Make a LoRA model stacked on top of the base model, this is what we train and
+# save for later use.
+model = FastLanguageModel.get_peft_model(model, ...) # other generic LoRA parameters here
+```
+
+Finally, the LoRA adapter is trained on each shard of the dataset for one epoch
+(pass over the shard) and the resulting weights are saved to Tigris:
+
+```python
+# For every dataset shard:
+for dataset in shards_for(bucket_name, model_name, dataset_name):
+    # Load the Trainer instance for this shard
+    trainer = SFTTrainer(
+        model = model,
+        tokenizer = tokenizer,
+        train_dataset = dataset,
+        dataset_text_field = "text", # The pre-chewed text field from before
+        args = TrainingArguments(
+            num_train_epochs = 1, # Number of times to iterate over the dataset when training
+            ..., # other training arguments here, see dotrain.py for more details
+        ),
+        ...,
+    )
+
+    # Train the model for one epoch
+    trainer_stats = trainer.train()
+    print(trainer_stats)
+```
+
+Note that even though we're creating a new `SFTTrainer` instance each iteration
+in the loop, we're not starting over from scratch each time. The `SFTTrainer`
+will _mutate_ the LoRA adapter we're passing in the `model` parameter, so each
+iteration in the loop is progressively training the model on the dataset.
+
+The `trainer.train()` method returns a dictionary of statistics about the
+training run, which we print out for debugging purposes. While the training run
+is going on, it will emit information about the loss function, the learning
+rate, and other things that are useful for debugging. Interpreting these
+statistics is a bit of an art (less than reading tea leaves, but more than
+reading tarot), but in general you want to see the loss function decreasing over
+time and the learning rate increasing over time. Consult your local data
+scientist for more information and life advice as appropriate.
+
+In this example, we save two products:
+
+- The LoRA weights themselves, which aren't useful without the base model
+- The LoRA weights fused with the base model, which is what you use for
+  standalone inference with tools like [vllm](https://docs.vllm.ai/en/latest/)
+
+```python
+# Save the LoRA model for later use
+model.save_pretrained(f"{home_dir}/done/{model_name}/{dataset_name}/lora_model")
+tokenizer.save_pretrained(f"{home_dir}/done/{model_name}/{dataset_name}/lora_model")
+
+# Save the LoRA fused to the base model for inference with vllm
+model.save_pretrained_merged(f"{home_dir}/done/{model_name}/{dataset_name}/fused", tokenizer, save_method="merged_16bit")
+
+# Push to Tigris
+os.system(f"aws s3 sync {home_dir}/done/{model_name}/{dataset_name} s3://{bucket_name}/done/{model_name}")
+```
+
+### Other things to have in mind
+
+Each of the scripts in this example are designed to be idempotent and are
+intended to run in sequence, but `import-dataset.py` and `import-model.py` can
+be run in parallel. This is because they don't depend on eachother and end up
+feeding into inputs at the prechewing and training steps.
+
+Training this LoRA adapter on a dataset of 100k examples takes about 15 minutes
+including downloading the dataset, standardizing it, downloading the model,
+saving it to Tigris, loading the model, pre-chewing the dataset, and training
+the model. The instance will shut down automatically after 15 minutes of
+inactivity to save you money.
+
+In theory, this example can run on any Nvidia GPU with at least 16 GB of vram
+(likely, it can work on smaller GPUs, but 16GB is the smallest GPU I had access
+to when testing this). The scripts are designed to be as cloud-agnostic as
+possible.
+
+## Conclusion
+
+This basic pattern of making each individual step in a pipeline idempotent and
+as stateless as possible is a good starting point for building out your own AI
+training and inference pipelines.
+
+If you abstract this a little bit further, then you can actually start to
+parallelize out the steps in the pipeline and spread the load between a cluster
+of machines. Imagine a world where you have one machine generating shards and
+then submitting standardization and pre-chewing jobs to a cluster of machines
+that are training the model. You can even do this for multiple datasets in
+parallel and then merge the results together at the end.
+
+This is the power that Tigris gives you as a storage layer. You can just
+decouple your storage and compute layers and then let the compute layer do what
+it does best: convincing people that it's able to think. You can then focus on
+the actual work of training models and making the world a better place.
+
+If you want to try this out for yourself, you can find the example code in the
+[skypilot-training-demo](https://github.com/tigrisdata-community/skypilot-training-demo)
+repository. If you have any questions or need help, open an issue on GitHub or
+reach out to us on [Bluesky](https://bsky.app/profile/tigrisdata.com). We're
+here to help you make the most of your data.
+
+<InlineCta
+  title={"Want to try it out?"}
+  subtitle={"Make a global bucket with no egress fees"}
+  button={"Get Started"}
+/>
