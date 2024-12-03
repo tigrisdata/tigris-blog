@@ -55,13 +55,7 @@ and manage it. Beam hot reloads your code to a live inference server for
 testing. And they integrate with workflow tools like ComfyUI so development is
 even easier.
 
-With AI development, the infrastructure gets complicated quickly. GPUs run one
-process at a time, so most use cases will almost immediately require a warm pool
-of many GPUs. AI / LLM development happens at the bleeding edge, so those GPUs
-require bleeding edge features. Which can mean a lot of break-fix at the
-infrastructure layer. Serverless GPUs offload that management and enable you to
-handle bursty and unpredictable load without additional configuration or latency
-ridden scale-up.
+AI workloads are at the bleeding edge for basically every part of the stack. For the best results you need top-of-the line hardware, drivers that _should_ work (but are still being proven), the newest kernel and userland you can get, and management of things that your sysadmin/SRE teams are not the most familiar with yet. Much like putting CPU-bound workloads into the cloud, serverless GPUs offload the driver configuration, hardware replacement, and other parts of how it all works to the platform so you can focus on doing what you want to.
 
 The big tradeoff with serverless GPUs is between cost and latency. If you want to use the cheapest GPU available, it's almost certainly going to not be close to your user or the data. The speed of light is only so fast, sending 50GB to another continent is going to be slow no matter what you do. Every time you have to do that you rack up longer cold start times, burn more cloud spend on expensive GPU minutes, and incur yet more egress fees.
 
