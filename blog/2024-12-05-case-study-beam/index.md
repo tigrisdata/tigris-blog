@@ -29,9 +29,7 @@ import InlineCta from "@site/src/components/InlineCta"; import PullQuote from
 
 # How Beam runs GPUs anywhere
 
-Where do you go when you need a completely custom, 7+ billion parameter model
-ready to serve inference requests in under 10 seconds cold start— without
-writing a Dockerfile? It sounds impossible, but [Beam](https://beam.cloud)’s
+Where do you go when you need to serve arbitrary AI models in only 10 seconds notice? Especially without writing a Dockerfile yourself. It sounds impossible, but [Beam](https://beam.cloud)'s
 serverless GPU platform provides performant, scalable AI infrastructure with
 minimal configuration. Adding a simple decorator function alongside your code
 gets you GPUs-as-a-service. And it’s cheaper than running your own persistent
