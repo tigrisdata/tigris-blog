@@ -63,11 +63,7 @@ infrastructure layer. Serverless GPUs offload that management and enable you to
 handle bursty and unpredictable load without additional configuration or latency
 ridden scale-up.
 
-Ultimately, the big trade-off with serverless GPUs is between cost and latency:
-if you want to use the cheapest GPU available, it’s almost never where you want
-it to be, i.e. near your data. And the time to send a beefy 50GB model where it
-needs to be, for each serverless function call, adds to cold start times,
-expensive GPU minutes, and egress costs across clouds.
+The big tradeoff with serverless GPUs is between cost and latency. If you want to use the cheapest GPU available, it's almost certainly going to not be close to your user or the data. The speed of light is only so fast, sending 50GB to another continent is going to be slow no matter what you do. Every time you have to do that you rack up longer cold start times, burn more cloud spend on expensive GPU minutes, and incur yet more egress fees.
 
 ## Challenge
 
