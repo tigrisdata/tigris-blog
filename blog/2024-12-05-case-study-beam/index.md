@@ -31,9 +31,7 @@ import InlineCta from "@site/src/components/InlineCta"; import PullQuote from
 
 Where do you go when you need to serve arbitrary AI models in only 10 seconds notice? Especially without writing a Dockerfile yourself. It sounds impossible, but [Beam](https://beam.cloud)'s
 serverless GPU platform provides performant, scalable AI infrastructure with
-minimal configuration. Adding a simple decorator function alongside your code
-gets you GPUs-as-a-service. And it’s cheaper than running your own persistent
-GPU by an order of magnitude in most cases.
+minimal configuration. Your code already does the AI inference in a function. Just add a decorator to get that function running somewhere in the cloud with whatever GPU you specify. It turns on when you need it, it turns off when you don't. This can save you orders of magnitude over running a persistent GPU in the cloud.
 
 ![Tigris tiger watching a beam from a ground satellite. Image generated with Flux [dev] from Black Forest Labs on fal.ai](./beam.png)
 
