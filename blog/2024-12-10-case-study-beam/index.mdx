@@ -24,14 +24,19 @@ authors: [ks]
 tags: [object storage, s3, ai, case study]
 ---
 
-import InlineCta from "@site/src/components/InlineCta"; import PullQuote from
-"@site/src/components/PullQuote";
+import InlineCta from "@site/src/components/InlineCta";
+import PullQuote from "@site/src/components/PullQuote";
 
 # How Beam runs GPUs anywhere
 
-Where do you go when you need to serve arbitrary AI models in only 10 seconds notice? Especially without writing a Dockerfile yourself. It sounds impossible, but [Beam](https://beam.cloud)'s
-serverless GPU platform provides performant, scalable AI infrastructure with
-minimal configuration. Your code already does the AI inference in a function. Just add a decorator to get that function running somewhere in the cloud with whatever GPU you specify. It turns on when you need it, it turns off when you don't. This can save you orders of magnitude over running a persistent GPU in the cloud.
+Where do you go when you need to serve arbitrary AI models in only 10 seconds
+notice? Especially without writing a Dockerfile yourself. It sounds impossible,
+but [Beam](https://beam.cloud)'s serverless GPU platform provides performant,
+scalable AI infrastructure with minimal configuration. Your code already does
+the AI inference in a function. Just add a decorator to get that function
+running somewhere in the cloud with whatever GPU you specify. It turns on when
+you need it, it turns off when you don't. This can save you orders of magnitude
+over running a persistent GPU in the cloud.
 
 ![Tigris tiger watching a beam from a ground satellite. Image generated with Flux [dev] from Black Forest Labs on fal.ai](./beam.png)
 
@@ -55,9 +60,20 @@ and manage it. Beam hot reloads your code to a live inference server for
 testing. And they integrate with workflow tools like ComfyUI so development is
 even easier.
 
-AI workloads are at the bleeding edge for basically every part of the stack. For the best results you need top-of-the line hardware, drivers that _should_ work (but are still being proven), the newest kernel and userland you can get, and management of things that your sysadmin/SRE teams are not the most familiar with yet. Much like putting CPU-bound workloads into the cloud, serverless GPUs offload the driver configuration, hardware replacement, and other parts of how it all works to the platform so you can focus on doing what you want to.
+AI workloads are at the bleeding edge for basically every part of the stack. For
+the best results you need top-of-the line hardware, drivers that _should_ work
+(but are still being proven), the newest kernel and userland you can get, and
+management of things that your sysadmin/SRE teams are not the most familiar with
+yet. Much like putting CPU-bound workloads into the cloud, serverless GPUs
+offload the driver configuration, hardware replacement, and other parts of how
+it all works to the platform so you can focus on doing what you want to.
 
-The big tradeoff with serverless GPUs is between cost and latency. If you want to use the cheapest GPU available, it's almost certainly going to not be close to your user or the data. The speed of light is only so fast, sending 50GB to another continent is going to be slow no matter what you do. Every time you have to do that you rack up longer cold start times, burn more cloud spend on expensive GPU minutes, and incur yet more egress fees.
+The big tradeoff with serverless GPUs is between cost and latency. If you want
+to use the cheapest GPU available, it's almost certainly going to not be close
+to your user or the data. The speed of light is only so fast, sending 50GB to
+another continent is going to be slow no matter what you do. Every time you have
+to do that you rack up longer cold start times, burn more cloud spend on
+expensive GPU minutes, and incur yet more egress fees.
 
 ## Challenge
 
@@ -79,9 +95,9 @@ cross region replication and global distribution.
 
 ## Solution
 
-Luke knew the architectural importance of separating the storage layer, and he
-knew egress costs were a non-starter. Of all the zero egress fee storage
-solutions, Tigris prioritized performance and reliability.
+The Beam team knew the architectural importance of separating the storage layer,
+and they knew egress costs were a non-starter. Of all the zero egress fee
+storage solutions, Tigris prioritized performance and reliability.
 
 :::info[Quote]
 
