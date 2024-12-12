@@ -29,9 +29,10 @@ import PullQuote from "@site/src/components/PullQuote";
 
 # How Beam runs GPUs anywhere
 
-Where do you go when you need to serve arbitrary AI models in only 10 seconds
-notice? Especially without writing a Dockerfile yourself. It sounds impossible,
-but [Beam](https://beam.cloud)'s serverless GPU platform provides performant,
+What do you do when you need to serve up a completely custom, 7+ billion
+parameter model with sub 10 second cold start times? And without writing a
+Dockerfile or managing scaling policies yourself. It sounds impossible, but
+[Beam](https://beam.cloud)'s serverless GPU platform provides performant,
 scalable AI infrastructure with minimal configuration. Your code already does
 the AI inference in a function. Just add a decorator to get that function
 running somewhere in the cloud with whatever GPU you specify. It turns on when
@@ -43,8 +44,8 @@ over running a persistent GPU in the cloud.
 <center>
   <small>
     <em>
-      Tigris tiger watching a beam from a ground satellite. Image generated with Flux [dev] from Black Forest
-      Labs on fal.ai.
+      Tigris tiger watching a beam from a ground satellite. Image generated with
+      Flux [dev] from Black Forest Labs on fal.ai.
     </em>
   </small>
 </center>
@@ -55,10 +56,10 @@ over running a persistent GPU in the cloud.
 Beam was founded to reduce cost and iteration time when developing AI / ML
 applications. Using \$bigCloud and Docker directly is too slow for iterative
 development, and waiting for a new image to build and redeploy to a dev
-environment just takes too long. Let alone requiring the time to set all that up
-and manage it. Beam hot reloads your code to a live inference server for
-testing. And they integrate with workflow tools like ComfyUI so development is
-even easier.
+environment just takes too long. Let alone the time it takes to setup and manage
+your own GPU cluster. Beam hot reloads your code to a live inference server for
+testing and provides single command deployments, `beam deploy`. And they
+integrate with workflow tools like ComfyUI so development is even easier.
 
 AI workloads are at the bleeding edge for basically every part of the stack. For
 the best results you need top-of-the line hardware, drivers that _should_ work
@@ -67,14 +68,6 @@ management of things that your sysadmin/SRE teams are not the most familiar with
 yet. Much like putting CPU-bound workloads into the cloud, serverless GPUs
 offload the driver configuration, hardware replacement, and other parts of how
 it all works to the platform so you can focus on doing what you want to.
-
-:::info[Quote]
-
-We've saved months of work, not to mention the maintenance cost & peace of mind.
-
-—Luke Lombardi, Co-founder & CTO, Beam
-
-:::end
 
 The big tradeoff with serverless GPUs is between cost and latency. If you want
 to use the cheapest GPU available, it's almost certainly going to not be close
@@ -103,15 +96,20 @@ cross region replication and global distribution.
 
 ## Solution
 
-The Beam team knew the architectural importance of separating the storage layer,
-and they knew egress costs were a non-starter. Of all the zero egress fee
-storage solutions, Tigris prioritized performance and reliability.
+The Beam engineering team knew the architectural importance of separating the
+storage layer, and they knew egress costs were a non-starter. Their primary need
+was performant data distibution across clouds. However, none of the object
+storage solutions they tried made it easy to manage multi-cloud, or even
+multi-region, workloads without extensive configuration, coding around file type
+restrictions, or accounting for dips in availability and latency. Using Tigris
+eliminated this undifferentiated work, and enabled Beam to ship faster.
 
 :::info[Quote]
 
 Before finding Tigris, we were planning on implementing our own data
 distribution and replication for our training and inference workloads. Now we
-just point our code to a single endpoint and Tigris handles it all.
+just point our code to a single endpoint and Tigris handles it all. We've saved
+months of work, not to mention the maintenance cost & peace of mind.
 
 —Luke Lombardi, Co-founder & CTO, Beam
 
