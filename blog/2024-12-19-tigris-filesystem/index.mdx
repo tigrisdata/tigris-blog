@@ -1,0 +1,281 @@
+---
+slug: tigris-filesystem
+title: Using Tigris as a Filesystem
+description: >
+  Object storage can be used as a filesystem in Kubernetes with the right setup.
+  Here's how I set it up on my homelab cluster and the tradeoffs I made in the
+  process.
+image: ./kubernetes-iris.webp
+keywords: [object storage, blob storage, s3, cloud storage, kubernetes]
+authors: [xe]
+tags: [object storage, kubernetes]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import PullQuote from "@site/src/components/PullQuote";
+
+Earlier this year I started consolidating some workloads to my homelab
+Kubernetes cluster. One of the last ones was a doozy. It's not a compute-hard or
+a memory-hard workload, it's a storage-hard workload. I needed to move the DJ
+set recording bot for an online radio station off of its current cloud and onto
+my homelab, but I still wanted the benefits of the cloud such as no thinking
+remote backups.
+
+This bot has been running for a decade and the dataset well predates that, over
+675 Gi of DJ sets, including ones that were thought to be lost media. Each of
+these sets is a 320 KiB/sec MP3 file that is anywhere from 150 to 500 MB, with
+smaller text files alongside them.
+
+Needless to say, this dataset is very important to me. The community behind this
+radio station is how I've met some of my closest friends. I want to make sure
+that it's backed up and available for anyone that wants to go back and listen to
+the older sets. I want to preserve these files and not just dump them in an
+[Archive bucket](https://www.tigrisdata.com/docs/objects/tiers/) or something
+that would make it hard or slow to access them. I want these to be easily
+accessible to help preserve the work that goes into live music performances.
+
+Here's how I did it and made it easy with Tigris.
+
+![An extreme close-up of a tiger with blue and orange fur. The Kubernetes logo replaces its iris.](./kubernetes-iris.webp)
+
+<div
+  style={{
+    fontSize: "0.75rem",
+    textAlign: "center",
+    maxWidth: "65ch",
+    marginLeft: "auto",
+    marginRight: "auto",
+  }}
+>
+  An extreme close-up of a tiger with blue and orange fur. The Kubernetes logo
+  replaces its iris.
+</div>
+
+{/* truncate */}
+
+## Storage in my homelab
+
+:::note
+
+For your convenience when reading, Kubernetes terms are written in GoPublicCase.
+If you want to learn more about a Kubernetes term, I suggest searching for
+`site:kubernetes.io TermNameHere`. All units are
+[Kubernetes units](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory)
+when possible.
+
+:::
+
+Kubernetes workloads are stateless by default. This lets you represent a lot of
+valid services (it's kinda like Heroku by default), but many times you will need
+persistent storage such as filesystem, relational, or object storage. In my
+homelab cluster, I have two
+[StorageClasses](https://kubernetes.io/docs/concepts/storage/storage-classes/):
+NFS mounting folders from my NAS (via the
+[nfs-subdir-external-provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner)),
+and [Longhorn](https://longhorn.io). I ended up going object-storage native for
+this project so that I didn't have to worry about exhausting the storage on my
+homelab machines.
+
+Most of my homelab projects use Longhorn for filesystem storage. Longhorn makes
+it easy for me to not have to care about rebooting my homelab machines, and when
+I do reboot one, it will automatically move volumes around so that they are
+local to the machine running a given workload. I also configured Longhorn to
+make nightly backups of all volumes to Tigris so that should my home get struck
+by a meteor, I would still have all of my data. Every volume is distibuted
+across three nodes, so random hardware failure is mathematically less likely to
+cause me to have to restore data from a backup.
+
+I can't use Longhorn for this because the PersistentVolumeClaim would need to be
+at least one terabyte (1 Ti) and the primary SSD storage on each of my homelab
+machines is one terabyte for both the OS and other volumes. This is too big. I
+could add rotational drives to the mix in order to have more space (and I have
+since I did this), but I didn't have any free drives at the time. This data is
+also very infrequently accessed, so putting it on an SSD is overkill.
+
+I could also put that data into my NAS via NFS, but I'd really feel better if
+that data was automatically backed up to the cloud (or already in the cloud to
+begin with). I could configure something to do that with a CronJob and a Tigris
+access key, but that would require extra configuration and seems kinda hacky.
+I'd really rather it be done by default or without extra configuration,
+following the
+[Charmin Ultra rule of infrastructure complexity](https://youtu.be/HjbfjCPuO2Y):
+less is more. The thing you don't need to go out of your way to configure is the
+thing that you will actually use.
+
+I needed an option that would allow me to store the data in the cloud by default
+without changing the application code too much. The bot is currently written
+assuming that it's writing directly to a filesystem, kinda like most of the AI
+tooling you'll find in the wild. I could change it to write to an S3 bucket, but
+this bot was written before I believed Our Lord and Savior Unit Tests. I'd
+rather not mess with it if I don't have to.
+
+## Using S3 as a filesystem
+
+What about S3 or [Tigris](https://tigrisdata.com)? If I could somehow mount a
+bucket directly, I could store it in the cloud by default, making me not have to
+maintain a copy of it locally. I did the math and it'd only cost me $16 per
+month to have it all backed up. This is way cheaper than the 52€ per month I pay
+for the server it's on right now.
+
+I want this to be object-storage native so that I never have to think or worry
+about this again. If I ever do have to worry about this again then I can just
+give people presigned URLs when they try to access a DJ set.
+
+I did some digging and found out about Yandex's
+[csi-s3](https://github.com/yandex-cloud/k8s-csi-s3). It's a StorageClass
+implementation that uses S3 buckets via
+[geesefs](https://www.tigrisdata.com/docs/training/geesefs-linux/) as its
+backing store instead of storage devices (rotational drives, SSD, EBS, etc.).
+Unlike a lot of other StorageClass implementations I've tried this year, csi-s3
+was really really easy to install. All I had to do was apply the release with
+[helmfile](https://helmfile.readthedocs.io/en/stable/) and it was up:
+
+```yaml
+repositories:
+  - name: csi-s3
+    url: https://yandex-cloud.github.io/k8s-csi-s3/charts
+
+releases:
+  - name: csi-s3
+    chart: csi-s3/csi-s3
+    namespace: kube-system
+    set:
+      - name: "storageClass.name"
+        value: "tigris"
+      - name: "secret.accessKey"
+        value: "tid_hunter2"
+      - name: "secret.secretKey"
+        value: "tsec_hunter2hunter2hunter2"
+      - name: "secret.endpoint"
+        value: "https://fly.storage.tigris.dev"
+      - name: "secret.region"
+        value: "auto"
+```
+
+I followed their
+[test process](https://github.com/yandex-cloud/k8s-csi-s3?tab=readme-ov-file#4-test-the-s3-driver)
+and then saw a `hello_world` file in the Tigris console in a dynamically created
+bucket. Cool, it works!
+
+:::note
+
+Seriously, look at how short
+[the csi-s3 guide](https://www.tigrisdata.com/docs/training/csi-s3/) is. It
+would be shorter if I didn't inline the Kubernetes manifests!
+
+:::
+
+## The migration
+
+The next big step was migrating over all of the recordings. Since they were
+"just files" on a Linux machine, I copied them over to my shellbox with
+`rsync -avz`. It took a day or so to copy them all from Helsinki to Ottawa, but
+that was okay.
+
+Once that was done, I made a bucket (imaginatively named `pvfm`) and copied the
+data over with `aws s3 sync`. I probably could have gotten better performance
+out of [rclone](https://rclone.org/) or [s5cmd](https://github.com/peak/s5cmd)
+(or if I copied the data to my NAS with its 2.5 gigabit NIC), but I started it,
+went to sleep, and when I woke up it was done. When I looked back over the logs,
+I noticed that the main reason why it took so long was that a lot of the older
+files had many small files alongside of them (.cue sheets listing when each
+track started and stopped in the DJ set). Tigris handles many small files
+efficiently, but `aws s3 sync` didn't properly recycle HTTP connections so
+uploading a small file was way more costly than it probably should have been.
+Otherwise I was hitting the limits of the gigabit ethernet card in my shellbox.
+Sweet!
+
+Now that everything was in Tigris, I needed to put the bucket in Kubernetes as a
+PersistentVolumeClaim. Normally when you create a PersistentVolumeClaim with the
+`tigris` StorageClass, it creates a randomly named bucket. For example, let's
+make a Tigris PersistentVolumeClaim:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: infinite-storage
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  - ReadWriteOnce
+  resources:
+    requests:
+  	storage: 5Gi
+  storageClassName: tigris
+```
+
+:::note
+
+The storage request is ignored by csi-s3, but required for Kubernetes. I haven't
+seen any consequences for using more storage than the PersistentVolumeClaim
+requests, but your mileage may vary. If you're in doubt, just request 10
+terabytes (`10Ti`) or something. This doesn't result in more storage use in
+Tigris. You certainly won't regret requesting 10 terabytes for your bucket!
+
+:::
+
+However, when you do this, you end up creating a randomly named bucket. Even
+though the PersistentVolumeClaim name is `infinite-storage`, the bucket will be
+named something like `pvc-cbf58f8b-28d9-4d7d-8a1e-97e4e47b3c99`. This is also
+the name of the PersistentVolume that backs the PersistentVolumeClaim.
+
+So in order to create a PersistentVolumeClaim pointing at the `pvfm` bucket, I
+needed to make both a PersistentVolume and the PersistentVolumeClaim at the same
+time. This was fairly simple thanks to one of their examples, and I made
+[a single config](https://github.com/Xe/x/blob/27eb123f7a4e3d1c94d297fb8706328a58a26acc/kube/alrest/pvfm/aura/pvc.yaml)
+with both of them in it.
+
+I created a test Pod and it worked instantly, all the files were there.
+
+## The migration
+
+Now that the data was moved over (including syncing over the other bits that
+changed while the migration was happening), all that was left was to fully move
+it to Kubernetes. I stopped the bot on the old server and then removed its DNS
+record in Terraform. Once that was done, I started deploying the new manifests
+while I wanted for the record to die from caches.
+
+Applying the
+[Deployment](https://github.com/Xe/x/blob/master/kube/alrest/pvfm/aura/deployment.yaml),
+[Service](https://github.com/Xe/x/blob/master/kube/alrest/pvfm/aura/service.yaml),
+and
+[Ingress](https://github.com/Xe/x/blob/master/kube/alrest/pvfm/aura/ingress.yaml)
+went off without a hitch. [cert-manager](https://cert-manager.io/) minted a new
+certificate and [External DNS](https://github.com/kubernetes-sigs/external-dns)
+set the DNS target for me. All that was left was to make sure it worked.
+
+It worked on the first try. It still is up and working to this day with zero
+issues. Most of the people using the bot are unaware that it's writing data to
+Tigris and it allows Tigris to seamlessly fade into the background, while still
+letting everyone benefit from the global distribution and near limitless storage
+capacity.
+
+## Having my cake and eating it too
+
+I don't have to worry about the DJ set server running out of space anymore and I
+have a lot more options when it comes to moving the bot around. It's just a Go
+program talking to object storage via a filesystem. I can just sit back and let
+it do its thing, all thanks to Tigris taking away the hard parts from me.
+
+Here's all the things I don't have to care about anymore:
+
+- Running out of disk space
+- Having to run backups myself
+- Having the bot go down when a single server goes down (Kubernetes will just
+  reschedule it somewhere that isn't down)
+- Having any special setup for the bot to run in another cluster (Kubernetes is
+  Heroku 2, but even more flexible)
+
+It Just Works™️, and that's such a relief. If you’re looking for a lightweight
+way to manage persistent storage in Kubernetes without a ton of overhead, I’d
+definitely recommend giving Tigris a shot.
+
+<InlineCta
+  title={"Want to try it out?"}
+  subtitle={
+    "Make a global bucket with no egress fees and mount it on your Kubernetes cluster."
+  }
+  button={"Get Started"}
+/>
