@@ -3,7 +3,8 @@ slug: tigris-filesystem
 title: Using Tigris as a Filesystem
 description: >
   Object storage can be used as a filesystem in Kubernetes with the right setup.
-  Here's how I set
+  Here's how I set it up on my homelab cluster and the tradeoffs I made in the
+  process.
 image: ./kubernetes-iris.webp
 keywords: [object storage, blob storage, s3, cloud storage, kubernetes]
 authors: [xe]
@@ -16,21 +17,21 @@ import PullQuote from "@site/src/components/PullQuote";
 Earlier this year I started consolidating some workloads to my homelab
 Kubernetes cluster. One of the last ones was a doozy. It's not a compute-hard or
 a memory-hard workload, it's a storage-hard workload. I needed to move the DJ
-set recording bot for an online radio station off of that single point of
-failure. I've been involved with this station for over a decade and I've been
-running their recording bot since the transition from IRC to Discord. I've
-accumulated over 675 GB of DJ sets, including ones that were thought to be lost
-media.
+set recording bot for an online radio station off of its current cloud and onto
+my homelab, but I still wanted the benefits of the cloud such as no thinking
+remote backups.
 
-Each of these files is anywhere from 150 to 500 MB (with a few outliers). They
-are MP3 audio files at about 320 KiB/sec and the sets usually rang from half an
-hour to two hours.
+This bot has been running for a decade and the dataset well predates that, over
+675 Gi of DJ sets, including ones that were thought to be lost media. Each of
+these sets is a 320 KiB/sec MP3 file that is anywhere from 150 to 500 MB, with
+smaller text files alongside them.
 
-Needless to say, this dataset is very important to me. I want to make sure that
-it's backed up and available for anyone that wants to go back and listen to the
-older sets. I want to preserve these files and not just dump them in an
+Needless to say, this dataset is very important to me. The community behind this
+radio station is how I've met some of my closest friends. I want to make sure
+that it's backed up and available for anyone that wants to go back and listen to
+the older sets. I want to preserve these files and not just dump them in an
 [Archive bucket](https://www.tigrisdata.com/docs/objects/tiers/) or something
-that would make it hard/slow to access them. I want these to be easily
+that would make it hard or slow to access them. I want these to be easily
 accessible to help preserve the work that goes into live music performances.
 
 Here's how I did it and made it easy with Tigris.
@@ -58,7 +59,9 @@ Here's how I did it and made it easy with Tigris.
 
 For your convenience when reading, Kubernetes terms are written in GoPublicCase.
 If you want to learn more about a Kubernetes term, I suggest searching for
-`site:kubernetes.io TermNameHere`.
+`site:kubernetes.io TermNameHere`. All units are
+[Kubernetes units](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory)
+when possible.
 
 :::
 
