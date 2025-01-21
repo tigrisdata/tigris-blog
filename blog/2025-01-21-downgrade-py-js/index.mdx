@@ -14,6 +14,8 @@ authors: [xe]
 tags: [object storage]
 ---
 
+import InlineCta from "@site/src/components/InlineCta";
+
 Hey all. Recently AWS released
 [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)
 version 1.36.0, and in the process they changed how the `upload_file` call
@@ -94,3 +96,11 @@ client. We’ll have that rolled out soon. Follow us on
 [Bluesky](https://bsky.app/profile/tigrisdata.com) @tigrisdata.com or on
 [LinkedIn](https://www.linkedin.com/company/tigrisdata/posts/?feedView=all) to
 keep up to date!
+
+<InlineCta
+  title={"Want to try it out?"}
+  subtitle={
+    "Make a global bucket with no egress fees and use it with Python or JavaScript."
+  }
+  button={"Get Started"}
+/>
