@@ -1,0 +1,96 @@
+---
+slug: downgrade-py-js
+title:
+  "If you’ve upgraded boto3 or the JavaScript S3 client in the last week,
+  uploading files won’t work. Here’s how to fix it."
+description: >
+  If you've recently upgraded boto3 or the JavaScript S3 client, file uploads
+  may fail due to a required Content-Length header. Downgrade boto3 to version
+  1.35.x and the JavaScript client to v3.728.0 to resolve this issue until
+  Tigris releases an update for compatibility with new versions.
+image: ./commands.webp
+keywords: [object storage, blob storage, s3, cloud storage]
+authors: [xe]
+tags: [object storage]
+---
+
+Hey all. Recently AWS released
+[boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)
+version 1.36.0, and in the process they changed how the `upload_file` call
+works. This will cause uploads to Tigris with boto3 version 1.36.0 or higher to
+fail with the following error message:
+
+```
+boto3.exceptions.S3UploadFailedError: Failed to upload ./filename.jpg to mybucket/filename.jpg: An error occurred (MissingContentLength) when calling the PutObject operation: You must provide the Content-Length HTTP header.
+```
+
+In order to work around this, downgrade boto3 to the last release of version
+1.35.x:
+
+```sh
+pip install boto3==1.35.95
+```
+
+Make sure that you persist this in your `requirements.txt`, `pyproject.toml`, or
+whatever you use to do dependency management.
+
+You might also hit this with the JavaScript client at version
+[v3.729.0](https://github.com/aws/aws-sdk-js-v3/issues/6810) or later. In order
+to fix that, downgrade to version
+[v3.728.0](https://github.com/aws/aws-sdk-js-v3/releases/tag/v3.728.0):
+
+```sh
+npm install @aws-sdk/client-s3@3.728.0
+npm install @aws-sdk/s3-request-presigner@3.728.0
+```
+
+Make sure the changes are saved in your package.json file.
+
+We’re fixing this on our end, but we want to take a minute to clarify why this
+is happening and what it means for Tigris to be S3 compatible.
+
+## What does it mean to be S3 compatible?
+
+At some level, an API is just a set of calls that have listed side effects. You
+upload an object by name and later are able to get that object back when you
+give the name. The devil is in the details, and like any good API there are a
+lot of details.
+
+In a perfect world, when you switch to using Tigris, you drop Tigris into place
+and then you don’t need to think anymore. We don’t live in a perfect world, and
+as such Tigris has a
+[list of compatible API calls](https://www.tigrisdata.com/docs/api/s3/), and if
+your app only uses those calls you’ll be fine. Most apps are perfectly happy
+with that set of calls (in fact only use about 5 of them at most). We are adding
+support for any missing calls as reality demands and time allows. Our goal is
+that there’s no breaking changes when anything else gets released. Client or
+server.
+
+S3’s API was originally meant to be used with Amazon S3. It has since become a
+cross-cloud standard, any cloud you can think of likely has a S3-compatible
+object storage system. It’s become the POSIX abstraction for the cloud. Any
+changes to the API change a whole host of edge cases that the creators of S3
+probably don’t have in mind.
+
+Tigris, Digital Ocean, MinIO, R2, and others were all affected by this change.
+We found out about this breakage when one of our tests broke in a new and
+exciting way that confused us. From what we can tell, users of boto3 and the
+JavaScript client found out about this change by their production code breaking
+without warning. Even some of AWS’ own example code broke with this change.
+
+I feel bad for the team behind the S3 API changes, they’re probably not getting
+very much love from the developer community right now. If this was an outage,
+I’d say
+[#hugops](https://www.ibm.com/think/insights/supporting-your-sysadmins-with-hugops).
+I’m not sure what to say this time other than I hope that this post helps you
+make your code work again.
+
+We’re taking this incident seriously and are updating our testing practices to
+make sure that we have more advance warning should this happen again as we take
+S3 compatibility seriously.
+
+We’re updating Tigris so that developers can use this new version of the S3
+client. We’ll have that rolled out soon. Follow us on
+[Bluesky](https://bsky.app/profile/tigrisdata.com) @tigrisdata.com or on
+[LinkedIn](https://www.linkedin.com/company/tigrisdata/posts/?feedView=all) to
+keep up to date!
