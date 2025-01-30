@@ -1,0 +1,439 @@
+---
+slug: thoughts-deepseek-r1
+title: "DeepSeek R1 is good enough"
+description: >
+  AI models, comprised mainly of floating-point numbers, function by processing
+  inputs through various components like tokenizers and embedding models. They
+  range in size from gigabytes to terabytes, with larger parameter counts
+  enhancing performance and nuance representation. How do they get so large
+  though?
+image: ./tiger-surfing.webp
+keywords: [object storage, blob storage, s3, ai, architecture]
+authors: [xe]
+tags: [ai, deepseek, reasoning]
+---
+
+import Conv from "@site/src/components/Conv";
+import Reasoning from "@site/src/components/Reasoning";
+import deepseekLogo from "@site/static/img/ai-models/deepseek.webp";
+import xe from "@site/static/img/avatars/xe.jpg";
+
+![A majestic blue tiger surfing on the back of a killer whale. The image evokes Ukiyo-E style framing.](./tiger-surfing.webp)
+
+<center>
+  <small>
+    <em>
+      A majestic blue tiger surfing on the back of a killer whale. The image
+      evokes Ukiyo-E style framing. Image generated using Flux [pro].
+    </em>
+  </small>
+</center>
+
+DeepSeek R1 is a mixture of experts reasoning frontier AI model; it was released
+by DeepSeek on
+[January 20th, 2025](https://api-docs.deepseek.com/news/news250120). Along with
+the model being available by [DeepSeek's API](https://api-docs.deepseek.com/),
+they released the
+[model weights on HuggingFace](https://huggingface.co/deepseek-ai/DeepSeek-R1)
+and [a paper about how they got it working](https://arxiv.org/abs/2501.12948).
+
+DeepSeek R1 is a [Mixture of Experts](https://huggingface.co/blog/moe) model.
+This means that instead of all of the model weights being trained and used at
+the same time, the model is broken up into 256 "experts" that each handle
+different aspects of the response. This doesn't mean that one "expert" is best
+at philosophy, music, or other subjects; in practice one expert will end up
+specializing with the special tokens (begin message, end message, role of
+interlocutor, etc), another will specialize on punctuation, some will focus on
+visual description words or verbs, and some can even focus on proper names or
+numbers. The main advantage of a Mixture of Experts model is that it allows you
+to get much better results with much less compute spent in training and at
+inference time. There are some minor difficulties involved in making sure that
+tokens get spread out between the experts in training, but it works out in the
+end.
+
+{/* truncate */}
+
+DeepSeek R1 is a reasoning model. This means that the model generates a bunch of
+"reasoning tokens" before it gives you an answer. These reasoning tokens are
+effectively a scratch space where the model breaks down the problem, plans out a
+solution, and then it ends its thinking and starts generating a response. This
+is a very new workflow and it was originally spelled out in
+[Learning to reason with LLMs](https://openai.com/index/learning-to-reason-with-llms/)
+by OpenAI in September 2024\. This is an extension of
+[Chain-of-Thought](https://en.wikipedia.org/wiki/Prompt_engineering#Chain-of-thought)
+prompting as pioneered by the Google Brain team in 2022\.
+
+Finally, DeepSeek R1 is a frontier-grade model, which means that the results are
+really good. Specifically it means that the results of the model are almost as
+good as the big closed models like Anthropic Claude, OpenAI's GPT and O line,
+and Google's Gemini models.
+
+So with all that terminology dumping out of the way, what does it look like?
+It's very similar to other models, but there's an additional reasoning bit.
+Here's an example:
+
+<Conv name="Xe" profilePic={xe} top>
+  How much wood could a woodchuck chuck if a woodchuck could chuck wood?
+</Conv>
+<Conv name="DeepSeek R1" profilePic={deepseekLogo} bottom>
+<Reasoning timeTaken={45}>
+Okay, so the question is "How much wood could a woodchuck chuck if a woodchuck could chuck wood?" Hmm, I know this is a classic tongue twister, but I wonder if there's a real answer to it. Let me think about it step by step.
+
+First, I need to understand what's being asked. The phrase plays on the words
+"woodchuck" and "chuck." A woodchuck is actually a type of rodent, also known as
+a groundhog. They don't actually chuck wood, right? They dig burrows, but they
+don't throw or move wood in any significant way. So the question is
+hypothetical: if they could chuck wood, how much would they chuck?
+
+The key here is that it's a playful riddle, so maybe there's a pun or a play on
+words involved. Let me break down the words. "Woodchuck" – the name might come
+from an Algonquian word, "wuchak," which is their name for the groundhog. But
+the English reinterpretation led to "woodchuck," even though they don't chuck
+wood. The verb "chuck" here means to throw or toss. So if a woodchuck had the
+ability to throw wood, how much would it throw?
+
+I remember hearing a possible answer that goes: "A woodchuck would chuck as much
+wood as a woodchuck could chuck if a woodchuck could chuck wood." That's a
+tautology, just repeating the question in the answer, but maybe there's a more
+creative answer.
+
+Alternatively, some people have tried to calculate it based on the animal's
+physiology. Let me think. If a woodchuck could chuck wood, how much could it
+realistically move? Considering their size and strength, maybe they could move a
+certain amount per day. But since they don't actually do this, it's all
+speculative.
+
+Another angle is the alliteration and the tongue twister aspect. The original
+question is meant to be tricky to say quickly. The answer might be more about
+the wordplay than a literal quantity. For example, some answers use wordplay
+with units of measurement, like cords of wood. A cord is a unit of volume for
+firewood, so maybe the answer is a certain number of cords.
+
+There's a study from wildlife specialists where they estimated how much dirt a
+woodchuck can move when digging. Since they're related to chucking wood, maybe
+someone extrapolated that. I recall that a woodchuck can move around 35 cubic
+feet of dirt when digging a burrow. If we analogize that to wood, maybe they
+could chuck a similar volume. But wood is denser than dirt, so the weight would
+be different. But this is all hypothetical.
+
+Alternatively, there's a humorous answer that references the tongue twister
+itself. Like, "Enough to make the forest breathe heavily\!" or something like
+that. But maybe the answer is more numerical. Let me check my memory. There's a
+line in a song by Bobby Bare from 1963 called "The Mighty U.A." which says, "A
+woodchuck would chuck 3.5 cords of wood if he could chuck wood." But I'm not
+sure if that's a real reference or just part of the song.
+
+Another approach is the phonetic one. The question sounds similar to "How much
+wood would a woodchuck chuck..." which, when said fast, the "would a" and
+"woodchuck" blend. Maybe the answer is in the repetition or the sound rather
+than the actual quantity.
+
+But if I have to give a literal answer, maybe I should consider the average
+amount a similar-sized animal could move. For example, beavers cut down trees,
+but they don't chuck the wood; they use it for building dams. A beaver can cut
+down hundreds of trees a year. If a woodchuck had similar abilities, maybe it
+could chuck a lot. But again, this is all speculative.
+
+Alternatively, maybe the answer is zero because woodchucks can't chuck wood. But
+the question says "if a woodchuck could chuck wood," so under that hypothetical
+scenario, they can. So zero isn't the answer here.
+
+Another angle is that the question is a riddle where the answer is a play on the
+word "chuck." Maybe "chuck" here is a unit of measurement, but I don't think
+that's the case. Or perhaps the answer is in the name: "woodchuck" – so "as much
+wood as a woodchuck would," which is circular.
+
+Wait, there's a study from the New York State Wildlife Service that supposedly
+calculated it, but I think that's an urban legend. The supposed answer was 700
+pounds, but that's likely made up. Still, it's a common answer people cite.
+
+So, putting it all together, the answer is probably a humorous or nonsensical
+one, playing on the tongue twister. The most common answers are either the
+tautological one ("as much as he could") or a fictional number like 700 pounds
+or 3.5 cords. Given that, maybe the best answer is the tongue-in-cheek one that
+references the hypothetical scenario without a real-world basis.
+
+</Reasoning>
+
+The classic tongue twister "How much wood could a woodchuck chuck if a woodchuck
+could chuck wood?" is a playful riddle rather than a literal question. Here’s a
+breakdown of possible answers:
+
+1. **Tautological Answer**: _"A woodchuck would chuck as much wood as a
+   woodchuck could chuck if a woodchuck could chuck wood."_  
+   This circular response leans into the wordplay and avoids quantification.
+2. **Hypothetical Estimate**:  
+   Some humorous calculations suggest a woodchuck might move **700 pounds** of
+   wood (based on its burrowing strength) or **3.5 cords of wood** (a
+   tongue-in-cheek reference from songs or folklore). These numbers lack
+   scientific basis but add to the whimsy.
+3. **Literal Reality Check**:  
+   Woodchucks (groundhogs) don’t actually chuck wood—they dig dirt. If forced to
+   guess, their hypothetical wood-chucking capacity might align with their
+   burrowing output (\~35 cubic feet of dirt), but this is speculative.
+
+**Final Answer**:  
+The riddle has no definitive answer, but the most fitting reply leans into the
+humor:  
+_"A woodchuck would chuck all the wood it could... if it could chuck wood!
+🌲😄"_
+
+</Conv>
+
+Note that there's two responses from the model: the text answer you're used to
+seeing and the chain of thought that the model uses as "scratch space" to work
+out the best answer.
+
+## Why is DeepSeek R1 so good?
+
+One of the big questions that people have is "if Chinese AI companies have to
+deal with sanctions that limit their access to GPUs, why is one of the best
+models from a Chinese AI company?" There's a reason why this is the case, but
+it's not going to be super obvious from the outset.
+
+Most of the time, people don't associate Nintendo with super-advanced high tech
+4k HDR graphics technology. Their consoles are actually fairly underpowered and
+require being clever with your optimizations. This is intentional because the
+hardware design philosophy encourages lateral thinking with well-understood and
+cheaply available technology. They buy a SoC and CPU and use the entire SoC and
+CPU to make games in ways that no other company takes the time to do. When you
+target a Nintendo platform, you have hard limits that you have to be clever
+about in ways that you don't need to be when you target a PlayStation 5 or an
+Xbox Series X. The PlayStation 5 and Xbox Series X are just so powerful that you
+can blow past all of the limits with ease.
+
+Most western AI companies can just buy faster GPUs en masse. They have access to
+the NVidia H100 (the most powerful flagship AI GPU) and can just purchase more
+of them depending on their needs. They can create giant datacentres and stuff
+them to the gills with as many GPUs as they want.
+
+Chinese AI companies aren't so lucky. They have hard limits on how many GPUs
+they can buy as well as what the limits of the cards are. I tried to dig up the
+actual sanctions limits and I wasn't able to find clear guidance in the 300+
+pages of legal text. However, DeepSeek says they train their models on a cluster
+of NVidia H800 GPUs. The H800 has half the memory bandwidth of the H100. AI
+workloads are mostly memory bandwidth bound. This is a near fatal flaw that
+means that the DeepSeek team had to get clever.
+
+The
+[DeepSeek V3 paper](https://github.com/deepseek-ai/DeepSeek-V3/blob/main/DeepSeek_V3.pdf)
+has a lot more details about how they managed to wring all the performance they
+could from the cards they had, but here's the cliffsnotes:
+
+- DeepSeek V3 (and R1) both use 256 experts and train 64 experts per node with 8
+  nodes per group.
+- They created their own training framework named HAI-LLM that dedicates some
+  otherwise unused hardware for cross-node communication.
+- They did all of their training using 8-bit floating point numbers so that they
+  can get the most effectiveness per hour. Previously it was thought that 8 bit
+  floating point numbers were too imprecise to handle AI training workloads for
+  benchmark results like the ones DeepSeek achieved.
+- They saved memory wherever possible in order to avoid costly cross-node
+  communication and even more costly CPU to GPU memory copy calls.
+- They used [Multi-Head Latent Attention](https://arxiv.org/abs/2405.04434) to
+  further optimize memory usage to 5-13% of what would normally be required for
+  this kind of training. This also allows them to cache inputs to the DeepSeek
+  API, making them able to deliver the model cheaply through their platform.
+
+If DeepSeek had unrestricted access to advanced GPUs, very few of these
+efficiency advancements would need to be made. I was almost certain that we've
+been leaving a bunch of overhead on the table with our use of GPUs, and DeepSeek
+has confirmed it. I'm kinda surprised that the stock market reacted so violently
+to this news though.
+
+I suspect that one of the reasons that people think that DeepSeek R1 is so good
+is that they're reading the reasoning / chain of thought output. One of the most
+magic parts of ChatGPT's initial release in late 2022 was that you were able to
+talk with a computer and have the computer talk back with you in plain English.
+This anthropomorphized the computer (so that it's a "friend" or at least
+authoritative-coded enough that you perceive it as a smart person). The
+reasoning output of DeepSeek R1 is another place that you can see this kind of
+subconscious anthropomorphization happening. I suspect that when you see it yap
+away like:
+
+<Conv name="DeepSeek R1 (thinking)" profilePic={deepseekLogo} top bottom>
+  First, I need to revisit the original text and the previous rewrite. The
+  original essay discusses the distinction between art and content, critiques AI
+  tools for generating "slop," and emphasizes the importance of human
+  creativity. The previous version by the assistant is structured with sections,
+  uses bold for emphasis, and includes examples like Kasane Teto and Suno.ai.
+</Conv>
+
+That you subconsciously see that and start anthropomorphizing it because it
+looks like the computer is "thinking" in the same way that you would take a
+complicated problem or thought and break it down into smaller bits. It kinda
+does make the model look adorable.
+
+Personally, I think that when you evaluate the output of a reasoning model like
+DeepSeek R1, you should **not** look at the reasoning before you look at the
+answer to reduce your own bias.
+
+There's also some controversy around
+[DeepSeek R1 supposedly being trained on the output of OpenAI models](https://archive.is/KiSYM).
+It's fairly common practice to use
+[synthetic data](https://techcrunch.com/2024/12/24/the-promise-and-perils-of-synthetic-data/)
+in AI training. This is also known as
+[distillation](https://en.wikipedia.org/wiki/Knowledge_distillation), and is the
+technique that DeepSeek used to make reasoning-distilled versions of Llama and
+Qwen models
+[as outlined in the DeepSeek R1 paper](https://github.com/deepseek-ai/DeepSeek-R1/blob/main/DeepSeek_R1.pdf)
+(section 2.4).
+
+Let's be real: most AI companies use data generated from OpenAI models, but not
+in the way that you think. A lot of AI models are trained from webpages on the
+internet. I personally have been having my own infrastructure struggle to cope
+with the load of AI scraping operations causing immense load and being unable to
+contact the operators of those bots to either give them the data they want
+through an external means or to get them to stop assaulting my servers into
+submission.
+
+[AI slop](https://en.wikipedia.org/wiki/AI_slop) has taken over The Internet.
+Infinite shrimp Jesus can be churned out and overwhelms all human-authored
+content. A project to
+[track the word frequency that people use over the years](https://github.com/rspeer/wordfreq/blob/master/SUNSET.md)
+has stopped collecting data because AI generated articles have overwhelmed
+everything else. It seems we no longer have reliable word choice data from 2022
+onwards. Even if you're not using OpenAI models directly, if you are scraping
+the internet to get your training set, then you're still using OpenAI model
+output. Period.
+
+## DeepSeek's origins
+
+DeepSeek is a research subsidiary of
+[High-Flyer](https://en.wikipedia.org/wiki/High-Flyer), a Chinese hedge fund and
+quantitative trading firm. They are solely dedicated to making AI tools and
+models better and have no dedicated plans for commercialization beyond selling
+access to hosted copies of their models. This allows them to stay a pure
+research organization and avoid
+[the complicated maze of AI regulations in Mainland China](https://www.nytimes.com/2025/01/23/technology/deepseek-china-ai-chips.html?smid=fb-nytimes&smtyp=cur).
+
+There's been a lot of fears that DeepSeek is some front for the Chinese
+government in order to collect data through vague means that could have vague
+impacts on people using their services. Usually people point to the terms of
+service having concerning phrases like:
+
+<Conv name="DeepSeek R1" profilePic={deepseekLogo} top bottom>
+  By submitting [User-Generated Content], you hereby grant [Company Name] a
+  non-exclusive, worldwide, royalty-free, sublicensable, and transferable
+  license to host, store, reproduce, modify, publicly display, distribute, and
+  otherwise use your [User-Generated Content] in connection with the operation,
+  promotion, and improvement of the Service. This license persists indefinitely
+  unless terminated by deletion of the [User-Generated Content] or account
+  closure, subject to technical limitations and backups.
+</Conv>
+
+By accepting this agreement, you are saying that you allow the forum engine to
+display your posts. Every time a major company changes their terms of service,
+it becomes An Issue™️ and people are fearful that they gave the company they're
+using to post to social media permission to distribute the things they post to
+social media.
+
+There's probably something to be said about the differences in legal regimes
+between data hosted in the US and data hosted in Mainland China. Realistically,
+if you use social media, you should expect the content you create on your device
+to be distributed somewhere else.
+
+## The model weights are open to the public
+
+One of the ways that DeepSeek R1 stands out is that the model weights are
+available to anyone
+[on Hugging Face](https://huggingface.co/deepseek-ai/DeepSeek-R1). No
+authentication or accepting of terms and conditions is required. Anyone can use
+them as long as they comply with
+[the license](https://huggingface.co/deepseek-ai/DeepSeek-R1/blob/main/LICENSE)
+(MIT).
+
+This is huge. This means that anyone can use a frontier-grade model on any
+workflow they want with total privacy as long as they have enough hardware to be
+able to run the model. This lets you have some of the most advanced AI
+capabilities in places where you would never be able to run OpenAI or Anthropic
+models.
+
+All you need is anything from 192 gigabytes of ram on your Mac Studio to 1.2
+terabytes of vram across multiple servers.
+
+The fact that you can have the weights on your computer means that you can
+fine-tune or [abliterate](https://huggingface.co/blog/mlabonne/abliteration) the
+model so that you can customize it to the tasks you want to do. For example,
+DeepSeek R1 lacks tool use, which limits its ability to fit into AI agent
+workflows. I suspect that within a few weeks, we'll see fine-tuning to enable
+tool use.
+
+<Conv name="Xe" profilePic={xe} top bottom>
+  Honestly the really cool part about DeepSeek R1 being open-weights means that
+  people can just download it and finetune it for usecases like tool use. It
+  lets the entire community not just use models, but contribute to making them
+  better for everyone. It reminds me of a lot of the spirit and intent of open
+  source software, but with AI models instead.
+</Conv>
+
+### The distilled models
+
+Along with the main R1 model, DeepSeek published distilled versions of R1 based
+on
+[popular AI models](https://huggingface.co/collections/deepseek-ai/deepseek-r1-678e1e131c0169c0bc89728d).
+This does demonstrate that training one model on the output of another works
+well, at the risk of
+[model collapse](https://www.nature.com/articles/s41586-024-07566-y) if this is
+repeated too many times. Clearly this is effective in the short term and the
+outputs of a model are public domain (copyright is usually restricted to human
+authored output, there
+[was a court case about a photograph taken by a monkey](https://en.wikipedia.org/wiki/Monkey_selfie_copyright_dispute)).
+
+## DeepSeek R1 is good enough for most people
+
+AI companies have no moat. If a competitor comes in and gives people output that
+is 95% as good as your model for 10% of the price, it's an easy decision to
+switch. Nearly every AI company exposes their models using an API compatible
+with the OpenAI API client, changing providers is as easy as changing out your
+API key and the API endpoint.
+
+Most of the time, you bill for AI model output per million output tokens (about
+750,000 words, or about two to three 3d-printed save icons worth of text). Input
+tokens are usually a lot cheaper than output tokens, but most of the time people
+focus on the output token cost because that helps you figure out the "upper
+bound" on cost.
+
+Generating one million output tokens with OpenAI's O1 model costs $60. The same
+number of tokens from DeepSeek R1 costs $2.19, just 3.6% of the cost of OpenAI
+O1. DeepSeek R1 doesn't have vision support, tool calling, or structured
+outputs, but the cost more than makes up for it. Many applications can cope with
+having to "waste output" or do more complicated filtering on the client side
+because the model is just that much cheaper.
+
+Developers have already been using DeepSeek R1 to do some pretty staggering
+things such as
+[porting SIMD optimizations in llama.cpp from ARM to WebAssembly](https://simonwillison.net/2025/Jan/27/llamacpp-pr/).
+It really does seem to be good enough, even for some advanced/specialized use
+cases.
+
+One of its biggest advantages is that it can run on hardware that you can look
+at. You don't need to own a datacenter to run a frontier model anymore. For full
+precision, eliminating quantization loss on the model weights, you'd need to
+re-mortgage your house (or raise a series B round) for a few spare 8xH100
+servers. But you can get away with
+[much less](https://unsloth.ai/blog/deepseekr1-dynamic), in practice
+[a Mac Studio with 192Gi of memory is all you need](https://x.com/ggerganov/status/1884358147403571466).
+I'll try running it on two A100-80Gi or H100-80Gi cards, but I'm on a work trip
+and haven't had the time to try doing this yet.
+
+The DeepSeek app works well enough on my iPhone that I have no real complaints.
+Sometimes the R1 model times out and I don't get a response, but if I disable
+reasoning mode then I get responses pretty quickly. It has helped me rewrite
+mediocre code, do the math on how many tokens can fit on a floppy disk, and
+given me some amusement
+[messing around with the model in order to see the limits](https://gist.github.com/Xe/8730107f4a3f4d1d43d25933bc0c91f7).
+
+## In summary
+
+Overall, it's a really good model and I kinda wish I had the hardware I needed
+to run it in its full form locally. It's probably the best model you can run on
+local hardware today. It's not perfect, but it's way better than most of the
+other models in its openness and weight class. It's available to the public
+through DeepSeek's platform; and more importantly you can run it yourself should
+you not want to trust DeepSeek at all.
+
+I like it and I'm mixing it into the list of models that I use for my projects.
+I would have waited to write this article until I've built some things on top of
+this model, but y'all've been asking me for my takes on this **right now**, and
+who am I to not give the people what they want?
