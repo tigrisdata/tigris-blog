@@ -1,0 +1,215 @@
+---
+slug: ai-left-pad
+title: "AI’s Impending Left-pad Scenario"
+description: >
+  Your AI workflows rely on models that other people post on the Internet. How
+  can you be sure that they'll stay up? Today Xe covers the history of the
+  infamous left-pad incident of 2016 and how it could happen again with AI.
+image: ./the-server-on-fire.webp
+keywords: [object storage, blob storage, s3, ai, architecture]
+authors: [xe]
+tags: [ai, left-pad, architecture]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+![A cartoon tiger desperately runs away from a datacentre fire](./the-server-on-fire.webp)
+
+<center>
+  <small>
+    <em>
+      A cartoon tiger desperately runs away from a datacentre fire. Image
+      generated using Flux [pro].
+    </em>
+  </small>
+</center>
+
+The software ecosystem is built on a bedrock of implicit trust. We trust the
+software won’t have deliberately placed security vulnerabilities and won’t be
+yanked away offline without warning. AI models aren’t exactly software, but
+they’re distributed using a lot of the same platforms and technology as
+software. Thus, people assume they’re distributed using the same social contract
+as with software.
+
+The AI ecosystem has a lot of the same distribution and trust challenges as
+software ecosystems do, but with much larger blobs of data that are harder to
+introspect. There are fears that something bad is going to happen with some
+large model and create a splash even greater than the infamous left-pad incident
+of 2016\. These kinds of attacks seem unthinkable, but are inevitable.
+
+How can you defend against AI supply-chain attacks? What are the risks? Today
+I’m going to cover what we can learn from the left-pad incident and how making a
+copy of the models you depend on can make your products more resilient.
+
+{/* truncate */}
+
+## The `left-pad` incident
+
+Back in 2016, the Node.js ecosystem had one main software repository: NPM (node
+package manager). Developers can take projects written in JavaScript and publish
+them on NPM so other developers can build on top of them. Importantly, when you
+publish a package on NPM, you give it a name. Companies that have trademarks
+generally want to protect them from misuse. One of the ways corporations like to
+protect their trademarks is by owning any names matching them on package
+management repositories.
+
+At some point in 2016, someone working for the messenger app Kik noticed that
+there was an NPM package named `kik`. Kik wanted to take over the NPM package
+name and unsuccessfully attempted to negotiate with the owner of that name. The
+negotiations failed and Kik contacted the NPM team to get ownership via NPM’s
+trademark protection policy.
+
+The owner of the package `kik` had their package name taken away. In an act of
+protest, they deleted all 250+ packages they maintained off of NPM. Among those
+packages was a seemingly insignificant one named `left-pad`. It was only 11
+lines of code, and it allowed you to indent a string.
+
+In most other ecosystems, this kind of functionality is usually part of the
+standard library, but JavaScript didn’t have this at the time. By total
+accident, left-pad was one of the most depended upon packages in the entire
+JavaScript ecosystem. Nearly every project using JavaScript at the time either
+depended on `left-pad` indirectly or used a tool that depended on `left-pad`.
+
+`left-pad`’s deletion from NPM instantly broke the builds of every JavaScript
+ecosystem user, ironically including Kik’s builds. The ecosystem was thrown into
+chaos for most of the day as people desperately tried to work around the
+breakage. NPM staff stepped in and restored the package from a backup to stem
+the bleed. As builds recovered and postmortems were written, a pair of questions
+swept across the industry: “What do we do if this happens again?” and “What if
+someone had put malicious code into the `left-pad` package while it was
+deleted?” These questions started out innocently enough, but quickly became
+horrifying as security experts started looking at how widespread a few simple
+NPM packages were.
+
+This incident brought to light a new kind of attack vector for software, similar
+to poisoned food corrupting a supply chain. Even more troubling, supply chains
+usually have a lot of inputs and outputs, meaning that one bad input somewhere
+can spill out into many bad outputs without any easy way to trace the root
+cause. Software supply-chain attacks were only theoretical until the left-pad
+package was deleted, and existing infrastructure was resilient and slow-moving
+enough to prevent it from happening. NPM’s size, velocity, and scale made this
+way worse than it would have been with traditional software distribution
+infrastructure.
+
+The left-pad incident came out of nowhere and with it the industry realized that
+everyone had copies of code written by some random guy in Oakland in production
+or directly touching production. This was a massive wake-up call for the
+industry and now we take software supply-chain attacks seriously.
+
+## AI’s impending left-pad scenario
+
+When I look at how AI models are used and deployed, I’m reminded of how people
+used to treat NPM before the left-pad incident. It’s a bit of a free-for-all
+where there’s a lot of implicit social trust that no one will go out of their
+way to break the models, datasets, and runtimes used for generative AI.
+
+In some ways, it’s slightly worse than the old days of NPM. Many companies using
+generative AI in their apps don’t run the models themselves. They rely on a
+third party API to run the models and return the results: you can’t download the
+model weights for ChatGPT. If the third party API hosting your model goes
+defunct or raises prices, then you’re out of luck. There’s no reasonable path to
+self-hosting it.
+
+Swapping out an AI model sounds like it should be easy. Sometimes it is, and we
+are thankful for those times. The hard part comes in when you’re testing:
+changes to the model (or sometimes even technical details in the runtime) can
+cause your AI workloads to radically change behavior, break your agentic
+workflows, and throw the balance of your app into chaos. Prompts are highly
+targeted for specific cases. This can surface in all your unstated assumptions
+about how the model works being violated.
+
+AI workloads also cause unique stress to existing CI and package distribution
+workloads. They often deal with payloads in the tens of gigabytes, and our
+existing package distribution services are optimized for payloads in the
+hundreds of megabytes. This combined with artifact size limits, rate-limits, and
+other limits that can pile up can make existing strategies untenable.
+
+As a result of this, developers, continuous integration tooling, and production
+workloads end up pulling their own copy of every model from upstreams like
+Ollama, HuggingFace, Civitai, and other model registries. This places the
+integrity and uptime of your production workloads into the good graces of the
+people and organizations that either run or contribute to those registries.
+Sure, most of the time it stays up and nothing bad happens; but what if it does?
+
+To compound the issues, there’s a few dominant formats AI model weights are
+distributed in:
+
+- [Safetensors](https://huggingface.co/docs/safetensors/index) files, which
+  contain AI model weights and limited metadata to instruct the runtime how to
+  process them.
+- [GGUF](https://huggingface.co/docs/hub/gguf) files, which contain AI model
+  weights and are specifically stored to be directly loaded into GPU memory from
+  the disk without conversion.
+- PickleTensors files, which use the Python
+  [pickle](https://docs.python.org/3/library/pickle.html) library to store and
+  load AI model weights.
+
+Safetensors and GGUF files are generally safe to process. The formats are
+designed with the intent that the input is untrusted and it is designed to
+reject invalid input aggressively. PickleTensors files were never intended to
+deal with untrusted input and can include arbitrary Python code to help the
+runtime with processing the model.
+
+The main downside to PickleTensors files is that the pickle library is
+[trivial to exploit](https://davidhamann.de/2020/04/05/exploiting-python-pickle/).
+Imagine if you were an attacker, exploiting a popular AI model using
+PickleTensors to distribute weights would mean that your code is able to sneak
+past review and run on some of the most powerful hardware in the world for free.
+
+## You should make your own copy
+
+A lot of the security and reliability challenges that come with trusting third
+party model providers and registries instantly evaporate when you make your own
+copy in your own registries.
+
+When you host your own copies of models you control your product destiny. The
+models you rely on can be routed to the cheapest compute when you need them. You
+get to choose the schedule of models getting deployed and deprecated. You get to
+control what happens and can have your AI applications retain the same behaviour
+even when the upstream vanishes or gets compromised. Not to mention, having your
+own copies of the models means that you can easily fine-tune them to your needs
+without having to rely on the expertise of third parties.
+
+When choosing where to put your own copy, you should take a close look at your
+options. Ideally you want something that is:
+
+- Multi-cloud native by not being affiliated to any large technology company in
+  particular.
+- Optimized for the large file sizes that are endemic to AI model weights.
+- Charges no egress fees, allowing you to scale fearlessly.
+
+There are a few options that fit the bill, but the best fit is
+[Tigris](https://tigrisdata.com). Tigris makes your AI workflows more resilient
+by providing a multi-cloud native, globally distributed object storage service
+that isn't affiliated with any big technology company. Tigris is built from the
+ground up to handle multi-gigabyte files and charges no egress fees. This lets
+you take your weekend hack and scale it beyond the moon without worrying about
+the bill.
+
+## Using public AI models safely
+
+The safest way to use public AI models is to make your own copy of them and use
+that copy in your production workloads. This defends against a left-pad attack
+where the upstream goes down, making your production workloads unable to scale
+or restart. Making your own copies means that the upstream can get attacked
+after you make your copy without that copy being affected.
+
+Additionally, make sure all your models are either
+[GGUF](https://huggingface.co/docs/hub/gguf) or SafeTensors files. These file
+formats allow models to be loaded faster than PickleTensors files and prevent
+code injection attacks through your AI models.
+
+Distributing your models and runtime images with Tigris means that you also
+defend against cloud lock-in, allowing you to freely float between providers as
+you are able to find better deals.
+
+If you want to distribute your own models from globally available object storage
+with zero egress fees, try Tigris!
+
+<InlineCta
+  title={"Want to try Tigris?"}
+  subtitle={
+    "Make a bucket and store your models, training data, and artifacts across the globe! No egress fees."
+  }
+  button={"I want that!"}
+/>
