@@ -35,7 +35,7 @@ The AI ecosystem has a lot of the same distribution and trust challenges as
 software ecosystems do, but with much larger blobs of data that are harder to
 introspect. There are fears that something bad is going to happen with some
 large model and create a splash even greater than the infamous left-pad incident
-of 2016\. These kinds of attacks seem unthinkable, but are inevitable.
+of 2016. These kinds of attacks seem unthinkable, but are inevitable.
 
 How can you defend against AI supply-chain attacks? What are the risks? Today
 I’m going to cover what we can learn from the left-pad incident and how making a
@@ -158,33 +158,38 @@ past review and run on some of the most powerful hardware in the world for free.
 
 ## You should make your own copy
 
-A lot of the security and reliability challenges that come with trusting third
-party model providers and registries instantly evaporate when you make your own
-copy in your own registries.
+Owning your own model registry mitigates much of the risk of supply chain
+attacks. You can verify each of the dependencies and bless trusted models so
+that you know every layer is safe to deploy. Further, you can set your own
+schedule for deprecation and more precisely manage change. Even small changes to
+models can have broad impact on the behavior of AI applications. Removing
+dependency on third parties and upstream providers ultimately ensures more
+stable behavior for your AI applications. Not to mention, having your own copies
+of the models means that you can easily fine-tune them to your needs without
+having to rely on the expertise of third parties.
 
-When you host your own copies of models you control your product destiny. The
-models you rely on can be routed to the cheapest compute when you need them. You
-get to choose the schedule of models getting deployed and deprecated. You get to
-control what happens and can have your AI applications retain the same behaviour
-even when the upstream vanishes or gets compromised. Not to mention, having your
-own copies of the models means that you can easily fine-tune them to your needs
-without having to rely on the expertise of third parties.
+The benefits are obvious, but hosting your own registry may sound daunting.
+There are a few different protocols for pushing and pulling models, and the
+ecosystem isn't as standardized as something like Docker. The three most popular
+public registries each use a different protocol:
 
-When choosing where to put your own copy, you should take a close look at your
-options. Ideally you want something that is:
+- HuggingFace uses Git-LFS to handle large files like models and training data
+  with LFS pointers resolving to objects
+- Civitai built their own system using presigned URLs pointing to object storage
+- Ollama operates with a closed-source version of the Docker Registry customized
+  for large files
 
-- Multi-cloud native by not being affiliated to any large technology company in
-  particular.
-- Optimized for the large file sizes that are endemic to AI model weights.
-- Charges no egress fees, allowing you to scale fearlessly.
+None of these protocols are approachable to host yourself. However, you can
+easily build Docker images with the models and their runtimes, and then store
+those images in typical Docker Registry. To help, we've made an open source
+docker registry you can deploy yourself. Check out
+[the guide in our documentation](https://www.tigrisdata.com/docs/apps/docker-registry/).
 
-There are a few options that fit the bill, but the best fit is
-[Tigris](https://tigrisdata.com). Tigris makes your AI workflows more resilient
-by providing a multi-cloud native, globally distributed object storage service
-that isn't affiliated with any big technology company. Tigris is built from the
-ground up to handle multi-gigabyte files and charges no egress fees. This lets
-you take your weekend hack and scale it beyond the moon without worrying about
-the bill.
+If you host your own Docker registry, you can put your models into your images,
+and then distribute those images to your production workloads. We have
+[an example](https://github.com/tigrisdata-community/ai-model-storage-in-docker-image-example)
+of this available on GitHub. This example gives you gravatar-like placeholder
+avatars generated on the fly using Stable Diffusion.
 
 ## Using public AI models safely
 
