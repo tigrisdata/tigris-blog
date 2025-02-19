@@ -1,0 +1,146 @@
+---
+slug: virtual-hosted-urls
+title: "Moving to Virtual Hosted URLs"
+description: >
+  We’re transitioning to virtual hosted style URLs for all new buckets created
+  after February 19, 2025.
+keywords: [object storage, blob storage, s3]
+authors: [ks]
+tags: [s3]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+We’re transitioning to virtual hosted style URLs for all new buckets created
+after February 19, 2025. For new buckets, we will stop supporting path style
+URLs. Buckets created before February 19, 2025 will continue to work with either
+path style or virtual host style URLs.
+
+The path style URL looks like this:
+`https://fly.storage.tigris.dev/tigris-example/bar.txt`
+
+The virtual host style URL looks like this:
+`https://tigris-example.fly.storage.tigris.dev/bar.txt`
+
+With the path style URL, the subdomain is always `fly.storage.tigris.dev`. By
+moving to virtual host style URLs, the subdomain is specific to the bucket. This
+additional specificity allows us to make some key improvements for security and
+scalability.
+
+## Why make this change now?
+
+Recently some ISPs blocked the Tigris subdomain after
+[malicious content was briefly shared](https://status.tigris.dev/incidents/01JKCBMAVT1W09PGVEAB4XCWMZ)
+using our platform. Though we removed the malicious content, the subdomain was
+the common denominator across several reports and added to blocklist maintained
+by security vendors. This block of our domain resulted in failed downloads on
+several ISPs with unclear error messages. Either the DNS resolved to another IP
+not owned by Tigris, or there were connection errors that implied a network
+issue. We’re sure this was frustrating for folks to debug.
+
+We have been working with the security vendors to remove our domain from their
+blocklists. However, the long term solution is to move to virtual hosted style
+URLs so that the subdomains are no longer the common denominator when
+identifying content.
+
+## How does this impact your code?
+
+You’ll need to update your code anywhere you have path based access like for
+presigned URLs. You’ll also need to configure your S3 client libraries to use
+the virtual hosted style URL. Some examples are below. If we’ve missed your
+framework, please reach out, and we’ll help.
+
+<Tabs groupId="languages">
+  <TabItem value="python" label="Python">
+```python
+svc = boto3.client(
+	's3',
+	endpoint_url='https://fly.storage.tigris.dev',
+	# highlight-start
+	config=Config(s3={'addressing_style': 'virtual'}),
+	# highlight-end
+)
+````
+</TabItem>
+  <TabItem value="go" label="Go">
+```go
+sdkConfig, err := config.LoadDefaultConfig(ctx)
+if err != nil {
+    	log.Fatalf("Couldn't load default configuration. Here's why: %v", err)
+    	return
+}
+
+// Create S3 service client svc := s3.NewFromConfig(sdkConfig, func(o
+\*s3.Options) { o.BaseEndpoint = aws.String("https://fly.storage.tigris.dev")
+o.Region = "auto" // highlight-start o.UsePathStyle = false // highlight-end })
+
+````
+</TabItem>
+  <TabItem value=".NET" label=".NET">
+```shell
+IAmazonS3 s3Client = new AmazonS3Client(
+	new AmazonS3Config {
+		// highlight-start
+		ForcePathStyle = false,
+		// highlight-end
+		ServiceURL = "https://fly.storage.tigris.dev"
+	}
+);
+````
+
+</TabItem>
+  <TabItem value="ruby" label="Ruby">
+```ruby
+s3 = Aws::S3::Client.new(
+	region: "auto",
+	endpoint: "https://fly.storage.tigris.dev",
+	# highlight-start
+	force_path_style: false,
+	# highlight-end
+)
+````
+</TabItem>
+  <TabItem value="js" label="JavaScript">
+```jsx
+const S3 = new S3Client({
+  region: "auto",
+  endpoint: "https://fly.storage.tigris.dev",
+  // highlight-start
+  s3ForcePathStyle: false,
+  // highlight-end
+});
+
+````
+</TabItem>
+  <TabItem value="elixir" label="Elixir">
+```shell
+config :ex_aws, :s3,
+  scheme: "https://",
+  host: "fly.storage.tigris.dev",
+  region: "auto",
+  # highlight-start
+  virtual_host: true
+  # highlight-end
+````
+
+NOTE: There is a [known bug](https://github.com/ex-aws/ex_aws/issues/1119) with
+ex-aws that prevents bucket-less calls like ListBuckets from working, however
+most other calls work.
+
+</TabItem>
+
+</Tabs>
+
+With this move to virtual hosted style URLs, we’re undoubtedly going to break
+some existing workflows as new buckets are created. If this creates a hardship
+on you, please contact us at help@tigrisdata.com and we'll find a solution.
+
+<InlineCta
+  title={"Want to try Tigris?"}
+  subtitle={
+    "Make a bucket and store your models, training data, and artifacts across the globe! No egress fees."
+  }
+  button={"I want that!"}
+/>
