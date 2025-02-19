@@ -47,14 +47,6 @@ identifying content.
 
 ## How does this impact your code?
 
-One of the features folks like about Tigris is the ability to make custom
-domains. Having your data behind a domain you control makes it easier to migrate
-between platforms in a multi-cloud environment and set your own destiny. We’re
-doubling down on custom domains. With this change to virtual hosted style URLs,
-you’ll need to create a
-[custom domain](https://www.tigrisdata.com/docs/buckets/custom-domain/) for your
-public buckets.
-
 You’ll need to update your code anywhere you have path based access like for
 presigned URLs. You’ll also need to configure your S3 client libraries to use
 the virtual hosted style URL. Some examples are below. If we’ve missed your
