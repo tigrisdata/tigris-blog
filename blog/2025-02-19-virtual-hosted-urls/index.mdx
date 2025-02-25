@@ -9,6 +9,7 @@ authors: [ks]
 tags: [s3]
 ---
 
+import CodeBlock from "@theme/CodeBlock";
 import InlineCta from "@site/src/components/InlineCta";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
@@ -62,21 +63,14 @@ svc = boto3.client(
 	config=Config(s3={'addressing_style': 'virtual'}),
 	# highlight-end
 )
-````
+```
 </TabItem>
   <TabItem value="go" label="Go">
-```go
-sdkConfig, err := config.LoadDefaultConfig(ctx)
-if err != nil {
-    	log.Fatalf("Couldn't load default configuration. Here's why: %v", err)
-    	return
-}
+  
+import exampleGo from "!!raw-loader!./example.go";
 
-// Create S3 service client svc := s3.NewFromConfig(sdkConfig, func(o
-\*s3.Options) { o.BaseEndpoint = aws.String("https://fly.storage.tigris.dev")
-o.Region = "auto" // highlight-start o.UsePathStyle = false // highlight-end })
+<CodeBlock language="go">{exampleGo}</CodeBlock>
 
-````
 </TabItem>
   <TabItem value=".NET" label=".NET">
 ```shell
