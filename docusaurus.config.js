@@ -246,6 +246,10 @@ const config = {
                 rel: "",
                 className: "footer__link-item disable-external-icon",
               },
+              {
+                label: "Report Abuse",
+                href: tigrisConfig.reportAbuseUrl,
+              },
               // {
               //   label: "Videos",
               //   href: tigrisConfig.youTubeUrl,

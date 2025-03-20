@@ -9,4 +9,5 @@ module.exports = {
   docsUrl: "https://www.tigrisdata.com/docs",
   statusPageUrl: "https://status.tigris.dev/",
   getStartedUrl: "https://www.tigrisdata.com/docs/get-started/",
+  reportAbuseUrl: "mailto:abuse@tigrisdata.com",
 };
