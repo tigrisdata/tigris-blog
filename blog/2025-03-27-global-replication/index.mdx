@@ -3,7 +3,7 @@ slug: global-replication
 title: Global replication made easy
 description: >
   TODO fill me out
-image: ./stop-sign.webp
+image: ./tiger-globe.webp
 keywords: [scalability, sre, systems design]
 authors: [xe, ks]
 tags: [scalability, foundationdb, replication]
@@ -19,15 +19,44 @@ need them, by default.
 Global replication matters because computers are ephemeral and there’s a
 tradeoff between performance and reliability. But does there have to be?
 
-![A macro shot of the bolt holding a stop sign to its pole, photo by Xe Iaso](./stop-sign.webp)
-
-<center>
-  <small>
-    <em>
-      A macro shot of the bolt holding a stop sign to its pole, photo by Xe Iaso
-    </em>
-  </small>
-</center>
+<div
+  style={{
+    height: "100%",
+    width: "100%",
+  }}
+>
+  <video
+    id="attract-video"
+    autoplay
+    loop
+    muted
+    style={{
+      width: "100%",
+      height: "auto",
+      maxWidth: "100%",
+      maxHeight: "100%",
+    }}
+    onCanPlayThrough={(ev) => {
+      ev.target.muted = true;
+      ev.target.play();
+    }}
+  >
+    <source
+      src="/blog/img/blog/global-replication/tiger-globe.mp4"
+      type="video/mp4"
+    />
+    <img src="./tiger-globe.webp" />
+  </video>
+  <center>
+    <small>
+      <em>
+        A cartoon tiger laying across the globe, protecting and distributing
+        buckets to users. Image input made with Flux 1.1 [ultra] and video made
+        with Veo 2.
+      </em>
+    </small>
+  </center>
+</div>
 
 {/* truncate */}
 
