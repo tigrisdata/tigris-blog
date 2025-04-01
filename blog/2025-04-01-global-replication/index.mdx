@@ -43,9 +43,6 @@ tradeoff between performance and reliability. But does there have to be?
       ev.target.muted = true;
       ev.target.play();
     }}
-    onLoad={() => {
-const v=document.getElementById('attract-video');setTimeout(async()=>{if(v.paused){await v.play();}},250);
-    }}
   >
     <source
       src="/blog/img/blog/global-replication/tiger-globe.mp4"
