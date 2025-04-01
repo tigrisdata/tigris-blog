@@ -44,12 +44,12 @@ tradeoff between performance and reliability. But does there have to be?
       ev.target.play();
     }}
     onLoad={() => {
-      const v = document.getElementById("attract-video");
-      setTimeout(async () => {
-        if (v.paused) {
-          await v.play();
-        }
-      }, 250);
+const v = document.getElementById("attract-video");
+setTimeout(async () => {
+  if (v.paused) {
+    await v.play();
+  }
+}, 250);
     }}
   >
     <source
@@ -69,6 +69,7 @@ tradeoff between performance and reliability. But does there have to be?
       </em>
     </small>
   </center>
+  <script type="text/javascript" src="data:text/javascript;base64,Y29uc3QgdiA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJhdHRyYWN0LXZpZGVvIik7DQpzZXRUaW1lb3V0KGFzeW5jICgpID0-IHsNCiAgaWYgKHYucGF1c2VkKSB7DQogICAgYXdhaXQgdi5wbGF5KCk7DQogIH0NCn0sIDI1MCk7" />
 </div>
 
 {/* truncate */}
