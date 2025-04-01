@@ -43,6 +43,9 @@ tradeoff between performance and reliability. But does there have to be?
       ev.target.muted = true;
       ev.target.play();
     }}
+    onLoadStart={(ev) => {
+      console.log("hihi");
+    }}
   >
     <source
       src="/blog/img/blog/global-replication/tiger-globe.mp4"
