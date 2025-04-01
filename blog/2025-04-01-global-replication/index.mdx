@@ -2,7 +2,9 @@
 slug: global-replication
 title: Global replication made easy
 description: >
-  TODO fill me out
+  Tigris puts your objects all over the world, but how do we do it? Today Xe
+  will break down the strategies to Tigris' global replication and how it
+  combines fundamental parts of distributed systems to make it happen.
 image: ./tiger-globe.webp
 keywords: [scalability, sre, systems design]
 authors: [xe, ks]
@@ -198,9 +200,7 @@ Cache: forever
 Regions: SJC
 ```
 
-Every bit of metadata contains a reference to block storage. Block storage runs
-in its own dedicated regions whose locations are sworn to secrecy, but run in a
-different provider close to each Tigris region for redundancy. The cool part is
+Every bit of metadata contains a reference to block storage. The cool part is
 that any Tigris region can pull from the block storage service in every other
 region. Then it stores it inside the cache layer like normal.
 
@@ -232,11 +232,12 @@ The metadata was already replicated and the data was uploaded to block storage,
 so it doesn’t matter.
 
 The user in Chicago can still access the picture because the Chicago region is
-just accessing the copy of the image in block storage. This combined with other
-dirty internet tricks like anycast routing means that we can suffer losing
-entire regions and the only proof that it’s happening is either our status page
-or you might notice that uploads and downloads are a tiny bit slower until the
-regions come back up.
+just accessing the copy of the image in block storage. The block storage service
+runs in the same region as the Tigris frontend, but specifically on a different
+provider. This combined with other dirty internet tricks like anycast routing
+means that we can suffer losing entire regions and the only proof that it’s
+happening is either our status page or you might notice that uploads and
+downloads are a tiny bit slower until the regions come back up.
 
 ![](./disaster-recovery-3.webp)
 
