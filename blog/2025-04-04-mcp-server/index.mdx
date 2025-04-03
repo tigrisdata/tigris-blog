@@ -21,6 +21,8 @@ tags: [ai, mcp, vibe coding]
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 One of the great things about modern AI editor workflows is how it makes it
 easier to get started. Normally when you open a text editor, you have an empty
@@ -51,8 +53,8 @@ generation B2B SaaS as a service.
 Abdullah just started at Tigris a week ago (Welcome\!) and has already built
 something that will make it easier for you to make object storage a native part
 of your development workflow: a Model Context Protocol (MCP) server for Tigris.
-This enables you to manage your buckets in plain language in your AI capable
-editor.
+This enables you to manage your buckets and objects with plain language in your
+AI capable editor.
 
 Just say “make me a bucket for this project” and it’ll go do that. Want files in
 the bucket? Just ask it to upload a file; it’ll make it happen.
@@ -107,7 +109,12 @@ number of zeroes in it.
 
 To get started, create some
 [access keys](https://console.tigris.dev/createaccesskey) and then install our
-MCP server by adding this snippet to your `claude_desktop_config.json`:
+MCP server:
+
+<Tabs>
+<TabItem value="config" label="Edit your config file" default>
+
+Add this snippet to your `claude_desktop_config.json`
 
 ```json
 {
@@ -125,6 +132,18 @@ MCP server by adding this snippet to your `claude_desktop_config.json`:
 }
 ```
 
+</TabItem>
+<TabItem value="script" label="Run the init script">
+
+Run the init script in your terminal:
+
+```text
+npx -y @tigrisdata/tigris-mcp-server init
+```
+
+</TabItem>
+</Tabs>
+
 Then ask your editor to make you a bucket for a project and it will! More
 instructions are on the official npm package
 [here](https://www.npmjs.com/package/@tigrisdata/tigris-mcp-server).
@@ -141,6 +160,10 @@ The Model Context Protocol server will run in the same level of sandboxing as
 your editor does. Be careful with what you install and always double-check what
 you run before you run it.
 
+This Model Context Protocol server will run with the full power and authority of
+any credentials you give it. Be very careful about typos with object names that
+have similar token distances.
+
 Additionally, AI tools are fundamentally built around random behavior and will
 have unexpected results at times. Sometimes it takes the AI a couple tries to
 learn what you want to do. Be very careful, as typos in an AI context can have
@@ -153,11 +176,11 @@ server [open source](https://github.com/tigrisdata/tigris-mcp-server) and are
 actively monitoring that repository.
 
 We’re making this as safe and reliable as possible. Part of this is the scope
-reduction we mentioned earlier: we’re only managing your buckets. The other part
-is by going out of our way to make this tool as boring as possible. Boring code
-is easy to understand, easy to maintain, and easy to learn from. We hope that
-this will help you make the exciting parts of your program while leaving the
-boilerplate to machines.
+reduction we mentioned earlier: we’re only managing your buckets and objects.
+The other part is by going out of our way to make this tool as boring as
+possible. Boring code is easy to understand, easy to maintain, and easy to learn
+from. We hope that this will help you make the exciting parts of your program
+while leaving the boilerplate to machines.
 
 We hope this will make using Tigris absolutely frictionless and that you can
 learn how S3’s API works in the process. Not to mention, we want you to get out
