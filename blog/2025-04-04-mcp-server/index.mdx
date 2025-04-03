@@ -1,0 +1,173 @@
+---
+slug: mcp-server
+title: "Announcing the Tigris MCP server"
+description: >
+  Want to do vibe coding with Tigris? We released a MCP server so you can make
+  it happen. 😎
+image: ./tiger-tools.webp
+keywords:
+  - ai
+  - vibe coding
+  - language models
+  - large language models
+  - llama
+  - phi
+  - openai
+  - chatgpt
+  - cursor
+  - claude
+authors: [xe, ks, abdullah]
+tags: [ai, mcp, vibe coding]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+One of the great things about modern AI editor workflows is how it makes it
+easier to get started. Normally when you open a text editor, you have an empty
+canvas and don’t know where to start. AI tools let you describe what you want
+and help you get started doing it.
+
+> “We’ve all been excited about AI editors making development fast and just
+> plain fun.”
+
+- Most developers, probably
+
+![A robotic blue tiger using tools to work on an engine.](./tiger-tools.webp)
+
+<center>
+  <small>
+    <em>A robotic blue tiger using tools to work on an engine.</em>
+  </small>
+</center>
+
+Today we’re happy to announce that we’re making it even easier to get started
+with Tigris in your AI editor workflow. If you want to get to the part where you
+can plug configs into your AI editor and get started, head to \<section link\>
+and get off to vibe coding your next generation B2B SaaS as a service.
+
+Abdullah just started at Tigris a week ago (Welcome\!) and has already built
+something that will make it easier for you to make object storage a native part
+of your development workflow: a Model Context Protocol (MCP) server for Tigris.
+This enables you to manage your buckets in plain language in your AI capable
+editor.
+
+Just say “make me a bucket for this project” and it’ll go do that. Want files in
+the bucket? Just ask it to upload a file; it’ll make it happen.
+
+<div
+  style={{
+    height: "100%",
+    width: "100%",
+  }}
+>
+  <video
+    id="attract-video"
+    autoplay
+    controls
+    playsInline
+    loop
+    muted
+    style={{
+      width: "100%",
+      height: "auto",
+      maxWidth: "100%",
+      maxHeight: "100%",
+    }}
+    onCanPlayThrough={(ev) => {
+      ev.target.muted = true;
+      ev.target.play();
+    }}
+  >
+    <source
+      src="/blog/img/blog/mcp-server/mcp-smol.mp4"
+      type="video/mp4"
+    />
+
+Your browser doesn’t support the video element. Click on this instead:
+[mcp-smol.mp4](/blog/img/blog/mcp-server/mcp-smol.mp4)
+
+  </video>
+  <script type="text/javascript" src="data:text/javascript,const v=document.getElementById('attract-video');setTimeout(async()=>{if(v.paused){await v.play();}},250);" />
+</div>
+
+## The vision
+
+We want your developer experience with Tigris to be as seamless, unsurprising,
+and natural as possible. What’s more natural than natural language? Getting this
+set up was a breeze. Tigris is compatible with S3, so all Abdullah had to do was
+glue S3 calls to the MCP library. Everything was already there, well-tested, and
+ready to go. And it’s just object storage: there’s no chance you’ll accidentally
+spin up an expensive service and get a surprise bill.
+
+Of note: many other MCP servers will try and do much more than they need to. Our
+MCP server just does object storage. There’s no possibility of it spinning up
+expensive servers and saddling you with a surprise bill with an unreasonable
+number of zeroes in it.
+
+## Getting started
+
+To get started, create some
+[access keys](https://console.tigris.dev/createaccesskey) and then install our
+MCP server by adding this snippet to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "tigris-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@tigrisdata/tigris-mcp-server", "run"],
+      "env": {
+        "AWS_ACCESS_KEY_ID": "YOUR_AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY": "YOUR_AWS_SECRET_ACCESS_KEY",
+        "TIGRIS_GLOBAL_ENDPOINT": "https://fly.storage.tigris.dev"
+      }
+    }
+  }
+}
+```
+
+Then ask your editor to make you a bucket for a project and it will! More
+instructions are on the official npm package
+[here](https://www.npmjs.com/package/@tigrisdata/tigris-mcp-server).
+
+## Trust
+
+AI editors and tooling are really cool, but there’s some key things you should
+be aware of before you blindly trust this. The Model Context Protocol ecosystem
+is still very new, so there will almost certainly be problems we solve together
+over time. There are also inherent risks involved in giving any tool access to
+your cloud storage accounts or filesystem.
+
+The Model Context Protocol server will run in the same level of sandboxing as
+your editor does. Be careful with what you install and always double-check what
+you run before you run it.
+
+Additionally, AI tools are fundamentally built around random behavior and will
+have unexpected results at times. Sometimes it takes the AI a couple tries to
+learn what you want to do. Be very careful, as typos in an AI context can have
+much more drastic consequences than they can in normal contexts. We don’t want
+you to lose data you need. For example, when you run the `DeleteBucket` call,
+you are _not allowed_ to do this unless the bucket has no data in it.
+
+In order to be as transparent as possible, we’ve made our Model Context Protocol
+server [open source](https://github.com/tigrisdata/tigris-mcp-server) and are
+actively monitoring that repository.
+
+We’re making this as safe and reliable as possible. Part of this is the scope
+reduction we mentioned earlier: we’re only managing your buckets. The other part
+is by going out of our way to make this tool as boring as possible. Boring code
+is easy to understand, easy to maintain, and easy to learn from. We hope that
+this will help you make the exciting parts of your program while leaving the
+boilerplate to machines.
+
+We hope this will make using Tigris absolutely frictionless and that you can
+learn how S3’s API works in the process. Not to mention, we want you to get out
+there and build things!
+
+<InlineCta
+  title={"Want vibe code with Tigris?"}
+  subtitle={
+    "Kick up some tunes and let the vibes flow! Build the product of your dreams. Tigris will help make it happen!"
+  }
+  button={"Get started today!"}
+/>
