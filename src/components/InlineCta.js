@@ -1,13 +1,16 @@
 import tigrisConfig from "@site/tigris.config.js";
 import React from "react";
 import PropTypes from "prop-types";
+import styles from "./InlineCta.module.css";
 
 function InlineCta(props) {
   return (
     <div>
       <div>
         <div className="is--color_gradient_back">
-          <div className="sl_card_m-2 card_static cta-flex">
+          <div
+            className={`${styles.InlineCta} sl_card_m-2 card_static cta-flex`}
+          >
             <div className="cta-margin-left">
               <h1 className="sl_title_m fix-1px">{props.title}</h1>
               <p>{props.subtitle}</p>

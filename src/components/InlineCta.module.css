@@ -1,0 +1,7 @@
+.InlineCta {
+  background-color: #F6F8FA;
+}
+
+[data-theme="dark"] .InlineCta {
+  background-color: #142229;
+}
