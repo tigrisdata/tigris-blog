@@ -8,7 +8,7 @@ description: >
   global data placement.
 image: ./bucket-compat.webp
 keywords: [s3, object storage, aws, global availability]
-authors: [ot, xe]
+authors: [ot]
 tags: [s3, distributed systems]
 ---
 
@@ -64,7 +64,7 @@ sheer load that something like Amazon needed to cope with.
 As a result, Amazon S3’s API has become the de facto standard. Nearly every
 company either uses S3 or uses a storage provider that is compatible with S3.
 It’s become the equivalent of the POSIX filesystem API but for distributed
-systems. The S3 API is a standard because of its simplicity. Here’s what the
+storage. The S3 API is a standard because of its simplicity. Here’s what the
 most common calls in the S3 API look like:
 
 ```
@@ -144,7 +144,7 @@ company instead of a video streaming company.
 
 Object storage was the key to their success. When TV shows released episodes,
 they pushed the files over to the cloud and sat back to let the machines take
-over to enqueue, transcode, and publish the optimized files so people can sit
+over to dequeue, transcode, and publish the optimized files so people can sit
 back and watch reruns of Star Trek: Voyager.
 
 Look at [their GitHub profile](https://github.com/netflix). Object storage
@@ -157,11 +157,11 @@ submitted a patch to without you even knowing.
 
 Dropbox lets you leave your USB drives at home and take your files with you via
 the magic of The Cloud. It even versioned your files for you so you didn’t have
-to set up an FTP server with your own subversion or CVS repo. Users need to
-store more and more files as tech exploded in growth during the 2010s. S3 let
-them ship Dropbox to users faster; imagine how much time it would have taken if
-they had to provision their own hardware and write their own storage backend
-like SmugMug did.
+[to set up an FTP server with your own subversion or CVS repo](https://news.ycombinator.com/item?id=9224).
+Users need to store more and more files as tech exploded in growth during the
+2010s. S3 let them ship Dropbox to users faster; imagine how much time it would
+have taken if they had to provision their own hardware and write their own
+storage backend like SmugMug did.
 
 "We used AWS S3 because storage at scale was an extremely hard problem to
 solve”, said their lead developer Preslav Le.
@@ -204,15 +204,19 @@ Object storage has become bigger than just S3. The S3 API is a standard across
 clouds and services, and it enables interoperability between them as a part of a
 larger multi-cloud native landscape.
 
+But to be truly multi-cloud you need your storage platform to provide you the
+freedom to deploy the workload globally across Geo regions and Compute providers
+without racking up huge data transfer bills \- eliminating vendor lock-in.
+
+That’s where Tigris comes in. Tigris is a multi-cloud storage platform that
+dynamically moves data closer to where compute is running—across clouds and
+continents—without the typical ingress and egress costs.
+
 Tigris is a drop-in replacement for any S3 compatible storage provider for the
-vast majority of workloads. Simply add access keys, set the region, and change
-your endpoint URL to point to Tigris, and your code will Just Work™. We have
+vast majority of workloads. Simply add access keys, and change your endpoint URL
+to point to Tigris, and your code will Just Work™. We have
 [comprehensive coverage of the S3 API](https://www.tigrisdata.com/docs/api/s3/),
-and we work with all your familiar tools. Our goal is to enhance the object
-storage experience by adding features we always wished we had like
-[on-demand data migration](https://www.tigrisdata.com/docs/buckets/settings/#data-migration)
-and dynamic placement of objects all over the globe. All whilst remaining S3
-compatible so you can easily mix and match cloud providers and services.
+and we work with all your familiar tools.
 
 Just turn it on and it scales right up.
 
