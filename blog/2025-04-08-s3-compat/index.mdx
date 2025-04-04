@@ -1,0 +1,229 @@
+---
+slug: s3-compat
+title: "The Storage API That Ate The World (And What We're Doing About It)"
+description: >
+  Tigris delivers S3-compatible, globally distributed object storage, enabling
+  seamless multi-cloud workflows without tool changes. Built on S3’s API
+  standard, it simplifies scaling, avoids vendor lock-in, and supports dynamic
+  global data placement.
+image: ./bucket-compat.webp
+keywords: [s3, object storage, aws, global availability]
+authors: [ot]
+tags: [s3, distributed systems]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+I want you to imagine what life was like before we had object storage. Uploading
+files was a custom process. If you wanted to scale, you ended up having to hire
+storage area network experts that built complicated systems with terms like
+“LUN” and “erasure coding”. Your application had to either shell out to an FTP
+server to handle uploads or put them alongside the source code. Above all
+though: everything had to be planned in advance. You had to do capacity planning
+so that you could know how much storage you needed to buy and when you needed to
+buy it. You couldn’t just insert a credit card and then get all the storage you
+wanted.
+
+In 2006, Amazon invented the concept of object storage, fundamentally changing
+how applications work. Storage became a faucet. If you want more, you simply
+turn the knob. Bottomless storage was revolutionary, and now we’ve come to
+expect storage to be decoupled from physical hardware. S3 paved the way for
+seamless data management across any environment as long as it had a connection
+back to Amazon.
+
+![An anthropomorphic tiger running between datacentres.](./bucket-compat.webp)
+
+<center>
+  <small>
+    <em>
+      An anthropomorphic tiger running between datacentres. Image generated
+      using Flux pro [ultra] on fal.ai.
+    </em>
+  </small>
+</center>
+
+{/* truncate */}
+
+## Malloc for the cloud
+
+In C, the standard library has a function called `malloc()`, it lets you
+allocate memory on the heap so that you can store data persistently between
+function calls. When S3 (Simple Storage Service) was first envisioned, it was as
+[malloc() for the internet](https://aws.amazon.com/blogs/aws/amazon-s3-path-deprecation-plan-the-rest-of-the-story/),
+allowing you to allocate storage with a single function call so that you can
+store data persistently between service calls.
+
+It makes a lot of sense for an ecommerce company like Amazon to want to have
+this kind of product; think about how many product pictures they were storing,
+even back in 2006\. It would have easily been beyond the scope of what any
+single server could provide; and even though there were options like
+[MogileFS](https://mogilefs.github.io/mogilefs-docs/HighLevelOverview.html)
+(think: OMG, files\!), there wasn’t really anything that could withstand the
+sheer load that something like Amazon needed to cope with.
+
+As a result, Amazon S3’s API has become the de facto standard. Nearly every
+company either uses S3 or uses a storage provider that is compatible with S3.
+It’s become the equivalent of the POSIX filesystem API but for distributed
+storage. The S3 API is a standard because of its simplicity. Here’s what the
+most common calls in the S3 API look like:
+
+```
+GET / -> ListBuckets
+PUT /{bucket} -> CreateBucket(bucket)
+DELETE /{bucket} -> DeleteBucket(bucket)
+GET /{bucket} -> ListObjectsV2(bucket)
+PUT /{bucket}/{key...} -> PutObject(bucket, key)
+GET /{bucket}/{key...} -> GetObject(bucket, key)
+HEAD /{bucket}/{key...} -> HeadObject(bucket, key)
+DELETE /{bucket}/{key...} -> DeleteObject(bucket, key)
+```
+
+All you need to do is implement eight function calls at most, and you’ve
+implemented just about everything you need in practice for 99.9% of applications
+to work.
+
+Even better, you don’t need to implement this yourself. S3 API clients exist in
+nearly every programming language from Ada to Zig. S3 API support is enabled by
+default in nearly every framework. It’s become the fundamental construct that
+people use to store user uploads, unstructured data, backups, and just about
+anything that can fit into the concept of being bytes in a bucket.
+
+This flexibility has been the key instrument to its success. It’s one of the
+rare cases where something named “simple” actually is.
+
+Let’s take a look at some of the earliest success stories in using object
+storage and how it’s shaped the public clouds we have today.
+
+## SmugMug
+
+One of the first big success stories for S3 was
+[SmugMug](https://en.wikipedia.org/wiki/SmugMug), a photo sharing, image
+hosting, and online video platform. Mind you, this was before social networking
+sites had photo uploads built into the app, so in order to share a picture of
+your lunch, you needed to upload it somewhere like SmugMug and share the link.
+
+They had built their own custom storage setup over the years buying and
+installing $40k per month worth of servers and storage hardware. They couldn’t
+lose users’ photos, so they had to have redundant storage. Using RAID 5 (with
+hot spares) meant they had to purchase about 1.5 terabytes of raw storage to get
+500 gigabytes of redundant storage.
+
+This is one of the many problems that you don’t have to think about with an
+object storage service. Just think about the logistics involved with
+provisioning and certifying so many servers so quickly.
+
+And then they started growing quicker than they could provision new storage.
+Before they moved everything to object storage, they had over 64 million photos
+stored. Half a year later, they had over 110 million photos. Using object
+storage saved them $500k that year alone, plus the income from selling their
+hardware.
+
+Those 110 million photos accounted for at least 100 terabytes of data copied
+over to S3. By 2010 they ballooned to two petabytes (2,000 terabytes). This is
+something that you can easily fit into a single server today, but not in 2010
+hard drive sizes. Keep in mind that 1 terabyte drives were first introduced in
+2007\. You’d need thousands of drives to keep up with that growth rate.
+
+S3 was the key to sustaining their growth, and they’re still around hosting
+photos to this day with Flickr as a subsidiary.
+
+## Netflix
+
+Netflix used to be a company that mailed you DVDs. Their entire shtick was you
+selecting some movies, hitting rent, and then waiting for them to show up in the
+mail. You watched them, you laughed, you cried, and then you sent them back to
+get more.
+
+Then in 2007 (about a year after S3 was introduced), they began offering
+streaming video on demand. You didn’t have to wait longer than it took for the
+video to buffer on your Wii. Imagine how many video files Netflix needed to
+store as they built their streaming offering. Not to mention the fact that it
+needed to grow at the rate of media production. They needed so much storage so
+fast that they would have needed to pivot into being a datacenter construction
+company instead of a video streaming company.
+
+Object storage was the key to their success. When TV shows released episodes,
+they pushed the files over to the cloud and sat back to let the machines take
+over to dequeue, transcode, and publish the optimized files so people can sit
+back and watch reruns of Star Trek: Voyager.
+
+Look at [their GitHub profile](https://github.com/netflix). Object storage
+allowed them to focus on building out the first generation of cloud-native
+tooling so they didn’t need to pivot into a datacenter construction company.
+Your projects probably benefit from something that Netflix either invented or
+submitted a patch to without you even knowing.
+
+## Dropbox
+
+Dropbox lets you leave your USB drives at home and take your files with you via
+the magic of The Cloud. It even versioned your files for you so you didn’t have
+[to set up an FTP server with your own subversion or CVS repo](https://news.ycombinator.com/item?id=9224).
+Users need to store more and more files as tech exploded in growth during the
+2010s. S3 let them ship Dropbox to users faster; imagine how much time it would
+have taken if they had to provision their own hardware and write their own
+storage backend like SmugMug did.
+
+"We used AWS S3 because storage at scale was an extremely hard problem to
+solve”, said their lead developer Preslav Le.
+
+Eventually they moved off S3, but in order to do that they had to design their
+system from the ground up including custom motherboards, redundant storage, and
+all the numerous problems S3 had already solved for them. They managed to pull
+it off by making machines the size of 8 pizza boxes that can contain half a
+petabyte of raw storage. But it was quite the investment.
+
+This was not possible when Dropbox launched as a small startup in 2007\. Not
+only did hard drives at those density levels just didn’t exist, but Dropbox
+began as a small startup who couldn’t make an upfront hardware investment. Using
+object storage allowed them to scale their cloud storage alongside their
+revenue.
+
+## Snowflake
+
+When Snowflake was developed in 2012, the dominant data warehouse solution was
+Amazon RedShift. On RedShift, you had to provision the size of your cluster and
+storage. If you ran out of space, you had to resize your storage manually.
+Snowflake separated the query processing and storage layers in the data
+warehouse, enabling independent scaling of both using the cloud. Back then, they
+were an outlier for offering it as a cloud SaaS product.
+
+Data warehouses (and lakes, and now lakehouses) often contain both structured
+and unstructured data. And that data needs to be loaded quickly to run queries
+on live events, such as right before and after a customer makes a purchase.
+Using object storage cuts down query execution times, and works flexibly for
+many different data formats.
+
+By leveraging the S3 API as a standard, Snowflake unifies data sets stored
+across clouds into a single tool. You can query data in an external provider
+without moving it into Snowflake, including
+[S3 compatible storage providers](https://docs.snowflake.com/en/user-guide/data-load-s3-compatible-storage).
+
+## Beyond S3
+
+Object storage has become bigger than just S3. The S3 API is a standard across
+clouds and services, and it enables interoperability between them as a part of a
+larger multi-cloud native landscape.
+
+But to be truly multi-cloud you need your storage platform to provide you the
+freedom to deploy the workload globally across Geo regions and Compute providers
+without racking up huge data transfer bills \- eliminating vendor lock-in.
+
+That’s where Tigris comes in. Tigris is a multi-cloud storage platform that
+dynamically moves data closer to where compute is running—across clouds and
+continents—without the typical ingress and egress costs.
+
+Tigris is a drop-in replacement for any S3 compatible storage provider for the
+vast majority of workloads. Simply add access keys, and change your endpoint URL
+to point to Tigris, and your code will Just Work™. We have
+[comprehensive coverage of the S3 API](https://www.tigrisdata.com/docs/api/s3/),
+and we work with all your familiar tools.
+
+Just turn it on and it scales right up.
+
+<InlineCta
+  title={"Want to store your data all over the globe?"}
+  subtitle={
+    "We move your data around the globe on-demand or in advance so that everything loads fast everywhere. Fearlessly store and read your data no matter what cloud you're running in!"
+  }
+  button={"Get started today!"}
+/>
