@@ -114,7 +114,8 @@ MCP server:
 <Tabs>
 <TabItem value="config" label="Edit your config file">
 
-Add this snippet to your `claude_desktop_config.json`
+Add this snippet to your `claude_desktop_config.json` or `mcp.json` for Cursor
+AI
 
 ```json
 {
@@ -125,7 +126,7 @@ Add this snippet to your `claude_desktop_config.json`
       "env": {
         "AWS_ACCESS_KEY_ID": "YOUR_AWS_ACCESS_KEY_ID",
         "AWS_SECRET_ACCESS_KEY": "YOUR_AWS_SECRET_ACCESS_KEY",
-        "TIGRIS_GLOBAL_ENDPOINT": "https://fly.storage.tigris.dev"
+        "AWS_ENDPOINT_URL_S3": "https://fly.storage.tigris.dev"
       }
     }
   }
@@ -159,6 +160,79 @@ your cloud storage accounts or filesystem.
 The Model Context Protocol server will run in the same level of sandboxing as
 your editor does. Be careful with what you install and always double-check what
 you run before you run it.
+
+In order to make this as safe as possible, we’ve made the Model Context Protocol
+also available as a docker container. This means you can run it in a sandboxed
+environment and not have to worry about it having access to your local
+filesystem. You can run it in a container and container have access to a
+specific directory on your local filesystem. This is a great way to make sure
+that the Model Context Protocol server can only access the files you want it to.
+
+<Tabs>
+<TabItem value="config" label="Step 1: Build the Image" default>
+
+In order to build the image, first clone the repository:
+
+```text
+https://github.com/tigrisdata/tigris-mcp-server
+```
+
+Then build the image:
+
+```text
+docker build -t tigris-mcp-server -f Dockerfile .
+```
+
+</TabItem>
+<TabItem value="script" label="Step 2: Configure Client">
+
+Either you can run the init script in your terminal and select Docker as option
+when prompted:
+
+```text
+npx -y @tigrisdata/tigris-mcp-server init
+```
+
+or manually configure the `claude_desktop_config.json` or `mcp.json` for Cursor
+AI
+
+```json
+{
+  "mcpServers": {
+    "tigris-mcp-server": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-e",
+        "AWS_ACCESS_KEY_ID",
+        "-e",
+        "AWS_SECRET_ACCESS_KEY",
+        "-e",
+        "AWS_ENDPOINT_URL_S3",
+        "--network",
+        "host",
+        "--name",
+        "tigris-mcp-server-cursor-ai",
+        "-i",
+        "-v",
+        "tigris-mcp-server:/app/dist",
+        "--rm",
+        "--mount",
+        "type=bind,src=/Users/CURRENTUSER/tigris-mcp-server,dst=/Users/CURRENTUSER/tigris-mcp-server",
+        "tigris-mcp-server"
+      ],
+      "env": {
+        "AWS_ACCESS_KEY_ID": "YOUR_AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY": "YOUR_AWS_SECRET_ACCESS_KEY",
+        "AWS_ENDPOINT_URL_S3": "https://fly.storage.tigris.dev"
+      }
+    }
+  }
+}
+```
+
+</TabItem>
+</Tabs>
 
 This Model Context Protocol server will run with the full power and authority of
 any credentials you give it. Be very careful about typos with object names that
