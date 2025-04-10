@@ -1,0 +1,450 @@
+---
+slug: vibes-off
+title: "Going beyond vibe coding"
+description: >
+  AI tools can make coding easier, but they can also introduce subtle errors
+  that can turn out really bad if you're not careful.
+image: ./high-five.jpg
+keywords: [object storage, blob storage, s3, ai, architecture, vibe coding]
+authors: [xe]
+tags: [ai, vibe-coding]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import Conv from "@site/src/components/Conv";
+import xe from "@site/static/img/avatars/xe.jpg";
+import ty from "@site/static/img/avatars/ty/happy.webp";
+import tyCoffee from "@site/static/img/avatars/ty/coffee.webp";
+import MCPCall from "@site/src/components/MCPCall";
+import MCPFileList from "@site/src/components/MCPFileList";
+
+export const Ty = ({ children, mood, top, bottom }) => {
+  let url = ty;
+  if (mood == "coffee") {
+    url = tyCoffee;
+  }
+  return (
+    <Conv name="Ty" profilePic={url} top={top} bottom={bottom}>
+      {children}
+    </Conv>
+  );
+};
+
+export const Xe = ({ children, top, bottom }) => (
+  <Conv name="Xe" profilePic={xe} top={top} bottom={bottom}>
+    {children}
+  </Conv>
+);
+
+Let’s say you’re trying to work on a clone of Twitter to learn how something
+like that is made with [Next.js](https://nextjs.org/). Sooner or later, you’re
+gonna hit a wall: someone wants to change their avatar. It's vibe coding time!
+
+![Xe and Ty giving a high five](./high-five.jpg)
+
+{/* truncate */}
+
+In order to get off the ground quicker, you had your friends send you their
+avatar images over a Discord DM, you put them in your avatars folder in your
+project, and then asked
+[the Tigris model context protocol (MCP) server](https://github.com/tigrisdata/tigris-mcp-server)
+to upload them all to the bucket:
+
+<Xe top>
+Can you upload all of the avatars in public/avatars to my tigris bucket?
+</Xe>
+<Ty bottom>
+Sure! I’ll help you upload them to your Tigris bucket. Let me break this down into steps:
+
+First I’ll make sure that folder exists and if there’s anything in it. Then I’ll
+upload each avatar file to your Tigris bucket named tigris-example (as specified
+in your .env.local).
+
+Let me start by checking the directory:
+
+<MCPFileList
+  title="Listed 3 items in public/avatars"
+  files={[
+    { name: "techlover.jpg", size: "3.1KB", date: "Apr 08, 01:26 PM" },
+    { name: "janesmith.jpg", size: "3.6KB", date: "Apr 08, 01:26 PM" },
+    { name: "nahtahul.jpg", size: "33.9KB", date: "Apr 08, 12:47 PM" },
+  ]}
+  defaultExpanded={false}
+/>
+
+Great! I found 3 avatar files in the directory. Now I'll upload each of these
+files to your Tigris bucket. I'll use the same path structure as in your avatar
+upload API route (`avatars/filename.jpg`):
+
+<details>
+  <summary>Multiple tool calls</summary>
+  <MCPCall
+    title={
+      <>
+        Called MCP tool <code>tigris_put_object_from_path</code>
+      </>
+    }
+    parameters={{
+      bucketName: "tigris-example",
+      key: "avatars/techlover.jpg",
+      path: "[project]/public/avatars/techlover.jpg",
+    }}
+    result={{
+      ETag: "d41d8cd98f00b204e9800998ecf8427e",
+      $metadata: {
+        httpStatusCode: 200,
+        attempts: 1,
+      },
+    }}
+  />
+  <MCPCall
+    title={
+      <>
+        Called MCP tool <code>tigris_put_object_from_path</code>
+      </>
+    }
+    parameters={{
+      bucketName: "tigris-example",
+      key: "avatars/janesmith.jpg",
+      path: "[project]/public/avatars/janesmith.jpg",
+    }}
+    result={{
+      ETag: "9ae0ea9e3c9c6e1b9b6252c8395efdc1",
+      $metadata: {
+        httpStatusCode: 200,
+        attempts: 1,
+      },
+    }}
+  />
+  <MCPCall
+    title={
+      <>
+        Called MCP tool <code>tigris_put_object_from_path</code>
+      </>
+    }
+    parameters={{
+      bucketName: "tigris-example",
+      key: "avatars/nahtahul.jpg",
+      path: "[project]/public/avatars/nahtahul.jpg",
+    }}
+    result={{
+      ETag: "45c48cce2e2d7fbdea1afc51c7c6ad26",
+      $metadata: {
+        httpStatusCode: 200,
+        attempts: 1,
+      },
+    }}
+  />
+</details>
+
+Perfect! I've successfully uploaded all three avatar files to your Tigris
+bucket. Let me verify the uploads by listing the objects in the bucket:
+
+<MCPCall
+  title={
+    <>
+      Called MCP tool <code>tigris_list_objects</code>
+    </>
+  }
+  parameters={{
+    bucketName: "tigris-example",
+  }}
+  result={[
+    "avatars/janesmith.jpg",
+    "avatars/nahtahul.jpg",
+    "avatars/techlover.jpg",
+  ]}
+/>
+
+All three avatars have been successfully uploaded to your Tigris bucket
+tigris-example under the avatars/ prefix. The files are:
+
+1. `avatars/techlover.jpg`
+2. `avatars/janesmith.jpg`
+3. `avatars/nahtahul.jpg`
+
+These files are now accessible through your bucket and can be used by your
+application. Is there anything else you'd like me to help you with?
+
+</Ty>
+
+Let’s be real, sometimes you really do just need to do this and this genuinely
+can help you get unstuck. But when you do, also make sure to ask for the command
+to run yourself next time. This way you can learn without getting doomed to
+training wheels.
+
+<Xe top>
+What command could I use for that next time?
+</Xe>
+<Ty bottom>
+I'll show you how to use the AWS CLI to upload files to your Tigris bucket.Since Tigris uses an S3-compatible API, we can use the AWS CLI `s3` commands with the appropriate endpoint.
+
+```
+aws s3 cp public/avatars/ \
+  s3://tigris-example/avatars/ \
+  --recursive \
+  --endpoint-url https://fly.storage.tigris.dev
+```
+
+Just make sure
+[you've configured your AWS CLI](https://www.tigrisdata.com/docs/sdks/s3/aws-cli/)
+to access Tigris!
+
+</Ty>
+
+This is a really great way to turn vibe coding sessions into lessons that you
+can take with you for the rest of your career. Just be a little careful,
+language models are really good at making very convincing looking text that is
+about as false as birds being real. If you are not careful, you can end up
+taking something as true when you _really should not_.
+
+## When the vibe is off
+
+In order to have better user empathy for people that do vibe coding, I had
+Cursor kick off and go nuts implementing a lot of the boilerplate involved with
+making a simple Twitter clone. I left it mostly alone while I was working on
+something else. This worked out pretty well for me until I tried to generate an
+avatar upload page.
+
+Everything worked until I tried to upload an avatar:
+
+```text
+✔ Compiled /avatar/upload 200 in 978ms
+✔ Compiled /api/avatar/upload in 218ms
+✖ Error: A "use server" file can only export async functions, found string.
+Read more: https://nextjs.org/docs/messages/invalid-use-server-value
+at [project]/src/utils/storage.ts [app-route] (ecmascript) (.next/server/chunks/[root of the server]__decd23c8._.js:144:241)
+at [project]/src/app/api/avatar/upload/route.ts [app-route] (ecmascript) (src/app/api/avatar/upload/route.ts:2:0)
+at Object.<anonymous> (.next/server/app/api/avatar/upload/route.js:6:9)
+```
+
+So I took a look. `utils/storage.ts` seemed like a good place to start. It's
+where Cursor put all the Tigris interactions. This code _should_ only ever run
+on the server, so it got marked as
+[`"use server";`](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations).
+
+When you make a file full of `"use server";` actions, it can't have anything in
+it but async exported functions, but it found a string exported. I looked in the
+file and instantly noticed what was wrong:
+
+```js
+export const bucket = process.env.TIGRIS_BUCKET || "tigris-example";
+```
+
+I’ve seen a few Next.js apps have “configuration variables” like this, this
+pattern says “the bucket name is the contents of the environment variable
+`TIGRIS_BUCKET`, but if that doesn’t exist, then use `tigris-example`. This lets
+you have a different bucket in testing than you do in production. However, this
+is a _string_, a _string_ is not an async function. The solution is to change
+this to be an async function:
+
+```javascript
+export const bucket = async () => process.env.TIGRIS_BUCKET || "tigris-example";
+```
+
+When I asked the AI to come up with an option, it struggled for a bit and then
+ended up wanting to make the file upload a _client_ component instead.
+
+<Xe top>  
+Hey how do I fix this error? \<paste\>  
+</Xe>
+<Ty bottom>  
+Ah, I see the issue. The error is coming from your `storage.ts` file because you’re exporting objects in a server context. In Next.js 14, files used by server components can only export async functions when using `”use server”;`. Let’s restructure things in the storage utility to fix this:
+
+```diff
+-”use server”;
++”use client”;
+[...]
+ // Configure S3 client to use Tigris endpoint
+ async function getS3Client() {
+   return new S3Client({
+     endpoint: "https://fly.storage.tigris.dev",
+     region: "auto",
+      credentials: {
+-       accessKeyId: process.env.TIGRIS_ACCESS_KEY || 'dummy',
+-       secretAccessKey: process.env.TIGRIS_SECRET_KEY || 'dummy'
++       accessKeyId: process.env.NEXT_PUBLIC_TIGRIS_ACCESS_KEY || 'dummy',
++       secretAccessKey: process.env.NEXT_PUBLIC_TIGRIS_SECRET_KEY || 'dummy'
+      },
+      forcePathStyle: false
+   });
+ }
+```
+
+You’ll need to update your environment variables to use the new names:
+
+</Ty>
+
+When I saw this, I had to do a double take. It left me thinking:
+
+<Xe top bottom>
+  Wait, hold up, that’s completely wrong. Why are you making the credentials
+  public? Won’t that have massive implications on the integrity of those keys?
+</Xe>
+
+Next.js client components don’t have access to the environment variables your
+server does. This is because many platforms
+[use the environment to store configuration](https://12factor.net/config), and
+leaking those to the client on every request would be _catastrophically bad_,
+that is how you end up with all your customer information leaked on the dark
+web.
+
+However, sometimes there are “low risk” keys like heavily restricted API keys or
+write-only API keys for things like browser telemetry. Those are okay to send to
+the client.
+[Next.js lets you send these variables to the client](https://nextjs.org/docs/pages/building-your-application/configuring/environment-variables#bundling-environment-variables-for-the-browser),
+but you have to go out of your way to do it by naming them `NEXT_PUBLIC_NAME`
+instead of just `NAME`:
+
+```text
+SECRET_PLANS="save the world from itself"   # private, on the server
+NEXT_PUBLIC_SECRET_PLANS="world domination" # public, on the client, everyone knows
+```
+
+Just so we’re clear: **DO NOT PUT YOUR TIGRIS CREDENTIALS IN ANY CODE EVER**,
+use the secret management tools that are baked into your platform, they’re there
+for a reason.
+
+<Ty mood="coffee" top bottom>
+  Doing that will make me a sad tiger.
+</Ty>
+
+## Can you spare me an `any`?
+
+When I was later in the hacking process, I had CI/CD set up to a Kubernetes
+cluster I had laying around. I pushed one of the avatar uploading changes and
+noticed CI failed:
+
+```text
+13.10 ./src/components/FileUpload.tsx
+13.10 7:31 Error: Unexpected any. Specify a different type. @typescript-eslint/no-explicit-any
+13.10
+13.10 info - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+```
+
+Looking at the bit in question (on line 7, near character 31):
+
+```javascript
+interface FileUploadProps {
+  onUploadComplete?: (result: any) => void;
+  onError?: (error: Error) => void;
+  bucket?: string;
+  keyPrefix?: string;
+}
+```
+
+This is a pretty common pattern: a handler function that runs when something is
+done. This callback is how you do lightweight message passing between components
+(and to a limited extent, this is largely what code did way back in the day
+before we had `async`, I remember the days of callback pyramids). But, we don’t
+know what type the response is. In fact, we likely don’t care what type it is.
+This `any` here says “I don’t care what type this is”.
+
+However `any` is kind of a landmine waiting to happen. It’s okay in small doses,
+but in general it’s a bad hammer to reach for. The solution here is to disable
+the lint rule:
+
+```diff
+ interface FileUploadProps {
++  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   onUploadComplete?: (result: any) => void;
+   onError?: (error: Error) => void;
+   bucket?: string;
+   keyPrefix?: string;
+ }
+```
+
+This makes things build and everything's okay. We can just put the fire over
+with the other fire, it's all good, right?
+
+![](./with-the-rest-of-the-fire.jpg)
+
+Let’s see what the AI thought. It's been right before, so surely it'll be fine
+this time, right?
+
+<Xe top>  
+How can I fix this error?  
+</Xe>  
+<Ty bottom>  
+I can see this is a **Next.js** project with **TypeScript**.  
+Let me check the `package.json` to see the build command and dependencies.
+
+<MCPCall
+  title={
+    <>
+      Called MCP tool <code>read_package_file</code>
+    </>
+  }
+  parameters={{
+    filePath: "package.json",
+    lines: "1-200",
+  }}
+  result={{
+    next: "15.2.4",
+    react: "^19.0.0",
+    "react-dom": "^19.0.0",
+    tailwindcss: "^4",
+    eslint: "^9",
+  }}
+/>
+
+I notice a few potential issues that need to be addressed before building:
+
+1. Some package versions seem incorrect or incompatible:
+
+- **React 19** doesn't exist yet (latest is **18.x**)
+- **Tailwind CSS v4** doesn't exist yet (latest is **3.x**)
+- **ESLint v9** doesn't exist yet (latest is **8.x**)
+
+Let me fix the `package.json` with correct versions:
+
+<MCPCall
+  title={
+    <>
+      Called MCP tool <code>update_package_file</code>
+    </>
+  }
+  parameters={{
+    filePath: "package.json",
+    updates: [
+      { dependency: "react", from: "^19.0.0", to: "^18.2.0" },
+      { dependency: "react-dom", from: "^19.0.0", to: "^18.2.0" },
+      { dependency: "tailwindcss", from: "^4", to: "^3.4.1" },
+      { dependency: "eslint", from: "^9", to: "^8.56.0" },
+    ],
+  }}
+  result={{
+    success: true,
+    updatedDependencies: ["react", "react-dom", "tailwindcss", "eslint"],
+  }}
+/>
+
+After fixing these versions, your project should build correctly!
+
+</Ty>
+
+This is not the fix we wanted because
+[React v19 does exist](https://www.npmjs.com/package/react). Additionally,
+downgrading the version of React in a framework like Next.js is…catastrophically
+bad.
+
+Sure, vibe will help you get out the door and ship something, but be very
+careful when you go out and just blindly accept what the language model says
+without thinking carefully. Payday loans do get you more money, but if you’re
+not careful the technical debt you rack up could cost you more than your project
+would ever bring in.
+
+Switching between vibing and debugging can be a bit of a struggle, but it's
+necessary to check that the code you're generating doesn't have common errors.
+Though you can't make big mistakes like deleting an entire bucket of objects
+with the Tigris MCP server, your editor can still generate code that leaks keys
+or doesn't handle the right types. I hope this example has helped you think
+about how you verify the code after its generated.
+
+<InlineCta
+  title={"Ready to launch that new b2b enterprise AI-optimized SaaS?"}
+  subtitle={
+    "Open your focus playlist, let the vibes flow, and make your dreams a reality! Tigris will help make it happen!"
+  }
+  button={"Get started today!"}
+/>

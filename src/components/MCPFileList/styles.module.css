@@ -1,0 +1,124 @@
+.details {
+  border: 1px solid #404249;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  background: #2b2d31;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.details[open] {
+  background: #1e1f22;
+}
+
+.summary {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #dbdde0;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.summary:hover {
+  background-color: #35373c;
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  margin-left: 0.5rem;
+}
+
+.arrow::after {
+  content: "▼";
+  font-size: 0.8em;
+  color: #949ba4;
+}
+
+.details[open] .arrow {
+  transform: rotate(180deg);
+}
+
+.content {
+  padding: 1rem;
+  border-top: 1px solid #404249;
+  color: #dbdde0;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .mcpContent {
+    flex-direction: row;
+  }
+}
+
+.block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: #8b949e;
+  margin-bottom: 0.5rem;
+}
+
+.codeBlock {
+  background-color: #161b22;
+  color: #c9d1d9;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.75rem;
+  overflow-x: auto;
+}
+
+/* File list inside content */
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #404249;
+  padding-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #dbdde0;
+}
+
+.fileRow:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.fileName {
+  flex: 1;
+  text-align: left;
+}
+
+.fileDate {
+  flex: 1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #8b949e;
+}
+
+.fileSize {
+  flex: 0.5;
+  text-align: right;
+  font-size: 0.75rem;
+  color: #8b949e;
+}
