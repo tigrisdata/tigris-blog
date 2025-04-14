@@ -1,0 +1,164 @@
+---
+slug: better-4o-images
+title: "Getting Good at Image Generation"
+description: >
+  AI tools can make coding easier, but they can also introduce subtle errors
+  that can turn out really bad if you're not careful.
+image: /blog/img/blog/better-4o-images/img/a-party-reborn.webp
+keywords: [object storage, blob storage, s3, ai, architecture, vibe coding]
+authors: [xe]
+tags: [ai, vibe-coding]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import Conv from "@site/src/components/Conv";
+import ImageGallery from "@site/src/components/Conv";
+import xe from "@site/static/img/avatars/xe.jpg";
+import ty from "@site/static/img/avatars/ty/happy.webp";
+import tyCoffee from "@site/static/img/avatars/ty/coffee.webp";
+
+export const Ty = ({ children, mood, top, bottom }) => {
+  let url = ty;
+  if (mood == "coffee") {
+    url = tyCoffee;
+  }
+  return (
+    <Conv name="Ty" profilePic={url} top={top} bottom={bottom}>
+      {children}
+    </Conv>
+  );
+};
+
+export const Xe = ({ children, top, bottom }) => (
+  <Conv name="Xe" profilePic={xe} top={top} bottom={bottom}>
+    {children}
+  </Conv>
+);
+
+I see a lot of AI generated illustrations these days and many of them have
+_obvious_ and _glaring_ problems that make them look cheap and lazy. You should
+really hire an artist to draw things for you; but if you’re dead set on using AI
+generated illustrations, here’s how you can level up your skills and put those
+images trapped in your head on the canvas in ways that will pop.
+
+This kinda turned into a stream of consciousness art and composition 101 lesson.
+Hope you enjoy that\!
+
+![An RPG party comprised of the white mage W'zamqo, the blue tiger bard Ty, and the samurai evasion tank Xe in a mockup of the Final Fantasy 7 battle UI](/img/blog/better-4o-images/img/a-party-reborn.webp)
+
+{/* truncate */}
+
+## Vibe evaluation and planning
+
+As much as people would love to imagine otherwise, a lot of art really is just
+starting out with a rough product and feeling out the vibes as you work at it. A
+lot of the core of this starts out with a single idea that you just continue to
+flesh out and give form. Let’s take a look at the cover image for this post as
+an example:
+
+This is a synthesis of a few things:
+
+- Ty the Tiger, one of the characters we’ve been working on in order to add
+  flavor to the blog. I’m not sure what DND class he would play yet, but let’s
+  just say bard because it would be amusing.
+- My Final Fantasy 14 character W’zamqo Rhid, complete with her staff.
+- A katana-wielding Xe to round the party out. Maybe Xe would be the
+  [Dunban](https://youtu.be/rA73i-FGw08) of the party. Every RPG party needs a
+  good old-fashioned evasion tank\!
+- The Final Fantasy 7 battle UI in order to give it some kind of “grounding”, or
+  some reason for all of those characters to be in the same place at the same
+  time. Imagine as if it’s a rambunctious RPG party trying to save the world
+  from bad art or something along those lines.
+
+For the sake of argument, let’s say we’re using GPT-4o via the ChatGPT UI. Most
+of my experience comes from making ornate flows with ComfyUI, but I’ll use this
+model so you can follow along at home. Normally the process isn’t quite so
+conversational, but maybe this’ll help you understand what I think about when I
+make the cover images for this blog.
+
+I like to start out with answering two questions in a fair bit of detail before
+I generate anything:
+
+1. What is there?
+2. What is it like?
+
+This is based on one of my favourite sources of inspiration for art: some
+anonymous eBook I found about chaos magick, astral projection, and all of those
+other fun things that you can only really find on the dark web. By focusing on
+what is there and what it’s like, you can naturally flesh out _all of the
+essential parts_ of an image by working backwards from the vibes.
+
+For this, I want it to feel like a PS1 screenshot of an RPG battle, but a bit
+surreal because it’s taking place in Seattle, like some kind of Stargate SG1
+inspired fantasy RPG. So as for what is there:
+
+- A forest with mountains in the distance, the detail doesn’t matter too much
+  because they’re just adding to the flavour of the image, not the substance.
+- The Space Needle peeking out as if it’s some massive landpoint that the party
+  is working their way up to, like the final area in a multi-hundred story of
+  courage, friendship, and succeeding against the odds.
+- A somewhat balanced party layout with a DPS, a healer, and a tank.
+
+And for what it is like:
+
+- Focused, but still
+- Balanced, yet tense
+- Something that you could take a glance at and say “yeah that’s an RPG
+  screenshot”.
+
+You get the vibe, something cozy, like what you played on the CRT after midnight
+even though you promised your parents you’d go to sleep early.
+
+## Base layout
+
+When doing art, you need reference images for the characters, scene, and other
+important details. These help get across the vibe in "concrete" terms. Here’s
+the reference images I used for this image:
+
+export const imageFor = (name) =>
+  `/blog/img/blog/better-4o-images/img/${name}.webp`;
+export const thumbFor = (name) =>
+  `/blog/img/blog/better-4o-images/thumbs/${name}.webp`;
+export const mkImage = ({ name, title, alt, height, width }) => {
+  return {
+    original: imageFor(name),
+    thumbnail: thumbFor(name),
+    width,
+    height,
+    alt,
+    title,
+  };
+};
+
+<ImageGallery
+  images={[
+    mkImage({
+      name: "w-zamqo-rhid-refsheet",
+      alt: "A reference sheet for the Miqo'te White Mage W'zamqo Rhid, complete with front and side views as well as expression examples.",
+      title: "Miqo'te White Mage W'zamqo Rhid",
+      width: 1536,
+      height: 1024,
+    }),
+    mkImage({
+      name: "ty-happy",
+      alt: "A blue anthropomorphic tiger in a black hoodie waving at the camera with a pink background.",
+      title: "Ty Gris the tiger",
+      width: 1536,
+      height: 1024,
+    }),
+    mkImage({
+      name: "xe-happy",
+      alt: "A green haired anime woman waving to the camera and smiling. She has somewhat chibi proportions.",
+      title: "Xe being happy",
+      width: 256,
+      height: 256,
+    }),
+    mkImage({
+      name: "ff7-battle-ui-reference",
+      alt: "A screenshot of the Playstation game Final Fantasy 7 showing Cloud Strife and Tifa Lockhart mid-battle in a forest area with some kind of creature. The creature is on the left side and the party is on the right side.",
+      title: "Final Fantasy 7 battle UI reference",
+      width: 640,
+      height: 428,
+    }),
+  ]}
+/>
