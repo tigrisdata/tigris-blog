@@ -85,11 +85,39 @@ scary in the costs department. You had to copy each object twice: once to a
 temporary name for staging and then again to the final name. Back in the day,
 the gigabytes were heavy and you had to do it uphill both ways in the snow.
 
+Let’s say you’re hosting an app that takes uploads from users, and you use the
+object name as the filename shown to the user. Maybe a user really likes to
+rename their files for sharing or organizing them. Instead of incurring the cost
+of rewriting the data every time, on Tigris, you can simply rename the object
+without moving the data. This might seem small on an individual user basis, but
+it adds up over time, especially when the user can initiate the change.
+
+Or maybe you have a bunch of logs you need to write for batch jobs or
+monitoring, and you need to have the exact timestamp as the file name. It’s easy
+to write the data to a temporary name, and then rename the file with the exact
+timestamp.
+
 Maybe you need to do copyright or content scanning on uploaded files. Have them
 start out at `/uploads/tmp/<id>.jpeg` and then get renamed to
 `/uploads/final/<id>.jpeg`. What if you want to easily figure out if a CI job is
 done? Rename the logs to `/logs/2025/04/done/run-456.log` The world is your
 oyster!
+
+Even the classic problem of ending up with a
+`version-final[FINAL\]-ok-really-final.mp4` file can be renamed to something
+neater. If you need to maintain a latest copy of a given dataset, you can rename
+the files to contain `/latest/` in the path. Overall, making renames easier and
+cost efficient allows you to better utilize temporary files and removes the
+stress of naming things.
+
+Renames help to mend architectural mistakes. Let’s say you designed your system
+to have unique names for files based on their checksum, but you forgot to take
+multipart files into account. Two different users have uploaded different files
+that just so happen to have the same checksum for the first part. In order to
+work around this in other systems you’d have to create a second “naming epoch”
+and totally change how the name patterns work. Tigris lets you directly rename
+the objects so that you can be sure that everything is consistently named across
+the board.
 
 When you do a rename with Tigris, you are charged for one standard class A
 CopyObject request ($0.005 per 1000 requests, or about half a millipenny per
