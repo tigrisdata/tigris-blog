@@ -18,8 +18,10 @@
     "blog:new": "NOW=$(date +\"%Y-%m-%d\") && mkdir ./blog/$NOW-$npm_config_slug && cp ./templates/blog-post/* ./blog/$NOW-$npm_config_slug/"
   },
   "dependencies": {
+    "@akebifiky/remark-simple-plantuml": "^1.0.2",
     "@docusaurus/core": "^3.1.1",
     "@docusaurus/preset-classic": "^3.1.1",
+    "@docusaurus/theme-mermaid": "^3.1.1",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^1.1.1",
     "dotenv": "^16.0.2",

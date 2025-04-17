@@ -11,6 +11,7 @@ const tigrisConfig = require("./tigris.config");
 
 const lightCodeTheme = require("prism-react-renderer").themes.github;
 const darkCodeTheme = require("prism-react-renderer").themes.dracula;
+const simplePlantUML = require("@akebifiky/remark-simple-plantuml");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -24,6 +25,11 @@ const config = {
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "throw",
   trailingSlash: true,
+
+  markdown: {
+    mermaid: true,
+  },
+  themes: ["@docusaurus/theme-mermaid"],
 
   clientModules: [
     require.resolve("./src/util/augmentConsoleLinks.js"),
@@ -52,6 +58,7 @@ const config = {
             type: "all",
             copyright: `Copyright © ${new Date().getFullYear()} Tigris Data, Inc.`,
           },
+          remarkPlugins: [simplePlantUML],
         },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
