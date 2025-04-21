@@ -1,0 +1,99 @@
+---
+slug: bucket-domain-names
+title: "Decoupling Bucket Names and Domain Names"
+description: >
+  Tigris lets you set any domain you want to point to your buckets instead of
+  making the domain name match the bucket name.
+image: ./bucket-label.jpg
+keywords: [object storage, blob storage, s3]
+authors: [ks]
+tags: [feature]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+On Tigris, you can set any domain name to point to any bucket. Why does this
+matter?
+
+Multi-cloud is all the rage these days. A new neocloud pops up every week
+offering cheap compute, and running your apps on Kubernetes means they’re easily
+ported to another provider. Compute is fungible, but storage is sticky. Using a
+custom domain to front your bucket of data makes it easy to swap out storage
+providers without updating all the code that uses that storage.
+
+![](./bucket-label.jpg)
+
+{/* truncate */}
+
+Your domain is your brand identity on the Internet. People want to know you as
+you, not as something or someone else. If your downloads come from
+yourcompany.com, that looks like they have _much more authority_ than if they
+come from yourcompany-public-downloads.someprovider-storage.dev. If you are
+operating in environments that require you to explicitly allowlist egress
+domains, then many times you don’t need to do anything because your own domain
+surely is already on that allow list. This makes it easy to glance at a domain
+name and get a good vibe as to what it’s there for.
+
+Oh, not to mention, you own your domain name. If you want to move to another
+provider, you just change the domain name over and everything’s migrated. You
+don’t have to coordinate with the other storage provider, you do it on your
+schedule.
+
+## What we built
+
+So what changed? Before, you had to match your domain name to your bucket name
+exactly. If you wanted to rebrand your website and change the domain name, you
+had to migrate your data to a new bucket. And we as an industry are… bad at
+naming things. Systems should be designed for the users, which means handling
+renames smoothly. You can now set any custom domain to point to any bucket.
+
+In order to do this, we removed the requirement for your bucket name to match
+your domain name. Now any bucket can be mapped to any domain name as long as the
+DNS records match what we expect.
+
+A cool thing about this new mapping is that you can have a custom domain on a
+private bucket. This setup lets you upload files and then share them out one by
+one with presigned URLs, giving you the best of both worlds: custom domains to
+enhance your brand and not having to expose everything to the public.
+
+For example, let’s say you’ve been hosting something like internal packages or
+test data in a private Tigris bucket. Usually you’d need to reference them
+directly like this:
+
+```
+<img src="https://your-bucket.fly.storage.tigris.dev/path/to/image.jpeg" />
+```
+
+But you really want to write:
+
+```
+<img src="https://files.yourdomain.com/path/to/image.jpeg" />
+```
+
+To do that with other object storage providers, you’d need to make a new bucket
+named `files.yourdomain.com` and copy all the objects over manually. You
+wouldn’t be able to do it the easy way with the CopyObject call either, you need
+to download _all of the data_ and then upload it all again. This is doable, but
+your local SRE probably has a horror story of how that all went wrong in an
+instant.
+
+Instead, what if you could just set the domain name directly to
+`files.yourdomain.com`? This is what Tigris lets you do. All you have to do is
+the
+[normal custom domain setup](https://www.tigrisdata.com/docs/buckets/custom-domain/):
+
+1. Make a DNS CNAME record from `files.yourdomain.com` to
+   `your-bucket.fly.storage.tigris.dev.`
+2. Configure `files.yourdomain.com` as the bucket’s custom domain in the admin
+   panel, or run
+   `flyctl storage update your-bucket \--custom-domain files.yourdomain.com`
+3. Update the links to point to the new name.
+4. There is no step 4.
+
+<InlineCta
+  title={"Object storage, now with less hassle"}
+  subtitle={
+    "Change your domain name? Change your mind? No problem! Tigris works with you because we know that opinions can and will change."
+  }
+  button={"I want that!"}
+/>
