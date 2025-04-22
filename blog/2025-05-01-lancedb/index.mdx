@@ -34,14 +34,24 @@ Tigris.
 
 [LanceDB](https://lancedb.github.io/lancedb/) is an open-source vector database
 (like a search engine) that enables you to ingest, and query documents via any
-number of backends, including Tigris. When you ingest a document into LanceDB,
-you use an
+number of backends, including Tigris. LanceDB sets itself apart from other
+vector databases because you can embed it into the same process that your web
+service runs in. Imagine it as being zero-setup like SQLite, but for vector
+databases instead of relational databases.
+
+When you ingest a document, image, video, or your secret world domination plans
+into LanceDB, you use an
 [embedding model](https://www.cloudflare.com/learning/ai/what-are-embeddings/)
 to transform the text of the document into high-dimensional embedding vectors.
 These vectors can be searched through
 [cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity), allowing
 you to search by concepts (eg: "hot" and "warm" would register as adjacent to
 eachother) instead of just the pure words of a search query.
+
+Of note: LanceDB isn't limited to just storing text, embedding vectors, and
+other simple metadata. LanceDB schemas can point to the raw bytes of your data,
+meaning that you don't need to store references to where your data lives if you
+don't need to.
 
 The main reason you'd want to bring a vector database into the equation is if
 you're doing a
