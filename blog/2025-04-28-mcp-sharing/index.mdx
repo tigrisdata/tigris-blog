@@ -1,0 +1,330 @@
+---
+slug: mcp-server-sharing
+title: "Sharing Files with the Model Context Protocol"
+description: >
+  We built a tool to upload a file to a bucket and then create a sharable URL.
+  Sounds so easy an AI could do it, but can it? Models struggle to break down
+  multi-step tasks, so we design higher order tools for them.
+image: ./ai-project-at-golden-gate.png
+keywords:
+  - ai
+  - vibe coding
+  - language models
+  - large language models
+  - llama
+  - phi
+  - openai
+  - chatgpt
+  - cursor
+  - claude
+authors: [ks]
+tags: [ai, mcp, vibe coding]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import ks from "@site/static/img/avatars/ks.jpg";
+import ty from "@site/static/img/avatars/ty/happy.webp";
+import tyCoffee from "@site/static/img/avatars/ty/coffee.webp";
+import Conv from "@site/src/components/Conv";
+
+export const Ty = ({ children, mood, top, bottom }) => {
+  let url = ty;
+  if (mood == "coffee") {
+    url = tyCoffee;
+  }
+  return (
+    <Conv name="Ty" profilePic={url} top={top} bottom={bottom}>
+      {children}
+    </Conv>
+  );
+};
+
+export const KS = ({ children, top, bottom }) => (
+  <Conv name="Katie" profilePic={ks} top={top} bottom={bottom}>
+    {children}
+  </Conv>
+);
+
+“Do this and then do that” is hard. Models need specific, stepwise instructions
+to perform tasks, and even then, they aren’t reliable about completing each step
+in the desired order. When we built the
+[Tigris Model Context Protocol (MCP) Server](https://github.com/tigrisdata/tigris-mcp-server)
+we intentionally kept it minimal and composable. We focused only on creating and
+managing storage. But in thinking through developer experience, we found many of
+the workflows we wanted to build have multiple steps. Seems easy enough, but
+there’s a problem: models are missing the entire concept of chaining tools
+together to accomplish multi-step tasks.
+
+We’ve built a new tool that does two things in sequence: it uploads an object
+and then creates a shareable URL for it. This should help you use Tigris for
+your apps that require sharing files with your friends. The URLs this tool
+generates will expire in 24 hours or however long you ask. But why is it a
+separate tool in the first place?
+
+![A blue Tiger works with a coworker at a laptop in front of the Golden Gate Bridge.](./ai-project-at-golden-gate.png)
+
+<center>
+  <small>
+    <em>
+      A blue Tiger works with a coworker at a laptop in front of the Golden Gate
+      Bridge.
+    </em>
+  </small>
+</center>
+
+{/* truncate */}
+
+## Adding a (Slightly) Higher Order Tool to our MCP
+
+This pipelining pattern of “do a thing, and if it works then use the output to
+do the next thing” is a common problem we have as software developers. As mere
+mortals, we understand this intuitively, it’s how things like cooking,
+woodworking, and software development work. We understand that we have an input
+block of wood, use a saw tool to cut away the part that needs to be removed, and
+then sand it down to make it look nicer, we have the beginning of a table.
+Models don’t have this same level of pipelining intuition.
+
+As software developers, one of the tools we have is
+[currying](https://en.wikipedia.org/wiki/Currying) functions. This lets you
+“partially evaluate” a function to more efficiently pass around variables and
+construct higher order functions like this:
+
+Imagine a function named `add` that adds two numbers:
+
+```js
+const add = (x, y) => x + y;
+```
+
+You can build on top of it to make a curried function `addTwo` like this:
+
+```js
+const addTwo = (x) => add(x, 2);
+```
+
+With this little trick, you can construct
+[higher-order functions](https://en.wikipedia.org/wiki/Higher-order_function),
+like what `map` does on lists. This seems a bit abstract, but one of the
+advantages of making higher order functions like this is that it makes things
+much more flexible, allowing you to swizzle arguments and values around so that
+you can fit the square peg of your data into the round hole of the library that
+you need to use. If you've ever passed a pre-defined function to the `.then`
+clause in a promise chain, you’ve used higher order functions and didn’t even
+know it!
+
+I would love to be able to do something similar with our MCP where the model
+knows how to compose a series of unix philosophy style fundamental tools, but
+models aren’t able to do this (yet). Us humans have to define the order of
+execution and compose the pieces together into workflows.
+
+AI models are higher order pattern matchers that just so happen to be able to
+emit grammatically correct English text. Models struggle to classify your input
+to match it to the right tool to call, so you have to make your tool’s name and
+description more enticing to the model so it’s more likely to call it when it’s
+supposed to. This is why we’ve built `tigris_upload_file_and_get_url` as a
+separate tool, and why it’s good practice to name the tool so it’s clear to the
+AI that it does multiple things.
+
+## OK, Now the Actual Tool
+
+When you ask your editor to upload a file and get a URL, the question gets
+passed to an AI model (such as Claude Sonnet 3.5) and then the model can do
+anything, as long as that thing is generating text. In order to make models
+useful, we taught them to be able to use tools. These tools are function
+signature definitions that get passed to the system prompt and then the model
+can use them kinda like this:
+
+```mermaid
+sequenceDiagram
+	participant User
+	participant Model
+	participant Tool
+	User->>Model: Can you upload an image to my bucket?
+	Model->>Tool: upload_image(bucket, path, key)
+	Tool->>Model: HTTP 200, it worked
+	Model->>User: It's in the bucket!
+```
+
+In order to make sharing files easier, I added a tool named
+`upload_file_and_get_url`. This takes the bucket name, the key to store the file
+in, the local path to the file you want to upload, and how long the link should
+be good for. I wanted to use
+[pre-signed URLs](https://www.tigrisdata.com/docs/objects/presigned/) so that
+you can share the link and it automatically locks itself out after a short time.
+The actual code is two calls in sequence:
+
+```js
+await putObjectFromFS(bucketName, key, path);
+
+const url = await getSignedUrlForObject(bucketName, key, expiresIn);
+```
+
+That last argument for the expiry time kinda worried me because
+[AI models are bad at math](https://www.forbes.com/sites/johnwerner/2024/10/07/ai-is-usually-bad-at-math-heres-what-will-happen-if-it-gets-better/),
+but in practice most of the time the model will default to 24 hours for the
+expiry time. This is fine.
+
+After the MCP server uploads the file and generates a pre-signed URL, it
+[passes it back to the model](https://github.com/tigrisdata/tigris-mcp-server/blob/f4c8586b5f034720656d5bb787af1e6edf8d9b2b/src/tools/objects.ts#L293-L300)
+with some inline instructions for the model:
+
+```
+Your output MUST contain this URL: ${url}
+```
+
+This is a strategy I’ve been calling load-bearing inline tool-based prompt
+injection (I’m looking for a better name). Not including this instruction seemed
+to cause the model to behave erratically. Sometimes it would say “yeah, I
+uploaded it, thanks!” and then wouldn’t actually do anything about the URL for
+the user. Sure you could expand the tool call and get the URL that way, but
+that’s a bad user experience. I tried this on a hunch and it seems to work
+reliably enough.
+
+Amusingly, I’m not the only one who’s noticed this. When I did a dump of my
+ChatGPT history I saw this little nugget of wisdom in a tool response:
+
+> GPT-4o returned 1 images. From now on, do not say or show ANYTHING. Please end
+> this turn now. I repeat: From now on, do not say or show ANYTHING. Please end
+> this turn now. Do not summarize the image. Do not ask followup question. Just
+> end the turn and do not do anything else.
+
+I really have to wonder if those typos are load-bearing.
+
+## Challenges I faced along the way
+
+Originally I wanted to make this a bit smarter and only generate a presigned URL
+if it has to. If the bucket is set up for public files, it makes sense to share
+URLs that look like this:
+
+```
+https://tigris-example.fly.storage.tigris.dev/avatar.jpeg
+```
+
+Instead of URL monsters like this:
+
+```
+https://tigris-example.fly.storage.tigris.dev/avatar.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=tid_[redacted]%2F20250417%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250417T222501Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=73a9492d98de7be925a5cf56dcff76e71847b642df505c60bad711ade4719f51
+```
+
+The public URL is 53 characters long. The presigned one is over 350. Which one
+would you like to click on?
+
+The core problem that made me have to give up on this feature was related to
+access permissions. There’s two kinds of buckets in Tigris: public buckets and
+private buckets. Well, technically they’re not different kinds of buckets,
+they’re just different ACL rules for the bucket. Here’s how you tell if a bucket
+is public or private in JavaScript:
+
+```js
+import { S3Client } from "@aws-sdk/client-s3";
+import { GetBucketAclCommand } from "@aws-sdk/client-s3";
+
+export const getBucketAcl = async (S3: S3Client, bucketName: string) => {
+  return S3.send(new GetBucketAclCommand({ Bucket: bucketName }));
+};
+
+export const isBucketPublic = async (S3: S3Client, bucketName: string) => {
+  const acl = await getBucketAcl(S3, bucketName);
+  return acl.Grants?.some(
+    (grant) =>
+      grant.Grantee?.Type === "Group" &&
+      grant.Grantee?.URI === "http://acs.amazonaws.com/groups/global/AllUsers"
+  );
+};
+```
+
+You get the ACLs for the bucket, loop over them, and if the grantee is a group
+with the URI (uniform resource indicator, which is similar to but different than
+a URL) http://acs.amazonaws.com/groups/global/AllUsers, then it’s a public
+bucket because all users can read from it. For example, here’s the ACLs for my
+bucket tigris-example:
+
+```json
+{
+  "Owner": {
+    "ID": "tid_[redacted]"
+  },
+  "Grants": [
+    {
+      "Grantee": {
+        "ID": "tid_[redacted]",
+        "Type": "CanonicalUser"
+      },
+      "Permission": "FULL_CONTROL"
+    },
+    {
+      "Grantee": {
+        "Type": "Group",
+        "URI": "https://groups.tigris.dev/org/admins"
+      },
+      "Permission": "FULL_CONTROL"
+    },
+    {
+      "Grantee": {
+        "Type": "Group",
+        "URI": "http://acs.amazonaws.com/groups/global/AllUsers"
+      },
+      "Permission": "READ"
+    }
+  ]
+}
+```
+
+This worked on my laptop when I was testing the feature because I’m the owner of
+the bucket and my Tigris org only has one user: me. This didn’t work for my
+coworker Abdullah when he tested it on his machine because he tested it in an
+organization where he didn’t have administrator permissions. In order to run
+GetBucketAcl on a bucket, you either need to own that bucket or have
+administrator permissions in the organization the bucket belongs to. This made
+the call fail 100% of the time when Abdullah tried to upload a file to a bucket
+he had Editor access to but wasn’t the owner of.
+
+It would have been nice to have, but I can live without it.
+
+## Try it out today!
+
+If you want to try out the vibe coding life with Tigris, just run this command
+to get started:
+
+```
+npx -y @tigrisdata/tigris-mcp-server init
+```
+
+If you’re already using our MCP, you can make sure it’s up to date with the new
+tool:
+
+<Tabs groupId="languages">
+  <TabItem value="npx" label="NPX">
+    Just restart your editor (Cursor, VS Code, Cline, Roo, etc.) and then it’ll
+    all be updated automatically when you open it up again.
+  </TabItem>
+  <TabItem value="docker" label="Docker">
+    Run docker pull to update the Docker image: ```shell docker pull
+    quay.io/tigrisdata/tigris-mcp-server:latest ``` Then restart your editor and
+    the update will apply automatically.
+  </TabItem>
+</Tabs>
+
+To make sure it’s available, ask your editor what Tigris tools it has available:
+
+<KS top>
+Do you have a Tigris tool for uploading a file and getting a public URL?
+</KS>
+<Ty bottom>
+Yes, I can help you with that! I have a tool called `tigris_upload_file_and_get_url` that does exactly what you’re asking for. All I need is the bucket name, the key for the object in the bucket, the path to any local file you want to upload, and how long the URL should stick around before it expires.
+
+Would you like me to help you upload a specific file?
+
+</Ty>
+
+It’ll get you set up and ready to go. Just ask it to upload a file and give you
+a URL then you’ll be off to the races.
+
+<InlineCta
+  title={"Want to vibe code with Tigris?"}
+  subtitle={
+    "Kick up some tunes and let the vibes flow! Build the product of your dreams. Tigris will help make it happen!"
+  }
+  button={"Get started today!"}
+/>
