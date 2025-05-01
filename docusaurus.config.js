@@ -191,17 +191,17 @@ const config = {
             position: "right",
           },
           {
-            label: "Dashboard",
-            href: tigrisConfig.dashboardUrl,
+            label: "Login",
+            href: tigrisConfig.loginUrl,
+            position: "right",
+            className: "wc-portal-login wc-portal-link",
+          },
+          {
+            label: "Get Started",
+            href: tigrisConfig.signupUrl,
             position: "right",
             className: "wc-portal-signup wc-portal-link",
           },
-          // {
-          //   label: "Login",
-          //   href: tigrisConfig.loginUrl,
-          //   position: "right",
-          //   className: "wc-portal-login wc-portal-link",
-          // },
         ],
       },
       footer: {
