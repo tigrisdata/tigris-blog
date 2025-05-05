@@ -54,6 +54,10 @@
   /*margin-bottom: 0.25rem;*/
 }
 
+span.title {
+  font-weight: 500;
+}
+
 .messageContent {
   font-size: 0.875rem;
   color: #dbdde0;

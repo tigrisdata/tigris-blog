@@ -9,6 +9,7 @@ interface DiscordMessageProps {
   children?: JSX.Element[] | JSX.Element;
   top?: boolean;
   bottom?: boolean;
+  title?: string;
 }
 
 export default function DiscordMessage({
@@ -17,6 +18,7 @@ export default function DiscordMessage({
   children,
   top,
   bottom,
+  title,
 }: DiscordMessageProps): JSX.Element {
   return (
     <div
@@ -29,7 +31,12 @@ export default function DiscordMessage({
       </div>
 
       <div className={styles.content}>
-        <div className={styles.username}>{name}</div>
+        <div className={styles.username}>
+          {name}{" "}
+          {title != undefined && (
+            <span className={styles.title}>-- {title}</span>
+          )}
+        </div>
         <div className={styles.messageContent}>{children}</div>
       </div>
     </div>
