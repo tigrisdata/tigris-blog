@@ -2,8 +2,8 @@
 slug: lifecycle-rules
 title: "You wanted lifecycle rules. Here’s how we made it happen."
 description: >
-  Tigris lets you store whatever you want including vector embeddings with
-  LanceDB! Find out how to get started today.
+  Tigris has support for object lifecycle rules, allowing you to automatically
+  move files between storage tiers. Here's the gorey details on how we did it.
 image: ./objects-transitioned.jpg
 keywords: [object storage, blob storage, s3]
 authors: [xe, ks]
@@ -46,9 +46,9 @@ all that.**
 Lifecycle rules automatically move your objects to archive or infrequent access
 tiers to help cut storage costs. This feature has become pretty standard for
 object storage systems, but under the hood, it’s relatively complex to
-implement. Especially when you’re building for multicloud across many regions.
-Let’s walk through how we built the feature, and where things got a little
-complicated.
+implement. Especially when you’re building with global storage across many
+regions. Let’s walk through how we built the feature, and where things got a
+little complicated.
 
 ![Ty happily transitioning objects between storage tiers](./objects-transitioned.jpg)
 
@@ -221,14 +221,12 @@ data, the last-modified header value is not changed. Internally, this
 Last-Modified header has also been used to mean “the last time the metadata was
 modified” because the object metadata contains pointers to block storage.
 
-Most of the hard work we put into this was separating out the concepts of “last
-time the object bytes were modified” and “last time the object metadata was
-modified”. This is a pretty scary thing to do and required _a lot_ of test code,
-manual testing, and testing in production. We have a number of internal test
-buckets we use to keep track of Tigris’ performance, and the most scary part of
-this change was enabling the separation of timestamps logic on those buckets.
-Nothing went wrong, thankfully, but it’s always scary to hit the big red button
-and know that you’re probably about to get paged if something goes wrong.
+We have a number of internal test buckets we use to keep track of Tigris’
+performance, and the most scary part of this change was enabling lifecycle
+migration rules on those buckets. Nothing went wrong, thanks to our tireless
+effort making sure that every aspect of this had unit and functional test
+coverage, but it’s always scary to hit the big red button and know that you’re
+probably about to get paged if something goes wrong.
 
 So when an object is ready for replication, we go through a few checks to make
 sure all is good:
