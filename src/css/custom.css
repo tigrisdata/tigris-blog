@@ -386,7 +386,12 @@ html[data-theme="dark"] .discord-icon::before {
 
 .wc-portal-login {
   --ifm-navbar-link-hover-color: var(--docs-color-primary-100);
-  background-color: transparent;
+  background-color: var(--ifm-menu-color-background-active);
+}
+
+.wc-portal-login:hover {
+  background-color: var(--docs-color-background-100);
+  color: var(--ifm-color-content);
 }
 
 .navbar-sidebar .wc-portal-link {
