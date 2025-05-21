@@ -28,23 +28,23 @@ import TabItem from "@theme/TabItem";
 </center>
 
 When you have _a lot_ of data, maybe even Big Data :tm:, you might start to
-wonder why you’re paying so much to keep it all hot and ready. Do you really
+wonder why you're paying so much to keep it all hot and ready. Do you really
 need that prior version of your model weights from last year to be available
-_instantly_? Let’s be clear though: we’re happy to serve you petabytes of old
-model weights and datasets… but we’d rather help you save some money on your
+_instantly_? Let's be clear though: we're happy to serve you petabytes of old
+model weights and datasets… but we'd rather help you save some money on your
 infrastructure budget.
 
 When you create new objects or buckets, you can select the storage tier to put
 it in: Standard, Infrequent Access, or Archive. Everything you currently have in
 Tigris is likely in the Standard storage tier, and when you create new objects
-with the S3 API and don’t specify a storage tier, it’ll end up in Standard too.
+with the S3 API and don't specify a storage tier, it'll end up in Standard too.
 
-We’ve updated our pricing with specifics, but you can expect to save $0.016 per
+We've updated our pricing with specifics, but you can expect to save $0.016 per
 GB per month by moving your backups and other old data from the Standard storage
 tier to the Archive storage tier. If you want to store one terabyte of data in
 the Archive tier, it will cost you $4 (at time of writing). At Infrequent Access
-rates, that will cost you $10, and at Standard, it’ll cost you $20 per month.
-This is a 5x cost reduction for data that you don’t need often and can tolerate
+rates, that will cost you $10, and at Standard, it'll cost you $20 per month.
+This is a 5x cost reduction for data that you don't need often and can tolerate
 waiting an hour or so for it to be pulled out of Archive.
 
 And, of course, none of our Storage Tiers include egress fees.
@@ -57,13 +57,13 @@ And, of course, none of our Storage Tiers include egress fees.
 
 ### Deciding what tier to use
 
-I’m sure you’ve heard of folks regretting their decision to archive data that
-they end up needing in a hurry. Here’s a good rule of thumb to decide where
-objects should go: how much downtime can you tolerate when everything’s on fire
+I'm sure you've heard of folks regretting their decision to archive data that
+they end up needing in a hurry. Here's a good rule of thumb to decide where
+objects should go: how much downtime can you tolerate when everything's on fire
 and you need that data **NOW**?
 
 If you can tolerate an hour of downtime for that data to get restored from
-Archive, Archive is fine. If you can’t, Infrequent Access is probably the best
+Archive, Archive is fine. If you can't, Infrequent Access is probably the best
 bet: Tigris returns Infrequent Access objects as rapidly as Standard tier
 objects.
 
@@ -75,7 +75,7 @@ into Infrequent Access. That way you can respond instantly to the wrong database
 being deleted instead of having to wait for an hour for the backups to load from
 Archive.
 
-### Here’s how to use object tiers
+### Here's how to use object tiers
 
 When you create a new bucket in the Tigris Dashboard, you can select which
 storage tier you want objects to use by default:
@@ -96,7 +96,7 @@ Choose between:
 
 - Standard: the default storage class, it provides high durability,
   availability, and performance for frequently accessed data.
-- Infrequent access: Lower-cost storage for data that isn’t accessed frequently,
+- Infrequent access: Lower-cost storage for data that isn't accessed frequently,
   but requires rapid access when needed.
 - Archive: Low-cost storage for data archiving. Long-term data archiving with
   infrequent access.
@@ -105,19 +105,23 @@ Otherwise, you can set it when you upload a file:
 
 <Tabs groupId="languages">
   <TabItem value="CLI" label="CLI">
+
 ```shell
-Standard
+# Standard
 aws s3 cp --storage-class STANDARD hello.txt s3://your-bucket-name/your-object-name
 
-Infrequent Access
+# Infrequent Access
+
 aws s3 cp --storage-class STANDARD_IA hello.txt s3://your-bucket-name/your-object-name
 
-Archive
+# Archive
 aws s3 cp --storage-class GLACIER hello.txt s3://your-bucket-name/your-object-name
+```
 
-````
-</TabItem>
+  </TabItem>
+
   <TabItem value="python" label="Python">
+
 ```python
 import boto3
 
@@ -140,10 +144,12 @@ s3.upload_file(
 )
 
 print(f"File {file_name} uploaded to tigris://{bucket_name}/{object_name} with storage class STANDARD_IA")
-````
+```
 
-</TabItem>
+  </TabItem>
+  
   <TabItem value="golang" label="Go">
+
 ```go
 // assumes that ctx is of type context.Context and in scope
 
@@ -189,12 +195,14 @@ if _, err := cli.PutObject(ctx, &s3.PutObjectInput{
 	return fmt.Errorf("can't upload %s to tigris://%s/%s: %w", fin.Name(), bucketName, objectName, err)
 }
 ```
-</TabItem>
+
+  </TabItem>
 </Tabs>
 
-### What’s up next
+### What's up next
 
-I bet you're thinking, *Wow this would be really cool to use with a Lifecycle Rule feature so I can better manage my backups and older objects.* Us, too! Lifecycle Rules are coming soon.
+I bet you're thinking, _Wow this would be really cool to use with a Lifecycle
+Rule feature so I can better manage my backups and older objects._ Us, too!
+Lifecycle Rules are coming soon.
 
 Convinced? Make [a new bucket](https://storage.new) today and give Tigris a try.
-
