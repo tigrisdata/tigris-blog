@@ -15,19 +15,19 @@ import TabItem from "@theme/TabItem";
 
 import InlineCta from "@site/src/components/InlineCta";
 
-Tigris is a globally distributed, multi-cloud object storage service with built-in support for the S3 API. As Tigris has grown this year, we’ve noticed an uptick in abuse of our platform. A natural side effect of growth in usage is growth in misusage.
+As usage of Tigris has grown, so has the need to protect it from abuse. Tigris is a globally distributed, multi-cloud object storage service with built-in S3 API support, and as more developers rely on it for performance and scale, we’ve also seen a natural increase in attempts to misuse the platform.
 
-Earlier this year, security researchers discovered a [“DeceptionAds” campaign](https://www.infostealers.com/article/deceptionads-fake-captcha-driving-infostealer-infections-and-a-glimpse-to-the-dark-side-of-internet-advertising/) running on several trusted services. Attackers used fake CAPTCHAs that instruct users to perform actions such as pressing "Windows + R," pasting a command, and hitting "Enter." This sequence executes a PowerShell command that installs the Lumma info-stealer malware, compromising personal data including credentials and financial information. The attackers hosted fake CAPTCHAs on Bunny CDN, a legitimate CDN provider, and used BeMob, an ad tracking service, to cloak malicious URLs. Hiding behind trusted infrastructure allowed the attackers to circumvent moderation and other security checks.
+Earlier this year, a campaign dubbed [“DeceptionAds”](https://www.infostealers.com/article/deceptionads-fake-captcha-driving-infostealer-infections-and-a-glimpse-to-the-dark-side-of-internet-advertising/) came to light, where attackers used fake CAPTCHAs hosted on trusted services to trick users into running malicious commands. The end result: installation of the Lumma info-stealer malware, which exfiltrates sensitive information like passwords and financial data. The attackers used a combination of Bunny CDN (a legitimate content delivery network) and BeMob (an ad tracking service) to distribute and cloak their payloads - demonstrating how malicious actors increasingly hide behind reputable infrastructure to evade detection.
 
 ![Ty the tiger monitoring alerts in a security operations center](./tiger-in-soc.webp)
 
 {/* truncate */}
 
-Tigris detected a similar pattern with fake CAPTCHAs on our platform back in February of this year. Common threat intelligence monitoring services flagged content hosted on Tigris as malicious and published a list of URLs that included Tigris domains. We ran additional scans and contacted third party services for more information as to the malicious content they had detected. As a result, we removed the content and banned users that were uploading malicious content.
+In February, we identified a similar tactic being used on Tigris. Fake CAPTCHA images were being hosted on our platform, and several threat intelligence feeds began flagging Tigris URLs as malicious. We immediately launched an investigation, scanned for additional indicators of compromise, and reached out to third-party security services for more context. After verifying the abuse, we removed the offending content and permanently banned the users behind it.
 
-Let’s go through how we detected the scheme, what we did to stop it, and the systems we hardened to prevent it from happening again.
+In this post, we’ll walk through how we detected the scheme, the steps we took to shut it down, and how we’ve strengthened our systems since then to prevent similar abuse in the future.
 
-## Scaling Response & Prevention
+## A Layered Approach to Abuse Prevention
 
 With petabytes of data entering the platform, we have to be efficient with scanning content. It’s not trivial: a suboptimal solution could eclipse the cost of storage by magnitudes. Not every object can be scanned on write, so modern platforms rely on a multi-layered approach to manage risk that includes:
 - Accepting abuse reports & acting on them
@@ -117,7 +117,6 @@ This function translates roughly to the code below:
 })();`}
 </CodeBlock>
 
-
 The key steps of this function are:
 - Decodes a base64 string containing a likely payload (e.g., a malicious link)
 - Auto-copies it to the user's clipboard using a hidden `<textarea>`.
@@ -132,14 +131,80 @@ Below HTML code is the original source (long code block collapsed):
 import markdownChunk2 from "!!raw-loader!./markdownChunk2.js";
 
 <details>
-  <summary>Long code block with obfuscated JavaScript function</summary>
+  <summary>Long code block with the original source code</summary>
   <CodeBlock language="js">{markdownChunk2}</CodeBlock>
 </details>
 
+This code renders another HTML by base64 decoding this to below:
+
+import markdownChunk3 from "!!raw-loader!./markdownChunk3.js";
+
+<details>
+  <summary>Long code block with rendered fake CAPTCHA page</summary>
+  <CodeBlock language="js">{markdownChunk3}</CodeBlock>
+</details>
+
+This code does the following:
+- It displays a fake "I'm not a robot" reCAPTCHA-style interface to trick the user into thinking they’re completing a legitimate human verification step.
+- When the user clicks the fake CAPTCHA button, a popup appears with instructions:
+    - Press Windows Key + R
+    - Paste something
+    - Press Enter
+- The JavaScript copies a hidden command (Base64-decoded PowerShell or other script) into the user's clipboard without their knowledge. 
+- The user is tricked into pasting and running the malicious command in the Windows Run dialog (Win + R), executing malware or giving the attacker access to the system.
+
+Tigris uses a layered approach to malware detection that balances performance with security. Instead of scanning every object on write, which would be prohibitively expensive, we selectively scan content based on signals like:
+- User trust score
+- File type and accessibility
+- Reputation of the uploading account
+
+When a file is written to Tigris (e.g., via PutObject), our system evaluates whether it should be flagged for malware scanning. If it meets certain criteria, an asynchronous worker submits the file’s hash to third-party malware detection services such as Pangea Cloud and ReversingLabs.
+
+```mermaid
+flowchart LR
+    A[User] -->| PutObject | B(Tigris Server )
+    B --> C{Needs Scanning}
+    C -->| Yes| E[Enqueues the entry for scanning]
+    E -->| | D[Complete]
+    C -->|No| D[Complete]
+
+```
+
+```mermaid
+flowchart LR
+    A[Queue] -->| Reads entry | B(Asyncronous Worker )
+    B --> C{External Hash Scanning}
+    C -->| Malicious Verdict| E[Flags the content in system]
+    E -->| | D[Complete]
+    C -->|Clean content| D[Complete]
+
+```
+
+If the content is later identified as malicious, we take immediate action: removing the file and banning the associated account, if necessary.
+
+## What we do when we detect malicious content
+
+When a file is confirmed to be malicious, we act quickly to contain and prevent further abuse. Our response includes:
+
+- Deleting the malicious content from the platform
+- Removing the associated bucket and revoking access keys
+- Blocking the user’s email address and preventing new signups with it
+- Reporting the incident to partner security services and threat intelligence platforms
+
+These steps help us limit the impact, prevent recurrence, and contribute to the broader security ecosystem.
+
+## Conclusion
+
+At the scale Tigris operates, scanning every uploaded file in real time isn’t practical—or efficient. Instead, we take a layered approach that balances speed, cost, and security. We flag risky content based on file type and user reputation, require identity verification and MFA to keep bad actors out, and work closely with security vendors and researchers to catch threats early and respond fast.
+
+This approach allows us to stay ahead of abuse without compromising the speed or reliability our users expect. By focusing on patterns—like repeat offenders using disposable accounts—and leveraging trusted partner data, we can prevent harm before it spreads and keep the platform safe and trustworthy for everyone.
+
+Have questions or want to report abuse? Reach out to abuse@tigrisdata.com.
+
 <InlineCta
-  title={"Infinite storage for your embeddings"}
+  title={"Infinite storage you can trust"}
   subtitle={
-  "Tigris is object storage that gives you bottomless storage for whatever you want, including your vector embeddings, images, or secret plans to achieve total world domination! Not to mention the seamless global architecture. Give it a try today!"
+  "Tigris is object storage that distributes your objects around the world."
     }
     button={"Get started today!"}
 />
