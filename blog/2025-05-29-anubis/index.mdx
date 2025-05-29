@@ -6,7 +6,7 @@ description: >
   up in the wake of abusive scrapers. In order to make Anubis filter things
   better, you need data. Here's how Xe got that data to improve Anubis'
   filtering powers.
-image: ./sunset.webp
+image: ./anubis-tigris-motherduck.webp
 keywords: [object storage, blob storage, s3, scraping]
 authors: [xe]
 tags: [anubis, scraping]
@@ -28,7 +28,7 @@ but to be clear I'm not really sure if they are for training generative AI or
 not. However, the worst offender has been Amazon's Alexa team so it's pretty
 easy to take those two points and draw a line between them.
 
-![A gorgeous sunset taken out of the side of an airplane](./sunset.webp)
+![](./anubis-tigris-motherduck.webp)
 
 {/* truncate */}
 
@@ -246,7 +246,7 @@ it ran out of ram.
 But as the scrapers evolve, so must my methods. I needed to dig deeper to make
 more educated guesses about how crawlers work and improve detection.
 
-## Importing the logs to DuckDB
+## Importing the logs to MotherDuck with DuckDB
 
 Now that I have data, how do I find patterns so that we can better detect the AI
 scrapers as they evolve? I’m more of an SRE than a data analyst, but I have a
@@ -257,7 +257,40 @@ is based on SQLite but adds extensions for things like arbitrary key/value pairs
 and strongly typed structures. This lets me take the JSON logs that the
 honeypots produce and turn them into something I can query.
 
-This data contains nested key-value pairs in two basic shapes:
+MotherDuck offers a cloud SaaS built on DuckDB that gives you a notebook,
+storage, sharing, and hybrid execution across cloud and local data. The
+notebooks are pretty convenient, especially if I want to have fresh data as it
+gets written to Tigris. Having fresh data becomes important when I want to
+analyze traffic from a machine currently experiencing a heavy volume of scraping
+traffic.
+
+Connecting your Tigris bucket o’ logs to MotherDuck is pretty simple: in your
+notebook, you use your Tigris URL:
+
+```sql
+from 's3://your-tigris-bucket/path/to/data'
+```
+
+And set the endpoint to the Tigris high performance endpoint in your secret
+config:
+
+```sql
+CREATE OR REPLACE SECRET tigris
+  (      TYPE  s3
+  ,  PROVIDER  config
+  ,    REGION  'auto'
+  ,  ENDPOINT  't3.storage.dev'
+  , URL_STYLE  'vhost'
+  );
+```
+
+It’s also pretty easy to run DuckDB locally if your data is small enough to fit
+on your laptop. I’m pretty pro having the same toolchain for local development
+as I do in the cloud, so that’s a little nicety.
+
+Now that we have the data loaded into a notebook, we can take a look at those
+honeypot logs. The JSON logs contains nested key-value pairs in two basic
+shapes:
 
 1. Known shapes, such as the timestamps and durations
 2. Unknown shapes, such as request headers and query strings
