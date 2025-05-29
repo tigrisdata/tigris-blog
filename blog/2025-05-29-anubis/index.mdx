@@ -253,9 +253,12 @@ scrapers as they evolve? I’m more of an SRE than a data analyst, but I have a
 lot of experience with SQL. Normally I’d use SQLite for this because
 [their documentation has the most lovely diagrams](https://sqlite.org/lang_select.html),
 but SQLite has very poor support for nested data, such as HTTP headers. DuckDB
-is based on SQLite but adds extensions for things like arbitrary key/value pairs
-and strongly typed structures. This lets me take the JSON logs that the
-honeypots produce and turn them into something I can query.
+is an embedded database engine like SQLite but with a heavy focus on analytics
+and dealing with unstructured data. It has extensions that let you make strictly
+typed structures, access files over HTTP (or even object storage), and
+[more](https://duckdb.org/docs/stable/extensions/overview.html). This lets me
+take the JSON logs that the honeypots produce and turn them into something I can
+query.
 
 MotherDuck offers a cloud SaaS built on DuckDB that gives you a notebook,
 storage, sharing, and hybrid execution across cloud and local data. The
