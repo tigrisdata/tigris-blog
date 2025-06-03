@@ -2,10 +2,10 @@
 slug: shadow-bucket
 title: "Eliminating Data Migration Risk with Shadow Buckets on Tigris"
 description: >
-  Anubis is a Web AI Firewall Utility that helps administrators keep their sites
-  up in the wake of abusive scrapers. In order to make Anubis filter things
-  better, you need data. Here's how Xe got that data to improve Anubis'
-  filtering powers.
+  Eliminate data migration risks with Tigris's Shadow Bucket Migration. Learn
+  how to move data seamlessly with incremental, two-way door strategies and
+  avoid downtime. Discover the benefits of read/write fallback and multi-region
+  synchronization for object storage.
 image: ./parachute.webp
 keywords:
   [
@@ -17,7 +17,7 @@ keywords:
     write-through,
     read-through,
   ]
-authors: [xe, ks]
+authors: [xe, ks, firsov]
 tags: [features, migration]
 ---
 
@@ -56,8 +56,8 @@ job that delivered data to a customer. We only found out that service was never
 migrated when the customer complained weeks after the migration. No one wants
 this, and migrations don’t have to be a one way door.
 
-At Tigris, we realize that this data inertia is the main reason why you wouldn’t
-want to use Tigris for your object storage needs. So we implemented
+At Tigris, we realize that this data inertia may make it hard for you to adopt
+Tigris for your object storage needs. So we implemented
 [Shadow bucket migration](https://www.tigrisdata.com/docs/migration/) to
 eliminate many of the risks associated with migrating object storage providers.
 When you set up shadow bucket migration, all the data on your old provider shows
@@ -77,15 +77,15 @@ We call this the “two way door” migration strategy.
 
 ### Migration Workflow Differences: Tigris vs other clouds
 
-|                                      Feature |                                                            Tigris                                                             |                                                           Other clouds                                                            |
-| -------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------: |
-|                    **Incremental migration** |              ✅ Yes – built-in option to read and write to another cloud storage service during your migration.               |                      ❌ No native incremental migration tooling, you must implement that migration yourself.                      |
-| **Read-through fallback to other providers** |                 ✅ Yes – Tigris can read from other storage providers if the object doesn’t exist in Tigris.                  |                                    ❌ No – you must ensure that the data is migrated yourself.                                    |
-|                    **Write-through support** |                                ✅ Yes – Tigris can write new data to another storage provider.                                |                   ❌ No – you must implement dual writing (and the error handling involved with that) yourself.                   |
-|                         **Backfill tooling** | Optional – you can backfill data from another provider to Tigris on your own schedule, shadow bucket migration buys you time. |                            Required – you must fully copy data over to that cloud before you cut over.                            |
-|                        **Risk of data loss** |                                   Low – because of read-through and write-through support.                                    |                        Medium – data migrations are risky and services constantly write data to the cloud.                        |
-|                         **Risk of downtime** |      Low – Tigris is globally distributed so even when a datacentre is lost you seamlessly get re-routed to another one.      | Medium – one phase of your data migration will require you to shut down services to copy over data, which is risky and expensive. |
-|                     **Latency optimization** |   ✅ Tigris has multi-region object synchronization abilities so that data is always closest to your users as they need it.   |       ❌ Not always – some providers implement globally distributed object storage; but it is the exception, not the rule.        |
+|                                      Feature |                                                            Tigris                                                             |                                                          Other clouds                                                           |
+| -------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------: |
+|                    **Incremental migration** |              ✅ Yes – built-in option to read and write to another cloud storage service during your migration.               |                     ❌ No native incremental migration tooling, you must implement that migration yourself.                     |
+| **Read-through fallback to other providers** |                 ✅ Yes – Tigris can read from other storage providers if the object doesn’t exist in Tigris.                  |                                   ❌ No – you must ensure that the data is migrated yourself.                                   |
+|                    **Write-through support** |                                ✅ Yes – Tigris can write new data to another storage provider.                                |                  ❌ No – you must implement dual writing (and the error handling involved with that) yourself.                  |
+|                         **Backfill tooling** | Optional – you can backfill data from another provider to Tigris on your own schedule, shadow bucket migration buys you time. |                           Required – you must fully copy data over to that cloud before you cut over.                           |
+|                        **Risk of data loss** |                                   Low – because of read-through and write-through support.                                    |                       Medium – data migrations are risky and services constantly write data to the cloud.                       |
+|                         **Risk of downtime** |      Low – Tigris is globally distributed so even when a datacentre is lost you seamlessly get re-routed to another one.      | High – one phase of your data migration will require you to shut down services to copy over data, which is risky and expensive. |
+|                     **Latency optimization** |   ✅ Tigris has multi-region object synchronization abilities so that data is always closest to your users as they need it.   |      ❌ Not always – some providers implement globally distributed object storage; but it is the exception, not the rule.       |
 
 ## Two Way Door Migration
 
@@ -169,12 +169,12 @@ multicloud data by default.
 
 ### When should I use Tigris?
 
-|                                         If you want to… | Use Tigris |      Use another cloud       |
-| ------------------------------------------------------: | :--------: | :--------------------------: |
-| Migrate gradually without breaking production workloads |     ✅     |              ❌              |
-|                  Avoid implementing migrations yourself |     ✅     |              ❌              |
-| Have automatic read/write fallback to your old provider |     ✅     |              ❌              |
-|                 Globally distribute your object storage |     ✅     | Provider-specific if offered |
+|                                         If you want to… | Use Tigris | Use another cloud |
+| ------------------------------------------------------: | :--------: | :---------------: |
+| Migrate gradually without breaking production workloads |     ✅     |        ❌         |
+|                  Avoid implementing migrations yourself |     ✅     |        ❌         |
+| Have automatic read/write fallback to your old provider |     ✅     |        ❌         |
+|                 Globally distribute your object storage |     ✅     |        ❌         |
 
 <InlineCta
   title={"Cloud storage with seamless migration"}
