@@ -1,0 +1,185 @@
+---
+slug: shadow-bucket
+title: "Eliminating Data Migration Risk with Shadow Buckets on Tigris"
+description: >
+  Eliminate data migration risks with Tigris's Shadow Bucket Migration. Learn
+  how to move data seamlessly with incremental, two-way door strategies and
+  avoid downtime. Discover the benefits of read/write fallback and multi-region
+  synchronization for object storage.
+image: ./parachute.webp
+keywords:
+  [
+    object storage,
+    blob storage,
+    s3,
+    migration,
+    data migration,
+    write-through,
+    read-through,
+  ]
+authors: [xe, ks, firsov]
+tags: [features, migration]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+![](./parachute.webp)
+
+Data migrations are risky. Data is sticky; once you put it somewhere, you need
+to spend a lot of time, energy, and egress fees trying to move it somewhere
+else. Let’s say you want to move all your data from The Big Cloud™ to another
+cloud. The gold standard process usually goes something like this:
+
+{/* truncate */}
+
+1. Figure out every service that could be using object storage and identify
+   which buckets they use
+2. Group those buckets by access tier (Standard, Infrequent Access, Glacier,
+   etc)
+3. Copy over all the data in several rounds to be sure that everything is
+   migrated
+4. Shut down everything
+5. Copy over any remaining data
+6. Swap out access keys and configuration
+7. Start everything up
+8. Hope it works
+
+This is a very stressful migration. It’s doable, but very very risky because
+there’s little ability to fall back to your old storage provider. This risk is
+usually so great that people (rightly) don’t want to even attempt to move object
+storage providers. It’s too easy to accidentally lose data in the process.
+
+Sure, you can do a blue green deployment, and test in lower environments. But
+there’s almost always some legacy microservice, long forgotten but somehow in
+the critical path. During a migration I led, there was a service with a monthly
+job that delivered data to a customer. We only found out that service was never
+migrated when the customer complained weeks after the migration. No one wants
+this, and migrations don’t have to be a one way door.
+
+At Tigris, we realize that this data inertia may make it hard for you to adopt
+Tigris for your object storage needs. So we implemented
+[Shadow bucket migration](https://www.tigrisdata.com/docs/migration/) to
+eliminate many of the risks associated with migrating object storage providers.
+When you set up shadow bucket migration, all the data on your old provider shows
+up in Tigris like it was there in the first place. When you access the data from
+Tigris, it gets copied over on demand.
+
+Here’s what migrating to Tigris looks like:
+
+1. Create new buckets
+2. Enable shadow bucket migration with write-through
+3. Move services over one at a time
+4. If you encounter problems, revert them to the old object storage provider
+5. Once everything is moved over and you feel confident, remove the shadow
+   bucket configuration
+
+We call this the “two way door” migration strategy.
+
+### Migration Workflow Differences: Tigris vs other clouds
+
+|                                      Feature |                                                            Tigris                                                             |                                                          Other clouds                                                           |
+| -------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------: |
+|                    **Incremental migration** |              ✅ Yes – built-in option to read and write to another cloud storage service during your migration.               |                     ❌ No native incremental migration tooling, you must implement that migration yourself.                     |
+| **Read-through fallback to other providers** |                 ✅ Yes – Tigris can read from other storage providers if the object doesn’t exist in Tigris.                  |                                   ❌ No – you must ensure that the data is migrated yourself.                                   |
+|                    **Write-through support** |                                ✅ Yes – Tigris can write new data to another storage provider.                                |                  ❌ No – you must implement dual writing (and the error handling involved with that) yourself.                  |
+|                         **Backfill tooling** | Optional – you can backfill data from another provider to Tigris on your own schedule, shadow bucket migration buys you time. |                           Required – you must fully copy data over to that cloud before you cut over.                           |
+|                        **Risk of data loss** |                                   Low – because of read-through and write-through support.                                    |                       Medium – data migrations are risky and services constantly write data to the cloud.                       |
+|                         **Risk of downtime** |      Low – Tigris is globally distributed so even when a datacentre is lost you seamlessly get re-routed to another one.      | High – one phase of your data migration will require you to shut down services to copy over data, which is risky and expensive. |
+|                     **Latency optimization** |   ✅ Tigris has multi-region object synchronization abilities so that data is always closest to your users as they need it.   |      ❌ Not always – some providers implement globally distributed object storage; but it is the exception, not the rule.       |
+
+## Two Way Door Migration
+
+When folks talk about an incremental migration between object storage providers,
+they usually talk about migrating data in phases, either bucket by bucket or
+service by service. There’s other strategies you can use like making your
+application write data to both providers instead of one, or a read-through
+strategy where data is moved as it’s accessed.
+
+Tigris shadow bucket migration reads data from your old cloud storage service as
+it’s accessed. If you enable
+[write-through support](https://www.tigrisdata.com/docs/migration/#enable-data-migration-in-the-tigris-dashboard),
+then any new data you write to Tigris seamlessly gets copied over to your old
+cloud storage service. This means that you can revert should you need to.
+
+This write-through option further reduces the risk of moving to another object
+storage provider because undoubtedly you will forget about some long-untouched
+workload that nobody has documented anywhere. Write-through makes sure that the
+data keeps going to the old destination. This means that old workloads keep
+getting new data and gives you enough time to track it down with audit logs.
+
+### How it works
+
+One of the best ways to think about Tigris is that it’s a multi-tiered cache
+system. When a request comes in, the data is pulled from:
+
+- SSD cache
+- The local FoundationDB cluster
+- The local regional block storage cluster
+- Another regional block storage cluster in another region
+
+If any one of those fails to contain the data, Tigris moves on to the next tier
+of caching and tries again. If none of them succeed, Tigris returns a 404\.
+
+When you enable shadow bucket migration, you add a fifth tier of caching: your
+remote object storage service of choice. There’s additional niceties like
+regularly listing objects to know what’s available, but that’s pretty much it.
+
+## An example
+
+Let’s say you have a bucket in Hetzner object storage. This bucket has over a
+terabyte of old data, backups, and other important data that you want to migrate
+over to Tigris. Here’s how you set up shadow bucket migration:
+
+<video
+  controls
+  playsInline
+  loop
+  muted
+  style={{
+    width: "100%",
+    height: "auto",
+    maxWidth: "100%",
+    maxHeight: "100%",
+  }}
+>
+  <source src="/blog/img/blog/shadow-bucket/demo.mp4" type="video/mp4" />
+</video>
+
+Create your bucket, punch your Hetzner object storage credentials into the
+settings, hit save, then try and download things. It’s trivial. Everything moves
+over on demand.
+
+### Caveats
+
+In order to have the best experience with shadow bucket migration, make sure to
+do the following things:
+
+- Make sure that your access credentials have the right IAM permissions for the
+  buckets in your other cloud.
+- Make sure that objects in the Glacier access tier have been restored from
+  Glacier into standard.
+- Make sure to take it easy, cloud migration can be stressful!
+
+## Conclusion
+
+We hope that this will make it easier for you to choose Tigris for your object
+storage needs. Shadow bucket migration helps you overcome the data inertia
+effect so that you can seamlessly upgrade your single-cloud data into becoming
+multicloud data by default.
+
+### When should I use Tigris?
+
+|                                         If you want to… | Use Tigris | Use another cloud |
+| ------------------------------------------------------: | :--------: | :---------------: |
+| Migrate gradually without breaking production workloads |     ✅     |        ❌         |
+|                  Avoid implementing migrations yourself |     ✅     |        ❌         |
+| Have automatic read/write fallback to your old provider |     ✅     |        ❌         |
+|                 Globally distribute your object storage |     ✅     |        ❌         |
+
+<InlineCta
+  title={"Cloud storage with seamless migration"}
+  subtitle={
+    "Want to migrate to Tigris without losing your data? No problem! We use shadow bucket migration to make it seamless."
+  }
+  button={"Get started today!"}
+/>
