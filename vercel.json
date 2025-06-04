@@ -5,6 +5,11 @@
       "source": "/blog/tags/data-modeling/",
       "destination": "/blog/tags/nosql-data-modeling-series/",
       "permanent": true
+    },
+    {
+      "source": "/blog/shadow-bucket-thumbnails/",
+      "destination": "/blog/effortless-global-image-delivery/",
+      "permanent": true
     }
   ]
 }
