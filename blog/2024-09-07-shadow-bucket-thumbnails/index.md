@@ -1,6 +1,6 @@
 ---
-slug: shadow-bucket-thumbnails
-title: Using Shadow Buckets for Fun and Thumbnails
+slug: effortless-global-image-delivery
+title: "Snip, Snap, Serve: Effortless Global Image Delivery with Tigris"
 description: >
   Exploring Tigris' shadow bucket feature for fun and thumbnails. In the blog
   post the feature will be used in an less conventional fashion. An additional
@@ -13,7 +13,7 @@ authors: [bmi]
 tags: [object storage, s3, thumbnail, images, cdn]
 ---
 
-# Using Shadow Buckets for Fun and Thumbnails
+# Snip, Snap, Serve: Effortless Global Image Delivery with Tigris
 
 Making thumbnails load reasonably quickly is surprisingly complex for such a
 common problem. With
