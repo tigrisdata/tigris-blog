@@ -11,15 +11,18 @@ authors: [xe, ks]
 tags: [cloud, big data, data lake, duckdb]
 ---
 
+import InlineCta from "@site/src/components/InlineCta";
+import PullQuote from "@site/src/components/PullQuote";
+
 ![](./ducks-in-a-lake.jpg)
 
-There’s a new data lake on the market: [DuckLake](https://ducklake.select/).
-It’s worth the hype because it gives you an open standard that not only enables
-you to run queries on your data lakes from anywhere, it outright encourages you
-to run your query, metadata, and storage layers separately in whatever platform
-works best for you. DuckLake moves the metadata layer out of object storage and
-into a dedicated database. But why would an object storage company like Tigris
-be excited about putting \_less\_ data in object storage?
+There’s a new data lake on the market: DuckLake. It’s worth the hype because it
+gives you an open standard that not only enables you to run queries on your data
+lakes from anywhere, it outright encourages you to run your query, metadata, and
+storage layers separately in whatever platform works best for you. DuckLake
+moves the metadata layer out of object storage and into a dedicated database.
+But why would an object storage company like Tigris be excited about putting
+_less_ data in object storage?
 
 Iceberg and Delta Lake both store their metadata in files on object storage:
 Delta Lake uses a translation log file within the object storage itself, whereas
@@ -29,15 +32,21 @@ storage. The trouble comes when you handle concurrent writes. Someone has to
 via DynamoDB or another service. DuckLake lets you handle concurrent writes via
 the concurrent write support of your database engine of choice, you get all of
 the benefits of a normal database without having to have all your data in one
-disk. You get all the advantages of a database by actually using a database\!
+disk. You get all the advantages of a database by actually using a database!
 
 But if you really want to take advantage of that flexibility and choice that
-DuckLake offers, you need to unstick your data from $BigCloud’s storage where
-every gigabyte of egress to a tool in another cloud has a cost.
+DuckLake offers, you need to unstick all the data in your lakehouse from
+$BigCloud’s storage where every gigabyte of egress to a tool in another cloud
+has a cost. The metadata layer being separate from the data also eliminates
+another point where other solutions can get your provider to dig you in the cost
+department. Storing all your actual data in Tigris is just the cherry on the top
+of the cost savings sundae.
 
-DuckLake lets you horizontally scale your queries with a serverless architecture
-on any cloud, and Tigris makes it economical to do so because Tigris has no
-egress fees.
+<PullQuote>
+  DuckLake lets you horizontally scale your queries with a serverless
+  architecture on any cloud, and Tigris makes it economical to do so because
+  Tigris has no egress fees.
+</PullQuote>
 
 Let’s say I wanted to run data analytics on a database in Supabase, but I
 already have data in Google Cloud Storage (GCS). I want to run queries against
@@ -434,8 +443,6 @@ your cards right, you can scale fearlessly.
 As I dig into DuckLake some more, I’m going to show you some demos that really
 play into Tigris and DuckLake working together to make data analytics work great
 on big and small scales. Join along for the ride\!
-
-import InlineCta from "@site/src/components/InlineCta";
 
 <InlineCta
   title={"Big and small data from anywhere on the planet"}
