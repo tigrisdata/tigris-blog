@@ -29,8 +29,8 @@ storage and into a dedicated database. But why would an object storage company
 like Tigris be excited about putting _less_ data in object storage?
 
 Iceberg and Delta Lake both store their metadata in files on object storage:
-Delta Lake uses a translation log file within the object storage itself, whereas
-Iceberg uses an external catalog that can be stored in a DB or in object
+Delta Lake uses a transactional log file within the object storage itself,
+whereas Iceberg uses an external catalog that can be stored in a DB or in object
 storage. The trouble comes when you handle concurrent writes. Someone has to
 “win” and object storage systems don’t let you lock files without coordination
 via DynamoDB or another service. DuckLake lets you handle concurrent writes via
