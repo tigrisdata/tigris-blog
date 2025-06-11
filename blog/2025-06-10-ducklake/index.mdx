@@ -1,0 +1,472 @@
+---
+slug: ducklake
+title: "Get your data ducks in a row with DuckLake"
+description: >
+  Combine SQL and object storage data seamlessly with DuckLake, a data lakehouse
+  solution that works with Tigris. Query big and small data without egress fees
+  and simplify your data analytics workflows.
+image: ./ducks-in-a-lake.jpg
+keywords: [object storage, blob storage, s3, big data, data lake, duckdb]
+authors: [xe, ks]
+tags: [cloud, big data, data lake, duckdb]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import PullQuote from "@site/src/components/PullQuote";
+
+![](./ducks-in-a-lake.jpg)
+
+There’s a new data lake on the market: [DuckLake](https://ducklake.select/).
+It’s worth the hype because it gives you an open standard that not only enables
+you to run queries on your data lakes from anywhere, it outright encourages you
+to run your query, metadata, and storage layers separately in whatever platform
+works best for you. We've been thinking about DuckDB as a solution for Small
+Data, but now with the limitless storage capability of object storage, it can
+support massive scale datasets. Big Data doesn't have to be complicated.
+
+One of the key changes with DuckLake is moving the metadata layer out of object
+storage and into a dedicated database. But why would an object storage company
+like Tigris be excited about putting _less_ data in object storage?
+
+Iceberg and Delta Lake both store their metadata in files on object storage:
+Delta Lake uses a transactional log file within the object storage itself,
+whereas Iceberg uses an external catalog that can be stored in a DB or in object
+storage. The trouble comes when you handle concurrent writes. Someone has to
+“win” and object storage systems don’t let you lock files without coordination
+via DynamoDB or another service. DuckLake lets you handle concurrent writes via
+the concurrent write support of your database engine of choice, you get all of
+the benefits of a normal database without having to have all your data in one
+disk. You get all the advantages of a database by actually using a database
+instead of
+[poorly emulating one with a bunch of flat files](https://www.e6data.com/blog/iceberg-metadata-evolution-after-compaction#:~:text=,understanding%20the%20iceberg%20file%20layout)\!
+
+But if you really want to take advantage of that flexibility and choice that
+DuckLake offers, you need to unstick all the data in your lakehouse from
+$BigCloud’s storage where every gigabyte of egress to a tool in another cloud
+has a cost. The metadata layer being separate from the data also eliminates
+another point where other solutions can get your provider to dig you in the cost
+department. Storing all your actual data in Tigris also gives you global
+performance and the ability for your data to be accessible and fast from
+anywhere.
+
+<PullQuote>
+  DuckLake lets you horizontally scale your queries with a serverless
+  architecture on any cloud, and Tigris makes it economical to do so because
+  Tigris has no egress fees.
+</PullQuote>
+
+Let's say that I have a database with customer data in Supabase, but I also have
+telemetry observations in Google Cloud Storage (GCS). I need to run a query that
+compares the data in Supabase with the data in GCS. If I wanted to run this, I’d
+have to pay by the gigabyte if I had the gall to run that query from anywhere
+but Google Cloud. I can’t magically teleport my laptop to be inside Google
+Cloud’s network (yeah, they have a VPN product, but you still have to pay egress
+for that) and my neocloud workloads definitely aren’t in Google Cloud, so I’d
+have to restrict all of my planning to find ways to lock myself deeper into the
+clutches of that ecosystem.
+
+If we want to live in this bright multicloud future where we _can_ use the best
+tool for the job, we need to make upfront choices about where and how we store
+data. When you use DuckLake with its metadata in a Postgres database running
+somewhere, you can connect to that data lake from any developer laptop, cloud
+instance, or serverless worker. This allows you to take the concepts of
+[Nomadic Compute](https://www.tigrisdata.com/blog/nomadic-compute/) to your
+data, meaning that you can leverage the cost savings of neo-clouds to manage
+your data from anywhere no matter how big or small it is. Your data will
+automatically move around to where it’s used without having to worry about
+egress fees and cost management.
+
+## DuckLake is a data lakehouse for big and small data
+
+DuckLake lets you import data from SQL databases and object storage, then stores
+that aggregated data in object storage so that queries are nice and quick. This
+lets you store and run queries on data that is bigger than your local device can
+ever store, everything is queried on demand and you only operate on the data you
+actually use. When you use this with Tigris, we have
+[no egress fees](https://www.tigrisdata.com/docs/pricing/), meaning that you
+don’t have to worry about the bill when you make a big query.
+
+DuckLake has two basic parts:
+
+- Metadata in a SQL database (MySQL, Postgres, DuckDB, or SQLite)
+- Data storage in object storage or on the local filesystem
+
+Here’s how you declare a table in DuckLake:
+
+```
+INSTALL ducklake;
+LOAD ducklake;
+
+ATTACH
+  'ducklake:postgres:dbname=postgres host=localhost'
+AS cloud
+  ( DATA_PATH 's3://xe-ducklake/data/'
+  );
+
+CREATE TABLE IF NOT EXISTS cloud.customers
+  ( id INTEGER NOT NULL
+  , username VARCHAR UNIQUE NOT NULL
+  , email_address VARCHAR UNIQUE NOT NULL
+  , created_at TIMESTAMP NOT NULL
+  , updated_at TIMESTAMP
+  , deleted_at TIMESTAMP
+  , usage_kind VARCHAR
+  );
+```
+
+That’s it. No setting up massive infrastructure, no bargaining with the powers
+that be for API access, and no overhead and churn to maintain the setup
+requiring expensive consultants to emit utterances that no human should have to
+comprehend. You just declare the table and _you’re done_. There are no more
+steps.
+
+Don’t want to store the metadata in Postgres? You don’t need to:
+
+```sql
+INSTALL ducklake;
+LOAD ducklake;
+
+ATTACH
+  'ducklake:metadata.ducklake'
+AS cloud
+  ( DATA_PATH './data'
+  );
+```
+
+This is how I play with DuckLake on my MacBook. I’m only dealing with data
+[much smaller than ram](https://www.tigrisdata.com/blog/anubis/), but the best
+part about this in my book is that I can fit all of the moving parts in one part
+of my mental context. This leaves me able to think about what I’m doing without
+having to think too much about how I have to do it. If I need more space, I can
+just farm it out to Tigris:
+
+```sql
+ATTACH
+  'ducklake:metadata.ducklake'
+AS cloud
+  ( DATA_PATH 's3://xe-ducklake/hoshimi-miyabi-hacking/'
+  );
+```
+
+But realistically, you probably want to store the DuckLake metadata in Postgres
+so you can connect to the same data lake from another computer, production
+instances, or serverless infrastructure. Once your lake is set up, you can
+import the data from another Postgres database:
+
+```sql
+INSTALL postgres;
+LOAD postgres;
+
+ATTACH
+  'dbname=dunda-prod user=readonly host=dunda-prod-pg.dunda.ti.do'
+AS prod
+  ( TYPE postgres
+  , READ_ONLY
+  );
+
+INSERT INTO
+  cloud.customers
+    ( id
+    , username
+    , email_address
+    , created_at
+    , updated_at
+    , deleted_at
+    )
+SELECT
+  id
+, username
+, email_addresses
+, created_at
+, updated_at
+, deleted_at
+FROM
+  cloud.users
+WHERE
+  deleted_at IS NOT NULL;
+```
+
+But what about your telemetry usage data in Tigris? You can import that too.
+Let’s say your data roughly looks like this:
+
+```json
+{
+  "created_at": "2025-06-09 20:38:40",
+  "user_id": 1337,
+  "action_verb": "CreateDocument",
+  "metadata": {
+    "document_id": "019755f9-7965-78ee-8677-b21ee8fa9bb6",
+    "org_id": "019755f9-f6b0-763b-9882-b773cfaf828c"
+  }
+}
+```
+
+Then make your table:
+
+```sql
+CREATE TABLE cloud.telemetry
+  ( created_at TIMESTAMP NOT NULL
+  , user_id INTEGER NOT NULL
+  , action_verb VARCHAR NOT NULL
+  , metadata MAP(STRING, STRING) NOT NULL
+  );
+```
+
+And load it directly from the cloud to the cloud:
+
+```sql
+INSERT INTO
+  cloud.telemetry
+    ( created_at
+    , user_id
+    , action_verb
+    , metadata
+    )
+SELECT
+  *
+FROM
+  READ_JSON
+    ( 's3://dunda-prod-telemetry/new/**/*.jsonl'
+    , columns =
+      { created_at: 'TIMESTAMP NOT NULL'
+      , user_id: 'INTEGER NOT NULL'
+      , action_verb: 'VARCHAR NOT NULL'
+      , metadata: 'MAP(string, STRING) NOT NULL'
+      }
+    , format = 'nd'
+    );
+```
+
+### Lakehouses in anger
+
+As for how you’d use this in production, let’s think about one of the most
+common issues when making a Software-as-a-Service business: users that sign up
+and then never do anything with your product. Typically you’d want to send them
+an email to let them know about some feature of the product that will entice
+them to re-engage with your product. Typically when you’re trying to figure out
+when to send these re-engagement emails, you will need to combine non-relational
+telemetry observations (such as when your product emits events like
+CreatedDocument or StartFunction) with relational data (such as user or
+organization details from your database). Historically, figuring out when to
+send these requires a lot of “database churn” with fields like the last time a
+user logged into the platform, or putting all of those events into your database
+in the first place. These make your SRE team unhappy, but they do _work_. We can
+do better though\!
+
+DuckLake lets you just run the query on your data lakehouse directly. Assume
+that a perfectly spherical import script runs every so often to sync data from
+Postgres and Tigris to your lakehouse. In order to mark customers to be selected
+for a re-engagement email, you can write a single query:
+
+```
+-- If users have no telemetry activity but their account was created a week ago, set them to Reengage.
+-- When the re-engagement is sent but there's no activity after a week, set them to GaveUp.
+-- Otherwise, if the user has activity then set them to Active.
+
+WITH last_event AS (
+    SELECT
+        c.id,
+        c.created_at                         AS customer_created_at,
+        COUNT(t.*)                           AS evt_cnt,              -- 0 = never seen
+        MAX(t.created_at)                    AS last_evt_at,          -- NULL if no events
+        arg_max(t.action_verb, t.created_at) AS last_evt_verb      -- DuckDB  v0.10+; picks verb of the latest row
+    FROM cloud.customers AS c
+    LEFT JOIN cloud.telemetry AS t
+           ON t.user_id = c.id
+    GROUP BY c.id, c.created_at
+)
+, desired AS (
+    SELECT
+        id,
+        CASE
+            WHEN evt_cnt = 0
+                 AND customer_created_at < CURRENT_TIMESTAMP - INTERVAL '7 days'
+            THEN 'Reengage'
+
+            WHEN evt_cnt > 0
+                 AND last_evt_verb = 'Reengaged'
+                 AND last_evt_at   < CURRENT_TIMESTAMP - INTERVAL '7 days'
+            THEN 'GaveUp'
+
+            WHEN evt_cnt > 0
+            THEN 'Active'
+
+            ELSE usage_kind            -- leave as‑is for very new sign‑ups, etc.
+        END AS new_usage_kind
+    FROM last_event
+)
+UPDATE cloud.customers AS c
+SET    usage_kind = d.new_usage_kind
+FROM   desired AS d
+WHERE  c.id = d.id
+  AND  c.usage_kind IS DISTINCT FROM d.new_usage_kind;
+```
+
+This lets you seamlessly weave relational data from your databases with
+non-relational data in object storage. All of that data we inserted gets stored
+in Tigris so that you only have to do your big imports _once_. Throw this into a
+serverless function, make it run every day as a cronjob, and then you can have
+another worker find customers that need to re-engage and send them gentle
+encouragement.
+
+## How it works
+
+DuckLake has two basic parts:
+
+- Metadata in a SQL database (MySQL, Postgres, DuckDB, or SQLite)
+- Data storage in object storage or on the local filesystem
+
+When you create a DuckLake backed by Postgres, it creates a bunch of tables for
+you:
+
+```
+thoth=> \dt
+                       List of relations
+ Schema |                 Name                  | Type  | Owner
+--------+---------------------------------------+-------+-------
+ public | ducklake_column                       | table | thoth
+ public | ducklake_column_tag                   | table | thoth
+ public | ducklake_data_file                    | table | thoth
+ public | ducklake_delete_file                  | table | thoth
+ public | ducklake_file_column_statistics       | table | thoth
+ public | ducklake_file_partition_value         | table | thoth
+ public | ducklake_files_scheduled_for_deletion | table | thoth
+ public | ducklake_inlined_data_tables          | table | thoth
+ public | ducklake_metadata                     | table | thoth
+ public | ducklake_partition_column             | table | thoth
+ public | ducklake_partition_info               | table | thoth
+ public | ducklake_schema                       | table | thoth
+ public | ducklake_snapshot                     | table | thoth
+ public | ducklake_snapshot_changes             | table | thoth
+ public | ducklake_table                        | table | thoth
+ public | ducklake_table_column_stats           | table | thoth
+ public | ducklake_table_stats                  | table | thoth
+ public | ducklake_tag                          | table | thoth
+ public | ducklake_view                         | table | thoth
+```
+
+All of these tables are used to create the mappings of what tables point to
+which data. This data can be stored on your local laptop for quick hacking or in
+object storage like Tigris for when your data gets much bigger than any one
+computer can possibly store.
+
+Additionally, any time you make a change to your DuckLake, it creates a snapshot
+of the entire state of the world so that you can roll back changes when you mess
+things up. This means that you can import data, run big analytics queries, and
+more without any fear of losing data. All the data will be safely stored in
+Tigris and you can do whatever queries you want from anywhere in the world
+without having to pay egress fees.
+
+Let’s say you need to look at data about a specific customer from a week ago:
+
+```
+SELECT
+  *
+FROM
+  cloud.customers
+WHERE
+  email_address LIKE '%@conto.so'
+AT ( TIMESTAMP => now() - INTERVAL '1 week' );
+```
+
+And bam, every one of your customers at Contoso has all their information show
+up. Need to make sure that the re-engagement emails got sent out back then? You
+can just do that without having to do a mass scan of object storage.
+
+Honestly this is one of the coolest parts of DuckLake in my book. Sure it’s not
+as theoretically performant as it would be if all the data was directly on my
+laptop, but being able to operate on extremely large datasets more than makes up
+for the downsides. Your postgres database won’t let you roll back a change that
+someone messed up a week ago, for that you’d have to restore from backup.
+
+## The cloud’s the limit
+
+Of course, this isn’t just limited to your developer laptop. You can access your
+DuckLake datasets from the
+[Node.js](https://duckdb.org/docs/stable/clients/node_neo/overview) client too\!
+Take a gander:
+
+```javascript
+import duckdb, { DuckDBConnection } from "@duckdb/node-api";
+
+console.log("duckdb version", duckdb.version());
+
+const connection = await DuckDBConnection.create();
+
+for (const statement of [
+  `INSTALL postgres`,
+  `LOAD postgres`,
+  `INSTALL ducklake`,
+  `LOAD ducklake`,
+  `INSTALL httpfs`,
+  `LOAD httpfs`,
+  `INSTALL json`,
+  `LOAD json`,
+  `CREATE OR REPLACE PERSISTENT SECRET tigris (
+    TYPE s3,
+    PROVIDER config,
+    KEY_ID 'tid_access_key_id',
+    SECRET 'tsec_secret_access_key',
+    REGION 'auto',
+    ENDPOINT 't3.storage.dev',
+    URL_STYLE 'vhost',
+    SCOPE 's3://xe-ducklake'
+  )`,
+  `CREATE OR REPLACE SECRET postgres_localhost (
+    TYPE postgres,
+    HOST 'localhost',
+    PORT 5432,
+    DATABASE postgres,
+    USER 'root',
+    PASSWORD 'hunter2'
+  )`,
+  `ATTACH 'ducklake:postgres:dbname=postgres host=localhost' as cloud (DATA_PATH 's3://xe-ducklake/data/')`,
+]) {
+  await connection.run(statement);
+}
+```
+
+Now you can `SELECT`, `INSERT`, `UPDATE`, and `DELETE` to your heart’s content\!
+Just make sure that the statements that create secrets are put safely into
+environment variables. This is super useful for making sure that your import
+jobs run in Lambda or for distributing analytics jobs across an entire fleet.
+
+Imagine a world where you have an API that creates resources and you want to
+charge users for those resources. You could imagine a world where that data gets
+written to Tigris based on the time it’s written, such as:
+
+```
+s3://dunda-prod-usage/2025/06/10/13/*.jsonl
+```
+
+And then your lambda jobs could take the data from the last hour (remember: time
+is “consistent enough” in values over one hour), massage it into DuckDB, and
+then update it into your production database with what’s changed\! Remember, you
+can attach Postgres databases the same way you can attach a DuckLake\! Throw in
+some
+[lifecycle rules](https://www.tigrisdata.com/docs/buckets/object-lifecycle-rules/)
+to delete the raw usage data after 6 months and add some batching to your
+uploading and you can get all of the fun of a fancy streaming analytics setup
+with nearly none of the bloat of having to reinvent the entire world\!
+
+## The new era of databases
+
+Personally, I think that DuckLake is really cool and this post barely scratches
+the surface of what you can do. It’s a SQL database without limits embedded
+right into your app. No more having to resize database instances for the data
+team. No more complicated import pipelines to get data from object storage into
+a database engine. You just query your data and then you’re done with it. This
+is seriously one of the most underrated data science superpowers and if you play
+your cards right, you can scale fearlessly.
+
+As I dig into DuckLake some more, I’m going to show you some demos that really
+play into Tigris and DuckLake working together to make data analytics work great
+on big and small scales. Join along for the ride\!
+
+<InlineCta
+  title={"Big and small data from anywhere on the planet"}
+  subtitle={
+    "Tigris lets you store your data everywhere, including SQL databases with DuckDB and DuckLake. Unify your data between your relational and non-relational stores so you can go back to doing what you love."
+  }
+  button={"Get started today!"}
+/>
