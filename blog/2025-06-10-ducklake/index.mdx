@@ -16,13 +16,13 @@ import PullQuote from "@site/src/components/PullQuote";
 
 ![](./ducks-in-a-lake.jpg)
 
-There’s a new data lake on the market: DuckLake. It’s worth the hype because it
-gives you an open standard that not only enables you to run queries on your data
-lakes from anywhere, it outright encourages you to run your query, metadata, and
-storage layers separately in whatever platform works best for you. DuckLake
-moves the metadata layer out of object storage and into a dedicated database.
-But why would an object storage company like Tigris be excited about putting
-_less_ data in object storage?
+There’s a new data lake on the market: [DuckLake](https://ducklake.select/).
+It’s worth the hype because it gives you an open standard that not only enables
+you to run queries on your data lakes from anywhere, it outright encourages you
+to run your query, metadata, and storage layers separately in whatever platform
+works best for you. DuckLake moves the metadata layer out of object storage and
+into a dedicated database. But why would an object storage company like Tigris
+be excited about putting \_less\_ data in object storage?
 
 Iceberg and Delta Lake both store their metadata in files on object storage:
 Delta Lake uses a translation log file within the object storage itself, whereas
@@ -32,15 +32,18 @@ storage. The trouble comes when you handle concurrent writes. Someone has to
 via DynamoDB or another service. DuckLake lets you handle concurrent writes via
 the concurrent write support of your database engine of choice, you get all of
 the benefits of a normal database without having to have all your data in one
-disk. You get all the advantages of a database by actually using a database!
+disk. You get all the advantages of a database by actually using a database
+instead of
+[poorly emulating one with a bunch of flat files](https://www.e6data.com/blog/iceberg-metadata-evolution-after-compaction#:~:text=,understanding%20the%20iceberg%20file%20layout)\!
 
 But if you really want to take advantage of that flexibility and choice that
 DuckLake offers, you need to unstick all the data in your lakehouse from
 $BigCloud’s storage where every gigabyte of egress to a tool in another cloud
 has a cost. The metadata layer being separate from the data also eliminates
 another point where other solutions can get your provider to dig you in the cost
-department. Storing all your actual data in Tigris is just the cherry on the top
-of the cost savings sundae.
+department. Storing all your actual data in Tigris also gives you global
+performance and the ability for your data to be accessible and fast from
+anywhere.
 
 <PullQuote>
   DuckLake lets you horizontally scale your queries with a serverless
@@ -48,14 +51,14 @@ of the cost savings sundae.
   Tigris has no egress fees.
 </PullQuote>
 
-Let’s say I wanted to run data analytics on a database in Supabase, but I
-already have data in Google Cloud Storage (GCS). I want to run queries against
-that Supabase database and the data in GCS. I’d have to pay by the gigabyte if I
-had the gall to run that query from anywhere but Google Cloud. I can’t magically
-teleport my laptop to be inside Google Cloud’s network (yeah, they have a VPN
-product, but you still have to pay egress for that) and my neocloud workloads
-definitely aren’t in Google Cloud, so I’d have to restrict all of my planning to
-find ways to lock myself deeper into the clutches of that ecosystem.
+Let’s say I wanted to run data analytics on data stored in Supabase, but some of
+the data I need to compare against is in Google Cloud Storage (GCS). I’d have to
+pay by the gigabyte if I had the gall to run that query from anywhere but Google
+Cloud. I can’t magically teleport my laptop to be inside Google Cloud’s network
+(yeah, they have a VPN product, but you still have to pay egress for that) and
+my neocloud workloads definitely aren’t in Google Cloud, so I’d have to restrict
+all of my planning to find ways to lock myself deeper into the clutches of that
+ecosystem.
 
 If we want to live in this bright multicloud future where we _can_ use the best
 tool for the job, we need to make upfront choices about where and how we store
@@ -355,10 +358,10 @@ up. Need to make sure that the re-engagement emails got sent out back then? You
 can just do that without having to do a mass scan of object storage.
 
 Honestly this is one of the coolest parts of DuckLake in my book. Sure it’s not
-as theoretically performant as a local database, but being able to operate on
-extremely large datasets more than makes up for the downsides. Your postgres
-database won’t let you roll back a change that someone messed up a week ago, for
-that you’d have to restore from backup.
+as theoretically performant as it would be if all the data was directly on my
+laptop, but being able to operate on extremely large datasets more than makes up
+for the downsides. Your postgres database won’t let you roll back a change that
+someone messed up a week ago, for that you’d have to restore from backup.
 
 ## The cloud’s the limit
 
