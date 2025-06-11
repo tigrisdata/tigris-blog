@@ -28,6 +28,8 @@ One of the key changes with DuckLake is moving the metadata layer out of object
 storage and into a dedicated database. But why would an object storage company
 like Tigris be excited about putting _less_ data in object storage?
 
+{/* truncate */}
+
 Iceberg and Delta Lake both store their metadata in files on object storage:
 Delta Lake uses a transactional log file within the object storage itself,
 whereas Iceberg uses an external catalog that can be stored in a DB or in object
