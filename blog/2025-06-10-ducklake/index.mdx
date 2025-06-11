@@ -20,9 +20,13 @@ There’s a new data lake on the market: [DuckLake](https://ducklake.select/).
 It’s worth the hype because it gives you an open standard that not only enables
 you to run queries on your data lakes from anywhere, it outright encourages you
 to run your query, metadata, and storage layers separately in whatever platform
-works best for you. DuckLake moves the metadata layer out of object storage and
-into a dedicated database. But why would an object storage company like Tigris
-be excited about putting \_less\_ data in object storage?
+works best for you. We've been thinking about DuckDB as a solution for Small
+Data, but now with the limitless storage capability of object storage, it can
+support massive scale datasets. Big Data doesn't have to be complicated.
+
+One of the key changes with DuckLake is moving the metadata layer out of object
+storage and into a dedicated database. But why would an object storage company
+like Tigris be excited about putting _less_ data in object storage?
 
 Iceberg and Delta Lake both store their metadata in files on object storage:
 Delta Lake uses a translation log file within the object storage itself, whereas
@@ -51,14 +55,15 @@ anywhere.
   Tigris has no egress fees.
 </PullQuote>
 
-Let’s say I wanted to run data analytics on data stored in Supabase, but some of
-the data I need to compare against is in Google Cloud Storage (GCS). I’d have to
-pay by the gigabyte if I had the gall to run that query from anywhere but Google
-Cloud. I can’t magically teleport my laptop to be inside Google Cloud’s network
-(yeah, they have a VPN product, but you still have to pay egress for that) and
-my neocloud workloads definitely aren’t in Google Cloud, so I’d have to restrict
-all of my planning to find ways to lock myself deeper into the clutches of that
-ecosystem.
+Let's say that I have a database with customer data in Supabase, but I also have
+telemetry observations in Google Cloud Storage (GCS). I need to run a query that
+compares the data in Supabase with the data in GCS. If I wanted to run this, I’d
+have to pay by the gigabyte if I had the gall to run that query from anywhere
+but Google Cloud. I can’t magically teleport my laptop to be inside Google
+Cloud’s network (yeah, they have a VPN product, but you still have to pay egress
+for that) and my neocloud workloads definitely aren’t in Google Cloud, so I’d
+have to restrict all of my planning to find ways to lock myself deeper into the
+clutches of that ecosystem.
 
 If we want to live in this bright multicloud future where we _can_ use the best
 tool for the job, we need to make upfront choices about where and how we store
@@ -81,6 +86,11 @@ actually use. When you use this with Tigris, we have
 [no egress fees](https://www.tigrisdata.com/docs/pricing/), meaning that you
 don’t have to worry about the bill when you make a big query.
 
+DuckLake has two basic parts:
+
+- Metadata in a SQL database (MySQL, Postgres, DuckDB, or SQLite)
+- Data storage in object storage or on the local filesystem
+
 Here’s how you declare a table in DuckLake:
 
 ```
@@ -93,9 +103,15 @@ AS cloud
   ( DATA_PATH 's3://xe-ducklake/data/'
   );
 
-CREATE TABLE IF NOT EXISTS cloud.customers  ( id INTEGER NOT NULL
-  , username VARCHAR UNIQUE NOT NULL  , email_address VARCHAR UNIQUE NOT NULL  , created_at TIMESTAMP NOT NULL  , updated_at TIMESTAMP
-  , deleted_at TIMESTAMP  , usage_kind VARCHAR  );
+CREATE TABLE IF NOT EXISTS cloud.customers
+  ( id INTEGER NOT NULL
+  , username VARCHAR UNIQUE NOT NULL
+  , email_address VARCHAR UNIQUE NOT NULL
+  , created_at TIMESTAMP NOT NULL
+  , updated_at TIMESTAMP
+  , deleted_at TIMESTAMP
+  , usage_kind VARCHAR
+  );
 ```
 
 That’s it. No setting up massive infrastructure, no bargaining with the powers
