@@ -57,15 +57,16 @@ anywhere.
   Tigris has no egress fees.
 </PullQuote>
 
-Let's say that I have a database with customer data in Supabase, but I also have
-telemetry observations in Google Cloud Storage (GCS). I need to run a query that
-compares the data in Supabase with the data in GCS. If I wanted to run this, I’d
-have to pay by the gigabyte if I had the gall to run that query from anywhere
-but Google Cloud. I can’t magically teleport my laptop to be inside Google
-Cloud’s network (yeah, they have a VPN product, but you still have to pay egress
-for that) and my neocloud workloads definitely aren’t in Google Cloud, so I’d
-have to restrict all of my planning to find ways to lock myself deeper into the
-clutches of that ecosystem.
+Let's say that I have an ETL pipeline processing customer data and storing it in
+a data lake on a Big Cloud provider like GCS. I have a fleet of Agents all using
+the customer data to answer questions during Support workflows. If I've deployed
+my Agents on an Agentic platform, I won't be guaranteed to run my queries within
+the same Big Cloud as my storage. I’d have to pay by the gigabyte if I had the
+gall to run that query from anywhere but Google Cloud. I can’t magically
+teleport my laptop to be inside Google Cloud’s network (yeah, they have a VPN
+product, but you still have to pay egress for that) and my neocloud workloads
+definitely aren’t in Google Cloud, so I’d have to restrict all of my planning to
+find ways to lock myself deeper into the clutches of that ecosystem.
 
 If we want to live in this bright multicloud future where we _can_ use the best
 tool for the job, we need to make upfront choices about where and how we store
