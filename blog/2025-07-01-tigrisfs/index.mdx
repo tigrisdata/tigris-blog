@@ -8,7 +8,7 @@ description: >
   challenges for AI, analytics, and more.
 image: ./tigrisfs.webp
 keywords: [object storage, blob storage, s3, big data, fuse, filesystem]
-authors: [xe, ks, ot]
+authors: [xe, ks, ot, firsov]
 tags: [cloud, big data, tigrisfs]
 ---
 
@@ -305,8 +305,12 @@ And we got these results for each permutation of the test:
 | 8       | 1M         | 2802 \*              |
 | 8       | 4M         | 2732 \*              |
 
+:::note
+
 The throughput numbers with the asterisk next to them could theoretically be
 faster, but at this point we saturated out the network card on the test machine.
+
+:::
 
 #### Write performance
 
