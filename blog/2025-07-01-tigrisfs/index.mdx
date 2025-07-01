@@ -33,8 +33,8 @@ export const Ovais = ({ children, top, bottom }) => (
 
 ![](./tigrisfs.webp)
 
-At Tigris we put your big data close to your compute so you don’t have to do it
-yourself. However, there’s been a small problem with that: most of the programs
+At Tigris we put your big data close to your compute so you don't have to do it
+yourself. However, there's been a small problem with that: most of the programs
 that are built to process that data such as AI training, document indexing, and
 other kinds of workloads expect to read data from a filesystem.
 
@@ -45,7 +45,7 @@ your code folder, but had unlimited storage?
 
 {/* truncate */}
 
-We’re proud to announce the immediate availability of
+We're proud to announce the immediate availability of
 [tigrisfs](https://github.com/tigrisdata/tigrisfs), the native filesystem
 interface for Tigris. This lets you mount Tigris buckets to your laptops,
 desktops, and servers so you can use data in your buckets as if it was local.
@@ -65,23 +65,23 @@ This bridges the gap between the cloud and your machine.
 
 ## Your data: everywhere
 
-Let’s imagine that you have big data in your stack. Not just big, but
-_unimaginably big_, we’re talking about data the size of Wikipedia, the entire
+Let's imagine that you have big data in your stack. Not just big, but
+_unimaginably big_, we're talking about data the size of Wikipedia, the entire
 Linux Kernel Mailing List archives, and the entire git history for all the big
 open source projects. Not to mention small datasets like every scientific paper
 from arxiv. tigrisfs lets you mount the same dataset in the same place on every
 machine in your cluster. Imagine just reading from
 `/mnt/tigris/datasets/raw/lkml`, processing the data around a bit, and then
 writing it to `/mnt/tigris/datasets/massaged/lkml` for the downstream analysis
-to run. We’ll go into more detail about this in the near future, keep an eye out
-for that\!
+to run. We'll go into more detail about this in the near future, keep an eye out
+for that!
 
 The really cool part about this is that it lets you have a global filesystem on
 your local machine. All your data is just there and waiting to be used. If you
 write that massaged dataset to `/mnt/tigris/datasets/massaged/lkml` on one
-machine, it’s instantly available to any other machine in the cluster. Any time
-it’s used, it’ll be seamlessly cached on the device so that it’s hot’n’ready for
-action\! It’s like having a ReadWriteMany Kubernetes volume, but without having
+machine, it's instantly available to any other machine in the cluster. Any time
+it's used, it'll be seamlessly cached on the device so that it's hot'n'ready for
+action! It's like having a ReadWriteMany Kubernetes volume, but without having
 to set up Ceph.
 
 | Dataset Type                                                  | Examples                                                                                                                                           |
@@ -90,7 +90,7 @@ to set up Ceph.
 | Bigger than any one disk                                      | The entire YouTube upload history of your favorite creator                                                                                         |
 | Smaller than RAM                                              | Every scientific paper from arXiv                                                                                                                  |
 
-If you’re dealing with anything bigger than ram, tigrisfs is a great fit.
+If you're dealing with anything bigger than ram, tigrisfs is a great fit.
 
 One of the neat parts about tigrisfs is that using it means you can deal with
 your files using either the S3 API or the filesystem API. This is in contrast to
@@ -100,19 +100,19 @@ block → data mapping works. With tigrisfs you can `PUT` an object into your
 bucket with the S3 API, and then open the file in your favorite text editor.
 This unlocks any number of fun integrations, including:
 
-- Using `inotifywait` to process data as it’s created in a bucket by your
+- Using `inotifywait` to process data as it's created in a bucket by your
   analytics pipeline
 - Backing up your home folder with `rsync` in a cronjob
 - Using tools like `gzcat` to read compressed data without having to decompress
   it
 - Storing TLS certificates across the cluster so that one machine can renew it,
-  and it’ll roll out to the rest of the machines instantly
+  and it'll roll out to the rest of the machines instantly
 - Reading your training datasets directly from disk instead of having to set up
   object storage with the datasets library
 - Reading a raw video out of one bucket and compressing it for global
   distribution into another bucket using `ffmpeg`
 
-Let’s say you want to edit your secret plans in your Linux VM on your MacBook.
+Let's say you want to edit your secret plans in your Linux VM on your MacBook.
 First, upload it to Tigris with `aws s3 cp`:
 
 ```text
@@ -136,7 +136,7 @@ folder with a single command:
 xe@pitohui:~ $ rsync -av ~ /mnt/tigris/pitohui
 ```
 
-The cloud’s the limit\!
+The cloud's the limit\!
 
 ## Getting started with tigrisfs
 
@@ -175,7 +175,7 @@ the following:
   in the access key you got from the admin console.
 - Uncomment the `AWS_ENDPOINT_URL` variable so tigrisfs points to Tigris
 
-If you’re in an environment with `systemd`, mount your bucket with
+If you're in an environment with `systemd`, mount your bucket with
 `systemctl enable --now`:
 
 ```text
@@ -183,8 +183,8 @@ sudo systemctl enable --now tigrisfs@bucketname.service
 ```
 
 Your bucket will be available at `/mnt/tigris/bucketname`. If you need things to
-be writable by your user account, edit the `OPTS` line based on your account’s
-information. For example on my MacBook’s Oracle Linux VM:
+be writable by your user account, edit the `OPTS` line based on your account's
+information. For example on my MacBook's Oracle Linux VM:
 
 ```text
 $ id
@@ -228,26 +228,47 @@ Perfect\!
 
 tigrisfs is a fork of [geesefs](https://github.com/yandex-cloud/geesefs), a high
 performance FUSE filesystem adaptor for object storage. We have extended geesefs
-to leverage Tigris-specific features that improve throughput and latency. In
-essence, tigrisfs bridges the gap between the Linux kernel and Tigris. It
+to leverage Tigris-specific features that improve throughput and latency.
+
+tigrisfs is a high performance FUSE filesystem adaptor for object storage based
+on [geesefs](https://github.com/yandex-cloud/geesefs), which is a fork of
+[goofys](https://github.com/kahing/goofys). GeeseFS solves performance problems
+which FUSE file systems based on S3 typically have, especially with small files
+and metadata operations. It solves these problems by using aggressive
+parallelism and asynchrony.
+
+### Improvements over GeeseFS
+
+Our initial release zeroed-in on hardening the codebase for production, focusing
+on two areas:
+
+- **Security hardening**
+  - Replaced the bundled, legacy AWS SDK that contained known CVEs
+  - Upgraded every dependency to its latest secure version
+- **Reliability upgrades**
+  - Eliminated all race conditions flagged by the Go race detector (now
+    mandatory in tests)
+  - Fixed every linter warning and added lint checks to CI
+  - Dramatically expanded the test-suite and made the extended tests a default
+    part of CI
+
+### Tigris-specific improvements
+
+We also shipped a few features that lean on Tigris internals:
+
+- **POSIX semantics** - permissions, special files, and symlinks now behave just
+  like they do on a local disk.
+- **Turbo-charged small files** - listing a directory automatically
+  batch-fetches and caches tiny objects in a single round-trip.
+- **Smart prefetch** - directory listings kick off background fetches so the
+  next `cat` or `grep` feels instant.
+
+In essence, tigrisfs bridges the gap between the Linux kernel and Tigris. It
 translates filesystem calls into S3 API calls so that you can explore your
 bucket with the shell and bridge the gap between the old world of servers and
 shells with the new world of dynamic infinity in the cloud.
 
 ![](./linux-diagram.webp)
-
-In general, tigrisfs can be slower than the native disk for files that aren’t
-cached yet, but it more than makes up for it by allowing you to make the
-location of your files irrelevant. All you need to do is run tigrisfs, and you
-have a single global namespace for your data across all your machines.
-
-tigrisfs is written in Go and is
-[open source on GitHub](https://github.com/tigrisdata/tigrisfs). We welcome any
-and all contributions to make it even better\!
-
-For most file operations, tigrisfs will be more than enough. If you need special
-Unix features like Unix sockets, character devices, or other magic things like
-extended attributes, tigrisfs won’t work out for you.
 
 ### Benchmarks
 
@@ -369,4 +390,11 @@ things I use it for is running
 [analytics across honeypot logs](https://www.tigrisdata.com/blog/anubis/) so
 that I can fight off evil scrapers and save the internet.
 
-Go out there and make stuff! We’ll have your back.
+In general, tigrisfs can be slower than the native disk for files that aren't
+cached yet, but it more than makes up for it by allowing you to make the
+location of your files irrelevant. All you need to do is run tigrisfs, and you
+have a single global namespace for your data across all your machines.
+
+tigrisfs is written in Go and is
+[open source on GitHub](https://github.com/tigrisdata/tigrisfs). We welcome any
+and all contributions to make it even better\!
