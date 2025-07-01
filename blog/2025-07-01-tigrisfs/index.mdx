@@ -141,49 +141,66 @@ The cloud's the limit\!
 ## Getting started with tigrisfs
 
 If you want to get started, all you need is an aarch64/x86_64 Linux system, a
-Tigris bucket, and a keypair:
+Tigris bucket, and a keypair.
+
+### Installing tigrisfs
+
+#### One-liner install
+
+This will install the latest version of tigrisfs and its dependencies.
+
+```sh
+curl -sSL https://raw.githubusercontent.com/tigrisdata/tigrisfs/refs/heads/main/install.sh | bash
+```
+
+#### Or, install using package manager
+
+If you're using a package manager, you can install tigrisfs by following the
+instructions below.
+
+- Download the package from
+  [the most recent release](https://github.com/tigrisdata/tigrisfs/releases)
+- Install the package using your package manager
+  - Debian/Ubuntu: `sudo apt install ./tigrisfs-version.deb`
+  - Alma Linux/Fedora/Red Hat/Rocky Linux:
+    `sudo dnf install ./tigrisfs-version.rpm`
+
+### Mounting the filesystem
+
+We are going to assume that you have a bucket called `pitohui` and you want to
+mount it to `/mnt/tigris/pitohui`.
+
+Open `/etc/default/tigrisfs` in your favorite text editor as root and uncomment
+the `AWS_ACCESS_KEY` and `AWS_SECRET_ACCESS_KEY` variables and paste in the
+access key you got from the Tigris dashboard.
 
 <Tabs>
-<TabItem value="debuntu" label="Debian/Ubuntu" default>
+<TabItem value="cli" label="Using the command line" default>
 
-Download the `.deb` package from
-[the most recent release](https://github.com/tigrisdata/tigrisfs/releases) and
-then put it in a local folder. Install it with `apt install`:
+First, create the directory you want to mount the bucket to:
 
-```text
-sudo apt install ./tigrisfs-version.deb
+```sh
+mkdir -p /mnt/tigris/pitohui
+```
+
+Then mount the bucket:
+
+```sh
+tigrisfs pitohui /mnt/tigris/pitohui
 ```
 
 </TabItem>
-<TabItem value="rpm" label="Alma Linux / Fedora / Red Hat / Rocky Linux">
-
-Download the `.rpm` package from
-[the most recent release](https://github.com/tigrisdata/tigrisfs/releases) and
-then put it in a local folder. Install it with `dnf install`:
-
-```text
-sudo dnf install ./tigrisfs-version.rpm
-```
-
-</TabItem>
-</Tabs>
-
-Then open `/etc/default/tigrisfs` in your favorite text editor as root and do
-the following:
-
-- Uncomment the `AWS_ACCESS_KEY` and `AWS_SECRET_ACCESS_KEY` variables and paste
-  in the access key you got from the admin console.
-- Uncomment the `AWS_ENDPOINT_URL` variable so tigrisfs points to Tigris
+<TabItem value="systemd" label="Using systemd">
 
 If you're in an environment with `systemd`, mount your bucket with
 `systemctl enable --now`:
 
 ```text
-sudo systemctl enable --now tigrisfs@bucketname.service
+sudo systemctl enable --now tigrisfs@pitohui.service
 ```
 
-Your bucket will be available at `/mnt/tigris/bucketname`. If you need things to
-be writable by your user account, edit the `OPTS` line based on your account's
+Your bucket will be available at `/mnt/tigris/pitohui`. If you need things to be
+writable by your user account, edit the `OPTS` line based on your account's
 information. For example on my MacBook's Oracle Linux VM:
 
 ```text
@@ -199,9 +216,12 @@ permissions, I need this `OPTS` line:
 OPTS="-o allow_other --gid=1000 --uid=1000"
 ```
 
+</TabItem>
+</Tabs>
+
 This gives me permission to do whatever I want such as touching grass:
 
-```text
+```sh
 $ touch /mnt/tigris/pitohui/grass
 $ stat /mnt/tigris/pitohui/grass
   File: /mnt/tigris/pitohui/grass
@@ -223,6 +243,11 @@ $ aws s3 ls s3://pitohui | grep grass
 ```
 
 Perfect\!
+
+If you are looking to crank up performance, there are a few configuration
+options that you can tweak. Take a look at the
+[documentation](https://www.tigrisdata.com/docs/training/tigrisfs/#maximizing-performance)
+for more details.
 
 ## Under the hood
 
