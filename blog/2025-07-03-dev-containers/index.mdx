@@ -79,18 +79,6 @@ There has to be some kind of middle path. We should be able to have nice things
 like the ability to just open a git repo and get a working development
 environment, right?
 
-Last week I rediscovered [Development Containers](https://containers.dev/). When
-you use them, you do all your development in a container instead of on your
-machine directly. This container is defined using a
-[`devcontainer.json`](https://containers.dev/implementors/json_schema/) file and
-when you create a development container it’s rebuilt from scratch every time.
-This means that when you get your build working in development, it won’t just
-work on your machine. It’ll work on anyone’s machine.
-
-This even works if you use
-[GitHub Codespaces](https://github.com/features/codespaces), meaning that you
-don’t even need to install a copy of VS Code to work on the project.
-
 ## How it works
 
 When you package your app in a Docker image, you make a `Dockerfile` manifest
@@ -223,3 +211,7 @@ suffering to get to the point where you really can just clone a repo and get
 working language server integration. If you have also been suffering trying to
 get Python installed so you can vibe code your way to an IPO, give development
 containers a try.
+
+This even works if you use
+[GitHub Codespaces](https://github.com/features/codespaces), meaning that you
+don’t even need to install a copy of VS Code to work on the project.
