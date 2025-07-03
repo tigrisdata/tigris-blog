@@ -28,19 +28,27 @@ import InlineCta from "@site/src/components/InlineCta";
 
 ![](./shipyard.webp)
 
-Hi, I’m Xe, and I’m a recovering former site reliability expert.
-[Go](https://go.dev) is my main programming language of choice. I’d use it more,
-but I’ve found myself working adjacent to the AI industry and this means that I
-need to use Python more than I did in the past.
+If you're working in AI, you're probably working in Python. Maybe you have a
+webapp in whatever JS framework is popular right now, but most of the core
+tooling in AI is built in and around Python. So maybe it’s time for a Go
+programmer like me to figure out how the production Python gets made.
 
-This shouldn't be that big of a deal, my first programming language was Python,
-but there’s one small problem that has resulted in me thinking that I have been
-cursed by an elder deity: Python environment management tools randomly break for
-me. I’ve never been able to figure out why this happens, but in the last three
-years I have not been able to consistently have basic editing, testing, or other
-project management tooling work reliably. I’ve spent hours debugging weird
-SIGBUS errors that nobody else can recreate and other things that go way above
-and beyond normal debugging of issues.
+Last week I rediscovered [Development Containers](https://containers.dev/). When
+you use them, you do all your development in a container instead of on your
+machine directly. This container is defined using a
+[`devcontainer.json`](https://containers.dev/implementors/json_schema/) file and
+when you create a development container it’s rebuilt from scratch every time.
+This means that when you get your build working in development, it won’t just
+work on your machine. It’ll work on anyone’s machine.
+
+Having to use Python shouldn't be that big of a deal, my first programming
+language was Python, but there’s one small problem that has resulted in me
+thinking that I have been cursed by an elder deity: Python environment
+management tools randomly break for me. I’ve never been able to figure out why
+this happens, but in the last three years I have not been able to consistently
+have basic editing, testing, or other project management tooling work reliably.
+I’ve spent hours debugging weird SIGBUS errors that nobody else can recreate and
+other things that go way above and beyond normal debugging of issues.
 
 {/* truncate */}
 
@@ -51,8 +59,16 @@ open. This combined with Python not having
 [a standard documentation site like Go does](https://pkg.go.dev) means that
 figuring out what I can do is not easy.
 
-Making things worse, there’s as many ways to manage Python dependencies as there
-are grains of sand on the planet.
+Making things worse, there’s as many ways to manage Python as there are grains
+of sand on the planet. Starting to use Python means you get to make a lot of
+lovely decisions:
+
+- What environment manager are you using? Conda? Virtualenv? uv? Anaconda?
+  Miniconda? Homebrew? Pipenv?
+- Which version of Python does your project depend on? Many big libraries like
+  tensorflow do deep monkey patching of Python for performance reasons and as a
+  result they can’t work on newer versions of the interpreter.
+- How are you installing your dependencies? Pip? Pip3? Uv?
 
 <center style={{ padding: "1.5rem" }}>
   [![](./xkcd_standards.webp)](https://xkcd.com/927/)
@@ -121,14 +137,9 @@ walk in the park.
 
 You’re probably sitting there asking yourself “yeah, that’s cool, but what about
 Python?” Python presents a lot of challenges for development use because there’s
-so many variables at play:
-
-- What environment manager are you using? Conda? Virtualenv? uv? Anaconda?
-  Miniconda? Homebrew? Pipenv?
-- Which version of Python does your project depend on? Many big libraries like
-  tensorflow do deep monkey patching of Python for performance reasons and as a
-  result they can’t work on newer versions of the interpreter.
-- How are you installing your dependencies? Pip? Pip3? Uv?
+so many variables at play. If you know what you’re doing, this is fine and
+manageable. If you don’t, you end up in pip hell. You don't want to be in pip
+hell with me.
 
 One of the big things that development containers give teams that have a mix of
 Python experts and non-Python experts is the ability to just have a known
