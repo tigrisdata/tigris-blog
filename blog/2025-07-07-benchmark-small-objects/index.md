@@ -69,8 +69,8 @@ _Western North America (WNAM)_ location.
 ## Results
 
 Using YCSB we evaluated two distinct phases: (i) a bulk load of 10 million 1 KB
-objects and (ii) a mixed workload of one million operations composed of 80 %
-reads and 20 % writes.
+objects and (ii) a mixed workload of one million operations composed of 80%
+reads and 20% writes.
 
 ### Loading 10 million objects
 
