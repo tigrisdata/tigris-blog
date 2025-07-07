@@ -25,10 +25,10 @@ const MetricCell: React.FC<MetricCellProps> = ({
         verticalAlign: "middle",
       }}
     >
-      <div style={{ fontWeight: "bold", fontSize: "1rem" }}>
+      <div style={{ fontWeight: "bold", fontSize: "1.125rem" }}>
         {serviceValue} {unit}
       </div>
-      <div style={{ fontSize: "0.875rem", color: "#ccc" }}>
+      <div style={{ fontSize: "0.75rem", color: "#ccc" }}>
         ({rounded}% of Tigris)
       </div>
     </div>
