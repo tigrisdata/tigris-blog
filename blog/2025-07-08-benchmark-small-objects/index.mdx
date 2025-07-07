@@ -7,11 +7,48 @@ description: >
   We have spent a lot of time optimizing Tigris for small objects. This post
   shares the results of our benchmarks of comparing the performance of Tigris,
   AWS S3, and Cloudflare R2 when storing and retrieving small objects.
-image: https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/total-time-load-comparison.png
+image: ./benchmark-surfing.webp
 keywords: [object storage, blob storage, s3, benchmarks]
 authors: [ot]
 tags: [benchmarks]
 ---
+
+import InlineCta from "@site/src/components/InlineCta";
+import MetricCell from "@site/src/components/MetricCell";
+
+export const B = ({ t, unit }) => (
+  <div style={{ textAlign: "center", padding: "8px" }}>
+    <div style={{ fontWeight: "bold", fontSize: "1rem" }}>
+      {t} {unit}
+    </div>
+  </div>
+);
+
+export const R = ({ t }) => (
+  <div
+    style={{
+      textAlign: "center",
+      verticalAlign: "middle",
+      padding: "8px",
+    }}
+  >
+    <div style={{ fontSize: "1.125rem" }}>{t}</div>
+  </div>
+);
+
+export const M = ({ t, s }) => (
+  <MetricCell tigrisValue={t} serviceValue={s} unit="ms" />
+);
+
+export const S = ({ t, s }) => (
+  <MetricCell tigrisValue={t} serviceValue={s} unit="sec" />
+);
+
+export const O = ({ t, s }) => (
+  <MetricCell tigrisValue={t} serviceValue={s} unit="ops/sec" higherIsBetter />
+);
+
+![](./benchmark-surfing.webp)
 
 One of Tigris's standout capabilities is its performance when storing and
 retrieving small objects. To quantify this advantage, we benchmarked Tigris
@@ -19,6 +56,8 @@ against two popular object stores—AWS S3 and Cloudflare R2—and found that Ti
 consistently delivers higher throughput and lower latency. These gains let you
 use a single store for everything from tiny payloads to multi-gigabyte blobs
 without sacrificing efficiency.
+
+{/* truncate */}
 
 Under the hood, Tigris accelerates small-object workloads by (i) inlining very
 small objects inside metadata records, (ii) coalescing adjacent keys to reduce
@@ -36,12 +75,14 @@ methodology and provide links to all artifacts.
 
 ## Benchmark Setup
 
-We used the Yahoo Cloud Serving Benchmark (YCSB) to evaluate the three systems.
-A fork of the Go implementation, available at
-[github.com/tigrisdata/go-ycsb](https://github.com/tigrisdata/go-ycsb), adds
-native clients for S3-compatible APIs. A pull request to upstream
-[pingcap/go-ycsb, PR #307](https://github.com/pingcap/go-ycsb/pull/307) is
-pending review.
+We used the
+[Yahoo Cloud Serving Benchmark (YCSB)](https://en.wikipedia.org/wiki/YCSB) to
+evaluate the three systems. We had to make
+[our own fork](https://github.com/tigrisdata/go-ycsb) of the Go version of YCSB
+to add support for S3-compatible object storage systems (such as Tigris and
+Cloudflare R2). We have submitted our changes upstream
+[pingcap/go-ycsb, PR #307](https://github.com/pingcap/go-ycsb/pull/307). At the
+time of writing, our changes are waiting for review.
 
 All experiments ran on a neutral cloud provider to avoid vendor-specific
 optimizations. Table 1 summarizes the test instance:
@@ -58,13 +99,19 @@ _Table 1: Benchmark host configuration._
 
 ### YCSB Configuration
 
-We benchmarked a dataset of 10 million objects, each 1 KB in size. YCSB issued
-requests from 32 client threads using the workload file hosted at:
-https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/workloads3
+We benchmarked a dataset of 10 million objects, each 1 KB in size. You can view
+our configuration in the
+[tigrisdata-community/ycsb-benchmarks](https://github.com/tigrisdata-community/ycsb-benchmarks)
+GitHub repo, specifically at
+[results/10m-1kb/workloads3](https://github.com/tigrisdata-community/ycsb-benchmarks/blob/main/results/10m-1kb/workloads3).
 
-The Tigris bucket is globally replicated and thus needs no region flag. The AWS
-S3 bucket resided in _us-west-1_, and Cloudflare R2 automatically selected the
-_Western North America (WNAM)_ location.
+Our buckets were placed in the following regions per provider:
+
+| Provider      | Region                                                               |
+| :------------ | :------------------------------------------------------------------- |
+| Tigris        | `auto` (globally replicated, but operating against the `sjc` region) |
+| AWS S3        | `us-west-1` (Los Angeles, CA)                                        |
+| Cloudflare R2 | `WNAM` (Western North America)                                       |
 
 ## Results
 
@@ -74,9 +121,9 @@ reads and 20% writes.
 
 ### Loading 10 million objects
 
-Figure&nbsp;1 (below) plots the end-to-end ingestion time. Tigris finishes the
-load in **6711 s**, which is roughly **31 % faster than S3 (8826 s)** and **an
-order of magnitude faster than R2 (72063 s)**.
+Figure 1 (below) plots the end-to-end ingestion time. Tigris finishes the load
+in **6711 s**, which is roughly **31 % faster than S3 (8826 s)** and **an order
+of magnitude faster than R2 (72063 s)**.
 
 Latency drives this gap. As shown in Figure&nbsp;2, R2's p90 PUT latency tops
 **340 ms** whereas Tigris stays below **36 ms** and S3 below **38 ms**.
@@ -84,13 +131,13 @@ Table&nbsp;2 summarises the key statistics.
 
 _Table 2: Load-phase latency and throughput metrics._
 
-| Service | P50 Latency (ms) | P90 Latency (ms) | Runtime (sec) | Throughput (ops/sec) |
-| ------- | ---------------- | ---------------- | ------------- | -------------------- |
-| Tigris  | 16.799           | 35.871           | 6710.7        | 1490.2               |
-| S3      | 25.743           | 37.791           | 8826.4        | 1133.0               |
-| R2      | 197.119          | 340.223          | 72063         | 138.8                |
+| Service          | P50 Latency (ms)             | P90 Latency (ms)             | Runtime (sec)               | Throughput (ops/sec)            |
+| ---------------- | ---------------------------- | ---------------------------- | --------------------------- | ------------------------------- |
+| <R t="Tigris" /> | <B t={16.799} unit="ms" />   | <B t={35.871} unit="ms" />   | <B t={6710.7} unit="sec" /> | <B t={1490.2} unit="ops/sec" /> |
+| <R t="S3" />     | <M t={16.799} s={25.743} />  | <M t={35.871} s={37.791} />  | <S t={6710.7} s={8826.4} /> | <O t={1490.2} s={1133.0} />     |
+| <R t="R2" />     | <M t={16.799} s={197.119} /> | <M t={35.871} s={340.223} /> | <S t={6710.7} s={72063} />  | <O t={1490.2} s={138.8} />      |
 
-![Figure 1 – Total load time – Tigris vs S3 vs R2](https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/total-time-load-comparison.png "Total load time – Tigris vs S3 vs R2")
+![Figure 1 – Total load time – Tigris vs S3 vs R2](./total-time-load-comparison.webp "Total load time – Tigris vs S3 vs R2")
 
 _Figure 1: Total load time for loading 10 M 1 KB objects._
 
@@ -100,7 +147,7 @@ the data load.
 While comparing Tigris latency to S3, it is still better but not the same margin
 as compared to R2.
 
-![Figure 2 – PUT p90 latency – Tigris vs S3](https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/load-sjc-s3-tigris-insert-latency_p90_ms.png "PUT p90 latency – Tigris vs S3")
+![Figure 2 – PUT p90 latency – Tigris vs S3](./load-sjc-s3-tigris-insert-latency_p90_ms.webp "PUT p90 latency – Tigris vs S3")
 
 _Figure 2: PUT p90 latency during load phase._
 
@@ -111,11 +158,11 @@ and 80% read workload totaling 1 million operations.
 
 #### Read throughput
 
-![Figure 3 – Read throughput – Tigris vs R2](https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/run-sjc-r2-tigris-read-throughput_ops.png "Read throughput – Tigris vs R2")
+![Figure 3 – Read throughput – Tigris vs R2](./run-sjc-r2-tigris-read-throughput_ops.webp "Read throughput – Tigris vs R2")
 
 _Figure 3: Read throughput during mixed workload (Tigris vs R2)._
 
-![Figure 4 – Read throughput – Tigris vs S3](https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/run-sjc-s3-tigris-read-throughput_ops.png "Read throughput – Tigris vs S3")
+![Figure 4 – Read throughput – Tigris vs S3](./run-sjc-s3-tigris-read-throughput_ops.webp "Read throughput – Tigris vs S3")
 
 _Figure 4: Read throughput during mixed workload (Tigris vs S3)._
 
@@ -126,11 +173,11 @@ headroom lets applications serve real-time workloads directly from Tigris.
 
 #### Read latency
 
-![Figure 5 – Read p90 latency – Tigris vs R2](https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/run-sjc-r2-tigris-read-latency_p90_ms.png "Read p90 latency – Tigris vs R2")
+![Figure 5 – Read p90 latency – Tigris vs R2](./run-sjc-r2-tigris-read-latency_p90_ms.webp "Read p90 latency – Tigris vs R2")
 
 _Figure 5: Read p90 latency during mixed workload (Tigris vs R2)._
 
-![Figure 6 – Read p90 latency – Tigris vs S3](https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/run-sjc-s3-tigris-read-latency_p90_ms.png "Read p90 latency – Tigris vs S3")
+![Figure 6 – Read p90 latency – Tigris vs S3](./run-sjc-s3-tigris-read-latency_p90_ms.webp "Read p90 latency – Tigris vs S3")
 
 _Figure 6: Read p90 latency during mixed workload (Tigris vs S3)._
 
@@ -140,11 +187,11 @@ closer to a key-value store than a traditional object store.
 
 #### Write throughput
 
-![Figure 7 – Write throughput – Tigris vs R2](https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/run-sjc-r2-tigris-update-throughput_ops.png "Write throughput – Tigris vs R2")
+![Figure 7 – Write throughput – Tigris vs R2](./run-sjc-r2-tigris-update-throughput_ops.webp "Write throughput – Tigris vs R2")
 
 _Figure 7: Write throughput during mixed workload (Tigris vs R2)._
 
-![Figure 8 – Write throughput – Tigris vs S3](https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/run-sjc-s3-tigris-update-throughput_ops.png "Write throughput – Tigris vs S3")
+![Figure 8 – Write throughput – Tigris vs S3](./run-sjc-s3-tigris-update-throughput_ops.webp "Write throughput – Tigris vs S3")
 
 _Figure 8: Write throughput during mixed workload (Tigris vs S3)._
 
@@ -154,11 +201,11 @@ for bursty ingest pipelines.
 
 #### Write latency
 
-![Figure 9 – Write p90 latency – Tigris vs R2](https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/run-sjc-r2-tigris-update-latency_p90_ms.png "Write p90 latency – Tigris vs R2")
+![Figure 9 – Write p90 latency – Tigris vs R2](./run-sjc-r2-tigris-update-latency_p90_ms.webp "Write p90 latency – Tigris vs R2")
 
 _Figure 9: Write p90 latency during mixed workload (Tigris vs R2)._
 
-![Figure 10 – Write p90 latency – Tigris vs S3](https://raw.githubusercontent.com/tigrisdata-community/ycsb-benchmarks/refs/heads/main/results/10m-1kb/processed/plots/run-sjc-s3-tigris-update-latency_p90_ms.png "Write p90 latency – Tigris vs S3")
+![Figure 10 – Write p90 latency – Tigris vs S3](./run-sjc-s3-tigris-update-latency_p90_ms.webp "Write p90 latency – Tigris vs S3")
 
 _Figure 10: Write p90 latency during mixed workload (Tigris vs S3)._
 
@@ -168,16 +215,21 @@ break user-facing workloads.
 
 To summarize:
 
-_Table 3: Mixed-workload latency and throughput metrics._
+_Table 3: Read and throughput metrics._
 
-| Service       | P50 Latency (ms) | P90 Latency (ms) | Runtime (sec) | Throughput (ops/sec) |
-| ------------- | ---------------- | ---------------- | ------------- | -------------------- |
-| Tigris Read   | 5.399            | 7.867            | 241.7         | 3309.8               |
-| Tigris Update | 12.855           | 16.543           | 241.6         | 828.1                |
-| S3 Read       | 22.415           | 42.047           | 896.8         | 891.5                |
-| S3 Update     | 26.975           | 41.215           | 896.8         | 223.6                |
-| R2 Read       | 118.591          | 198.911          | 4705.5        | 170.0                |
-| R2 Update     | 605.695          | 680.959          | 4705.3        | 42.6                 |
+| Service          | P50 Latency (ms)            | P90 Latency (ms)            | Runtime (sec)              | Throughput (ops/sec)            |
+| ---------------- | --------------------------- | --------------------------- | -------------------------- | ------------------------------- |
+| <R t="Tigris" /> | <B t={5.399} unit="ms" />   | <B t={7.867} unit="ms" />   | <B t={241.7} unit="sec" /> | <B t={3309.8} unit="ops/sec" /> |
+| <R t="S3" />     | <M t={5.399} s={22.415} />  | <M t={7.867} s={42.047} />  | <S t={241.7} s={896.8} />  | <O t={3309.8} s={891.5} />      |
+| <R t="R2" />     | <M t={5.399} s={605.695} /> | <M t={7.867} s={680.959} /> | <S t={241.7} s={4705.3} /> | <O t={3309.8} s={42.6} />       |
+
+_Table 4: Update and throughput metrics._
+
+| Service          | P50 Latency (ms)             | P90 Latency (ms)             | Runtime (sec)              | Throughput (ops/sec)           |
+| ---------------- | ---------------------------- | ---------------------------- | -------------------------- | ------------------------------ |
+| <R t="Tigris" /> | <B t={12.855} unit="ms" />   | <B t={16.543} unit="ms" />   | <B t={241.6} unit="sec" /> | <B t={828.1} unit="ops/sec" /> |
+| <R t="S3" />     | <M t={12.855} s={26.975} />  | <M t={16.543} s={41.215} />  | <S t={242.6} s={896.8} />  | <O t={828.1} s={223.6} />      |
+| <R t="R2" />     | <M t={12.855} s={605.695} /> | <M t={16.543} s={680.959} /> | <S t={242.6} s={4705.3} /> | <O t={828.1} s={42.6} />       |
 
 ## Conclusion
 
