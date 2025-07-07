@@ -7,7 +7,7 @@ description: >
   We have spent a lot of time optimizing Tigris for small objects. This post
   shares the results of our benchmarks of comparing the performance of Tigris,
   AWS S3, and Cloudflare R2 when storing and retrieving small objects.
-image: ./benchmark-surfing.webp
+image: ./benchmark-science.webp
 keywords: [object storage, blob storage, s3, benchmarks]
 authors: [ot]
 tags: [benchmarks]
@@ -48,7 +48,7 @@ export const O = ({ t, s }) => (
   <MetricCell tigrisValue={t} serviceValue={s} unit="ops/sec" higherIsBetter />
 );
 
-![](./benchmark-surfing.webp)
+![](./benchmark-science.webp)
 
 One of Tigris's standout capabilities is its performance when storing and
 retrieving small objects. To quantify this advantage, we benchmarked Tigris

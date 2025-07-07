@@ -7,23 +7,15 @@ interface MetricCellProps {
   tigrisValue: number;
   /** unit to display, e.g. "ms", "ops/sec" */
   unit: string;
-  /**
-   * If true, then diff% > 100 → ✅ (for throughput, ops/sec, etc).
-   * If false (default), diff% < 100 → ✅ (for latency, ms, etc).
-   */
-  higherIsBetter?: boolean;
 }
 
 const MetricCell: React.FC<MetricCellProps> = ({
   serviceValue,
   tigrisValue,
   unit,
-  higherIsBetter = false,
 }) => {
   const diffPercent = (serviceValue / tigrisValue) * 100;
   const rounded = Math.round(diffPercent);
-  const isBetter = higherIsBetter ? rounded > 100 : rounded < 100;
-  const statusEmoji = isBetter ? "✅" : "❌";
 
   return (
     <div
@@ -37,7 +29,7 @@ const MetricCell: React.FC<MetricCellProps> = ({
         {serviceValue} {unit}
       </div>
       <div style={{ fontSize: "0.875rem", color: "#ccc" }}>
-        ({rounded}% of Tigris)&nbsp;{statusEmoji}
+        ({rounded}% of Tigris)
       </div>
     </div>
   );
