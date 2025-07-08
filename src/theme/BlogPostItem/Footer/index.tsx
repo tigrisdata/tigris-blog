@@ -1,7 +1,6 @@
 import React, { type ReactNode } from "react";
 import clsx from "clsx";
 import { useBlogPost } from "@docusaurus/theme-common/internal";
-import { ThemeClassNames } from "@docusaurus/theme-common";
 import TagsListInline from "@theme/TagsListInline";
 import ReadMoreLink from "@theme/BlogPostItem/Footer/ReadMoreLink";
 
@@ -25,13 +24,7 @@ export default function BlogPostItemFooter(): ReactNode {
     return (
       <footer className="docusaurus-mt-lg">
         {tagsExists && (
-          <div
-            className={clsx(
-              "row",
-              "margin-top--sm",
-              (ThemeClassNames.blog as any).blogFooterEditMetaRow
-            )}
-          >
+          <div className={clsx("row", "margin-top--sm")}>
             <div className="col">
               <TagsListInline tags={tags} />
             </div>

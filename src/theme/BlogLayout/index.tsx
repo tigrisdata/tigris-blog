@@ -26,26 +26,17 @@ export default function BlogLayout(props: Props): ReactNode {
                 }}
               >
                 <li style={{ marginRight: "0.5rem" }}>
-                  <Link
-                    to="/blog/tags/engineering"
-                    className="button button--secondary"
-                  >
+                  <Link to="/blog/" className="button button--secondary">
                     Engineering
                   </Link>
                 </li>
                 <li style={{ marginRight: "0.5rem" }}>
-                  <Link
-                    to="/blog/tags/product"
-                    className="button button--secondary"
-                  >
+                  <Link to="/blog/" className="button button--secondary">
                     Product & Design
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    to="/blog/tags/updates"
-                    className="button button--secondary"
-                  >
+                  <Link to="/blog/" className="button button--secondary">
                     Updates
                   </Link>
                 </li>
