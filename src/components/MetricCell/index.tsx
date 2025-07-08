@@ -14,8 +14,8 @@ const MetricCell: React.FC<MetricCellProps> = ({
   tigrisValue,
   unit,
 }) => {
-  const diffPercent = (serviceValue / tigrisValue) * 100;
-  const rounded = Math.round(diffPercent);
+  const diffMultiple = serviceValue / tigrisValue;
+  const multiple = Math.round(diffMultiple * 100) / 100;
 
   return (
     <div
@@ -29,7 +29,7 @@ const MetricCell: React.FC<MetricCellProps> = ({
         {serviceValue} {unit}
       </div>
       <div style={{ fontSize: "0.75rem", color: "#ccc" }}>
-        ({rounded}% of Tigris)
+        ({multiple}x Tigris)
       </div>
     </div>
   );
