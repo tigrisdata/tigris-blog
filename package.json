@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "dev": "docusaurus start",
-    "start": "docusaurus start",
+    "dev": "docusaurus start --host 0.0.0.0",
+    "start": "docusaurus start --host 0.0.0.0",
     "build": "docusaurus build",
     "vercel-build": "[ \"$VERCEL\" = 1 ] && docusaurus build --out-dir build/blog && npm run vercel-copy-404",
     "vercel-copy-404": "[ \"$VERCEL\" = 1 ] && echo \"copying 404\" && cp build/blog/404.html build/",
