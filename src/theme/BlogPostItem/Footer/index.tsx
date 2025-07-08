@@ -1,21 +1,13 @@
 import React, { type ReactNode } from "react";
 import clsx from "clsx";
-import { useBlogPost } from "@docusaurus/plugin-content-blog/client";
+import { useBlogPost } from "@docusaurus/theme-common/internal";
 import { ThemeClassNames } from "@docusaurus/theme-common";
-import EditMetaRow from "@theme/EditMetaRow";
 import TagsListInline from "@theme/TagsListInline";
 import ReadMoreLink from "@theme/BlogPostItem/Footer/ReadMoreLink";
 
 export default function BlogPostItemFooter(): ReactNode {
   const { metadata, isBlogPostPage } = useBlogPost();
-  const {
-    tags,
-    title,
-    editUrl,
-    hasTruncateMarker,
-    lastUpdatedBy,
-    lastUpdatedAt,
-  } = metadata;
+  const { tags, title, editUrl, hasTruncateMarker } = metadata;
 
   // A post is truncated if it's in the "list view" and it has a truncate marker
   const truncatedPost = !isBlogPostPage && hasTruncateMarker;
@@ -30,8 +22,6 @@ export default function BlogPostItemFooter(): ReactNode {
 
   // BlogPost footer - details view
   if (isBlogPostPage) {
-    const canDisplayEditMetaRow = !!(editUrl || lastUpdatedAt || lastUpdatedBy);
-
     return (
       <footer className="docusaurus-mt-lg">
         {tagsExists && (
@@ -39,24 +29,13 @@ export default function BlogPostItemFooter(): ReactNode {
             className={clsx(
               "row",
               "margin-top--sm",
-              ThemeClassNames.blog.blogFooterEditMetaRow
+              (ThemeClassNames.blog as any).blogFooterEditMetaRow
             )}
           >
             <div className="col">
               <TagsListInline tags={tags} />
             </div>
           </div>
-        )}
-        {canDisplayEditMetaRow && (
-          <EditMetaRow
-            className={clsx(
-              "margin-top--sm",
-              ThemeClassNames.blog.blogFooterEditMetaRow
-            )}
-            editUrl={editUrl}
-            lastUpdatedAt={lastUpdatedAt}
-            lastUpdatedBy={lastUpdatedBy}
-          />
         )}
       </footer>
     );

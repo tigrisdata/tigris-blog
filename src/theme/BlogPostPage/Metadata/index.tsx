@@ -1,19 +1,20 @@
-import React, {type ReactNode} from 'react';
-import {PageMetadata} from '@docusaurus/theme-common';
-import {useBlogPost} from '@docusaurus/plugin-content-blog/client';
+import React, { type ReactNode } from "react";
+import { PageMetadata } from "@docusaurus/theme-common";
+import { useBlogPost } from "@docusaurus/theme-common/internal";
 
 export default function BlogPostPageMetadata(): ReactNode {
-  const {assets, metadata} = useBlogPost();
-  const {title, description, date, tags, authors, frontMatter} = metadata;
+  const { assets, metadata } = useBlogPost();
+  const { title, description, date, tags, authors, frontMatter } = metadata;
 
-  const {keywords} = frontMatter;
+  const { keywords } = frontMatter;
   const image = assets.image ?? frontMatter.image;
   return (
     <PageMetadata
-      title={frontMatter.title_meta ?? title}
+      title={(frontMatter.title_meta as string) ?? title}
       description={description}
       keywords={keywords}
-      image={image}>
+      image={image}
+    >
       <meta property="og:type" content="article" />
       <meta property="article:published_time" content={date} />
       {/* TODO double check those article meta array syntaxes, see https://ogp.me/#array */}
@@ -23,13 +24,13 @@ export default function BlogPostPageMetadata(): ReactNode {
           content={authors
             .map((author) => author.url)
             .filter(Boolean)
-            .join(',')}
+            .join(",")}
         />
       )}
       {tags.length > 0 && (
         <meta
           property="article:tag"
-          content={tags.map((tag) => tag.label).join(',')}
+          content={tags.map((tag) => tag.label).join(",")}
         />
       )}
     </PageMetadata>
