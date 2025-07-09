@@ -62,9 +62,15 @@ export default function BlogLayout(props: Props): ReactNode {
               </ul>
             </div>
           )}
-          <main className={clsx("row row--no-gutters", "col", "col--12")}>
+          <main
+            className={clsx("row row--no-gutters", "col", {
+              "col--12": !toc,
+              "col--10": toc,
+            })}
+          >
             {children}
           </main>
+
           {toc && <div className="col col--2">{toc}</div>}
         </div>
       </div>
