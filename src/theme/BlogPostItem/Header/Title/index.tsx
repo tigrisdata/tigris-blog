@@ -9,7 +9,7 @@ import styles from "./styles.module.css";
 export default function BlogPostItemHeaderTitle({
   className,
 }: Props): ReactNode {
-  const { metadata, isBlogPostPage } = useBlogPost();
+  const { metadata, isBlogPostPage, assets } = useBlogPost();
   const tag = metadata.tags[0];
 
   const { permalink, title } = metadata;
@@ -38,6 +38,15 @@ export default function BlogPostItemHeaderTitle({
           isBlogPostPage ? styles.titleBlogPostPage : styles.title
         )}
       >
+        {!isBlogPostPage && (
+          <Link to={permalink} className={styles.titleImageLink}>
+            <img
+              src={assets.image}
+              alt={metadata.title}
+              className={styles.titleImage}
+            />
+          </Link>
+        )}
         {isBlogPostPage ? title : <Link to={permalink}>{title}</Link>}
       </TitleHeading>
     </>

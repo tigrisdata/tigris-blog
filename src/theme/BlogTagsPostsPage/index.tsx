@@ -42,13 +42,15 @@ function BlogTagsPostsPageContent({
 }: Props): ReactNode {
   return (
     <BlogLayout sidebar={sidebar}>
-      <header className="margin-bottom--sm col col--12">
-        <Link to="/blog" className="">
-          Blog
-        </Link>
-        {" / "}
-        <h1>{tag.label}</h1>
-      </header>
+      <div className="row col col--12">
+        <header className="margin-bottom--sm col col--12">
+          <Link to="/blog" className="">
+            Blog
+          </Link>
+          {" / "}
+          <h1>{tag.label}</h1>
+        </header>
+      </div>
       <BlogPostItems items={items} />
       <BlogListPaginator metadata={listMetadata} />
     </BlogLayout>

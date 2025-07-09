@@ -48,7 +48,7 @@ const config = {
         docs: false,
         blog: {
           routeBasePath: "/",
-          postsPerPage: 9,
+          postsPerPage: 6,
           blogTitle: "Tigris Blog",
           blogDescription: "A blog dedicated to all things storage!",
           blogSidebarTitle: "All our posts",

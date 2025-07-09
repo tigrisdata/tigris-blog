@@ -17,14 +17,16 @@ export default function BlogPostItem({
     <BlogPostItemContainer
       className={clsx(
         className,
-        styles.item,
         "col",
-        isBlogPostPage ? "col--12" : "col--4 margin-bottom--xl"
+        { [styles.item]: !isBlogPostPage },
+        isBlogPostPage ? "col--12" : "col--6 margin-bottom--xl"
       )}
     >
-      <BlogPostItemHeader />
-      <BlogPostItemContent>{children}</BlogPostItemContent>
-      <BlogPostItemFooter />
+      <div className={clsx("padding--md")}>
+        <BlogPostItemHeader />
+        <BlogPostItemContent>{children}</BlogPostItemContent>
+        <BlogPostItemFooter />
+      </div>
     </BlogPostItemContainer>
   );
 }

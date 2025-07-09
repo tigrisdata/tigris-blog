@@ -6,6 +6,10 @@
   font-size: 2rem;
 }
 
+.titleImage {
+  margin-bottom: 1rem;
+}
+
 /**
   Blog post title should be smaller on smaller devices
 **/

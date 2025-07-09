@@ -9,7 +9,14 @@ export default function BlogPostItemContent({
   children,
   className,
 }: Props): ReactNode {
-  const { isBlogPostPage } = useBlogPost();
+  const { isBlogPostPage, metadata } = useBlogPost();
+
+  if (!isBlogPostPage && metadata.description) {
+    return (
+      <div className={clsx("markdown", className)}>{metadata.description}</div>
+    );
+  }
+
   return (
     <div
       // This ID is used for the feed generation to locate the main content

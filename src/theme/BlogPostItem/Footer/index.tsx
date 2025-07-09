@@ -42,13 +42,6 @@ export default function BlogPostItemFooter(): ReactNode {
             <ReadMoreLink blogPostTitle={title} to={metadata.permalink} />
           </div>
         )}
-        {tagsExists && (
-          <div
-            className={clsx("col margin-top--sm", { "col--12": truncatedPost })}
-          >
-            <TagsListInline tags={tags} />
-          </div>
-        )}
       </footer>
     );
   }
