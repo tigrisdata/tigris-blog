@@ -9,7 +9,9 @@ export default function BlogLayout(props: Props): ReactNode {
   const { toc, children, ...layoutProps } = props;
 
   const location = useLocation();
-  const isHomePage = location.pathname.endsWith("/blog/");
+  const isHomePage =
+    location.pathname.endsWith("/blog/") ||
+    location.pathname.includes("/blog/page");
 
   return (
     <Layout {...layoutProps}>
@@ -27,7 +29,7 @@ export default function BlogLayout(props: Props): ReactNode {
               >
                 <li style={{ marginRight: "0.5rem" }}>
                   <Link
-                    to="/blog/"
+                    to="/blog/tags/engineering"
                     className="button button--lg button--secondary"
                   >
                     Engineering
@@ -35,15 +37,23 @@ export default function BlogLayout(props: Props): ReactNode {
                 </li>
                 <li style={{ marginRight: "0.5rem" }}>
                   <Link
-                    to="/blog/"
+                    to="/blog/tags/product-and-design"
                     className="button button--lg button--secondary"
                   >
                     Product & Design
                   </Link>
                 </li>
+                <li style={{ marginRight: "0.5rem" }}>
+                  <Link
+                    to="/blog/tags/case-studies"
+                    className="button button--lg button--secondary"
+                  >
+                    Case Studies
+                  </Link>
+                </li>
                 <li>
                   <Link
-                    to="/blog/"
+                    to="/blog/tags/updates"
                     className="button button--lg button--secondary"
                   >
                     Updates
