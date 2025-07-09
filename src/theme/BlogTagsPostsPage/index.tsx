@@ -43,7 +43,7 @@ function BlogTagsPostsPageContent({
   return (
     <BlogLayout sidebar={sidebar}>
       <div className="row col col--12">
-        <header className="margin-bottom--sm col col--12">
+        <header className="margin-bottom--sm">
           <Link to="/blog" className="">
             Blog
           </Link>
