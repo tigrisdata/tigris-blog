@@ -2,7 +2,6 @@ import React, { type ReactNode } from "react";
 import clsx from "clsx";
 import Layout from "@theme/Layout";
 import type { Props } from "@theme/BlogLayout";
-import Link from "@docusaurus/Link";
 import { useLocation } from "@docusaurus/router";
 import Navigation from "@site/src/components/Navigation/Navigation";
 
