@@ -3,5 +3,5 @@
 }
 
 .item:hover {
-  background-color: var(--ifm-code-background);
+  /* background-color: var(--ifm-code-background); */
 }

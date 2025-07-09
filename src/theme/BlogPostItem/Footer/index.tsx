@@ -2,11 +2,11 @@ import React, { type ReactNode } from "react";
 import clsx from "clsx";
 import { useBlogPost } from "@docusaurus/theme-common/internal";
 import TagsListInline from "@theme/TagsListInline";
-import ReadMoreLink from "@theme/BlogPostItem/Footer/ReadMoreLink";
+import BlogPostItemHeaderInfo from "../Header/Info";
 
 export default function BlogPostItemFooter(): ReactNode {
   const { metadata, isBlogPostPage } = useBlogPost();
-  const { tags, title, editUrl, hasTruncateMarker } = metadata;
+  const { tags, editUrl, hasTruncateMarker } = metadata;
 
   // A post is truncated if it's in the "list view" and it has a truncate marker
   const truncatedPost = !isBlogPostPage && hasTruncateMarker;
@@ -32,17 +32,7 @@ export default function BlogPostItemFooter(): ReactNode {
         )}
       </footer>
     );
-  }
-  // BlogPost footer - list view
-  else {
-    return (
-      <footer className="row margin-top--sm">
-        {truncatedPost && (
-          <div className={clsx("col col--12")}>
-            <ReadMoreLink blogPostTitle={title} to={metadata.permalink} />
-          </div>
-        )}
-      </footer>
-    );
+  } else {
+    return <BlogPostItemHeaderInfo />;
   }
 }

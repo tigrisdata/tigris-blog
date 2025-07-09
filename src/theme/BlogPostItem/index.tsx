@@ -19,14 +19,12 @@ export default function BlogPostItem({
         className,
         "col",
         { [styles.item]: !isBlogPostPage },
-        isBlogPostPage ? "col--12" : "col--6 margin-bottom--lg"
+        isBlogPostPage ? "col--12" : "col--4 margin-bottom--lg"
       )}
     >
-      <div className={clsx("padding--md")}>
-        <BlogPostItemHeader />
-        <BlogPostItemContent>{children}</BlogPostItemContent>
-        <BlogPostItemFooter />
-      </div>
+      <BlogPostItemHeader />
+      <BlogPostItemContent>{children}</BlogPostItemContent>
+      <BlogPostItemFooter />
     </BlogPostItemContainer>
   );
 }
