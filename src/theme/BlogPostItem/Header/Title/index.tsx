@@ -38,7 +38,7 @@ export default function BlogPostItemHeaderTitle({
           isBlogPostPage ? styles.titleBlogPostPage : styles.title
         )}
       >
-        {!isBlogPostPage && (
+        {!isBlogPostPage && assets.image && (
           <Link to={permalink} className={styles.titleImageLink}>
             <img
               src={assets.image}

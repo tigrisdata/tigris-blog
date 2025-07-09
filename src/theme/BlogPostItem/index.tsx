@@ -19,7 +19,7 @@ export default function BlogPostItem({
         className,
         "col",
         { [styles.item]: !isBlogPostPage },
-        isBlogPostPage ? "col--12" : "col--6 margin-bottom--xl"
+        isBlogPostPage ? "col--12" : "col--6 margin-bottom--lg"
       )}
     >
       <div className={clsx("padding--md")}>

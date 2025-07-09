@@ -18,35 +18,38 @@ export default function BlogLayout(props: Props): ReactNode {
           {isHomePage && (
             <div className="row col col--12" style={{ marginBottom: "1rem" }}>
               <ul
-                className="button-group col col--8"
+                className="button-group col col--12"
                 style={{
                   listStyle: "none",
-                  padding: "0 0 0 1.5rem",
-                  margin: "0 0 1rem 0",
+                  padding: "0 0 0 1rem",
+                  margin: "0.5rem 0 1rem 0",
                 }}
               >
                 <li style={{ marginRight: "0.5rem" }}>
-                  <Link to="/blog/" className="button button--secondary">
+                  <Link
+                    to="/blog/"
+                    className="button button--lg button--secondary"
+                  >
                     Engineering
                   </Link>
                 </li>
                 <li style={{ marginRight: "0.5rem" }}>
-                  <Link to="/blog/" className="button button--secondary">
+                  <Link
+                    to="/blog/"
+                    className="button button--lg button--secondary"
+                  >
                     Product & Design
                   </Link>
                 </li>
                 <li>
-                  <Link to="/blog/" className="button button--secondary">
+                  <Link
+                    to="/blog/"
+                    className="button button--lg button--secondary"
+                  >
                     Updates
                   </Link>
                 </li>
               </ul>
-
-              <div className="col col--4">
-                <div className="search-bar align-right">
-                  <input type="text" placeholder="Search" />
-                </div>
-              </div>
             </div>
           )}
           <main className={clsx("row row--no-gutters", "col", "col--12")}>
