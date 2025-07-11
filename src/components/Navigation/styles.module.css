@@ -1,0 +1,10 @@
+.container {
+  background-color: var(--ifm-code-background);
+  border-radius: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.navigation {
+  list-style: none;
+  padding: 1.5rem;
+}

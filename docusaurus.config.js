@@ -48,11 +48,11 @@ const config = {
         docs: false,
         blog: {
           routeBasePath: "/",
-          postsPerPage: 10,
+          postsPerPage: 9,
           blogTitle: "Tigris Blog",
           blogDescription: "A blog dedicated to all things storage!",
           blogSidebarTitle: "All our posts",
-          blogSidebarCount: "ALL",
+          blogSidebarCount: 0,
           showReadingTime: true,
           feedOptions: {
             type: "all",
