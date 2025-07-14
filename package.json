@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "dev": "docusaurus start",
+    "dev": "docusaurus start --host 0.0.0.0",
     "start": "docusaurus start",
     "build": "docusaurus build",
     "vercel-build": "[ \"$VERCEL\" = 1 ] && docusaurus build --out-dir build/blog && npm run vercel-copy-404",
