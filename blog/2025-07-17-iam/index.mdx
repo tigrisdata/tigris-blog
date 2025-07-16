@@ -148,17 +148,14 @@ job in the new IAM Policy Builder, and adding a time based restriction:
 
 And here’s the policy JSON for that:
 
-```
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Sid": "WikipediaReadOnly",
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ],
+      "Action": ["s3:GetObject", "s3:ListBucket"],
       "Resource": [
         "arn:aws:s3:::contoso-training-datasets-wikipedia-2025-07-01",
         "arn:aws:s3:::contoso-training-datasets-wikipedia-2025-07-01/*"
@@ -167,10 +164,7 @@ And here’s the policy JSON for that:
     {
       "Sid": "BaseModelsReadOnly",
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ],
+      "Action": ["s3:GetObject", "s3:ListBucket"],
       "Resource": [
         "arn:aws:s3:::contoso-base-models",
         "arn:aws:s3:::contoso-base-models/*"
@@ -184,7 +178,6 @@ And here’s the policy JSON for that:
         "s3:ListBucket",
         "s3:PutObject",
         "s3:PutObjectAcl",
-        "s3:CreateMultipartUpload",
         "s3:AbortMultipartUpload",
         "s3:ListMultipartUploadParts",
         "s3:CompleteMultipartUpload"
