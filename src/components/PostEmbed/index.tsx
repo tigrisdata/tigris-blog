@@ -10,6 +10,8 @@ interface PostEmbedProps {
   username: string;
   /** RFC3339 timestamp, e.g. "2025-07-11T13:46:00Z" */
   timestamp: string;
+  /** image link */
+  imageUrl: string;
   /** the actual post text */
   children: React.ReactNode;
 }
@@ -18,6 +20,7 @@ const PostEmbed: React.FC<PostEmbedProps> = ({
   link,
   userId,
   username,
+  imageUrl,
   timestamp,
   children,
 }) => {
@@ -39,11 +42,7 @@ const PostEmbed: React.FC<PostEmbedProps> = ({
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.header}>
-        <img
-          src={`https://avatars.bsky.social/${userId}.png`}
-          alt={username}
-          className={styles.avatar}
-        />
+        <img src={imageUrl} alt={username} className={styles.avatar} />
         <div className={styles.userInfo}>
           <span className={styles.username}>{username}</span>
           <span className={styles.userId}>@{userId}</span>

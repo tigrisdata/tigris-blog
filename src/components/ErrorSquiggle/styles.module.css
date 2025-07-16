@@ -11,13 +11,13 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0px; /* yank it down 2px so it’s not cut off */
-  height: 3px; /* height of the wave */
+  bottom: -2px; /* yank it down 2px so it’s not cut off */
+  height: 1.5px; /* height of the wave */
   pointer-events: none;
   z-index: 1;
 
   /* same SVG tile as before, but we’ll scale it to 1ch wide */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='3' viewBox='0 0 20 3'%3E%3Cpath d='M0 3 Q5 0 10 3 T20 3' stroke='red' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='3' viewBox='0 0 20 3'%3E%3Cpath d='M0 3 Q5 0 10 3 T20 3' stroke='red' stroke-width='2' fill='none'/%3E%3C/svg%3E");
   background-repeat: repeat-x;
   background-size: 1ch 3px; /* one full wave per “character” width */
   background-position: 0 100%;

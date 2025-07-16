@@ -1,8 +1,8 @@
 .container {
-  background-color: #0f172a; /* slate‑900 */
+  background-color: oklch(12.9% 0.042 264.695);
   border-radius: 16px;
   padding: 16px;
-  color: #fff;
+  color: oklch(98.4% 0.003 247.858);
   font-family: system-ui, sans-serif;
   width: 600px;
   margin: 0 auto; /* center horizontally */
@@ -32,7 +32,7 @@
 }
 
 .userId {
-  color: #94a3b8; /* slate‑400 */
+  color: oklch(86.9% 0.022 252.894); /* slate‑300 */
   font-size: 14px;
   line-height: 1.2;
 }
@@ -45,7 +45,7 @@
 
 .timestamp {
   font-size: 14px;
-  color: #94a3b8; /* slate‑400 */
+  color: oklch(86.9% 0.022 252.894); /* slate‑700 */
 }
 
 .divider {
