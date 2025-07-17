@@ -21,8 +21,18 @@
       "target": "/home/vscode/.local/share/atuin"
     }
   ],
-  // 👇 Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [3000]
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "unifiedjs.vscode-mdx",
+        "esbenp.prettier-vscode",
+        "streetsidesoftware.code-spell-checker",
+        "ms-vscode.wordcount",
+        "SirTori.indenticator",
+        "bpruitt-goddard.mermaid-markdown-syntax-highlighting"
+      ]
+    }
+  }
   // 👇 Use 'postCreateCommand' to run commands after the container is created.
   // 👇 Configure tool-specific properties.
   // "customizations": {},

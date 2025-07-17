@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "unifiedjs.vscode-mdx",
+    "esbenp.prettier-vscode",
+    "streetsidesoftware.code-spell-checker",
+    "ms-vscode.wordcount",
+    "sirtori.indenticator",
+    "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
+    "ms-vscode-remote.remote-containers"
+  ]
+}
