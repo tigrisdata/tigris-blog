@@ -31,6 +31,13 @@ you have?
 
 {/* truncate */}
 
+| 🏗️ **Approach**            | 💾 **Storage Format**       | 🚀 **Streaming**         | 🔄 **DDP Compatible**       | ⚙️ **Setup Complexity** |
+| -------------------------- | --------------------------- | ------------------------ | --------------------------- | ----------------------- |
+| **Custom IterableDataset** | Raw files + manual sharding | ✅ Manual implementation | ✅ Manual sharding required | 🔴 High                 |
+| **WebDataset**             | `.tar` shards over HTTP/S3  | ✅ Built-in streaming    | ✅ Automatic                | 🟡 Medium               |
+| **HuggingFace Datasets**   | Various formats on HF Hub   | ✅ Streaming mode        | ⚠️ Partial support          | 🟢 Low                  |
+| **LanceDB + Tigris**       | Optimized columnar format   | ✅ Native streaming      | ✅ Built-in sharding        | 🟢 Low                  |
+
 What if there were a better way to do this? What if you could store however much
 data you wanted and let the infrastructure layer figure it all out for you? This
 is possible with the combination of [LanceDB](https://www.lancedb.com/), a
