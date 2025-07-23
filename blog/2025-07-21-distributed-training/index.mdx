@@ -323,8 +323,10 @@ memory, but the main difference is how they end up doing it:
   `DataLoader` shuffling and sampling.
 
 In short, use `SafeLanceDataset` for data that you know is smaller than memory
-and will never change. If the dataset is continuously growing or is so large
-that it can’t fit on a single machine, use `LanceDataset`.
+and will never change. If the dataset is continuously growing (such as a
+continuously updated dataset of social media posts) or is so large that even the
+index of it can’t fit on a single machine (such as a dataset of the entire set
+of English language YouTube videos), use `LanceDataset`.
 
 We’re going to show off what it looks like to use both options. In either case,
 the goal is to decode image bytes into tensors and apply any preprocessing
