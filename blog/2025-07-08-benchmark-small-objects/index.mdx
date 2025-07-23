@@ -85,12 +85,10 @@ methodology and provide links to all artifacts.
 
 We used the
 [Yahoo Cloud Serving Benchmark (YCSB)](https://en.wikipedia.org/wiki/YCSB) to
-evaluate the three systems. We had to make
-[our own fork](https://github.com/tigrisdata/go-ycsb) of the Go version of YCSB
-to add support for S3-compatible object storage systems (such as Tigris and
-Cloudflare R2). We have submitted our changes upstream
-[pingcap/go-ycsb, PR #307](https://github.com/pingcap/go-ycsb/pull/307). At the
-time of writing, our changes are waiting for review.
+evaluate the three systems. We
+[added support](https://github.com/pingcap/go-ycsb/pull/307) for S3-compatible
+object storage systems (such as Tigris and Cloudflare R2), which was merged
+shortly after publish.
 
 All experiments ran on a neutral cloud provider to avoid vendor-specific
 optimizations. Table 1 summarizes the test instance:
