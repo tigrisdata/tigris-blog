@@ -1,5 +1,4 @@
 .container {
-  background-color: var(--ifm-code-background);
   border-radius: 2.5rem;
   margin-bottom: 1.5rem;
 }
@@ -7,4 +6,14 @@
 .navigation {
   list-style: none;
   padding: 1.5rem;
+}
+
+.navigation li {
+  margin-right: 0.5rem;
+}
+
+.link {
+  background-color: var(--ifm-code-background);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
 }

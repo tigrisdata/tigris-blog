@@ -5,14 +5,6 @@ import { usePluralForm } from "@docusaurus/theme-common";
 import { useBlogPost } from "@docusaurus/theme-common/internal";
 import type { Props } from "@theme/BlogPostItem/Header/Info";
 
-function formatDate(date) {
-  return new Date(date).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 import styles from "./styles.module.css";
 
 // Very simple pluralization: probably good enough for now
@@ -40,32 +32,16 @@ function ReadingTime({ readingTime }: { readingTime: number }) {
   return <>{readingTimePlural(readingTime)}</>;
 }
 
-function DateTime({
-  date,
-  formattedDate,
-}: {
-  date: string;
-  formattedDate: string;
-}) {
-  return <time dateTime={date}>{formattedDate}</time>;
-}
-
-function Spacer() {
-  return <>{" · "}</>;
-}
-
 export default function BlogPostItemHeaderInfo({
   className,
 }: Props): ReactNode {
   const { metadata } = useBlogPost();
-  const { date, readingTime } = metadata;
+  const { readingTime } = metadata;
 
   return (
     <div className={clsx(styles.container, "margin-vert--md", className)}>
-      <DateTime date={date} formattedDate={formatDate(date)} />
       {typeof readingTime !== "undefined" && (
         <>
-          <Spacer />
           <ReadingTime readingTime={readingTime} />
         </>
       )}
