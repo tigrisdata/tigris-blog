@@ -1,9 +1,16 @@
 import tigrisConfig from "@site/tigris.config.js";
 import React from "react";
-import PropTypes from "prop-types";
-import styles from "./InlineCta.module.css";
+import styles from "./styles.module.css";
 
-function InlineCta(props) {
+interface Props {
+  title: string;
+  subtitle: string;
+  button: string;
+  link?: string;
+}
+
+const InlineCta = ({ title, subtitle, button, link }: Props) => {
+  const linkUrl = link !== undefined ? link! : tigrisConfig.getStartedUrl;
   return (
     <div>
       <div>
@@ -12,14 +19,14 @@ function InlineCta(props) {
             className={`${styles.InlineCta} sl_card_m-2 card_static cta-flex`}
           >
             <div className="cta-margin-left">
-              <h1 className="sl_title_m fix-1px">{props.title}</h1>
-              <p>{props.subtitle}</p>
+              <h1 className="sl_title_m fix-1px">{title}</h1>
+              <p>{subtitle}</p>
             </div>
             <div className="cta-flex-item cta-margin-right">
-              <div style={{ "white-space": "nowrap" }}>
-                <a href={tigrisConfig.getStartedUrl} className="cta-link">
+              <div style={{ whiteSpace: "nowrap" }}>
+                <a href={linkUrl} className="cta-link">
                   <div>
-                    {props.button}
+                    {button}
                     <svg
                       width="13.5"
                       height="13.5"
@@ -41,12 +48,6 @@ function InlineCta(props) {
       </div>
     </div>
   );
-}
-
-InlineCta.propTypes = {
-  title: PropTypes.string,
-  subtitle: PropTypes.string,
-  button: PropTypes.string,
 };
 
 export default InlineCta;

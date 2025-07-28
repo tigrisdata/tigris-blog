@@ -1,12 +1,12 @@
 ---
 slug: warpstream
-title: "Getting started with Warpstream on Tigris"
+title: "Getting started with WarpStream on Tigris"
 description: >
-  Get started integrating Warpstream with Tigris so you can have a durable
+  Get started integrating WarpStream with Tigris so you can have a durable
   multi-cloud message broker that's fast anywhere on the planet!
 image: ./ty-stream.jpg
 keywords:
-  - Warpstream
+  - WarpStream
   - Tigris Object Storage
   - bottomless durable message queue
   - S3-compatible object store
@@ -16,54 +16,75 @@ keywords:
   - cloud-native message broker
   - Kafka alternative
   - unlimited message storage
-authors: [xe]
+authors: [xe, ks]
 tags: [kafka]
 ---
 
+import InlineCta from "@site/src/components/InlineCta";
+
 ![](./ty-stream.jpg)
 
-[Warpstream](https://www.warpstream.com/) lets you store an unlimited amount of
-data in your message queues, but when you set it up with S3 or other object
-stores, you end up having to pay egress fees to read messages. Tigris is a
-globally distributed, multi-cloud object storage service with built-in support
-for the S3 API and no egress fees. When you combine the two, you get a
-bottomless durable message queue that lets you store however much you want
-without having to worry about where your data is.
+[WarpStream](https://www.warpstream.com/) is a
+[Kafka®](https://kafka.apache.org/)-compatible streaming platform that stores
+data directly in object storage instead of relying on local disks. This
+architecture unlocks virtually unlimited retention and simplifies operations.
+Because WarpStream is zone-aligned, it avoids costly inter-AZ network traffic by
+ensuring that agents and object storage communicate within the same availability
+zone. However, in multi-cloud architectures where clients and agents communicate
+across clouds, egress fees from cross-cloud traffic can quickly dominate your
+cloud bill as you scale.
 
 {/* truncate */}
 
+Tigris is a globally distributed, multi-cloud object storage platform with
+native S3 API support and zero egress fees. It dynamically places data in the
+region where it’s being accessed—eliminating cross-cloud data transfer costs
+without sacrificing on performance.
+
+By combining WarpStream with Tigris, you get a bottomless, durable, and globally
+aware message queue. Your data is stored efficiently, close to where it’s
+consumed, without incurring hidden transfer fees or needing to plan for regional
+bucket placement.
+
 Before we get started, let’s cover the moving parts:
 
-- [**Apache Kafka**](https://kafka.apache.org/) is a durable message queue. In
-  Kafka, Producers send Messages into Topics hosted by Brokers that are read by
-  Consumers or Consumer Groups. Kafka is one of the most popular message queue
-  programs. It’s deployed by 80% of Fortune 500 companies because it’s very
-  fault-tolerant and its durability means that the Queues continue functioning
-  even as Brokers go down. The main downside is that Kafka relies on local
-  storage, meaning that your Kafka Brokers need to have lots of fast storage.
-- [**Warpstream**](https://www.warpstream.com/) is like Kafka but it improves on
-  it in one key way: Warpstream puts every Message in every Topic into objects
-  in an S3-compatible object store. This means that the amount of data you hold
-  in your queue isn’t limited by the amount of storage in each server running
-  Warpstream. This also means you don’t need to set up all of Kafka’s
-  dependencies (Zookeeper, the JVM, etc). Warpstream also ships an easy to use
-  command line utility that helps you administrate your message queue and test
-  functionality.
-- [**Docker**](https://docker.com) is the universal package format for the
-  Internet. Docker lets you put your application and all its dependencies into a
-  container image so that it can’t conflict with anything else on the system.
+## The Moving Parts
 
-Today we’re going to deploy a Warpstream Broker backed by Tigris into a Docker
+Apache Kafka is a durable, distributed messaging system. In Kafka, Producers
+write records into Topics hosted by Brokers that are read by Consumers. Used by
+80% of Fortune 500 companies, Kafka connects applications and data stores using
+a real-time publish/subscribe model with strong durability guarantees. One of
+the main differences between Kafka and a traditional queueing system is
+_persistence._ Data written to Kafka is retained, even after it is read by a
+Consumer, which enables interesting patterns such as multiple consumers reading
+from the same topic. The main downside is that Kafka relies on local storage,
+meaning that your Kafka Brokers require fast disks and intra-cluster replication
+to ensure durability and availability.
+
+WarpStream is fully compatible with the Kafka protocol, but it fundamentally
+reimagines the architecture. Instead of using local disks, it writes all data
+directly to object storage, completely decoupling compute and storage. While
+Apache Kafka 3.6.0 introduced Tiered Storage to enable more flexible scaling of
+compute and storage, it stops short of full decoupling—brokers still require
+local disk, retain state, manage replication, and serve all client traffic.
+
+With WarpStream, the compute layer is completely stateless. The data does not
+need to be replicated between nodes since durability is handled entirely by the
+object store. This architecture is much simpler to operate: you don’t need to
+set up and manage all of Kafka’s dependencies (Zookeeper, the JVM, etc).
+WarpStream also ships an easy to use command line utility that helps you
+administrate your message queue and test functionality.
+
+In addition, we’ll use Docker, the universal package format for the Internet.
+Docker lets you put your application and all its dependencies into a container
+image so that it can’t conflict with anything else on the system.
+
+Today we’re going to deploy a WarpStream cluster backed by Tigris into a Docker
 container so you can create your own bottomless durable message queue. This
-example will use [Docker compose](https://docs.docker.com/compose/), but it will
-help you understand how to create your own broker so you can deploy it anywhere.
+example will use Docker compose, but it will help you understand how to create
+your own broker so you can deploy it anywhere.
 
 ## Prerequisites
-
-Clone the
-[warpstream-tigris](https://github.com/tigrisdata-community/warpstream-tigris)
-demo repo to your laptop and open it in your favourite editor, such as
-[VS Code](https://code.visualstudio.com/).
 
 Make sure you have the following installed on your computer:
 
@@ -76,18 +97,13 @@ You will need the following accounts:
 
 - A Tigris account from [storage.new](https://storage.new).
 - A Warpstream account from
-  [console.warpstream.com](http://console.warpstream.com/login)
+  [console.warpstream.com](http://console.warpstream.com/login).
 
 ## Building a compose file
 
-First, clone
-[tigrisdata-community/warpstream-tigris](https://github.com/tigrisdata-community/warpstream-tigris)
-to your laptop and open it in your favourite text editor. If you use
-[development containers](https://www.tigrisdata.com/blog/dev-containers-python/),
-tell your editor to open this repository in a development container to get up
-and running in a snap\!
-
-Take a look at the `docker-compose.yaml` file in the root of the repository:
+Clone the
+[warpstream-tigris](https://github.com/tigrisdata-community/warpstream-tigris)
+demo repo to your laptop and open it in your favourite editor, such as VS Code.
 
 ```yaml
 services:
@@ -113,7 +129,7 @@ services:
       retries: 5
 ```
 
-Open a new terminal in your development container and make sure Warpstream is up
+Open a new terminal in your development container and make sure WarpStream is up
 and running:
 
 ```text
@@ -136,7 +152,7 @@ GroupCoordinator: warp:9092 (NodeID: 1547451680)
     ACCESSIBLE ✅
 ```
 
-Excellent\! Create a new topic with `warpstream kcmd`:
+Excellent! Create a new topic with `warpstream kcmd`:
 
 ```text
 warpstream kcmd --bootstrap-host warp --type create-topic --topic hello
@@ -271,3 +287,12 @@ It works\! You’ve successfully put data into a queue and fetched it back from
 the queue. From here you can connect to your broker on host `warp` and port
 `9092`. All your data is securely backed by Tigris and you can access it from
 anywhere in the world.
+
+<InlineCta
+  title="Global storage for your files and feeds"
+  subtitle={
+    "Fast, global, reliable: pick three. Tigris lets you store your datasets, models, streams, backups, and more close to where they're needed."
+  }
+  button="Get started"
+  link="https://www.tigrisdata.com/docs/"
+/>
