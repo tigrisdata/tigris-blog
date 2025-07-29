@@ -221,7 +221,7 @@ const config = {
                 label: "Pricing",
                 target: "_self",
                 rel: "",
-                className: "disable-external-icon",
+                className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Terms of Service",
@@ -259,7 +259,7 @@ const config = {
                 label: "Docs",
                 target: "_self",
                 rel: "",
-                className: "disable-external-icon",
+                className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Status",
