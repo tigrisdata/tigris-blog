@@ -2,16 +2,19 @@ import Link from "@docusaurus/Link";
 import clsx from "clsx";
 import React from "react";
 import styles from "./styles.module.css";
+import { useLocation } from "@docusaurus/router";
 
-function isCategoryActive(category: string) {
+type Location = ReturnType<typeof useLocation>;
+
+function isCategoryActive(category: string, location: Location) {
   return location.pathname.includes(category);
 }
 
-function isBlogHomePage() {
+function isBlogHomePage(location: Location) {
   return location.pathname.endsWith("/blog/");
 }
 
-export default function Navigation() {
+export default function Navigation({ location }: { location: Location }) {
   return (
     <>
       <div className={clsx(styles.container, "container")}>
@@ -30,7 +33,10 @@ export default function Navigation() {
           <li>
             <Link
               to="/blog"
-              className={clsx(styles.link, isBlogHomePage() && styles.active)}
+              className={clsx(
+                styles.link,
+                isBlogHomePage(location) && styles.active
+              )}
             >
               All Posts
             </Link>
@@ -40,7 +46,7 @@ export default function Navigation() {
               to="/blog/tags/engineering"
               className={clsx(
                 styles.link,
-                isCategoryActive("engineering") && styles.active
+                isCategoryActive("engineering", location) && styles.active
               )}
             >
               Engineering
@@ -51,7 +57,7 @@ export default function Navigation() {
               to="/blog/tags/build-with-tigris"
               className={clsx(
                 styles.link,
-                isCategoryActive("build-with-tigris") && styles.active
+                isCategoryActive("build-with-tigris", location) && styles.active
               )}
             >
               Build with Tigris
@@ -62,7 +68,7 @@ export default function Navigation() {
               to="/blog/tags/customers"
               className={clsx(
                 styles.link,
-                isCategoryActive("customers") && styles.active
+                isCategoryActive("customers", location) && styles.active
               )}
             >
               Customers
@@ -73,7 +79,7 @@ export default function Navigation() {
               to="/blog/tags/updates"
               className={clsx(
                 styles.link,
-                isCategoryActive("updates") && styles.active
+                isCategoryActive("updates", location) && styles.active
               )}
             >
               Updates
