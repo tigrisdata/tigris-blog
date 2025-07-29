@@ -12,23 +12,42 @@ keywords:
   - S3-compatible object store
   - multi-cloud object storage
 authors: [xe]
-tags: [python, datasets, ai]
+tags:
+  - python
+  - datasets
+  - ai
+  - build-with-tigris
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
 
 ![](./dunda-datnybakfu.jpg)
 
-When you’re working with AI models, you need to work with datasets. If you
-mainly have your datasets stored on your local disk it gets to be hard to
-distribute them to production servers for distributed training. What if you
-stored that data in Tigris? You’d benefit from Tigris being able to store your
-data close to where it’s needed without having to worry about data placement,
-egress fees, or having to provision unreasonable amounts of storage for data
-that you may not even need in the first place. All that’s left is how to store
-and load those datasets.
+One of the most popular ways to share datasets is via
+[Hugging Face’s dataset platform](https://huggingface.co/datasets). You can even
+stream larger-than-laptop datasets, but there are no guarantees on throughput
+nor availability. When you’re developing a toy model, this might not be an
+issue. But as you mature your model, and combine your custom datasets with
+public datasets, it’s critical to save your own copy.
 
 {/* truncate */}
+
+The ability to reproduce the state of your model at a given time has become
+critical, and even legally required, as models are integrated into healthcare,
+legal, and other compliance heavy domains. Why did the AI agree to
+[sell a car for $1](https://www.upworthy.com/prankster-tricks-a-gm-dealership-chatbot-to-sell-him-a-76000-chevy-tahoe-for-ex1)?
+Or
+[delete a production database](https://fortune.com/2025/07/23/ai-coding-tool-replit-wiped-database-called-it-a-catastrophic-failure/)?
+
+As we develop models, they’re going to make mistakes. It’s challenging to debug
+across scattered datasets, especially public ones outside your control.
+Centralizing your datasets in a common store is a good first step on your way to
+full dataset version control. Just make sure you think about additional costs–
+HuggingFace dataset streaming is free, but private stores can quickly rack up
+egress fees.
+
+Today we’re going to learn how to import
+[Hugging Face datasets](https://huggingface.co/datasets) into Tigris.
 
 Today we’re going to learn how to import
 [Hugging Face datasets](https://huggingface.co/datasets) into Tigris so that you
@@ -53,12 +72,8 @@ Here’s what you need to get started:
 - A Tigris account from [storage.new](https://storage.new).
 - A Tigris bucket and access keys with the Editor permission on that bucket.
 
-## Setting up your environment
-
-Before we start importing datasets, you'll need to set up your development
-environment. If you're using VS Code with the Development Containers extension,
-you can clone the repository and run "Dev Containers: Reopen in Container" to
-automatically set up all dependencies.
+<details>
+<summary>Setting up your environment manually</summary>
 
 For manual setup, you'll need:
 
@@ -116,6 +131,8 @@ for key in [
 
 print("Your .env file is good to go!")
 ```
+
+</details>
 
 ## Importing a dataset
 
@@ -245,13 +262,19 @@ uv run scripts/read-from-tigris.py
 
 ## Conclusion
 
-And that's it! Your data is safely stored in the multicloud, meaning that you
-can scale your workloads fearlessly. This is the secret sauce that lets you
-adopt a [Nomadic Compute](https://www.tigrisdata.com/blog/nomadic-compute/)
-workflow so your training can take advantage of the best possible deals.
+You did it\! Your copy of those datasets are safely stored in your own bucket.
+You have centralized your datasets and are on the path to versioning them.
+
+We love Hugging Face for providing models and datasets to the world for free,
+and we want you to keep using them to develop your own models. However, as you
+start maturing and complying with regulations, making your own copy ensures no
+one tampers with the data. And that your bandwidth won’t suddenly drop mid
+training job, or lag across regions. Tigris dynamically places your datasets
+where you need them so you can scale fearlessly to any cloud with an internet
+connection.
 
 <InlineCta
   title="Globally distributed storage for your datasets and more"
-  subtitle="Tigrist gives you the object storage system you never knew you needed. Automatically distribute your datasets, images, videos, and backups close to where they're needed. Just add data."
+  subtitle="Tigris gives you the object storage system you never knew you needed. Automatically distribute your datasets, images, videos, and backups close to where they're needed. Just add data."
   button="Get started"
 />
