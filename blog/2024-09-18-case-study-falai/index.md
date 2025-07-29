@@ -22,7 +22,7 @@ keywords:
     cost,
   ]
 authors: [ks]
-tags: [object storage, s3, ai, case studies, case study]
+tags: [object storage, s3, ai, case studies, case study, customers]
 ---
 
 # How fal.ai offers the fastest generative ai in the world

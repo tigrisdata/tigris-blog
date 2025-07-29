@@ -8,10 +8,20 @@ description: >
   they relate to S3 Conditional Writes feature. Finally, we will discuss whether
   developers can now avoid client-side consensus mechanisms completely when
   using S3.
-image: ./twin-formula-1-race-car-drivers-navigating-a-sharp-turn-on-a-track-that-weaves-through-the-bustling--58786778.jpeg
-keywords: [object storage, conditional writes, cas, distributed systems]
-authors: [ot]
-tags: [object storage, conditional writes, distributed systems]
+image: >-
+  ./twin-formula-1-race-car-drivers-navigating-a-sharp-turn-on-a-track-that-weaves-through-the-bustling--58786778.jpeg
+keywords:
+  - object storage
+  - conditional writes
+  - cas
+  - distributed systems
+authors:
+  - ot
+tags:
+  - object storage
+  - conditional writes
+  - distributed systems
+  - engineering
 ---
 
 # What’s the Big Deal with Conditional Writes Support in S3?

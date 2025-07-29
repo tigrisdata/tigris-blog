@@ -9,7 +9,7 @@ export default function Navigation() {
       <ul className={clsx("button-group col col--12", styles.navigation)}>
         <li>
           <Link to="/blog" className={styles.link}>
-            All
+            All Posts
           </Link>
         </li>
         <li>
@@ -18,8 +18,8 @@ export default function Navigation() {
           </Link>
         </li>
         <li>
-          <Link to="/blog/tags/building-with-tigris" className={styles.link}>
-            Building with Tigris
+          <Link to="/blog/tags/build-with-tigris" className={styles.link}>
+            Build with Tigris
           </Link>
         </li>
         <li>

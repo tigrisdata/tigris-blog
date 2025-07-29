@@ -9,9 +9,17 @@ description: >
   Tigris usage in July because we're confident that Tigris is reliable enough
   for us to justify doing that.
 image: ./tigris-enabling-billing-d2.png
-keywords: [object storage, blob storage, billing]
-authors: [ot]
-tags: [object storage, blob storage, billing]
+keywords:
+  - object storage
+  - blob storage
+  - billing
+authors:
+  - ot
+tags:
+  - object storage
+  - blob storage
+  - billing
+  - updates
 ---
 
 # We're enabling billing for Tigris in July

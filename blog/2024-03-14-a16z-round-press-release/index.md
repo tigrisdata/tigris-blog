@@ -7,9 +7,20 @@ description: >
   access any amount of data using the S3 libraries you're already using in
   production. Today, we're announcing our seed round led by Andreessen Horowitz.
 image: ./tigris-river.jpeg
-keywords: [object storage, blob storage, s3, funding, a16z]
-authors: [ot]
-tags: [object storage, blob storage, s3, funding]
+keywords:
+  - object storage
+  - blob storage
+  - s3
+  - funding
+  - a16z
+authors:
+  - ot
+tags:
+  - object storage
+  - blob storage
+  - s3
+  - funding
+  - updates
 ---
 
 # Announcing our Seed Round led by Andreessen Horowitz

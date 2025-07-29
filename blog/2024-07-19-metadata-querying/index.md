@@ -8,9 +8,19 @@ description: >
   Let's see if we can't set your internal constraint-solver aflame with
   possibilities.
 image: ./little-cute-mouse-sitting-on-the-ground.jpeg
-keywords: [object storage, querying, elixir, distributed systems]
-authors: [lw]
-tags: [object storage, querying, elixir, distributed systems]
+keywords:
+  - object storage
+  - querying
+  - elixir
+  - distributed systems
+authors:
+  - lw
+tags:
+  - object storage
+  - querying
+  - elixir
+  - distributed systems
+  - build-with-tigris
 ---
 
 # Metadata Querying for Object Storage
