@@ -10,7 +10,6 @@ import BlogListPaginator from "@theme/BlogListPaginator";
 import SearchMetadata from "@theme/SearchMetadata";
 import type { Props } from "@theme/BlogTagsPostsPage";
 import BlogPostItems from "@theme/BlogPostItems";
-import Link from "@docusaurus/Link";
 import { translate } from "@docusaurus/Translate";
 
 function useBlogTagsPostsPageTitle(tag: Props["tag"]) {
@@ -35,22 +34,12 @@ function BlogTagsPostsPageMetadata({ tag }: Props): ReactNode {
 }
 
 function BlogTagsPostsPageContent({
-  tag,
   items,
   sidebar,
   listMetadata,
 }: Props): ReactNode {
   return (
     <BlogLayout sidebar={sidebar}>
-      <div className="row col col--12">
-        <header className="margin-bottom--sm">
-          <Link to="/blog" className="">
-            Blog
-          </Link>
-          {" / "}
-          <h1>{tag.label}</h1>
-        </header>
-      </div>
       <BlogPostItems items={items} />
       <BlogListPaginator metadata={listMetadata} />
     </BlogLayout>

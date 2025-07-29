@@ -20,8 +20,7 @@ export default function BlogPostItems({
         >
           <div
             className={clsx("col col--4", {
-              "col--6": i < 3 && isHomePage,
-              "col--12": i === 0 && isHomePage,
+              "col--4": i < 2 && isHomePage,
             })}
           >
             <BlogPostItemComponent>

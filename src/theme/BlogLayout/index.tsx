@@ -11,7 +11,8 @@ export default function BlogLayout(props: Props): ReactNode {
   const location = useLocation();
   const isHomePage =
     location.pathname.endsWith("/blog/") ||
-    location.pathname.includes("/blog/page");
+    location.pathname.includes("/blog/page") ||
+    location.pathname.includes("/blog/tags/");
 
   return (
     <Layout {...layoutProps}>

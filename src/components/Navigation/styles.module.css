@@ -1,6 +1,10 @@
+.title {
+  font-size: 2.5rem;
+  font-weight: 600;
+}
+
 .container {
-  border-radius: 2.5rem;
-  margin-bottom: 1.5rem;
+  margin: 2.5rem 0;
 }
 
 .navigation {
@@ -16,4 +20,21 @@
   background-color: var(--ifm-code-background);
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
+  border: none;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.link:hover {
+  background-color: var(--ifm-color-emphasis-200);
+  text-decoration: none;
+  color: var(--docs-color-text);
+}
+
+.active {
+  background-color: var(--ifm-color-primary) !important;
+  color: var(--ifm-color-primary-contrast-foreground) !important;
 }
