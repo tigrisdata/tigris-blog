@@ -5,18 +5,23 @@
 
 .container {
   margin: 2.5rem 0;
+  text-align: center;
 }
 
 .navigation {
   list-style: none;
-  padding: 1.5rem;
+  padding-bottom: 2.5rem;
+  text-align: center;
 }
 
-.navigation li {
+.navigationItem {
+  display: inline-block;
   margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .link {
+  display: inline-block;
   background-color: var(--ifm-code-background);
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;

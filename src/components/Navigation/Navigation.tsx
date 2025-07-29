@@ -28,9 +28,9 @@ export default function Navigation({ location }: { location: Location }) {
           </div>
         </div>
       </div>
-      <div className="row col">
-        <ul className={clsx("button-group col col--12", styles.navigation)}>
-          <li>
+      <div className="row col col--8 col--offset-2 text-center">
+        <ul className={clsx("col col--12", styles.navigation)}>
+          <li className={clsx(styles.navigationItem)}>
             <Link
               to="/blog"
               className={clsx(
@@ -41,7 +41,7 @@ export default function Navigation({ location }: { location: Location }) {
               All Posts
             </Link>
           </li>
-          <li>
+          <li className={clsx(styles.navigationItem)}>
             <Link
               to="/blog/tags/engineering"
               className={clsx(
@@ -52,7 +52,7 @@ export default function Navigation({ location }: { location: Location }) {
               Engineering
             </Link>
           </li>
-          <li>
+          <li className={clsx(styles.navigationItem)}>
             <Link
               to="/blog/tags/build-with-tigris"
               className={clsx(
@@ -63,7 +63,7 @@ export default function Navigation({ location }: { location: Location }) {
               Build with Tigris
             </Link>
           </li>
-          <li>
+          <li className={clsx(styles.navigationItem)}>
             <Link
               to="/blog/tags/customers"
               className={clsx(
@@ -74,7 +74,7 @@ export default function Navigation({ location }: { location: Location }) {
               Customers
             </Link>
           </li>
-          <li>
+          <li className={clsx(styles.navigationItem)}>
             <Link
               to="/blog/tags/updates"
               className={clsx(
