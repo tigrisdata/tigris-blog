@@ -4,6 +4,7 @@ import BlogPostItem from "@theme/BlogPostItem";
 import type { Props } from "@theme/BlogPostItems";
 import clsx from "clsx";
 import { useLocation } from "@docusaurus/router";
+import BlogFilter from "@site/src/components/BlogFilter";
 
 export default function BlogPostItems({
   items,
@@ -11,6 +12,11 @@ export default function BlogPostItems({
 }: Props): JSX.Element {
   const location = useLocation();
   const isHomePage = location.pathname.endsWith("/blog/");
+
+  if (isHomePage) {
+    return <BlogFilter items={items} />;
+  }
+
   return (
     <>
       {items.map(({ content: BlogPostContent }, i) => (

@@ -4,6 +4,7 @@ import Layout from "@theme/Layout";
 import type { Props } from "@theme/BlogLayout";
 import { useLocation } from "@docusaurus/router";
 import Navigation from "@site/src/components/Navigation/Navigation";
+import BlogHero from "@site/src/components/BlogHero";
 
 export default function BlogLayout(props: Props): ReactNode {
   const { toc, children, ...layoutProps } = props;
@@ -15,6 +16,7 @@ export default function BlogLayout(props: Props): ReactNode {
 
   return (
     <Layout {...layoutProps}>
+      {isHomePage && <BlogHero />}
       <div className="container margin-vert--lg">
         <div className="row">
           {isHomePage && <Navigation />}

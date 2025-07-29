@@ -1,36 +1,70 @@
-import Link from "@docusaurus/Link";
 import clsx from "clsx";
-import React from "react";
+import React, { useState } from "react";
 import styles from "./styles.module.css";
 
 export default function Navigation() {
+  const [activeFilter, setActiveFilter] = useState("all");
+
+  const handleFilterClick = (filter: string) => {
+    setActiveFilter(filter);
+
+    // Trigger custom event for blog filtering
+    const event = new CustomEvent("blogFilter", { detail: { filter } });
+    window.dispatchEvent(event);
+  };
+
   return (
     <div className="row col">
       <ul className={clsx("button-group col col--12", styles.navigation)}>
         <li>
-          <Link to="/blog" className={styles.link}>
+          <button
+            onClick={() => handleFilterClick("all")}
+            className={clsx(styles.link, {
+              [styles.active]: activeFilter === "all",
+            })}
+          >
             All Posts
-          </Link>
+          </button>
         </li>
         <li>
-          <Link to="/blog/tags/engineering" className={styles.link}>
+          <button
+            onClick={() => handleFilterClick("engineering")}
+            className={clsx(styles.link, {
+              [styles.active]: activeFilter === "engineering",
+            })}
+          >
             Engineering
-          </Link>
+          </button>
         </li>
         <li>
-          <Link to="/blog/tags/build-with-tigris" className={styles.link}>
+          <button
+            onClick={() => handleFilterClick("build-with-tigris")}
+            className={clsx(styles.link, {
+              [styles.active]: activeFilter === "build-with-tigris",
+            })}
+          >
             Build with Tigris
-          </Link>
+          </button>
         </li>
         <li>
-          <Link to="/blog/tags/customers" className={styles.link}>
+          <button
+            onClick={() => handleFilterClick("customers")}
+            className={clsx(styles.link, {
+              [styles.active]: activeFilter === "customers",
+            })}
+          >
             Customers
-          </Link>
+          </button>
         </li>
         <li>
-          <Link to="/blog/tags/updates" className={styles.link}>
+          <button
+            onClick={() => handleFilterClick("updates")}
+            className={clsx(styles.link, {
+              [styles.active]: activeFilter === "updates",
+            })}
+          >
             Updates
-          </Link>
+          </button>
         </li>
       </ul>
     </div>
