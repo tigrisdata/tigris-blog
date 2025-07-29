@@ -16,11 +16,11 @@ keywords:
 authors:
   - lw
 tags:
+  - build-with-tigris
   - object storage
   - querying
   - elixir
   - distributed systems
-  - build-with-tigris
 ---
 
 # Metadata Querying for Object Storage

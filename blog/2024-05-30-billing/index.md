@@ -16,10 +16,10 @@ keywords:
 authors:
   - ot
 tags:
+  - updates
   - object storage
   - blob storage
   - billing
-  - updates
 ---
 
 # We're enabling billing for Tigris in July

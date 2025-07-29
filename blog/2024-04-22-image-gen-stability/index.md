@@ -14,10 +14,10 @@ keywords:
 authors:
   - bm
 tags:
+  - build-with-tigris
   - object storage
   - blob storage
   - ai
-  - build-with-tigris
 ---
 
 # AI Image Generator with Stability and Tigris

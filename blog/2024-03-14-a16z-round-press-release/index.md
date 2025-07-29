@@ -16,11 +16,11 @@ keywords:
 authors:
   - ot
 tags:
+  - updates
   - object storage
   - blob storage
   - s3
   - funding
-  - updates
 ---
 
 # Announcing our Seed Round led by Andreessen Horowitz

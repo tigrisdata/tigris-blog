@@ -17,11 +17,11 @@ keywords:
 authors:
   - jt
 tags:
+  - build-with-tigris
   - blob storage
   - caching
   - ai
   - filesystem
-  - build-with-tigris
 ---
 
 If you've been toying around in the AI space over the past few months, you've

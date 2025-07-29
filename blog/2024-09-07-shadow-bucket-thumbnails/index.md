@@ -19,12 +19,12 @@ keywords:
 authors:
   - bmi
 tags:
+  - build-with-tigris
   - object storage
   - s3
   - thumbnail
   - images
   - cdn
-  - build-with-tigris
 ---
 
 # Snip, Snap, Serve: Effortless Global Image Delivery with Tigris

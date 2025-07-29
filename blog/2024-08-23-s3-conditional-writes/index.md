@@ -18,10 +18,10 @@ keywords:
 authors:
   - ot
 tags:
+  - engineering
   - object storage
   - conditional writes
   - distributed systems
-  - engineering
 ---
 
 # What’s the Big Deal with Conditional Writes Support in S3?

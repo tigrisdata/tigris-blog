@@ -14,11 +14,11 @@ keywords:
 authors:
   - lw
 tags:
+  - build-with-tigris
   - object storage
   - blob storage
   - caching
   - elixir
-  - build-with-tigris
 ---
 
 # Lazy & Eager Caching feat. Elixir

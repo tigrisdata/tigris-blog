@@ -15,13 +15,13 @@ keywords:
 authors:
   - as
 tags:
+  - engineering
   - object storage
   - blob storage
   - s3
   - launch
   - cloudfront
   - cdn
-  - engineering
 ---
 
 Tigris is a globally distributed S3-compatible object storage solution available
