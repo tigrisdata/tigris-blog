@@ -1,0 +1,257 @@
+---
+slug: huggingface-datasets
+title: Using Hugging Face datasets with Tigris
+description: >
+  Let your datasets roam freely between the multicloud with Tigris! Today you'll
+  learn how to import your datasets into Tigris in a snap.
+image: ./dunda-datnybakfu.jpg
+keywords:
+  - AI training
+  - Hugging Face datasets
+  - Global object storage
+  - S3-compatible object store
+  - multi-cloud object storage
+authors: [xe]
+tags: [python, datasets, ai]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+![](./dunda-datnybakfu.jpg)
+
+When you’re working with AI models, you need to work with datasets. If you
+mainly have your datasets stored on your local disk it gets to be hard to
+distribute them to production servers for distributed training. What if you
+stored that data in Tigris? You’d benefit from Tigris being able to store your
+data close to where it’s needed without having to worry about data placement,
+egress fees, or having to provision unreasonable amounts of storage for data
+that you may not even need in the first place. All that’s left is how to store
+and load those datasets.
+
+{/* truncate */}
+
+Today we’re going to learn how to import
+[Hugging Face datasets](https://huggingface.co/datasets) into Tigris so that you
+can use them for whatever you need.
+
+:::note
+
+In production workloads, we recommend that you use
+[LanceDB’s multimodal lakehouse](https://www.tigrisdata.com/docs/libraries/lancedb/)
+to store your training datasets; but if you’re just getting started then this is
+way more than enough.
+
+:::
+
+## Prerequisites
+
+Here’s what you need to get started:
+
+- A local Python development environment (our blog has a guide on
+  [using development containers](https://www.tigrisdata.com/blog/dev-containers-python/)
+  to set one up).
+- A Tigris account from [storage.new](https://storage.new).
+- A Tigris bucket and access keys with the Editor permission on that bucket.
+
+## Setting up your environment
+
+Before we start importing datasets, you'll need to set up your development
+environment. If you're using VS Code with the Development Containers extension,
+you can clone the repository and run "Dev Containers: Reopen in Container" to
+automatically set up all dependencies.
+
+For manual setup, you'll need:
+
+- Python 3.10 or later
+- [uv](https://docs.astral.sh/uv/) or another Python dependency manager
+- Your Tigris access credentials
+
+Install the dependencies:
+
+```bash
+uv python install 3.10
+uv venv
+uv sync
+```
+
+Next, copy `.env.example` to `.env` and configure your Tigris credentials:
+
+```sh
+# Tigris configuration
+AWS_ACCESS_KEY_ID=tid_your_access_key_here
+AWS_SECRET_ACCESS_KEY=tsec_your_secret_key_here
+AWS_ENDPOINT_URL_S3=https://fly.storage.tigris.dev
+AWS_ENDPOINT_URL_IAM=https://iam.tigris.dev
+AWS_REGION=auto
+
+# Dataset and bucket
+BUCKET_NAME=your-bucket-name-here
+DATASET_NAME=mlabonne/FineTome-100k
+```
+
+To verify your configuration is correct, run the validation script:
+
+```text
+uv run scripts/ensure-dotenv.py
+```
+
+This script checks that all required environment variables are set:
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+for key in [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_ENDPOINT_URL_S3",
+    "AWS_ENDPOINT_URL_IAM",
+    "AWS_REGION",
+    "BUCKET_NAME",
+    "DATASET_NAME",
+]:
+    assert os.getenv(key) is not None, f"Environment variable {key} is not defined"
+
+print("Your .env file is good to go!")
+```
+
+## Importing a dataset
+
+Now let's import the
+[FineTome-100k](https://huggingface.co/datasets/mlabonne/FineTome-100k) dataset
+to Tigris. The process is surprisingly straightforward thanks to Hugging Face
+datasets' built-in support for S3-compatible storage.  
+First, let's look at the helper module that sets up our Tigris connection:
+
+```python
+import os
+import s3fs
+from dotenv import load_dotenv
+from typing import Dict, Tuple
+
+def setup() -> Tuple[Dict[str, str], s3fs.S3FileSystem]:
+    load_dotenv()
+
+    storage_options = {
+        "key": os.getenv("AWS_ACCESS_KEY_ID"),
+        "secret": os.getenv("AWS_SECRET_ACCESS_KEY"),
+        "endpoint_url": os.getenv("AWS_ENDPOINT_URL_S3"),
+    }
+
+    # Create the S3 filesystem
+    fs = s3fs.S3FileSystem(**storage_options)
+
+    # Test write access
+    bucket_name = os.getenv("BUCKET_NAME")
+    fs.write_text(f"/{bucket_name}/test.txt", "this is a test")
+    fs.rm(f"/{bucket_name}/test.txt")
+
+    return (storage_options, fs)
+```
+
+The import script uses Hugging Face datasets' `save_to_disk` method with our
+Tigris storage options:
+
+```python
+import os
+import tigris
+from datasets import load_dataset
+from dotenv import load_dotenv
+
+def main():
+    storage_options, fs = tigris.setup()
+
+    bucket_name = os.getenv("BUCKET_NAME")
+    dataset_name = os.getenv("DATASET_NAME")
+
+    # Load the dataset from Hugging Face
+    dataset = load_dataset(dataset_name, split="train")
+
+    # Save directly to Tigris
+    dataset.save_to_disk(
+        f"s3://{bucket_name}/datasets/{dataset_name}",
+        storage_options=storage_options
+    )
+
+    print(f"Dataset {dataset_name} is now in Tigris at {bucket_name}/datasets/{dataset_name}")
+
+if __name__ == "__main__":
+    main()
+```
+
+Run the import script:
+
+```test
+uv run scripts/import-to-tigris.py
+```
+
+That's it! The dataset is now stored in Tigris and ready to use from anywhere.
+
+## Reading and processing datasets from Tigris
+
+Once your dataset is in Tigris, you can load it from anywhere using the same
+storage options. Here's an example that loads the dataset, applies a filter, and
+saves the filtered version back to Tigris:
+
+```python
+import os
+import tigris
+from datasets import load_from_disk
+
+def remove_blue(row):
+    """
+    Example transformation that removes conversations mentioning "blue".
+    You can implement any filtering or transformation logic here.
+    """
+    for conv in row['conversations']:
+        if "blue" in conv['value']:
+            return False  # remove the row
+    return True  # keep the row
+
+def main():
+    storage_options, fs = tigris.setup()
+
+    bucket_name = os.getenv("BUCKET_NAME")
+    dataset_name = os.getenv("DATASET_NAME")
+
+    # Load dataset from Tigris
+    dataset = load_from_disk(
+        f"s3://{bucket_name}/datasets/{dataset_name}",
+        storage_options=storage_options
+    )
+
+    # Apply filtering
+    filtered_ds = dataset.filter(remove_blue)
+
+    # Save filtered dataset back to Tigris
+    filtered_ds.save_to_disk(
+        f"s3://{bucket_name}/no-blue/{dataset_name}",
+        storage_options=storage_options
+    )
+
+    print(f"Filtered dataset saved to {bucket_name}/no-blue/{dataset_name}")
+
+if __name__ == "__main__":
+    main()
+```
+
+Run the processing script:
+
+```bash
+uv run scripts/read-from-tigris.py
+```
+
+## Conclusion
+
+And that's it! Your data is safely stored in the multicloud, meaning that you
+can scale your workloads fearlessly. This is the secret sauce that lets you
+adopt a [Nomadic Compute](https://www.tigrisdata.com/blog/nomadic-compute/)
+workflow so your training can take advantage of the best possible deals.
+
+<InlineCta
+  title="Globally distributed storage for your datasets and more"
+  subtitle="Tigrist gives you the object storage system you never knew you needed. Automatically distribute your datasets, images, videos, and backups close to where they're needed. Just add data."
+  button="Get started"
+/>
