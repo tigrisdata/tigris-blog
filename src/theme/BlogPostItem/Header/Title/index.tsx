@@ -21,7 +21,7 @@ export default function BlogPostItemHeaderTitle({
         Blog
       </Link>{" "}
       /{" "}
-      <Link to={tag.permalink} className="">
+      <Link to={tag.permalink} className={clsx(styles.tagLink)}>
         {tag.label}
       </Link>
     </>

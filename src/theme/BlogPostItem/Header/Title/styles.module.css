@@ -10,6 +10,10 @@
   font-size: 2rem;
 }
 
+.tagLink {
+  text-transform: capitalize;
+}
+
 .titleImageLink {
   display: block;
   overflow: hidden;
