@@ -41,5 +41,5 @@
 
 .active {
   background-color: var(--ifm-color-primary) !important;
-  color: var(--ifm-color-primary-contrast-foreground) !important;
+  color: #0b181e;
 }
