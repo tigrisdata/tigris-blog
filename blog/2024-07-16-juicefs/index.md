@@ -17,7 +17,7 @@ keywords:
 authors:
   - jt
 tags:
-  - build-with-tigris
+  - build with tigris
   - blob storage
   - caching
   - ai

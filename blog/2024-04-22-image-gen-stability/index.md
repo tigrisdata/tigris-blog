@@ -14,7 +14,7 @@ keywords:
 authors:
   - bm
 tags:
-  - build-with-tigris
+  - build with tigris
   - object storage
   - blob storage
   - ai
