@@ -23,7 +23,7 @@ export default function Navigation({ location }: { location: Location }) {
             <h1 className={styles.title}>Tigris Blog</h1>
             <p>
               A multi-cloud, S3-compatible object storage service for low
-              latency data access anywhere
+              latency data access anywhere.
             </p>
           </div>
         </div>
