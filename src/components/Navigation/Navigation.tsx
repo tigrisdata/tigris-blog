@@ -54,10 +54,10 @@ export default function Navigation({ location }: { location: Location }) {
           </li>
           <li className={clsx(styles.navigationItem)}>
             <Link
-              to="/blog/tags/build with tigris"
+              to="/blog/tags/build-with-tigris"
               className={clsx(
                 styles.link,
-                isCategoryActive("build with tigris", location) && styles.active
+                isCategoryActive("build-with-tigris", location) && styles.active
               )}
             >
               Build with Tigris
