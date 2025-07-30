@@ -1,0 +1,72 @@
+.title {
+  font-size: 1.25rem;
+}
+
+.titleLink:hover {
+  text-decoration: none;
+}
+
+.titleBlogPostPage {
+  font-size: 2rem;
+}
+
+.tagLink {
+  text-transform: capitalize;
+}
+
+.titleImageLink {
+  display: block;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  max-height: 450px;
+  display: flex;
+  justify-content: center; /* horizontal centering */
+  align-items: baseline;
+}
+
+.titleImage {
+  width: 100%;
+  height: auto;
+
+  transition: transform 0.3s ease;
+}
+
+.zoomImage {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.zoomImage::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.zoomImage:hover::before {
+  left: 100%;
+}
+
+.titleImageLink:hover .titleImage {
+  transform: scale(1.05);
+}
+
+/**
+  Blog post title should be smaller on smaller devices
+**/
+@media (max-width: 576px) {
+  .title {
+    font-size: 1rem;
+  }
+}

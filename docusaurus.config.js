@@ -48,11 +48,11 @@ const config = {
         docs: false,
         blog: {
           routeBasePath: "/",
-          postsPerPage: 10,
+          postsPerPage: 9,
           blogTitle: "Tigris Blog",
           blogDescription: "A blog dedicated to all things storage!",
           blogSidebarTitle: "All our posts",
-          blogSidebarCount: "ALL",
+          blogSidebarCount: 0,
           showReadingTime: true,
           feedOptions: {
             type: "all",
@@ -221,7 +221,7 @@ const config = {
                 label: "Pricing",
                 target: "_self",
                 rel: "",
-                className: "disable-external-icon",
+                className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Terms of Service",
@@ -259,7 +259,7 @@ const config = {
                 label: "Docs",
                 target: "_self",
                 rel: "",
-                className: "disable-external-icon",
+                className: "footer__link-item disable-external-icon",
               },
               {
                 label: "Status",

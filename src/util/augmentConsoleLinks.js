@@ -18,13 +18,20 @@ export function onRouteDidUpdate({ location, previousLocation }) {
         `a[href*="${tigrisConfig.consoleUrl}`
       );
 
-      // Add the `pid` search parameter if it is not present
-      const pid = posthog.get_distinct_id();
+      const existingPid = location.searchParams?.get("pid");
+      const existingSid = location.searchParams?.get("sid");
+      const pid = existingPid || posthog.get_distinct_id();
+      const sid = existingSid || posthog.get_session_id();
       allSignupLinks.forEach((el) => {
         const href = new URL(el.getAttribute("href"));
 
         if (href.searchParams.has("pid") === false) {
           href.searchParams.set("pid", pid);
+          el.setAttribute("href", href.toString());
+        }
+
+        if (href.searchParams.has("sid") === false) {
+          href.searchParams.set("sid", sid);
           el.setAttribute("href", href.toString());
         }
       });

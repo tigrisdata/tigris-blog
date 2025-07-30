@@ -6,9 +6,22 @@ description: >
   I show how you can use JuiceFS to turn your bottomless Tigris storage into a
   FUSE mounted filesystem where we persist model data for more efficiently
   running production-scale Ollama on Fly.io
-keywords: [blob storage, caching, juicefs, ollama, ai, llm, filesystem]
-authors: [jt]
-tags: [blob storage, caching, ai, filesystem]
+keywords:
+  - blob storage
+  - caching
+  - juicefs
+  - ollama
+  - ai
+  - llm
+  - filesystem
+authors:
+  - jt
+tags:
+  - build-with-tigris
+  - blob storage
+  - caching
+  - ai
+  - filesystem
 ---
 
 If you've been toying around in the AI space over the past few months, you've

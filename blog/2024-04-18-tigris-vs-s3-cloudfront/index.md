@@ -6,9 +6,22 @@ description: >
   available that can easily be hosted on Fly.io. In this article, we'll explore
   how Tigris fits into the existing slate of object storage options and why you
   might choose one over the other.
-keywords: [object storage, blob storage, s3, cloudfront, cdn]
-authors: [as]
-tags: [object storage, blob storage, s3, launch, cloudfront, cdn]
+keywords:
+  - object storage
+  - blob storage
+  - s3
+  - cloudfront
+  - cdn
+authors:
+  - as
+tags:
+  - engineering
+  - object storage
+  - blob storage
+  - s3
+  - launch
+  - cloudfront
+  - cdn
 ---
 
 Tigris is a globally distributed S3-compatible object storage solution available

@@ -8,9 +8,23 @@ description: >
   generated thumbnails are stored on Tigris, while making use of the included
   CDN features of Tigris.
 image: ./a-pair-of-scissors-cutting-a-photograph.jpg
-keywords: [object storage, blob storage, s3, thumbnail, images, cloudfront, cdn]
-authors: [bmi]
-tags: [object storage, s3, thumbnail, images, cdn]
+keywords:
+  - object storage
+  - blob storage
+  - s3
+  - thumbnail
+  - images
+  - cloudfront
+  - cdn
+authors:
+  - bmi
+tags:
+  - build-with-tigris
+  - object storage
+  - s3
+  - thumbnail
+  - images
+  - cdn
 ---
 
 # Snip, Snap, Serve: Effortless Global Image Delivery with Tigris

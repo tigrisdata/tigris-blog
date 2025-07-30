@@ -7,7 +7,7 @@ description: >
 image: ./tiger-in-soc.webp
 keywords: [object storage, blob storage, s3, abuse, security]
 authors: [ot]
-tags: [abuse, security]
+tags: [updates, abuse, security]
 ---
 
 import CodeBlock from "@theme/CodeBlock";
@@ -16,10 +16,14 @@ import TabItem from "@theme/TabItem";
 
 import InlineCta from "@site/src/components/InlineCta";
 
+![Ty the tiger monitoring alerts in a security operations center](./tiger-in-soc.webp)
+
 As usage of Tigris has grown, so has the need to protect it from abuse. Tigris
 is a globally distributed, multi-cloud object storage service with built-in S3
 API support, and as more developers rely on it for performance and scale, we've
 also seen a natural increase in attempts to misuse the platform.
+
+{/* truncate */}
 
 Earlier this year, a campaign dubbed
 ["DeceptionAds"](https://www.infostealers.com/article/deceptionads-fake-captcha-driving-infostealer-infections-and-a-glimpse-to-the-dark-side-of-internet-advertising/)
@@ -30,10 +34,6 @@ passwords and financial data. The attackers used a combination of Bunny CDN (a
 legitimate content delivery network) and BeMob (an ad tracking service) to
 distribute and cloak their payloads - demonstrating how malicious actors
 increasingly hide behind reputable infrastructure to evade detection.
-
-![Ty the tiger monitoring alerts in a security operations center](./tiger-in-soc.webp)
-
-{/* truncate */}
 
 In February, we identified a similar tactic being used on Tigris. Fake CAPTCHA
 images were being hosted on our platform, and several threat intelligence feeds

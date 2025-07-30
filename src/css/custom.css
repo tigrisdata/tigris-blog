@@ -1205,3 +1205,7 @@ table td {
 .sl_label_s--c-txt1 {
   color: var(--token--accent-2);
 }
+
+.theme-code-block code {
+  max-width: 360px;
+}

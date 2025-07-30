@@ -1,0 +1,11 @@
+engineering:
+  label: Engineering
+  description: Engineering blog posts
+
+product:
+  label: Product & Design
+  description: Product blog posts
+
+updates:
+  label: Updates
+  description: Updates blog posts

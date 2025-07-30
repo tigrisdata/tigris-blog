@@ -6,9 +6,18 @@ description: >
   available that is nativeliy integrated with Fly.io. In this article, we'll
   explore creating AI-generated images using the Stability API and storing them
   in a Tigris bucket for easy and fast retrieval.
-keywords: [object storage, blob storage, ai, image hosting]
-authors: [bm]
-tags: [object storage, blob storage, ai]
+keywords:
+  - object storage
+  - blob storage
+  - ai
+  - image hosting
+authors:
+  - bm
+tags:
+  - build-with-tigris
+  - object storage
+  - blob storage
+  - ai
 ---
 
 # AI Image Generator with Stability and Tigris

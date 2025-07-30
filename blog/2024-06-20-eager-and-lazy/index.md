@@ -6,9 +6,19 @@ description: >
   your typical Object Storage does. We fit these within the existing common APIs
   or as graceful extensions when necessary. In this post we look at how you can
   take control of the Tigris caching mechanism if you feel the need.
-keywords: [object storage, blob storage, caching, elixir]
-authors: [lw]
-tags: [object storage, blob storage, caching, elixir]
+keywords:
+  - object storage
+  - blob storage
+  - caching
+  - elixir
+authors:
+  - lw
+tags:
+  - build-with-tigris
+  - object storage
+  - blob storage
+  - caching
+  - elixir
 ---
 
 # Lazy & Eager Caching feat. Elixir
