@@ -19,7 +19,7 @@ keywords:
 authors:
   - bmi
 tags:
-  - build-with-tigris
+  - build with tigris
   - object storage
   - s3
   - thumbnail

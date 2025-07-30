@@ -16,7 +16,7 @@ keywords:
 authors:
   - lw
 tags:
-  - build-with-tigris
+  - build with tigris
   - object storage
   - querying
   - elixir
