@@ -1,6 +1,7 @@
 import tigrisConfig from "@site/tigris.config.js";
 import React from "react";
 import styles from "./styles.module.css";
+import { useLocation } from "@docusaurus/router";
 
 interface Props {
   title: string;
@@ -10,7 +11,26 @@ interface Props {
 }
 
 const InlineCta = ({ title, subtitle, button, link }: Props) => {
-  const linkUrl = link !== undefined ? link! : tigrisConfig.getStartedUrl;
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+
+  console.log(queryParams);
+
+  if (!window.posthog) {
+    console.warn("Cannot set 'pid' for console links");
+  }
+
+  const existingPid = queryParams.get("pid");
+  const existingSid = queryParams.get("sid");
+  const pid = existingPid || window.posthog.get_distinct_id();
+  const sid = existingSid || window.posthog.get_session_id();
+
+  const linkUrl = new URL(
+    link !== undefined ? link! : tigrisConfig.getStartedUrl
+  );
+  linkUrl.searchParams.set("pid", pid);
+  linkUrl.searchParams.set("sid", sid);
+
   return (
     <div>
       <div>
