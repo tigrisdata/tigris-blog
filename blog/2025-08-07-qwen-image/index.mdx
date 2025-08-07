@@ -1,12 +1,12 @@
 ---
 slug: qwen-image
-title: Potential is not the same thing as results
+title: I Tested Qwen Image's Text Rendering Claims. Here's What I Found.
 description: >
   Alibaba's new open-weights Qwen Image model shows promise in text rendering
   but struggles with style consistency and its advertised image editing features
   are currently unavailable, making its real-world utility limited despite its
   potential.
-image: ./cover-plasticine.webp
+image: ./ty-vs-ty.webp
 keywords:
   - Qwen Image
   - Alibaba
@@ -22,8 +22,8 @@ keywords:
   - synthetic data
 authors: [xe]
 tags:
-  - thought leadership
-  - ai
+  - Engineering
+  - AI
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
@@ -77,7 +77,7 @@ img:not(.hero-image) {
 }`}
 </style>
 
-import heroimage from "./cover-plasticine.webp";
+import heroimage from "./ty-vs-ty.webp";
 
 <img src={heroimage} class="hero-image" />
 
@@ -88,8 +88,6 @@ style, and better support for generating text. All while fitting into a chat
 experience. I took a day to experiment with the new model by generating our
 mascot, Ty. It went… well, you can compare the main image here to our other blog
 posts.
-
-![](./ty-vs-ty.webp)
 
 I read the paper so you don’t have to, and I have a take.
 
@@ -113,14 +111,14 @@ weren’t consistent stylistically, even with consistent prompting. And checking
 their [Hugging Face page](https://huggingface.co/Qwen/models), the image editing
 features were nowhere to be found.
 
-To rub salt in the wound, in
+To tease us further, in
 [the Qwen Image paper](https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-Image/Qwen_Image.pdf),
 they claim:
 
 > We further train a multi-task version of Qwen-Image for image editing (TI2I)
 > tasks, seamlessly integrating both text and image as conditioning inputs.
 
-(Section 5.2.3: Performance of Image Editing, bottom of page 23)
+_Section 5.2.3: Performance of Image Editing (page 23)_
 
 I understand that there’s a race to announce new features before competing
 models, but I believe in actually testing out new tools before I have an
@@ -137,7 +135,7 @@ This is PR speak for “you’re never going to see this in a product.”
 
 All I can say is: it’s cool AI tech is moving so fast. But without actually
 trying these features out myself, I truly don’t know how fast it’s actually
-going.
+going. Especially with something as qualitative as image generation.
 
 Before we get into the meat of how Qwen Image performs in my testing, let’s go
 over how diffusion models work just so we're on the same page.
@@ -183,7 +181,7 @@ great for our blog illustrations, but it means I have to add the text in after
 the fact instead of it being a fundamental component of the image. It'd be great
 if a model could just solve text rendering for me.
 
-## Qwen Image claims to have solved text rendering
+## Qwen Image claims to have solved complex text rendering
 
 One of the biggest weaknesses of open weights AI models is rendering text. Text
 is surprisingly complicated and bad AI text examples can be found all over the
@@ -200,9 +198,16 @@ scenarios?
 
 ![](./text-clarity.webp)
 
-Fig 17, Qwen paper
+_Figure 17 from the
+[Qwen Image paper](https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-Image/Qwen_Image.pdf)
+showing Qwen Image's text rendering capabilities compared to other models_
 
-## Complex text rendering
+Qwen claims to excel at "complex text rendering, including multi-line layouts,
+paragraph-level semantics, and fine-grained details." In the paper, they compare
+the generation of text in a flat document, but how does it fare in more complex
+scenarios? Let me test each of these capabilities systematically.
+
+### Multi-line layouts
 
 Prompt: An anime woman holding a sign that says "我爱你" (I love you in
 Simplified Chinese) -- Left side is Stable Diffusion XL, right side is Qwen
@@ -210,12 +215,12 @@ Image
 
 ![](./wo-ai-ni.webp)
 
-This is night and day better, almost to a ridiculous level.
+This is night and day better, almost to a ridiculous level. 👏
 
 ### Paragraph-level semantics
 
-However it falls apart when you ask it to emit a longer paragraph, such as the
-intro to the FitnessGram Pacer Test:
+Next, let's test paragraph-level text rendering, such as the intro to the
+FitnessGram Pacer Test:
 
 ![](./pacer-test.webp)
 
@@ -244,6 +249,10 @@ notebook, space needle visible in distance. – Qwen Image
 
 This looks…fine? The text is curved, but not draped. The multiline layout is
 pretty good.
+
+### Fine-grained details
+
+Finally, let's test fine-grained text rendering with more complex scenarios:
 
 :::note
 
@@ -388,9 +397,19 @@ that makes people think it's badly photoshopped in.
 
 ## Conclusion
 
-The best part about Qwen Image is the fact that it's licensed with Apache 2, so
-you can fine tune it yourself with pretty darn good results.
+Qwen Image is a solid choice for text rendering, _for an open model._ Need fancy
+layouts, paragraphs, or text that really blends in? Closed models are still way
+ahead. But if you're running your own models to render text, you can get better
+results by adding text in post, compositing, or splitting up longer text into
+smaller bits before generating.
 
-I'm going to keep an eye on the local image diffusion model community to see if
-anyone manages to fix a lot of these issues and on the Qwen blog in case they do
-actually release the image editing model.
+If you end up customizing your models and needing to store weights, check out
+our guide on
+[Storing Model Weights on Tigris](https://www.tigrisdata.com/docs/model-storage/).
+
+<InlineCta
+  title="Store your models on Tigris"
+  subtitle="Need low latency storage for your models without egress fees? We got you."
+  button="Read the Guide"
+  link="https://www.tigrisdata.com/docs/model-storage/"
+/>
