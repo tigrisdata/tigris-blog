@@ -1,16 +1,20 @@
 ---
+slug: generative-software
 title: "Generative Software Development: From Coding to Conversing"
-description:
-  "How AI is transforming software development from autocomplete to autonomous
-  agents, and what this means for the future of coding."
+description: >
+  How AI is transforming software development from autocomplete to autonomous
+  agents, and what this means for the future of coding.
+image: ./generative-software.webp
+keywords:
+  - Claude Code
+  - AI tools
+  - Generative Software
+  - IntelliSense
+  - AI models
 authors: [ot]
 tags:
-  - engineering
-  - ai
-  - development
-
-image: ./generative-software.webp
-date: 2025-08-12
+  - Engineering
+  - AI
 ---
 
 import Timeline from "@site/src/components/Timeline";
@@ -18,20 +22,72 @@ import InlineCta from "@site/src/components/InlineCta";
 
 import heroimage from "./generative-software.webp";
 
+<style>
+  {`@media (min-width: 1536px) {
+  img:not(.hero-image) {
+    max-width: 48rem; /* 3xl equivalent */
+  }
+}
+
+.hero-image {
+  margin-bottom: 1rem;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+p:not(:has(img)) {
+  max-width: 42rem; /* 2xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+h2, h3, h4, h5, h6, blockquote, .theme-admonition, ul, ol {
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.theme-code-block {
+  max-width: 48rem; /* 3xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table {
+  max-width: 42rem; /* 4xl equivalent - wider for tables */
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td, th {
+  padding: 0.75rem;
+  text-align: left;
+}
+
+img:not(.hero-image) {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+video {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  max-width: 42rem;
+}`}
+</style>
+
 <img src={heroimage} class="hero-image" />
 
-<div
-  style={{
-    textAlign: "center",
-    marginTop: "0.5rem",
-    fontSize: "0.9rem",
-    color: "var(--ifm-color-emphasis-600)",
-  }}
->
-  <em>The evolution of AI tools</em>
-</div>
-
-<div style={{ margin: "2rem" }} />
+<center>
+  <small>
+    <em>The evolution of AI tools</em>
+  </small>
+</center>
 
 As someone who's spent the better part of my career deep in distributed
 systems - debugging memory issues at 3 a.m., obsessing over database consistency
@@ -117,33 +173,15 @@ S3-compatible object storage, and watching it produce over
 **[2,000 lines of code](https://github.com/tigrisdata/terraform-provider-tigris)**
 in minutes.
 
-<img
-  src="/blog/img/blog/generative-software/terraform-pr.webp"
-  alt="The 1,000 lines of enhancements added to the Tigris Terraform Provider."
-  style={{
-    maxWidth: "1000px",
-    borderRadius: "8px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-    maxHeight: "600px",
-    display: "block",
-    margin: "2rem auto",
-  }}
-/>
+![](/img/blog/generative-software/terraform-pr.webp)
 
-<div
-  style={{
-    textAlign: "center",
-    marginTop: "0.5rem",
-    fontSize: "0.9rem",
-    color: "var(--ifm-color-emphasis-600)",
-  }}
->
-  <em>
-    The 1,000 lines of enhancements added to the Tigris Terraform Provider.
-  </em>
-</div>
-
-<div style={{ margin: "2rem" }} />
+<center>
+  <small>
+    <em>
+      The 1,000 lines of enhancements added to the Tigris Terraform Provider.
+    </em>
+  </small>
+</center>
 
 Was it perfect? Of course not. I had to review and make
 **[1,000+ lines of enhancements](https://github.com/tigrisdata/terraform-provider-tigris/commit/0e49b0a450def187f592f7909851ff44fc4a96ec)**
@@ -191,18 +229,7 @@ finds the outdated code, implements a fix, tests it, and opens a
 **[pull request](https://github.com/tigrisdata/tigrisfs/pull/33)** with a
 detailed explanation.
 
-<video
-  controls
-  width="100%"
-  style={{
-    maxWidth: "800px",
-    borderRadius: "8px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-    maxHeight: "400px",
-    display: "block",
-    margin: "2rem auto",
-  }}
->
+<video controls width="100%">
   <source
     src="/blog/img/blog/generative-software/claude-code.webm"
     type="video/webm"
@@ -211,54 +238,28 @@ detailed explanation.
     src="/blog/img/blog/generative-software/claude-code.mp4"
     type="video/mp4"
   />
-  Download the{" "}
-  <a href="/blog/img/blog/generative-software/claude-code.mp4">MP4</a> version.
+  Your browser does not support the video tag.
 </video>
 
-<div
-  style={{
-    textAlign: "center",
-    marginTop: "0.5rem",
-    fontSize: "0.9rem",
-    color: "var(--ifm-color-emphasis-600)",
-  }}
->
-  <em>Claude Code workflow for a complex codebase (2:33)</em>
-</div>
-
-<div style={{ margin: "2rem" }} />
+<center>
+  <small>
+    <em>Claude Code workflow for a complex codebase (2:33)</em>
+  </small>
+</center>
 
 The wild part? That PR is then reviewed by another AI agent: Copilot. Claude
 takes the feedback, updates the code, and resubmits.
 
-<img
-  src="/blog/img/blog/generative-software/ai-review.webp"
-  alt="Another AI reviews the AI generated code, leaves nitpick comments, which are then resolved by Claude."
-  style={{
-    maxWidth: "1000px",
-    borderRadius: "8px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-    maxHeight: "600px",
-    display: "block",
-    margin: "2rem auto",
-  }}
-/>
+![](/img/blog/generative-software/ai-review.webp)
 
-<div
-  style={{
-    textAlign: "center",
-    marginTop: "0.5rem",
-    fontSize: "0.9rem",
-    color: "var(--ifm-color-emphasis-600)",
-  }}
->
-  <em>
-    Another AI reviews the AI generated code, leaves nitpick comments, which are
-    then resolved by Claude.
-  </em>
-</div>
-
-<div style={{ margin: "2rem" }} />
+<center>
+  <small>
+    <em>
+      Another AI reviews the AI generated code, leaves nitpick comments, which
+      are then resolved by Claude.
+    </em>
+  </small>
+</center>
 
 This wasn't just code generation. It was multi-step task execution, contextual
 understanding, and collaborative iteration - all initiated from a single prompt.

@@ -5,7 +5,6 @@ interface TimelineItem {
   period: string;
   title: string;
   features: string[];
-  highlight?: string;
 }
 
 interface TimelineProps {
@@ -25,27 +24,32 @@ function parseMarkdownLinks(text: string): JSX.Element {
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index));
     }
-    
+
     // Add the link
     parts.push(
-      <a key={match.index} href={match[2]} target="_blank" rel="noopener noreferrer">
+      <a
+        key={match.index}
+        href={match[2]}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {match[1]}
       </a>
     );
-    
+
     lastIndex = match.index + match[0].length;
   }
-  
+
   // Add remaining text after the last link
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex));
   }
-  
+
   // If no links found, return the original text
   if (parts.length === 0) {
     return <>{text}</>;
   }
-  
+
   return <>{parts}</>;
 }
 
@@ -65,9 +69,6 @@ export default function Timeline({ items }: TimelineProps): JSX.Element {
               {item.features.map((feature, featureIndex) => (
                 <li key={featureIndex} className={styles.feature}>
                   {parseMarkdownLinks(feature)}
-                  {item.highlight && feature.includes(item.highlight) && (
-                    <span className={styles.highlight}> {item.highlight}</span>
-                  )}
                 </li>
               ))}
             </ul>

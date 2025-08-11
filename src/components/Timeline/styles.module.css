@@ -124,11 +124,11 @@
   .timeline {
     padding: 0 0.5rem;
   }
-  
+
   .timelineItem {
     flex-direction: column;
   }
-  
+
   .timelineMarker {
     width: 100%;
     margin-right: 0;
@@ -136,11 +136,11 @@
     display: flex;
     justify-content: center;
   }
-  
+
   .markerLine {
     display: none;
   }
-  
+
   .timelineContent {
     margin-left: 0;
   }
