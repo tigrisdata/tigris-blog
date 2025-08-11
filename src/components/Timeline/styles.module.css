@@ -1,0 +1,147 @@
+.timeline {
+  position: relative;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.timelineItem {
+  display: flex;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.timelineMarker {
+  position: relative;
+  flex-shrink: 0;
+  width: 60px;
+  margin-right: 2rem;
+}
+
+.markerDot {
+  width: 16px;
+  height: 16px;
+  background: var(--ifm-color-primary);
+  border-radius: 50%;
+  border: 3px solid var(--ifm-background-color);
+  box-shadow: 0 0 0 3px var(--ifm-color-primary-lightest);
+  z-index: 2;
+  position: relative;
+}
+
+.markerLine {
+  position: absolute;
+  top: 16px;
+  left: 7px;
+  width: 2px;
+  height: calc(100% + 2rem);
+  background: linear-gradient(
+    to bottom,
+    var(--ifm-color-primary-lightest),
+    var(--ifm-color-emphasis-200)
+  );
+  z-index: 1;
+}
+
+.timelineContent {
+  flex: 1;
+  background: var(--ifm-card-background-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.timelineContent:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-color: var(--ifm-color-primary-lightest);
+}
+
+.period {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ifm-color-content);
+  margin: 0 0 1rem 0;
+}
+
+.features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature {
+  padding: 0.5rem 0;
+  color: var(--ifm-color-content-secondary);
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.feature::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--ifm-color-primary);
+  font-weight: bold;
+}
+
+.highlight {
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+}
+
+.feature a {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.feature a:hover {
+  border-bottom-color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.feature a:focus {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .timeline {
+    padding: 0 0.5rem;
+  }
+  
+  .timelineItem {
+    flex-direction: column;
+  }
+  
+  .timelineMarker {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .markerLine {
+    display: none;
+  }
+  
+  .timelineContent {
+    margin-left: 0;
+  }
+}
