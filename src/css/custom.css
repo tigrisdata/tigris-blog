@@ -1209,3 +1209,261 @@ table td {
 .theme-code-block code {
   max-width: 360px;
 }
+
+/* Override for blog posts to make code blocks inset */
+[class*="blogPostPage"] .theme-code-block,
+.blog-post-page .theme-code-block,
+main .theme-code-block {
+  max-width: 48rem !important; /* 3xl equivalent - use !important to override */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+[class*="blogPostPage"] .theme-code-block code,
+.blog-post-page .theme-code-block code,
+main .theme-code-block code {
+  max-width: 100% !important; /* Let the container control the width */
+}
+
+/* Target all possible code block containers in blog posts */
+[class*="blogPostPage"] pre,
+[class*="blogPostPage"] .prism-code,
+[class*="blogPostPage"] .theme-code-block,
+.blog-post-page pre,
+.blog-post-page .prism-code,
+.blog-post-page .theme-code-block,
+main pre,
+main .prism-code,
+main .theme-code-block {
+  max-width: 48rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Target the actual code content */
+[class*="blogPostPage"] pre code,
+[class*="blogPostPage"] .prism-code code,
+[class*="blogPostPage"] .theme-code-block code,
+.blog-post-page pre code,
+.blog-post-page .prism-code code,
+.blog-post-page .theme-code-block code,
+main pre code,
+main .prism-code code,
+main .theme-code-block code {
+  max-width: 100% !important;
+}
+
+/* More aggressive targeting for blog posts */
+.blog-post-page pre,
+.blog-post-page .prism-code,
+.blog-post-page .theme-code-block,
+.blog-post-page img:not(.hero-image),
+.blog-post-page p,
+.blog-post-page h1,
+.blog-post-page h2,
+.blog-post-page h3,
+.blog-post-page h4,
+.blog-post-page h5,
+.blog-post-page h6,
+.blog-post-page blockquote,
+.blog-post-page ul,
+.blog-post-page ol {
+  max-width: 48rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* More aggressive image targeting */
+.blog-post-page img,
+.blog-post-page figure img,
+.blog-post-page p img,
+.blog-post-page div img {
+  max-width: 48rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: block !important;
+}
+
+/* Target images in any container within blog posts */
+.blog-post-page * img:not(.hero-image) {
+  max-width: 48rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: block !important;
+}
+
+/* Also try targeting by the main content area */
+main img:not(.hero-image),
+main figure img,
+main p img {
+  max-width: 48rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: block !important;
+}
+
+/* Ensure hero images remain full width */
+[class*="blogPostPage"] .hero-image,
+.blog-post-page .hero-image,
+main .hero-image {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+/* Make text content and other elements inset */
+[class*="blogPostPage"] p:not(:has(img)),
+.blog-post-page p:not(:has(img)),
+main p:not(:has(img)) {
+  max-width: 42rem; /* 2xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+[class*="blogPostPage"] h2,
+[class*="blogPostPage"] h3,
+[class*="blogPostPage"] h4,
+[class*="blogPostPage"] h5,
+[class*="blogPostPage"] h6,
+[class*="blogPostPage"] blockquote,
+[class*="blogPostPage"] .theme-admonition,
+[class*="blogPostPage"] ul,
+[class*="blogPostPage"] ol,
+.blog-post-page h2,
+.blog-post-page h3,
+.blog-post-page h4,
+.blog-post-page h5,
+.blog-post-page h6,
+.blog-post-page blockquote,
+.blog-post-page .theme-admonition,
+.blog-post-page ul,
+.blog-post-page ol,
+main h2,
+main h3,
+main h4,
+main h5,
+main h6,
+main blockquote,
+main .theme-admonition,
+main ul,
+main ol {
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Make all code blocks inset with text content */
+[class*="blogPostPage"] pre,
+[class*="blogPostPage"] code,
+.blog-post-page pre,
+.blog-post-page code,
+main pre,
+main code {
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Ensure inline code doesn't get affected */
+[class*="blogPostPage"] p code,
+[class*="blogPostPage"] li code,
+.blog-post-page p code,
+.blog-post-page li code,
+main p code,
+main li code {
+  max-width: none;
+  margin: 0;
+}
+
+[class*="blogPostPage"] table,
+.blog-post-page table,
+main table {
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+[class*="blogPostPage"] video,
+.blog-post-page video,
+main video {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  max-width: 42rem;
+}
+
+/* Make admonition blocks (:::note, :::tip, :::warning, etc.) inset */
+.blog-post-page .theme-admonition,
+.blog-post-page .admonition,
+.blog-post-page .note,
+.blog-post-page .tip,
+.blog-post-page .warning,
+.blog-post-page .danger,
+.blog-post-page .info,
+main .theme-admonition,
+main .admonition,
+main .note,
+main .tip,
+main .warning,
+main .danger,
+main .info {
+  max-width: 42rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* More aggressive admonition targeting */
+.blog-post-page div[class*="admonition"],
+.blog-post-page div[class*="note"],
+.blog-post-page div[class*="tip"],
+.blog-post-page div[class*="warning"],
+.blog-post-page div[class*="danger"],
+.blog-post-page div[class*="info"],
+main div[class*="admonition"],
+main div[class*="note"],
+main div[class*="tip"],
+main div[class*="warning"],
+main div[class*="danger"],
+main div[class*="info"] {
+  max-width: 42rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Make details elements (collapsible sections) inset */
+.blog-post-page details,
+.blog-post-page summary,
+main details,
+main summary {
+  max-width: 42rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Also target any details within other containers */
+.blog-post-page * details,
+.blog-post-page * summary,
+main * details,
+main * summary {
+  max-width: 42rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Make InlineCta components inset - but preserve gradient border */
+.blog-post-page .is--color_gradient_back,
+main .is--color_gradient_back {
+  max-width: 42rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Ensure the content inside is properly contained */
+.blog-post-page .InlineCta,
+.blog-post-page [class*="InlineCta"],
+main .InlineCta,
+main [class*="InlineCta"] {
+  width: 100% !important; /* Let it fill the constrained container */
+}
