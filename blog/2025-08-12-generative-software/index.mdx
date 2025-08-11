@@ -1,8 +1,14 @@
 ---
 title: "Generative Software Development: From Coding to Conversing"
-description: "How AI is transforming software development from autocomplete to autonomous agents, and what this means for the future of coding."
+description:
+  "How AI is transforming software development from autocomplete to autonomous
+  agents, and what this means for the future of coding."
 authors: [ot]
-tags: [engineering, ai, development, build-with-tigris]
+tags:
+  - engineering
+  - ai
+  - development
+
 image: ./generative-software.webp
 date: 2025-08-12
 ---
@@ -14,17 +20,45 @@ import heroimage from "./generative-software.webp";
 
 <img src={heroimage} class="hero-image" />
 
-As someone who's spent the better part of my career deep in distributed systems - debugging memory issues at 3 a.m., obsessing over database consistency models, and chasing every last bit of performance– I never thought I'd see the day when writing code would feel conversational.
+<div
+  style={{
+    textAlign: "center",
+    marginTop: "0.5rem",
+    fontSize: "0.9rem",
+    color: "var(--ifm-color-emphasis-600)",
+  }}
+>
+  <em>The evolution of AI tools</em>
+</div>
 
-I don't write production code daily anymore. My role as a CEO is different now: strategy, team-building, and product vision consume most of my day. But the developer in me watches this transformation with awe. We're not just improving developer tools. We're redefining how software is built.
+<div style={{ margin: "2rem" }} />
 
-Let's trace a path through the AI tools I've used through my career, and how we're collaborating with AI at Tigris.
+As someone who's spent the better part of my career deep in distributed
+systems - debugging memory issues at 3 a.m., obsessing over database consistency
+models, and chasing every last bit of performance– I never thought I'd see the
+day when writing code would feel conversational.
+
+I don't write production code daily anymore. My role as a CEO is different now:
+strategy, team-building, and product vision consume most of my day. But the
+developer in me watches this transformation with awe. We're not just improving
+developer tools. We're redefining how software is built.
+
+Let's trace a path through the AI tools I've used through my career, and how
+we're collaborating with AI at Tigris.
 
 ## From Autocomplete to AI Partners
 
-Back in the late '90s, **[IntelliSense](https://en.wikipedia.org/wiki/Code_completion#Visual_Studio)** was revolutionary. Introduced by Microsoft in 1996, it cut down on repetitive keystrokes and made exploring APIs easier. It wasn't "intelligent" in the way we talk about intelligence today, but it did reduce documentation lookups significantly.
+Back in the late '90s,
+**[IntelliSense](https://en.wikipedia.org/wiki/Code_completion#Visual_Studio)**
+was revolutionary. Introduced by Microsoft in 1996, it cut down on repetitive
+keystrokes and made exploring APIs easier. It wasn't "intelligent" in the way we
+talk about intelligence today, but it did reduce documentation lookups
+significantly.
 
-Fast-forward 30 years, and we're no longer just talking about keystroke savings. We're talking about AI partners, tools that understand intent, design systems, and even debug complex workflows. The jump from IntelliSense to GitHub Copilot, to Cursor, and now to Claude Code, isn't incremental. It's exponential.
+Fast-forward 30 years, and we're no longer just talking about keystroke savings.
+We're talking about AI partners, tools that understand intent, design systems,
+and even debug complex workflows. The jump from IntelliSense to GitHub Copilot,
+to Cursor, and now to Claude Code, isn't incremental. It's exponential.
 
 ## The Four Generations of Developer Assistance
 
@@ -38,8 +72,8 @@ If I map out my own experience with these tools, I see four clear generations:
       features: [
         "Pattern matching & static analysis",
         "Single-file context awareness",
-        "20-30% keystroke reduction"
-      ]
+        "20-30% keystroke reduction",
+      ],
     },
     {
       period: "2021–2024",
@@ -47,9 +81,8 @@ If I map out my own experience with these tools, I see four clear generations:
       features: [
         "Large language models (Codex/GPT)",
         "Multi-file context",
-        "[35-55% faster development](https://github.blog/2023-03-23-github-copilot-x-the-ai-powered-developer-experience/)"
+        "[35-55% faster development](https://github.blog/2023-03-23-github-copilot-x-the-ai-powered-developer-experience/)",
       ],
-      highlight: "35-55% faster development"
     },
     {
       period: "2024–2025",
@@ -57,8 +90,8 @@ If I map out my own experience with these tools, I see four clear generations:
       features: [
         "Project-wide understanding",
         "Multi-model flexibility",
-        "Lower latency than Copilot"
-      ]
+        "Lower latency than Copilot",
+      ],
     },
     {
       period: "2025–Present",
@@ -66,37 +99,86 @@ If I map out my own experience with these tools, I see four clear generations:
       features: [
         "Autonomous task execution",
         "Natural language programming",
-        "Complete workflow automation"
-      ]
-    }
+        "Complete workflow automation",
+      ],
+    },
   ]}
 />
 
-What strikes me most is not the raw capability improvements, but the shift in how developers think about code. We've gone from **"type less"** to **"describe what you want."**
+What strikes me most is not the raw capability improvements, but the shift in
+how developers think about code. We've gone from **"type less"** to **"describe
+what you want."**
 
 ## The Turning Point: GitHub Copilot
 
-Copilot was my first real taste of AI, writing code that felt like my own. I still remember asking it to generate a Terraform module for Tigris, our S3-compatible object storage, and watching it produce over **[2,000 lines of code](https://github.com/tigrisdata/terraform-provider-tigris)** in minutes.
+Copilot was my first real taste of AI, writing code that felt like my own. I
+still remember asking it to generate a Terraform module for Tigris, our
+S3-compatible object storage, and watching it produce over
+**[2,000 lines of code](https://github.com/tigrisdata/terraform-provider-tigris)**
+in minutes.
 
-![Terraform pull request generated by GitHub Copilot](./terraform-pr.webp)
+<img
+  src="/blog/img/blog/generative-software/terraform-pr.webp"
+  alt="The 1,000 lines of enhancements added to the Tigris Terraform Provider."
+  style={{
+    maxWidth: "1000px",
+    borderRadius: "8px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+    maxHeight: "600px",
+    display: "block",
+    margin: "2rem auto",
+  }}
+/>
 
-Was it perfect? Of course not. I had to review and make **[1,000+ lines of enhancements](https://github.com/tigrisdata/terraform-provider-tigris/commit/0e49b0a450def187f592f7909851ff44fc4a96ec)** before shipping. But that didn't matter. It turned a multi-day task into something I could iterate on in an afternoon.
+<div
+  style={{
+    textAlign: "center",
+    marginTop: "0.5rem",
+    fontSize: "0.9rem",
+    color: "var(--ifm-color-emphasis-600)",
+  }}
+>
+  <em>
+    The 1,000 lines of enhancements added to the Tigris Terraform Provider.
+  </em>
+</div>
 
-Copilot made me realize something fundamental: developers are now curators and reviewers as much as they are authors of code.
+<div style={{ margin: "2rem" }} />
+
+Was it perfect? Of course not. I had to review and make
+**[1,000+ lines of enhancements](https://github.com/tigrisdata/terraform-provider-tigris/commit/0e49b0a450def187f592f7909851ff44fc4a96ec)**
+before shipping. But that didn't matter. It turned a multi-day task into
+something I could iterate on in an afternoon.
+
+Copilot made me realize something fundamental: developers are now curators and
+reviewers as much as they are authors of code.
 
 ## Cursor: The IDE Redefined
 
-If Copilot felt like autocomplete on steroids, Cursor feels like hiring a junior engineer who can read and understand the entire repository in seconds.
+If Copilot felt like autocomplete on steroids, Cursor feels like hiring a junior
+engineer who can read and understand the entire repository in seconds.
 
-I recently used Cursor while working on our object storage cache for PyTorch and Dask. I'd describe a design or a feature, **"optimal file reading that uses the cached file handler"**, and Cursor would produce a usable draft across multiple files.
+I recently used Cursor while working on our object storage cache for PyTorch and
+Dask. I'd describe a design or a feature, **"optimal file reading that uses the
+cached file handler"**, and Cursor would produce a usable draft across multiple
+files.
 
-It wasn't about typing anymore. It was about guiding. I found myself shifting from "what code do I write?" to "how do I architect this system, so AI can fill in the details?"
+It wasn't about typing anymore. It was about guiding. I found myself shifting
+from "what code do I write?" to "how do I architect this system, so AI can fill
+in the details?"
 
 ## Claude Code: The Prompt Revolution
 
-By the time I had gotten comfortable with tools like Copilot and Cursor, I thought I had a pretty good sense of what "AI-assisted development" could do. Then I tried Claude Code.
+By the time I had gotten comfortable with tools like Copilot and Cursor, I
+thought I had a pretty good sense of what "AI-assisted development" could do.
+Then I tried Claude Code.
 
-Claude Code takes it one step further. It's not just embedded in an IDE; it's like an autonomous copilot. I first used it on **[tigrisfs](https://github.com/tigrisdata/tigrisfs)**, our FUSE-based filesystem that mounts S3-compatible object storage as a local POSIX drive. This is deep infrastructure code, definitely not low-hanging fruit.
+Claude Code takes it one step further. It's not just embedded in an IDE; it's
+like an autonomous copilot. Combined with **[Conductor](https://conductor.ai)**,
+I can run multiple Claude agents in parallel. I first used Claude on
+**[tigrisfs](https://github.com/tigrisdata/tigrisfs)**, our FUSE-based
+filesystem that mounts S3-compatible object storage as a local POSIX drive. This
+is deep infrastructure code, definitely not low-hanging fruit.
 
 With a single command:
 
@@ -104,38 +186,112 @@ With a single command:
 $ claude "Replace deprecated semaphore implementation"
 ```
 
-Claude scans the **[tigrisfs](https://github.com/tigrisdata/tigrisfs)** repo, finds the outdated code, implements a fix, tests it, and opens a **[pull request](https://github.com/tigrisdata/tigrisfs/pull/33)** with a detailed explanation.
+Claude scans the **[tigrisfs](https://github.com/tigrisdata/tigrisfs)** repo,
+finds the outdated code, implements a fix, tests it, and opens a
+**[pull request](https://github.com/tigrisdata/tigrisfs/pull/33)** with a
+detailed explanation.
 
-> **[Placeholder for screen recording]**
+<video
+  controls
+  width="100%"
+  style={{
+    maxWidth: "800px",
+    borderRadius: "8px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+    maxHeight: "400px",
+    display: "block",
+    margin: "2rem auto",
+  }}
+>
+  <source
+    src="/blog/img/blog/generative-software/claude-code.webm"
+    type="video/webm"
+  />
+  <source
+    src="/blog/img/blog/generative-software/claude-code.mp4"
+    type="video/mp4"
+  />
+  Download the{" "}
+  <a href="/blog/img/blog/generative-software/claude-code.mp4">MP4</a> version.
+</video>
 
-The wild part? That PR is then reviewed by another AI agent: Copilot. Claude takes the feedback, updates the code, and resubmits.
+<div
+  style={{
+    textAlign: "center",
+    marginTop: "0.5rem",
+    fontSize: "0.9rem",
+    color: "var(--ifm-color-emphasis-600)",
+  }}
+>
+  <em>Claude Code workflow for a complex codebase (2:33)</em>
+</div>
 
-> *Side note: I used **[Conductor](https://conductor.ai)** as the interface to Claude Code. It's a beautifully designed tool that lets you run multiple Claude agents in parallel— perfect for managing complex workflows like this.*
+<div style={{ margin: "2rem" }} />
 
-This wasn't just code generation. It was multi-step task execution, contextual understanding, and collaborative iteration - all initiated from a single prompt.
+The wild part? That PR is then reviewed by another AI agent: Copilot. Claude
+takes the feedback, updates the code, and resubmits.
 
-This is where things clicked for me: we're no longer just writing code with AI's help. We're supervising autonomous agents as they do the heavy lifting.
+<img
+  src="/blog/img/blog/generative-software/ai-review.webp"
+  alt="Another AI reviews the AI generated code, leaves nitpick comments, which are then resolved by Claude."
+  style={{
+    maxWidth: "1000px",
+    borderRadius: "8px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+    maxHeight: "600px",
+    display: "block",
+    margin: "2rem auto",
+  }}
+/>
+
+<div
+  style={{
+    textAlign: "center",
+    marginTop: "0.5rem",
+    fontSize: "0.9rem",
+    color: "var(--ifm-color-emphasis-600)",
+  }}
+>
+  <em>
+    Another AI reviews the AI generated code, leaves nitpick comments, which are
+    then resolved by Claude.
+  </em>
+</div>
+
+<div style={{ margin: "2rem" }} />
+
+This wasn't just code generation. It was multi-step task execution, contextual
+understanding, and collaborative iteration - all initiated from a single prompt.
+
+This is where things clicked for me: we're no longer just writing code with AI's
+help. We're supervising autonomous agents as they do the heavy lifting.
 
 ## The Future: From Coding to Conversing
 
-We're entering a new phase of Conversational Development. Code is still involved, but the interaction layer is now natural language. Here's where I think we're heading:
+We're entering a new phase of Conversational Development. Code is still
+involved, but the interaction layer is now natural language. Here's where I
+think we're heading:
 
 - 50%+ of new code written by AI
 - IDE → AI orchestration platform
 - Developers focus on architecture, validation, and system thinking
 - Prompt engineering becomes a core competency
 
-We're not just witnessing a new generation of developer tools. We're witnessing a redefinition of what it means to be a software engineer.
+We're not just witnessing a new generation of developer tools. We're witnessing
+a redefinition of what it means to be a software engineer.
 
-As a founder, this excites me. I see the potential to build faster, iterate more intelligently, and remove the friction that slows innovation. But it also demands a mindset shift.
+As a founder, this excites me. I see the potential to build faster, iterate more
+intelligently, and remove the friction that slows innovation. But it also
+demands a mindset shift.
 
-Those who don't embrace this transformation will likely get left behind. At Tigris, we're building the storage layer designed for the future of AI. 
+Those who don't embrace this transformation will likely get left behind. At
+Tigris, we're building the storage layer designed for the future of AI.
 
 <InlineCta
-  title={"Want to explore how we’re building infrastructure to support this future?"}
-  subtitle={
-    "Tigris is object storage purpose-built for AI workloads"
+  title={
+    "Want to explore how we’re building infrastructure to support this future?"
   }
+  subtitle={"Tigris is object storage purpose-built for AI workloads"}
   button={"Check out the Docs"}
   link="https://www.tigrisdata.com/docs/"
 />
