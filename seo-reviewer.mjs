@@ -12,6 +12,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import yaml from "js-yaml";
 
 // ES module __dirname polyfill
 const __filename = fileURLToPath(import.meta.url);
@@ -73,7 +74,7 @@ class SEOReviewer {
   }
 
   /**
-   * Parse frontmatter from an MDX file
+   * Parse frontmatter from an MDX file using js-yaml
    * @param {string} content - The file content including frontmatter
    * @returns {{data: Object, raw: string, start: number, end: number}} Parsed frontmatter data and metadata
    */
@@ -90,70 +91,18 @@ class SEOReviewer {
     if (!frontmatterMatch) return { data: {}, raw: "", start: -1, end: -1 };
 
     const rawFrontmatter = frontmatterMatch[1];
-    const frontmatter = {};
-    const lines = rawFrontmatter.split("\n");
-    let currentKey = null;
-    let currentValue = "";
+    let data;
 
-    for (const line of lines) {
-      if (line.trim() === "") continue;
-
-      if (line.match(/^[a-zA-Z_][a-zA-Z0-9_]*:/)) {
-        // Save previous key-value pair
-        if (currentKey) {
-          frontmatter[currentKey] = this.parseValue(currentValue.trim());
-        }
-
-        // Start new key-value pair
-        const [key, ...valueParts] = line.split(":");
-        currentKey = key.trim();
-        currentValue = valueParts.join(":").trim();
-      } else if (currentKey) {
-        // Continuation of previous value
-        currentValue += "\n" + line;
-      }
-    }
-
-    // Save last key-value pair
-    if (currentKey) {
-      frontmatter[currentKey] = this.parseValue(currentValue.trim());
+    try {
+      data = yaml.load(rawFrontmatter) || {};
+    } catch (error) {
+      throw new Error(`Invalid YAML in frontmatter: ${error.message}`);
     }
 
     const start = content.indexOf("---\n") + 4; // Skip '---' and newline
     const end = start + rawFrontmatter.length;
 
-    return { data: frontmatter, raw: rawFrontmatter, start, end };
-  }
-
-  /**
-   * Parse YAML values
-   * @param {string} value - The YAML value to parse
-   * @returns {string|string[]} Parsed value
-   */
-  parseValue(value) {
-    // Handle multiline strings starting with >
-    if (value.startsWith(">")) {
-      return value.substring(1).trim().replace(/\n/g, " ");
-    }
-
-    // Handle arrays
-    if (value.includes("\n  -")) {
-      return value
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.startsWith("-"))
-        .map((line) => line.substring(1).trim());
-    }
-
-    // Handle simple arrays [item1, item2]
-    if (value.startsWith("[") && value.endsWith("]")) {
-      return value
-        .slice(1, -1)
-        .split(",")
-        .map((item) => item.trim());
-    }
-
-    return value;
+    return { data, raw: rawFrontmatter, start, end };
   }
 
   /**
@@ -1594,28 +1543,23 @@ class SEOReviewer {
   }
 
   /**
-   * Serialize frontmatter data back to a YAML string.
+   * Serialize frontmatter data back to a YAML string using js-yaml.
    * @param {Object} data - The frontmatter data object.
    * @returns {string} Serialized YAML string.
    */
   serializeFrontmatter(data) {
-    let serialized = "";
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        const value = data[key];
-        if (Array.isArray(value)) {
-          serialized += `${key}:\n`;
-          value.forEach((item) => {
-            serialized += `  - ${item}\n`;
-          });
-        } else if (typeof value === "string" && value.includes("\n")) {
-          serialized += `${key}: >\n  ${value.replace(/\n/g, "\n  ")}\n`;
-        } else {
-          serialized += `${key}: ${value}\n`;
-        }
-      }
+    try {
+      return yaml
+        .dump(data, {
+          indent: 2,
+          lineWidth: -1, // Don't wrap lines
+          noRefs: true, // Don't use anchors/references
+          sortKeys: false, // Preserve key order
+        })
+        .trim();
+    } catch (error) {
+      throw new Error(`Failed to serialize YAML: ${error.message}`);
     }
-    return serialized.trim();
   }
 
   /**
