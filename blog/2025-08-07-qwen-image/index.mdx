@@ -27,59 +27,9 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-
-<style>
-  {`@media (min-width: 1536px) {
-  img:not(.hero-image) {
-    max-width: 48rem; /* 3xl equivalent */
-  }
-}
-
-.hero-image {
-  margin-bottom: 1rem;
-}
-
-p:not(:has(img)) {
-  max-width: 42rem; /* 2xl equivalent */
-  margin-left: auto;
-  margin-right: auto;
-}
-
-h2, h3, h4, h5, h6, blockquote, .theme-admonition {
-  max-width: 42rem; 
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.theme-code-block {
-  max-width: 48rem; /* 3xl equivalent */
-  margin-left: auto;
-  margin-right: auto;
-}
-
-table {
-  max-width: 42rem; /* 4xl equivalent - wider for tables */
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-  border-collapse: collapse;
-}
-
-td, th {
-  padding: 0.75rem;
-  text-align: left;
-}
-
-img:not(.hero-image) {
-  margin-left: auto;
-  margin-right: auto;
-  display: block;
-}`}
-</style>
-
 import heroimage from "./ty-vs-ty.webp";
 
-<img src={heroimage} class="hero-image" />
+<img src={heroimage} alt="Ty vs Ty comparison" />
 
 This week Alibaba released
 [Qwen Image](https://qwenlm.github.io/blog/qwen-image/), an open-weights
@@ -158,10 +108,14 @@ more noise with each diffusion step. It's synthesizing an image from scratch by
 removing all of the noise until the image remains, organizing the chaos into
 whatever you asked it to generate.
 
-I think this is much easier to explain visually, so here’s an animation of each
+I think this is much easier to explain visually, so here's an animation of each
 diffusion phase of Qwen Image generating Ty riding a skateboard:
 
-<center style={{ marginBottom: "2rem" }}>![](./ty-diffusion.webp)</center>
+<div className="indented-image">
+
+![Ty diffusion animation showing each de-noising step](./ty-diffusion.webp)
+
+</div>
 
 Each frame in that GIF shows a separate de-noising step. You can see the noise
 gradually get removed as the image is unearthed from the chaos. I don’t really
@@ -196,7 +150,7 @@ paragraph-level semantics, and fine-grained details.” In the paper, they compa
 the generation of text in a flat document, but how does it fare in more complex
 scenarios?
 
-![](./text-clarity.webp)
+![Figure 17 from the Qwen Image paper showing text rendering capabilities](./text-clarity.webp)
 
 _Figure 17 from the
 [Qwen Image paper](https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-Image/Qwen_Image.pdf)
