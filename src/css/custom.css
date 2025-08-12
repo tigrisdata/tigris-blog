@@ -1209,3 +1209,258 @@ table td {
 .theme-code-block code {
   max-width: 360px;
 }
+
+/* Blog Content Width Constraints */
+/* Apply consistent max-width to all blog content elements for optimal readability */
+:root {
+  --blog-content-max-width: 42rem; /* ~672px - optimal reading width */
+}
+
+/* Target blog post content using Docusaurus's actual markdown container */
+/* Using the .markdown class that Docusaurus applies to blog content */
+.markdown > p,
+.markdown > ul,
+.markdown > ol,
+.markdown > h1,
+.markdown > h2,
+.markdown > h3,
+.markdown > h4,
+.markdown > h5,
+.markdown > h6,
+.markdown > blockquote,
+.markdown > table,
+.markdown > div,
+.markdown > pre {
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Images - constrain to same width as text */
+/* Only target direct markdown-generated images, not images inside components */
+.markdown > p > img:not([class]),
+.markdown > p:not([class]) > img,
+.markdown > figure > img,
+.markdown > div:not([class]) > img {
+  max-width: var(--blog-content-max-width);
+  width: 100%;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+/* Direct markdown images that are immediate children */
+.markdown > img:not([class]) {
+  max-width: var(--blog-content-max-width);
+  width: 100%;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+/* Videos and other media - constrain to same width as text */
+.markdown video,
+.markdown iframe,
+.markdown embed,
+.markdown object {
+  max-width: var(--blog-content-max-width);
+  width: 100%;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+/* Preserve aspect ratio for iframes (e.g., YouTube embeds) */
+.markdown iframe[src*="youtube"],
+.markdown iframe[src*="vimeo"] {
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+
+/* Indented images - smaller width with extra margin */
+.markdown .indented-image {
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 3rem;
+  padding-right: 3rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.markdown .indented-image img {
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Code blocks - same width as text content */
+.markdown .theme-code-block,
+.markdown pre {
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  overflow-x: auto; /* Allow horizontal scrolling for wide code */
+}
+
+/* Mermaid diagrams - constrain width and their containers */
+.markdown .mermaid,
+.markdown [class*="mermaid"],
+.markdown svg[id^="mermaid"],
+.markdown > div:has(.mermaid),
+.markdown > div:has(svg[id^="mermaid"]) {
+  max-width: var(--blog-content-max-width) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  overflow-x: auto;
+  display: block;
+}
+
+/* Ensure mermaid SVGs themselves are constrained */
+.markdown .mermaid svg,
+.markdown div[class*="mermaid"] svg {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Center elements (like image captions) should also be constrained */
+.markdown center {
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Admonitions (:::note, :::warning, etc.) */
+.markdown .admonition,
+.markdown .theme-admonition,
+.markdown [class*="admonition"] {
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Lists inside other elements should also be constrained */
+.markdown li > p,
+.markdown li > ul,
+.markdown li > ol {
+  max-width: none; /* Don't double-constrain nested elements */
+}
+
+/* Custom components that might be used in blog posts */
+.markdown [class*="Carousel"],
+.markdown [class*="PullQuote"],
+.markdown [class*="Reasoning"],
+.markdown [class*="ErrorSquiggle"],
+.markdown [class*="MCPCall"],
+.markdown [class*="MCPFileList"],
+.markdown [class*="NewsletterSubscribe"],
+.markdown [class*="PostEmbed"],
+.markdown [class*="TerminalWindow"] {
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Conv component - override the 80ch max-width from Conv/styles.module.css */
+/* Be very specific to only target Conv containers, not PostEmbed */
+.markdown
+  div[class*="container_"][class*="containerTop_"]:not([class*="PostEmbed"]),
+.markdown
+  div[class*="container_"][class*="containerBottom_"]:not(
+    [class*="PostEmbed"]
+  ) {
+  max-width: var(--blog-content-max-width) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  /* Preserve the flex layout */
+  display: flex !important;
+  gap: 1rem !important;
+  align-items: flex-start !important;
+}
+
+/* Ensure Conv component's avatar container doesn't shrink */
+.markdown
+  div[class*="container_"][class*="containerTop_"]
+  > div[class*="avatarContainer"],
+.markdown
+  div[class*="container_"][class*="containerBottom_"]
+  > div[class*="avatarContainer"] {
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+}
+
+/* Ensure Conv component's content area takes remaining space */
+.markdown
+  div[class*="container_"][class*="containerTop_"]
+  > div[class*="content"],
+.markdown
+  div[class*="container_"][class*="containerBottom_"]
+  > div[class*="content"] {
+  flex: 1;
+  min-width: 0;
+  text-align: left !important;
+}
+
+/* Special handling for InlineCta with gradient background */
+.markdown .is--color_gradient_back {
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Ensure InlineCta component is also constrained */
+.markdown [class*="InlineCta"] {
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* PostEmbed components handle their own width and indentation */
+/* Ensure PostEmbed avatars remain circular - be specific to PostEmbed only */
+.markdown div[class*="PostEmbed"] img[class*="avatar"],
+.markdown
+  div[class*="container_"]:not([class*="containerTop_"]):not(
+    [class*="containerBottom_"]
+  )
+  img[class*="avatar_"] {
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  max-width: 48px;
+  max-height: 48px;
+  margin: 0 8px 0 0;
+  display: block;
+  object-fit: cover;
+}
+
+/* Tables - ensure they don't overflow */
+.markdown table {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+/* Details/Summary elements */
+.markdown details {
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Ensure proper responsive behavior */
+@media (max-width: 768px) {
+  :root {
+    --blog-content-max-width: 100%; /* Full width on mobile */
+  }
+
+  .markdown {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
