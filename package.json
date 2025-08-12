@@ -20,12 +20,12 @@
     "test": "npm run test:format && npm run lint && npm run build",
     "test:format": "npx prettier --check .",
     "lint": "npx eslint .",
-    "seo:review": "node seo-reviewer.js",
-    "seo:review:all": "node seo-reviewer.js --all",
-    "seo:check": "node seo-reviewer.js",
-    "seo:check:all": "node seo-reviewer.js --all",
-    "seo:apply": "node seo-reviewer.js --apply",
-    "seo:apply:all": "node seo-reviewer.js --all --apply"
+    "seo:review": "node seo-reviewer.mjs",
+    "seo:review:all": "node seo-reviewer.mjs --all",
+    "seo:check": "node seo-reviewer.mjs",
+    "seo:check:all": "node seo-reviewer.mjs --all",
+    "seo:apply": "node seo-reviewer.mjs --apply",
+    "seo:apply:all": "node seo-reviewer.mjs --all --apply"
   },
   "dependencies": {
     "@akebifiky/remark-simple-plantuml": "^1.0.2",
