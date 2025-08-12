@@ -19,7 +19,13 @@
     "format": "npx prettier -w",
     "test": "npm run test:format && npm run lint && npm run build",
     "test:format": "npx prettier --check .",
-    "lint": "npx eslint ."
+    "lint": "npx eslint .",
+    "seo:review": "node seo-reviewer.js",
+    "seo:review:all": "node seo-reviewer.js --all",
+    "seo:check": "node seo-reviewer.js",
+    "seo:check:all": "node seo-reviewer.js --all",
+    "seo:apply": "node seo-reviewer.js --apply",
+    "seo:apply:all": "node seo-reviewer.js --all --apply"
   },
   "dependencies": {
     "@akebifiky/remark-simple-plantuml": "^1.0.2",
