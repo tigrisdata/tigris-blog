@@ -1229,8 +1229,16 @@ table td {
 .markdown > h6,
 .markdown > blockquote,
 .markdown > table,
-.markdown > div,
-.markdown > pre {
+.markdown > pre,
+/* More specific selectors for divs that need width constraints */
+.markdown > div[class*="admonition"],
+.markdown > div[class*="theme-"],
+.markdown > div[class*="alert"],
+.markdown > div[class*="callout"],
+.markdown > div[class*="note"],
+.markdown > div[class*="warning"],
+.markdown > div[class*="info"],
+.markdown > div[class*="tip"] {
   max-width: var(--blog-content-max-width);
   margin-left: auto;
   margin-right: auto;
@@ -1309,23 +1317,27 @@ table td {
 }
 
 /* Mermaid diagrams - constrain width and their containers */
-.markdown .mermaid,
-.markdown [class*="mermaid"],
-.markdown svg[id^="mermaid"],
-.markdown > div:has(.mermaid),
-.markdown > div:has(svg[id^="mermaid"]) {
-  max-width: var(--blog-content-max-width) !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+/* Using higher specificity instead of !important */
+article[itemProp="blogPost"] .markdown .mermaid,
+article[itemProp="blogPost"] .markdown [class*="mermaid"],
+article[itemProp="blogPost"] .markdown svg[id^="mermaid"],
+#__blog-post-container .markdown .mermaid,
+#__blog-post-container .markdown [class*="mermaid"],
+#__blog-post-container .markdown svg[id^="mermaid"] {
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
   overflow-x: auto;
   display: block;
 }
 
 /* Ensure mermaid SVGs themselves are constrained */
-.markdown .mermaid svg,
-.markdown div[class*="mermaid"] svg {
-  max-width: 100% !important;
-  height: auto !important;
+article[itemProp="blogPost"] .markdown .mermaid svg,
+article[itemProp="blogPost"] .markdown div[class*="mermaid"] svg,
+#__blog-post-container .markdown .mermaid svg,
+#__blog-post-container .markdown div[class*="mermaid"] svg {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Center elements (like image captions) should also be constrained */
@@ -1367,20 +1379,28 @@ table td {
 }
 
 /* Conv component - override the 80ch max-width from Conv/styles.module.css */
-/* Be very specific to only target Conv containers, not PostEmbed */
-.markdown
+/* Using higher specificity to avoid !important */
+article[itemProp="blogPost"]
+  .markdown
   div[class*="container_"][class*="containerTop_"]:not([class*="PostEmbed"]),
-.markdown
+article[itemProp="blogPost"]
+  .markdown
+  div[class*="container_"][class*="containerBottom_"]:not([class*="PostEmbed"]),
+#__blog-post-container
+  .markdown
+  div[class*="container_"][class*="containerTop_"]:not([class*="PostEmbed"]),
+#__blog-post-container
+  .markdown
   div[class*="container_"][class*="containerBottom_"]:not(
     [class*="PostEmbed"]
   ) {
-  max-width: var(--blog-content-max-width) !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  max-width: var(--blog-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
   /* Preserve the flex layout */
-  display: flex !important;
-  gap: 1rem !important;
-  align-items: flex-start !important;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
 }
 
 /* Ensure Conv component's avatar container doesn't shrink */
@@ -1396,15 +1416,25 @@ table td {
 }
 
 /* Ensure Conv component's content area takes remaining space */
-.markdown
+article[itemProp="blogPost"]
+  .markdown
   div[class*="container_"][class*="containerTop_"]
   > div[class*="content"],
-.markdown
+article[itemProp="blogPost"]
+  .markdown
+  div[class*="container_"][class*="containerBottom_"]
+  > div[class*="content"],
+#__blog-post-container
+  .markdown
+  div[class*="container_"][class*="containerTop_"]
+  > div[class*="content"],
+#__blog-post-container
+  .markdown
   div[class*="container_"][class*="containerBottom_"]
   > div[class*="content"] {
   flex: 1;
   min-width: 0;
-  text-align: left !important;
+  text-align: left;
 }
 
 /* Special handling for InlineCta with gradient background */
