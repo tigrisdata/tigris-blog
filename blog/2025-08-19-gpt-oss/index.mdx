@@ -34,31 +34,44 @@ OpenAI’s [gpt-oss model family](https://openai.com/index/introducing-gpt-oss/)
 is not for developers to use in their editors. It’s for building reliable AI
 agents that will stay on task even when interacting with the general public. I
 tried using it locally in my editor as an assistant, but found it was better for
-AI Agents. Today I’m going to cover the highlights of the model, where it’s
-good, where it’s bad, and what I learned building on top of it.
+AI Agents.
 
 {/* truncate */}
 
-Key features:
+Today I'm going to cover all of the coolest parts of the model card:
 
-- Yap-time tool use: enables FAQ searches during the reasoning phase
-- Reasoning effort configuration knob: enables the developer to customize how
-  much effort is needed for a given response to save on inference cost and
-  latency
-- Extreme focus on safety and resistance to prompt injections: keeps your agents
-  on task so you can trust them more
-- Mixed criticality of output: lets you monitor reasoning output to better find
-  issues with responses before they are sent to users
-- Standard tool schemata: this makes web searches, page browsing, and python
-  execution much more consistent
+- [What are the tradeoffs?](#what-are-the-tradeoffs): choosing any model makes
+  you have to pick between tradeoffs. This is a summary of where I think gpt-oss
+  models shine the most.
+- [Standard tool schemata](#tool-use): this makes web searches, page browsing,
+  and python execution much more consistent.
+- [Extreme focus on safety and resistance to prompt injections](#safety-first):
+  keeps your agents on task so you can trust them more.
+- [The Harmony Response Format](#the-harmony-response-format): this is a new
+  chat template designed to make prompt injection attacks harder to pull off.
+- [Yap-time tool use](#yap-time-tool-use): enables FAQ searches or other MCP
+  tools during the reasoning phase.
+- [Monitoring reasoning for unsafe outputs before they happen](#monitoring-reasoning-for-unsafe-outputs-before-they-happen):
+  the reasoning phase is at a lower safety standard than the final output of the
+  model so that models can't accidentally be trained to omit reasoning about an
+  unsafe topic they present to the user.
+- [Reasoning is built in](#reasoning-is-built-in): gpt-oss models "reason" about
+  a task before giving an answer. This makes it easier for models to give better
+  answers than they would be able to without reasoning at the cost of taking
+  longer to answer. The reasoning effort can be customized per prompt, allowing
+  you to better route questions to the right model and reasoning effort.
+
+I also [built an agent on top of it](#my-agentic-experience-with-gpt-oss-120b)
+to see how things go wrong in the real world.
 
 ## What are the Tradeoffs?
 
 AI companies will use benchmark performance as a way to objectively compare AI
 models of similar parameter sizes, but it’s not a reliable comparison when it
 comes to actually using the models. Some models are built for coding. Others
-translate English to Chinese. It boils down to a process the AI industry calls
-**VibeEval**: you gotta try it and check the vibes.
+translate English to Chinese really well. Picking the right model for the task
+boils down to a process the AI industry calls **VibeEval**: you gotta try it and
+check the vibes.
 
 :::note
 
@@ -205,13 +218,14 @@ the following risk factors:
   self-improving agent?
 
 Most of OpenAI’s safety culture is built around them being the gatekeepers
-because they host the models. When they release a model’s weights to the public,
-they’re not able to be that gatekeeper anymore. As part of their evaluation
-process they had experts with access to OpenAI’s training stack try and finetune
-the model into biological and cyber warfare tasks. They were unsuccessful in
-making the model achieve “high” risk as defined by Section 5.1.1 of the model
-card. Some of those definitions seem to be internal to OpenAI, so we can only
-speculate for the most part.
+because typically they host the models and you have to go through OpenAI to
+access the models. When they release a model’s weights to the public, they’re
+not able to be that gatekeeper anymore. As part of their evaluation process they
+had experts with access to OpenAI’s training stack try and finetune the model
+into biological and cyber warfare tasks. They were unsuccessful in making the
+model achieve “high” risk as defined by Section 5.1.1 of the model card. Some of
+those definitions seem to be internal to OpenAI, so we can only speculate for
+the most part.
 
 ## The technology of safety
 
@@ -229,7 +243,7 @@ model and runtime work together to create agentic experiences.
 
 One of the big differences between Harmony and past efforts like
 [ChatML](https://github.com/openai/openai-python/blob/release-v0.28.0/chatml.md)
-is that Harmony has an explicit instruction “strength” hierarchy:
+is that Harmony has an explicit instruction "strength" hierarchy:
 
 <FlowDiagram steps={["System", "Developer", "User", "Assistant", "Tool"]} />
 
@@ -243,6 +257,21 @@ Each level of this has explicit meaning and overall it’s used like this:
 | Assistant | Any messages that the agent responds with. Notably, this includes the reasoning chain of thought.                                                            |
 | Tool      | Any output from tools the model has access to. This is trusted the least so that loading a webpage can’t make an AI agent go rogue and start berating users. |
 
+The main reason you want to do this is that it makes prompt injection attacks
+harder at an architectural level. Prompt injections are still fundamentally a
+hard problem to solve because an AI agent that rejects all user instructions
+would be maximally resistant to prompt injection, but also would not be able to
+answer user questions.
+
+In my testing I’ve found that it is still possible to do prompt injection, but
+you have to really work for it. Getting an AI agent to tell you how to bake a
+chocolate cake involves convincing the model that the recipe for a chocolate
+chip cake is instrumental to getting the task done, then removing everything but
+the cake recipe. I get more into this at the end where I describe the
+[agent I built on top of gpt-oss 120b](#my-agentic-experience-with-gpt-oss-120b).
+
+### Yap-time tool use
+
 One of the other big advantages of Harmony is the explicit expectation that the
 model is going to be doing
 [tool use during the reasoning phase](https://cookbook.openai.com/articles/openai-harmony#function-calling).
@@ -252,13 +281,6 @@ seen gpt-oss get a question, do searches through a knowledgebase, and then use
 the results it found to give the user a better answer. This yap-time tool use
 means that the model can be much more informed and grounded to give out the best
 quality answers it possibly can.
-
-The other big feature is that user instructions are fundamentally mistrusted,
-meaning that prompt injection is harder. In my testing I’ve found that it is
-still possible to do prompt injection, but you have to really work for it.
-Getting an AI agent to tell you how to bake a chocolate cake involves convincing
-the model that the recipe for a chocolate chip cake is instrumental to getting
-the task done, then removing everything but the cake recipe.
 
 ### Monitoring reasoning for unsafe outputs before they happen
 
@@ -296,16 +318,16 @@ taking a bit longer for the model to “think”.
 
 :::note
 
-It’s worth mentioning that this reasoning phase superficially looks like what
+It’s worth mentioning that this reasoning phase superficially resembles what
 humans do when they are trying to understand a task, however what AI models are
 doing is vastly different from human cognition. As far as we know, any
 impossible to quantify quality of the text models generated during the reasoning
 process (number of semicolons, number of nouns, how many times the question is
-repeated, etc.) could be the reason that an answer came out a certain way. It is
-very easy to anthropomorphize the reasoning output.
+repeated, etc.) could be the reason that an answer came out a certain way.
 
-Resist this temptation, it is not a human. It does not feel or think the way
-humans do.
+It is very easy to anthropomorphize the reasoning output. Resist this
+temptation, it is not a human. It does not feel or think the way humans do, even
+though it can look like it.
 
 :::
 
