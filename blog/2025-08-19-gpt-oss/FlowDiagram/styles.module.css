@@ -1,0 +1,79 @@
+/* New style for the centering wrapper */
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* --- DESKTOP STYLES (screens > 768px) --- */
+.diagramContainer {
+  display: inline-flex;
+  align-items: center;
+  background-color: #1f2937;
+  color: white;
+  border: 1.5px solid white;
+  border-radius: 9999px; /* Pill shape */
+  font-size: 1rem;
+  overflow: hidden;
+  padding: 0 0.5rem;
+  /* Add a transition for a smooth change */
+  transition: all 0.3s ease-in-out;
+  z-index: 10;
+}
+
+.step {
+  padding: 0.5rem 1rem;
+}
+
+.separator {
+  width: 0;
+  height: 0;
+  border-top: 24px solid transparent;
+  border-bottom: 24px solid transparent;
+  border-left: 28px solid white;
+  margin: 0 0.5rem;
+  transition: all 0.3s ease-in-out;
+}
+
+@media (min-width: 768px) {
+  .diagramContainer {
+    font-size: 1.125rem;
+  }
+}
+
+/* --- MOBILE STYLES (screens <= 768px) --- */
+@media (max-width: 768px) {
+  .diagramContainer {
+    /* Switch to a vertical layout */
+    flex-direction: column;
+
+    /* Change shape from a pill to a rounded rectangle */
+    border-radius: 1rem; /* 16px */
+
+    /* Set a width to prevent it from touching the screen edges */
+    width: 90%;
+    max-width: 400px;
+
+    /* Adjust padding for the new vertical layout */
+    padding: 1.5rem 1rem;
+  }
+
+  .step {
+    /* Center the text inside each step block */
+    justify-content: center;
+    width: 100%;
+  }
+
+  .separator {
+    /* Override horizontal arrow styles to create a DOWNWARD arrow */
+    margin: 1rem 0; /* Vertical margin */
+
+    /* The new shape */
+    border-top: 10px solid white; /* This is the tip of the downward arrow */
+    border-bottom: none; /* Remove the bottom transparent border */
+    border-left: 8px solid transparent; /* Make side borders transparent */
+    border-right: 8px solid transparent; /* Add a right transparent border */
+  }
+}

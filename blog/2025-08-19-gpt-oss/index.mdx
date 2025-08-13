@@ -36,7 +36,7 @@ tags:
 
 import InlineCTA from "@site/src/components/InlineCta";
 import styles from "!!raw-loader!./styles.css";
-import Breadcrumbs from "./Breadcrumbs";
+import FlowDiagram from "./FlowDiagram";
 
 <style>{styles}</style>
 
@@ -243,7 +243,7 @@ One of the big differences between Harmony and past efforts like
 [ChatML](https://github.com/openai/openai-python/blob/release-v0.28.0/chatml.md)
 is that Harmony has an explicit instruction “strength” hierarchy:
 
-<Breadcrumbs items={["System", "Developer", "User", "Assistant", "Tool"]} />
+<FlowDiagram steps={["System", "Developer", "User", "Assistant", "Tool"]} />
 
 Each level of this has explicit meaning and overall it’s used like this:
 
