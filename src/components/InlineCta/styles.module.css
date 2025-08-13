@@ -5,3 +5,9 @@
 [data-theme="dark"] .InlineCta {
   background-color: #142229;
 }
+
+@media (min-width: 1536px) {
+  .InlineCta {
+    max-width: 48rem; /* 3xl equivalent */
+  }
+}
