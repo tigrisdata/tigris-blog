@@ -31,6 +31,17 @@ class SEOReviewer {
   static DESCRIPTION_TARGET_LENGTH = 150;
   static DESCRIPTION_TARGET_LENGTH_SHORT = 155;
 
+  // Suggestion types and their corresponding emojis
+  static SUGGESTION_TYPES = {
+    GOOD: "good",
+    BAD: "bad",
+  };
+
+  static SUGGESTION_EMOJIS = {
+    good: ":white_check_mark:",
+    bad: ":x:",
+  };
+
   constructor() {
     this.blogDir = path.join(__dirname, "blog");
     this.recommendations = [];
@@ -42,6 +53,112 @@ class SEOReviewer {
 
     // Content size limit (10MB)
     this.MAX_CONTENT_SIZE = 10 * 1024 * 1024;
+  }
+
+  /**
+   * Create a suggestion object with type and line number
+   * @param {string} kind - "good" or "bad"
+   * @param {string} body - The suggestion text
+   * @param {number} lineNumber - Line number where the issue was found (optional)
+   * @returns {Object} Suggestion object
+   */
+  createSuggestion(kind, body, lineNumber = null) {
+    return {
+      kind,
+      body,
+      lineNumber,
+    };
+  }
+
+  /**
+   * Create a good suggestion
+   * @param {string} body - The suggestion text
+   * @param {number} lineNumber - Line number (optional)
+   * @returns {Object} Good suggestion object
+   */
+  addGoodSuggestion(body, lineNumber = null) {
+    return this.createSuggestion(
+      SEOReviewer.SUGGESTION_TYPES.GOOD,
+      body,
+      lineNumber
+    );
+  }
+
+  /**
+   * Create a bad suggestion
+   * @param {string} body - The suggestion text
+   * @param {number} lineNumber - Line number (optional)
+   * @returns {Object} Bad suggestion object
+   */
+  addBadSuggestion(body, lineNumber = null) {
+    return this.createSuggestion(
+      SEOReviewer.SUGGESTION_TYPES.BAD,
+      body,
+      lineNumber
+    );
+  }
+
+  /**
+   * Extract text from suggestion (handles both string and object formats)
+   * @param {string|Object} suggestion - Suggestion item
+   * @returns {string} The suggestion text
+   */
+  getSuggestionText(suggestion) {
+    return typeof suggestion === "string" ? suggestion : suggestion.body;
+  }
+
+  /**
+   * Find line number for a given frontmatter field
+   * @param {string} content - Full file content
+   * @param {string} fieldName - Field name to find (e.g., "title", "description")
+   * @returns {number|null} Line number or null if not found
+   */
+  findFrontmatterLineNumber(content, fieldName) {
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.startsWith(`${fieldName}:`)) {
+        return i + 1; // Convert to 1-based line numbers
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Find line number for content in the body (after frontmatter)
+   * @param {string} content - Full file content
+   * @param {string} searchText - Text to find in content body
+   * @returns {number|null} Line number or null if not found
+   */
+  findContentLineNumber(content, searchText) {
+    const lines = content.split("\n");
+    let inFrontmatter = false;
+    let frontmatterEnded = false;
+    let dashCount = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (line.trim() === "---") {
+        dashCount++;
+        if (dashCount === 1) {
+          inFrontmatter = true;
+        } else if (dashCount === 2) {
+          inFrontmatter = false;
+          frontmatterEnded = true;
+        }
+        continue;
+      }
+
+      // Only search in content body (after frontmatter)
+      if (
+        frontmatterEnded &&
+        line.toLowerCase().includes(searchText.toLowerCase())
+      ) {
+        return i + 1; // Convert to 1-based line numbers
+      }
+    }
+    return null;
   }
 
   /**
@@ -297,6 +414,7 @@ class SEOReviewer {
       frontmatter: frontmatter.data, // Pass only the data part to analysis
       fullFrontmatter: frontmatter, // Keep full frontmatter info for writing
       content: bodyContent,
+      fullContent: content, // Add full content for line number tracking
       wordCount,
       headings,
       images,
@@ -324,20 +442,32 @@ class SEOReviewer {
    * @param {Object} analysis - Analysis object to modify
    */
   performSEOAnalysis(analysis) {
-    const { frontmatter, content, wordCount, headings, images } = analysis;
+    const { frontmatter, content, fullContent, wordCount, headings, images } =
+      analysis;
 
     // Title analysis
     if (!frontmatter.title) {
       analysis.issues.push("Missing title in frontmatter");
     } else {
       const titleLength = frontmatter.title.length;
+      const titleLineNumber = this.findFrontmatterLineNumber(
+        fullContent,
+        "title"
+      );
+
       if (titleLength < SEOReviewer.TITLE_MIN_LENGTH) {
         analysis.suggestions.push(
-          `Title is short (${titleLength} chars). Consider expanding to 50-60 characters for better SEO`
+          this.addBadSuggestion(
+            `Title is short (${titleLength} chars). Consider expanding to 50-60 characters for better SEO`,
+            titleLineNumber
+          )
         );
       } else if (titleLength > SEOReviewer.TITLE_MAX_LENGTH) {
         analysis.suggestions.push(
-          `Title is long (${titleLength} chars). Consider shortening to under 60 characters`
+          this.addBadSuggestion(
+            `Title is long (${titleLength} chars). Consider shortening to under 60 characters`,
+            titleLineNumber
+          )
         );
       }
     }
@@ -349,31 +479,48 @@ class SEOReviewer {
       const suggestedDesc = this.generateImprovedDescription(analysis);
       if (suggestedDesc) {
         analysis.suggestions.push(
-          `Suggested meta description: "${suggestedDesc}"`
+          this.addGoodSuggestion(
+            `Suggested meta description: "${suggestedDesc}"`
+          )
         );
       }
     } else {
       const descLength = frontmatter.description.length;
+      const descLineNumber = this.findFrontmatterLineNumber(
+        fullContent,
+        "description"
+      );
+
       if (descLength < SEOReviewer.DESCRIPTION_MIN_LENGTH) {
         analysis.suggestions.push(
-          `Meta description is short (${descLength} chars). Expand to 150-160 characters`
+          this.addBadSuggestion(
+            `Meta description is short (${descLength} chars). Expand to 150-160 characters`,
+            descLineNumber
+          )
         );
         // Generate suggested improved description
         const suggestedDesc = this.generateImprovedDescription(analysis);
         if (suggestedDesc) {
           analysis.suggestions.push(
-            `Suggested improved description: "${suggestedDesc}"`
+            this.addGoodSuggestion(
+              `Suggested improved description: "${suggestedDesc}"`
+            )
           );
         }
       } else if (descLength > SEOReviewer.DESCRIPTION_MAX_LENGTH) {
         analysis.suggestions.push(
-          `Meta description is long (${descLength} chars). Shorten to under 160 characters`
+          this.addBadSuggestion(
+            `Meta description is long (${descLength} chars). Shorten to under 160 characters`,
+            descLineNumber
+          )
         );
         // Generate suggested shortened description
         const suggestedDesc = this.generateImprovedDescription(analysis, true);
         if (suggestedDesc) {
           analysis.suggestions.push(
-            `Suggested shortened description: "${suggestedDesc}"`
+            this.addGoodSuggestion(
+              `Suggested shortened description: "${suggestedDesc}"`
+            )
           );
         }
       }
@@ -383,13 +530,24 @@ class SEOReviewer {
     const keywordsArray = Array.isArray(frontmatter.keywords)
       ? frontmatter.keywords
       : [];
+    const keywordsLineNumber = this.findFrontmatterLineNumber(
+      fullContent,
+      "keywords"
+    );
+
     if (keywordsArray.length === 0) {
       analysis.suggestions.push(
-        "Consider adding relevant keywords for better discoverability"
+        this.addBadSuggestion(
+          "Consider adding relevant keywords for better discoverability",
+          keywordsLineNumber
+        )
       );
     } else if (keywordsArray.length > 10) {
       analysis.suggestions.push(
-        "Too many keywords. Focus on 5-8 most relevant ones"
+        this.addBadSuggestion(
+          "Too many keywords. Focus on 5-8 most relevant ones",
+          keywordsLineNumber
+        )
       );
     }
 
@@ -506,7 +664,9 @@ class SEOReviewer {
     const hasCodeBlocks = content.includes("```") || content.includes("<code>");
     if (hasCodeBlocks) {
       analysis.suggestions.push(
-        "Great! Code examples help LLMs understand technical content"
+        this.addGoodSuggestion(
+          "Great! Code examples help LLMs understand technical content"
+        )
       );
     }
 
@@ -1304,7 +1464,19 @@ class SEOReviewer {
 
     if (suggestions.length > 0) {
       report.push("## Suggestions for Improvement");
-      suggestions.forEach((suggestion) => report.push(`- ${suggestion}`));
+      suggestions.forEach((suggestion) => {
+        // Handle both old string format and new object format for backward compatibility
+        if (typeof suggestion === "string") {
+          report.push(`- ${suggestion}`);
+        } else {
+          const emoji = SEOReviewer.SUGGESTION_EMOJIS[suggestion.kind] || "";
+          const lineInfo = suggestion.lineNumber
+            ? `:${suggestion.lineNumber}`
+            : "";
+          const fileName = path.relative(this.blogDir, filePath);
+          report.push(`- ${fileName}${lineInfo} ${emoji} ${suggestion.body}`);
+        }
+      });
       report.push("");
     }
 
@@ -1374,32 +1546,36 @@ class SEOReviewer {
     }
 
     // Terminology Analysis
-    const terminologySuggestions = suggestions.filter(
-      (s) =>
-        (s.includes("Tigris") || s.includes("terminology")) &&
-        !s.includes("Consider adding tags:") &&
-        !s.includes('Use "') &&
-        !s.includes("Consider replacing")
-    );
+    const terminologySuggestions = suggestions.filter((s) => {
+      const text = this.getSuggestionText(s);
+      return (
+        (text.includes("Tigris") || text.includes("terminology")) &&
+        !text.includes("Consider adding tags:") &&
+        !text.includes('Use "') &&
+        !text.includes("Consider replacing")
+      );
+    });
     if (terminologySuggestions.length > 0) {
       report.push("### Tigris Terminology");
       terminologySuggestions.forEach((suggestion) => {
-        report.push(`- ${suggestion}`);
+        report.push(`- ${this.getSuggestionText(suggestion)}`);
       });
       report.push("");
     }
 
     // Tag Analysis
-    const tagSuggestions = suggestions.filter(
-      (s) =>
-        s.includes("Consider adding tags:") ||
-        (s.includes('Use "') && s.includes("for consistency")) ||
-        s.includes("Consider replacing")
-    );
+    const tagSuggestions = suggestions.filter((s) => {
+      const text = this.getSuggestionText(s);
+      return (
+        text.includes("Consider adding tags:") ||
+        (text.includes('Use "') && text.includes("for consistency")) ||
+        text.includes("Consider replacing")
+      );
+    });
     if (tagSuggestions.length > 0) {
       report.push("### Tag Suggestions");
       tagSuggestions.forEach((suggestion) => {
-        report.push(`- ${suggestion}`);
+        report.push(`- ${this.getSuggestionText(suggestion)}`);
       });
       report.push("");
     }
@@ -1591,13 +1767,20 @@ class SEOReviewer {
 
     // Apply tag changes (additions, casing, positioning)
     if (
-      analysis.suggestions.some((s) => s.startsWith("Consider adding tags:")) ||
-      analysis.suggestions.some(
-        (s) => s.includes('Use "') && s.includes("for consistency")
+      analysis.suggestions.some((s) =>
+        this.getSuggestionText(s).startsWith("Consider adding tags:")
       ) ||
-      analysis.suggestions.some(
-        (s) => s.includes("Category tags") && s.includes("should be at the top")
-      )
+      analysis.suggestions.some((s) => {
+        const text = this.getSuggestionText(s);
+        return text.includes('Use "') && text.includes("for consistency");
+      }) ||
+      analysis.suggestions.some((s) => {
+        const text = this.getSuggestionText(s);
+        return (
+          text.includes("Category tags") &&
+          text.includes("should be at the top")
+        );
+      })
     ) {
       const currentTags = Array.isArray(originalFrontmatter.data.tags)
         ? originalFrontmatter.data.tags
@@ -1619,7 +1802,9 @@ class SEOReviewer {
 
       // Fix tag casing
       const aiConsistencyMatch = analysis.suggestions.find((s) =>
-        s.includes('Use "AI" instead of "ai" for consistency')
+        this.getSuggestionText(s).includes(
+          'Use "AI" instead of "ai" for consistency'
+        )
       );
       if (aiConsistencyMatch) {
         newTagsArray = newTagsArray.map((tag) =>
@@ -1628,7 +1813,9 @@ class SEOReviewer {
         console.log(`- Corrected "ai" to "AI"`);
       }
       const engineeringConsistencyMatch = analysis.suggestions.find((s) =>
-        s.includes('Use "Engineering" instead of "engineering" for consistency')
+        this.getSuggestionText(s).includes(
+          'Use "Engineering" instead of "engineering" for consistency'
+        )
       );
       if (engineeringConsistencyMatch) {
         newTagsArray = newTagsArray.map((tag) =>
@@ -1638,9 +1825,13 @@ class SEOReviewer {
       }
 
       // Reorder category tags
-      const categoryPositioningMatch = analysis.suggestions.find(
-        (s) => s.includes("Category tags") && s.includes("should be at the top")
-      );
+      const categoryPositioningMatch = analysis.suggestions.find((s) => {
+        const text = this.getSuggestionText(s);
+        return (
+          text.includes("Category tags") &&
+          text.includes("should be at the top")
+        );
+      });
       if (categoryPositioningMatch) {
         const categoryTagsLower = [
           "engineering",
@@ -1726,18 +1917,21 @@ class SEOReviewer {
     }
 
     // Apply caption text as alt text for images
-    const captionSuggestions = analysis.suggestions.filter(
-      (s) =>
-        s.includes("Consider using the caption text:") &&
-        (s.includes("Image missing alt text:") ||
-          s.includes("Alt text too short for image:"))
-    );
+    const captionSuggestions = analysis.suggestions.filter((s) => {
+      const text = this.getSuggestionText(s);
+      return (
+        text.includes("Consider using the caption text:") &&
+        (text.includes("Image missing alt text:") ||
+          text.includes("Alt text too short for image:"))
+      );
+    });
 
     for (const suggestion of captionSuggestions) {
-      const imagePathMatch = suggestion.match(
+      const suggestionText = this.getSuggestionText(suggestion);
+      const imagePathMatch = suggestionText.match(
         /Image (?:missing alt text|Alt text too short for image): ([^.]+\.[^.]+)/
       );
-      const captionMatch = suggestion.match(
+      const captionMatch = suggestionText.match(
         /Consider using the caption text: "([^"]+)"/
       );
 
