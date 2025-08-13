@@ -13,6 +13,8 @@
 
 @media (min-width: 1024px) {
   .ContainerWidth {
-    max-width: 38rem; /* xl equivalent */
+@media (min-width: 1280px) {
+  .ContainerWidth {
+    max-width: 36rem; /* xl equivalent */
   }
 }
