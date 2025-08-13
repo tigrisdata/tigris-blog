@@ -38,8 +38,8 @@ class SEOReviewer {
   };
 
   static SUGGESTION_EMOJIS = {
-    good: ":white_check_mark:",
-    bad: ":x:",
+    good: "✅",
+    bad: "❌",
   };
 
   constructor() {
