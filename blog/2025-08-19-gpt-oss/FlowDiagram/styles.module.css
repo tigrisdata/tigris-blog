@@ -54,10 +54,12 @@
 
     /* Set a width to prevent it from touching the screen edges */
     width: 90%;
-    max-width: 400px;
+    max-width: fit-content;
 
     /* Adjust padding for the new vertical layout */
-    padding: 1.5rem 1rem;
+    padding: 0.25rem 0.25rem;
+    text-align: center;
+    font-size: 1.5rem;
   }
 
   .step {
@@ -68,12 +70,12 @@
 
   .separator {
     /* Override horizontal arrow styles to create a DOWNWARD arrow */
-    margin: 1rem 0; /* Vertical margin */
+    margin: 0.25rem 0; /* Vertical margin */
 
     /* The new shape */
-    border-top: 10px solid white; /* This is the tip of the downward arrow */
+    border-top: 20px solid white; /* This is the tip of the downward arrow */
     border-bottom: none; /* Remove the bottom transparent border */
-    border-left: 8px solid transparent; /* Make side borders transparent */
-    border-right: 8px solid transparent; /* Add a right transparent border */
+    border-left: 16px solid transparent; /* Make side borders transparent */
+    border-right: 16px solid transparent; /* Add a right transparent border */
   }
 }
