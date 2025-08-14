@@ -115,6 +115,18 @@ async function shouldRegenerateTile(sourcePath, tilePath) {
 }
 
 /**
+ * Validate if a file is a valid image
+ */
+async function validateImage(imagePath) {
+  try {
+    const metadata = await sharp(imagePath).metadata();
+    return metadata.width && metadata.height && metadata.format;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
  * Process a single image to create a tile
  */
 async function processImage(sourcePath, tilePath) {
@@ -128,9 +140,23 @@ async function processImage(sourcePath, tilePath) {
       return { skipped: true };
     }
 
+    // Validate the image before processing
+    const isValid = await validateImage(sourcePath);
+    if (!isValid) {
+      console.error(`  ✗ Invalid image file: ${path.basename(sourcePath)}`);
+      return { error: "Invalid image file" };
+    }
+
     const startTime = Date.now();
     const sourceStats = await fs.stat(sourcePath);
     const sourceSizeKB = Math.round(sourceStats.size / 1024);
+    
+    // Skip extremely large files
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    if (sourceStats.size > MAX_FILE_SIZE) {
+      console.warn(`  ⚠ Skipping large file (>50MB): ${path.basename(sourcePath)}`);
+      return { skipped: true, reason: "file_too_large" };
+    }
 
     let pipeline = sharp(sourcePath).resize(TILE_WIDTH, TILE_HEIGHT, {
       fit: "cover",
@@ -157,9 +183,9 @@ async function processImage(sourcePath, tilePath) {
     // Get output file size
     const tileStats = await fs.stat(tilePath);
     const tileSizeKB = Math.round(tileStats.size / 1024);
-    const reduction = Math.round(
-      ((sourceSizeKB - tileSizeKB) / sourceSizeKB) * 100
-    );
+    const reduction = sourceSizeKB > 0 
+      ? Math.round(((sourceSizeKB - tileSizeKB) / sourceSizeKB) * 100)
+      : 0;
     const processingTime = Date.now() - startTime;
 
     console.log(
@@ -187,6 +213,10 @@ async function generateTiles() {
   console.log("🖼️  Starting tile generation...\n");
 
   try {
+    // Dynamic import for ESM module
+    const { default: pLimit } = await import("p-limit");
+    const limit = pLimit(3); // Process max 3 images at a time
+
     // Ensure tiles directory exists
     await ensureTilesDirectory();
 
@@ -200,37 +230,44 @@ async function generateTiles() {
     let totalSourceSize = 0;
     let totalTileSize = 0;
 
-    // Process each blog post
-    for (const blogDir of blogDirs) {
-      const dirName = path.basename(blogDir);
+    // Process each blog post with concurrency control
+    const processPromises = blogDirs.map((blogDir) =>
+      limit(async () => {
+        const dirName = path.basename(blogDir);
 
-      // Find the first image in the blog post
-      const imagePath = await findFirstImage(blogDir);
+        // Find the first image in the blog post
+        const imagePath = await findFirstImage(blogDir);
 
-      if (!imagePath) {
-        console.log(`○ ${dirName}: No images found`);
-        continue;
-      }
+        if (!imagePath) {
+          console.log(`○ ${dirName}: No images found`);
+          return null;
+        }
 
-      console.log(`● ${dirName}:`);
+        console.log(`● ${dirName}:`);
 
-      // Generate tile filename
-      const tileFilename = getTileFilename(blogDir, path.extname(imagePath));
-      const tilePath = path.join(TILES_DIR, tileFilename);
+        // Generate tile filename
+        const tileFilename = getTileFilename(blogDir, path.extname(imagePath));
+        const tilePath = path.join(TILES_DIR, tileFilename);
 
-      // Process the image
-      const result = await processImage(imagePath, tilePath);
+        // Process the image
+        const result = await processImage(imagePath, tilePath);
 
-      if (result.success) {
-        processed++;
-        totalSourceSize += result.sourceSizeKB;
-        totalTileSize += result.tileSizeKB;
-      } else if (result.skipped) {
-        skipped++;
-      } else {
-        failed++;
-      }
-    }
+        if (result.success) {
+          processed++;
+          totalSourceSize += result.sourceSizeKB;
+          totalTileSize += result.tileSizeKB;
+        } else if (result.skipped) {
+          skipped++;
+        } else {
+          failed++;
+        }
+        
+        return result;
+      })
+    );
+
+    // Wait for all processing to complete
+    await Promise.all(processPromises);
 
     // Summary
     console.log("\n" + "=".repeat(50));

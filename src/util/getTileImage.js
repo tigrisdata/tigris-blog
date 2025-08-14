@@ -27,32 +27,10 @@ export function getTileImagePath(permalink, originalImage) {
   // Construct the tile path
   const tilePath = `/tiles/${slug}${tileExt}`;
 
-  // In development, we might want to check if the tile exists
-  // For production, we assume tiles are generated during build
-  if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-    // In development, fall back to original if tile doesn't exist
-    // This is a simple check - in production tiles should always exist
-    return checkTileExists(tilePath) ? tilePath : originalImage;
-  }
-
+  // In production and SSR, always use tile path
+  // In browser development, we could check but it's complex with async loading
+  // For simplicity, always return tile path and let browser handle 404 with fallback
   return tilePath;
-}
-
-/**
- * Check if a tile image exists (development only)
- * @param {string} tilePath - The tile image path to check
- * @returns {boolean} Whether the tile exists
- */
-function checkTileExists(tilePath) {
-  // Simple existence check for development
-  // This could be enhanced with actual file checking if needed
-  try {
-    // For now, assume tiles exist if the path is valid
-    // In a real implementation, you might want to maintain a manifest
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export default getTileImagePath;
