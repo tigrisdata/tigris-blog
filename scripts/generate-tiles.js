@@ -150,11 +150,13 @@ async function processImage(sourcePath, tilePath) {
     const startTime = Date.now();
     const sourceStats = await fs.stat(sourcePath);
     const sourceSizeKB = Math.round(sourceStats.size / 1024);
-    
+
     // Skip extremely large files
     const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
     if (sourceStats.size > MAX_FILE_SIZE) {
-      console.warn(`  ⚠ Skipping large file (>50MB): ${path.basename(sourcePath)}`);
+      console.warn(
+        `  ⚠ Skipping large file (>50MB): ${path.basename(sourcePath)}`
+      );
       return { skipped: true, reason: "file_too_large" };
     }
 
@@ -183,9 +185,10 @@ async function processImage(sourcePath, tilePath) {
     // Get output file size
     const tileStats = await fs.stat(tilePath);
     const tileSizeKB = Math.round(tileStats.size / 1024);
-    const reduction = sourceSizeKB > 0 
-      ? Math.round(((sourceSizeKB - tileSizeKB) / sourceSizeKB) * 100)
-      : 0;
+    const reduction =
+      sourceSizeKB > 0
+        ? Math.round(((sourceSizeKB - tileSizeKB) / sourceSizeKB) * 100)
+        : 0;
     const processingTime = Date.now() - startTime;
 
     console.log(
@@ -261,7 +264,7 @@ async function generateTiles() {
         } else {
           failed++;
         }
-        
+
         return result;
       })
     );
