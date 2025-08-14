@@ -70,3 +70,49 @@
     font-size: 1rem;
   }
 }
+
+/* Mobile performance optimizations */
+@media (max-width: 768px) {
+  .titleImageLink {
+    /* Reduce max height on mobile */
+    max-height: 250px;
+    /* Simplify border radius for better performance */
+    border-radius: 0.25rem;
+  }
+  
+  /* Disable hover effects on mobile for better performance */
+  .titleImageLink:hover .titleImage {
+    transform: none;
+  }
+  
+  .zoomImage::before {
+    display: none;
+  }
+  
+  .titleImage {
+    /* Disable transition on mobile */
+    transition: none;
+  }
+}
+
+/* Respect user's preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .titleImage,
+  .zoomImage,
+  .zoomImage::before {
+    transition: none;
+    animation: none;
+  }
+  
+  .titleImageLink:hover .titleImage {
+    transform: none;
+  }
+}
+
+/* High performance mode for slow connections */
+@media (prefers-reduced-data: reduce) {
+  .titleImageLink {
+    /* Show placeholder instead of loading images on slow connections */
+    background-color: var(--ifm-color-emphasis-100);
+  }
+}
