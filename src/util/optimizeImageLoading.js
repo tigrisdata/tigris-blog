@@ -2,18 +2,24 @@
 
 if (typeof window !== "undefined") {
   // Check if the user is on a mobile device (better detection)
-  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  
+  const isMobile =
+    "ontouchstart" in window ||
+    navigator.maxTouchPoints > 0 ||
+    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   // Safely check connection with feature detection
-  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const isSlowConnection = connection && 
-    ['slow-2g', '2g', '3g'].includes(connection.effectiveType);
+  const connection =
+    navigator.connection ||
+    navigator.mozConnection ||
+    navigator.webkitConnection;
+  const isSlowConnection =
+    connection && ["slow-2g", "2g", "3g"].includes(connection.effectiveType);
 
   if (isMobile || isSlowConnection) {
     // Implement adaptive loading based on connection speed
     document.addEventListener("DOMContentLoaded", () => {
       const images = document.querySelectorAll("img[loading='lazy']");
-      
+
       if (isSlowConnection) {
         // On slow connections, only load images that are immediately visible
         const observer = new IntersectionObserver(
@@ -45,12 +51,12 @@ if (typeof window !== "undefined") {
                 const img = entry.target;
                 const allImages = Array.from(images);
                 const currentIndex = allImages.indexOf(img);
-                
+
                 // Load current image
                 if (img.dataset.src && !img.src) {
                   img.src = img.dataset.src;
                 }
-                
+
                 // Pre-load next 2 images
                 for (let i = 1; i <= 2; i++) {
                   const nextImg = allImages[currentIndex + i];
@@ -61,7 +67,7 @@ if (typeof window !== "undefined") {
                     }, i * 100);
                   }
                 }
-                
+
                 observer.unobserve(img);
               }
             });
@@ -102,9 +108,9 @@ if (typeof window !== "undefined") {
           document.body.style.pointerEvents = "auto";
         }, 100);
       };
-      
+
       window.addEventListener("scroll", handleScroll, { passive: true });
-      
+
       // Cleanup on page unload
       window.addEventListener("beforeunload", () => {
         window.removeEventListener("scroll", handleScroll);

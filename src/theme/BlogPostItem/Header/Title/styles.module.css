@@ -79,16 +79,16 @@
     /* Simplify border radius for better performance */
     border-radius: 0.25rem;
   }
-  
+
   /* Disable hover effects on mobile for better performance */
   .titleImageLink:hover .titleImage {
     transform: none;
   }
-  
+
   .zoomImage::before {
     display: none;
   }
-  
+
   .titleImage {
     /* Disable transition on mobile */
     transition: none;
@@ -103,7 +103,7 @@
     transition: none;
     animation: none;
   }
-  
+
   .titleImageLink:hover .titleImage {
     transform: none;
   }
