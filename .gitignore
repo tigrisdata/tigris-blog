@@ -8,6 +8,7 @@
 .docusaurus
 .cache-loader
 .vercel
+/static/tiles
 
 # Misc
 .DS_Store

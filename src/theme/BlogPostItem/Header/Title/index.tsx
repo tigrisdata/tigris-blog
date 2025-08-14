@@ -4,6 +4,7 @@ import Link from "@docusaurus/Link";
 import { useBlogPost } from "@docusaurus/theme-common/internal";
 import type { Props } from "@theme/BlogPostItem/Header/Title";
 import OptimizedImage from "@site/src/components/OptimizedImage";
+import { getTileImagePath } from "@site/src/util/getTileImage";
 
 import styles from "./styles.module.css";
 
@@ -42,7 +43,7 @@ export default function BlogPostItemHeaderTitle({
         {!isBlogPostPage && assets.image && (
           <Link to={permalink} className={clsx(styles.titleImageLink)}>
             <OptimizedImage
-              src={assets.image}
+              src={getTileImagePath(permalink, assets.image)}
               alt={metadata.title}
               className={clsx(styles.titleImage, styles.zoomImage)}
               loading="lazy"
