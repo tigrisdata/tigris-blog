@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import clsx from "clsx";
 import styles from "./styles.module.css";
 
@@ -25,3 +26,13 @@ export default function OptimizedImage({
     />
   );
 }
+
+OptimizedImage.propTypes = {
+  src: PropTypes.string.isRequired,
+  alt: PropTypes.string.isRequired,
+  className: PropTypes.string,
+  width: PropTypes.number,
+  height: PropTypes.number,
+  loading: PropTypes.oneOf(["lazy", "eager"]),
+  sizes: PropTypes.string,
+};

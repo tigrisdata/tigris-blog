@@ -1,7 +1,7 @@
-module.exports = function imageOptimizationPlugin(context, options) {
+module.exports = function imageOptimizationPlugin(context) {
   return {
     name: "image-optimization-plugin",
-    configureWebpack(config, isServer, utils) {
+    configureWebpack() {
       return {
         module: {
           rules: [
@@ -31,7 +31,7 @@ module.exports = function imageOptimizationPlugin(context, options) {
         },
       };
     },
-    async contentLoaded({ content, actions }) {
+    async contentLoaded({ actions }) {
       // Add preconnect hints for faster image loading
       actions.setGlobalData({
         preconnectHints: [

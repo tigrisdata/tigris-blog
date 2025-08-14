@@ -1,5 +1,13 @@
 // Client-side module to optimize image loading on mobile devices
 
+// Implement progressive enhancement for WebP support
+function supportsWebP() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1;
+  canvas.height = 1;
+  return canvas.toDataURL("image/webp").indexOf("image/webp") === 0;
+}
+
 if (typeof window !== "undefined") {
   // Check if the user is on a mobile device (better detection)
   const isMobile =
@@ -116,14 +124,6 @@ if (typeof window !== "undefined") {
         window.removeEventListener("scroll", handleScroll);
       });
     }
-  }
-
-  // Implement progressive enhancement for WebP support
-  function supportsWebP() {
-    const canvas = document.createElement("canvas");
-    canvas.width = 1;
-    canvas.height = 1;
-    return canvas.toDataURL("image/webp").indexOf("image/webp") === 0;
   }
 
   if (!supportsWebP()) {
