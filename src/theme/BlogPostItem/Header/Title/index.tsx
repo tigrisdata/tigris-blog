@@ -44,6 +44,10 @@ export default function BlogPostItemHeaderTitle({
               src={assets.image}
               alt={metadata.title}
               className={clsx(styles.titleImage, styles.zoomImage)}
+              loading="lazy"
+              width={400}
+              height={225}
+              sizes="(max-width: 768px) 100vw, (max-width: 996px) 50vw, 400px"
             />
           </Link>
         )}
