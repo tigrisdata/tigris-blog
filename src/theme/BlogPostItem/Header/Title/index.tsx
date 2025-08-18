@@ -50,6 +50,7 @@ export default function BlogPostItemHeaderTitle({
               width={400}
               height={225}
               sizes="(max-width: 768px) 100vw, (max-width: 996px) 50vw, 400px"
+              fallbackSrc={assets.image}
             />
           </Link>
         )}

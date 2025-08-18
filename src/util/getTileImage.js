@@ -27,9 +27,9 @@ export function getTileImagePath(permalink, originalImage) {
   // Construct the tile path
   const tilePath = `/tiles/${slug}${tileExt}`;
 
-  // In production and SSR, always use tile path
-  // In browser development, we could check but it's complex with async loading
-  // For simplicity, always return tile path and let browser handle 404 with fallback
+  // During SSR/build, we can't easily check if the file exists
+  // So we'll return the tile path and add a fallback mechanism
+  // The component using this should handle fallback to original image
   return tilePath;
 }
 
