@@ -6,9 +6,8 @@
     "docusaurus": "docusaurus",
     "dev": "docusaurus start --host 0.0.0.0",
     "start": "docusaurus start",
-    "tiles": "node scripts/generate-tiles.js",
-    "build": "npm run tiles && docusaurus build",
-    "vercel-build": "[ \"$VERCEL\" = 1 ] && npm run tiles && docusaurus build --out-dir build/blog && npm run vercel-copy-404",
+    "build": "docusaurus build",
+    "vercel-build": "[ \"$VERCEL\" = 1 ] && docusaurus build --out-dir build/blog && npm run vercel-copy-404",
     "vercel-copy-404": "[ \"$VERCEL\" = 1 ] && echo \"copying 404\" && cp build/blog/404.html build/",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
@@ -55,9 +54,7 @@
     "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-react": "^7.29.4",
-    "p-limit": "^6.2.0",
     "prettier": "2.8.8",
-    "sharp": "^0.34.3",
     "typescript": "~5.2.2"
   },
   "engines": {

@@ -34,7 +34,6 @@ const config = {
   clientModules: [
     require.resolve("./src/util/augmentConsoleLinks.js"),
     require.resolve("./src/util/hideNavbarInBlogPost.js"),
-    require.resolve("./src/util/optimizeImageLoading.js"),
   ],
 
   customFields: {
@@ -82,7 +81,6 @@ const config = {
         enableInDevelopment: process.env.USE_POSTHOG_IN_DEVELOPMENT === "true",
       },
     ],
-    require.resolve("./src/plugins/imageOptimization.js"),
   ],
 
   themeConfig:
