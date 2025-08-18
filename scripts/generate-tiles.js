@@ -5,6 +5,7 @@
  * Runs during build to create smaller, web-optimized versions of blog images
  */
 
+/* eslint-disable @typescript-eslint/no-var-requires */
 const fs = require("fs").promises;
 const path = require("path");
 const sharp = require("sharp");
@@ -131,8 +132,6 @@ async function validateImage(imagePath) {
  */
 async function processImage(sourcePath, tilePath) {
   try {
-    const ext = path.extname(sourcePath).toLowerCase();
-
     // Check if regeneration is needed
     const shouldRegenerate = await shouldRegenerateTile(sourcePath, tilePath);
     if (!shouldRegenerate) {
