@@ -26,7 +26,9 @@ if (typeof window !== "undefined") {
   if (isMobile || isSlowConnection) {
     // Implement adaptive loading based on connection speed
     document.addEventListener("DOMContentLoaded", () => {
-      const images = document.querySelectorAll("img[loading='lazy']");
+      // Only select images that have data-src attribute (our optimized images)
+      // This prevents interfering with regular MDX content images
+      const images = document.querySelectorAll("img[data-src]");
 
       if (isSlowConnection) {
         // On slow connections, only load images that are immediately visible
