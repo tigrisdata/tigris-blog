@@ -47,9 +47,20 @@ class SEOReviewer {
     this.recommendations = [];
 
     // Pre-compile regex patterns for better performance
-    this.markdownImagePattern = /!\[([^\]]*)\]\(([^)]+)\)/g;
-    this.htmlImagePattern =
-      /<img[^>]*src=["']([^"']+)["'][^>]*(?:alt=["']([^"']+)["'][^>]*)?>/g;
+    this.compiledRegexes = {
+      markdownImage: /!\[([^\]]*)\]\(([^)]+)\)/g,
+      htmlImage:
+        /<img[^>]*src=["']([^"']+)["'][^>]*(?:alt=["']([^"']+)["'][^>]*)?>/g,
+      frontmatter: /^---\n((?:[^\n]|\n(?!---))*)\n---/,
+      headings: /^(#{1,6})\s+(.+)$/gm,
+      // Safe regex patterns for terminology replacement
+      safeWordBoundary: (term) =>
+        new RegExp(`\\b${this.escapeRegex(term)}\\b`, "gi"),
+    };
+
+    // Legacy patterns for backward compatibility
+    this.markdownImagePattern = this.compiledRegexes.markdownImage;
+    this.htmlImagePattern = this.compiledRegexes.htmlImage;
 
     // Content size limit (10MB)
     this.MAX_CONTENT_SIZE = 10 * 1024 * 1024;
@@ -103,6 +114,15 @@ class SEOReviewer {
    * @param {string|Object} suggestion - Suggestion item
    * @returns {string} The suggestion text
    */
+  /**
+   * Safely escape regex special characters
+   * @param {string} text - Text to escape
+   * @returns {string} Escaped text
+   */
+  escapeRegex(text) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   getSuggestionText(suggestion) {
     return typeof suggestion === "string" ? suggestion : suggestion.body;
   }
@@ -169,11 +189,19 @@ class SEOReviewer {
   validateFilePath(filePath) {
     const resolvedPath = path.resolve(filePath);
     const resolvedBase = path.resolve(this.blogDir);
+    const resolvedCwd = path.resolve(process.cwd());
 
-    if (
-      !resolvedPath.startsWith(resolvedBase) &&
-      !resolvedPath.startsWith(process.cwd())
-    ) {
+    // Use path.relative to check containment more securely
+    const relativeToBase = path.relative(resolvedBase, resolvedPath);
+    const relativeToCwd = path.relative(resolvedCwd, resolvedPath);
+
+    // Check if path escapes allowed directories using .. or absolute paths
+    const isOutsideBase =
+      relativeToBase.startsWith("..") || path.isAbsolute(relativeToBase);
+    const isOutsideCwd =
+      relativeToCwd.startsWith("..") || path.isAbsolute(relativeToCwd);
+
+    if (isOutsideBase && isOutsideCwd) {
       throw new Error("Invalid file path: outside allowed directory");
     }
 
@@ -186,8 +214,17 @@ class SEOReviewer {
    * @returns {string} Sanitized path
    */
   sanitizeImagePath(imagePath) {
-    // Only allow alphanumeric, hyphens, dots, slashes, underscores
-    return imagePath.replace(/[^a-zA-Z0-9\-./_ ]/g, "");
+    // Stricter validation first - only allow safe characters
+    if (!/^[a-zA-Z0-9\-./_ ]+$/.test(imagePath)) {
+      throw new Error("Invalid image path: contains unsafe characters");
+    }
+
+    // Additional length check to prevent overly long paths
+    if (imagePath.length > 500) {
+      throw new Error("Invalid image path: path too long");
+    }
+
+    return imagePath.trim();
   }
 
   /**
@@ -211,7 +248,15 @@ class SEOReviewer {
     let data;
 
     try {
-      data = yaml.load(rawFrontmatter) || {};
+      // Use safe schema to prevent YAML bombs and restrict to safe types
+      data =
+        yaml.load(rawFrontmatter, {
+          schema: yaml.FAILSAFE_SCHEMA, // Only allow basic YAML types
+          json: true, // Only JSON-compatible types
+          onWarning: (warning) => {
+            console.warn(`YAML parsing warning: ${warning.message}`);
+          },
+        }) || {};
     } catch (error) {
       throw new Error(`Invalid YAML in frontmatter: ${error.message}`);
     }
@@ -1160,7 +1205,9 @@ class SEOReviewer {
       frontmatter.description || ""
     } ${headings.map((h) => h.text).join(" ")} ${content}`.toLowerCase();
     const currentTags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
-    const currentTagsLower = currentTags.map((t) => t.toLowerCase());
+    const currentTagsLower = currentTags
+      .map((t) => t?.toLowerCase?.() || "")
+      .filter(Boolean);
 
     // Category tags that must be at the top of the list and should never be moved/removed
     const categoryTags = [
@@ -1602,8 +1649,21 @@ class SEOReviewer {
             directories.push(dir);
           }
         } catch (error) {
-          // Skip files that can't be accessed
-          continue;
+          // Categorize and handle different error types appropriately
+          if (error.code === "ENOENT") {
+            // File doesn't exist - expected, continue
+            continue;
+          } else if (error.code === "EACCES") {
+            console.warn(`Permission denied: ${fullPath}`);
+            continue;
+          } else {
+            // Unexpected error - log and continue
+            console.error(
+              `Unexpected error accessing ${fullPath}:`,
+              error.message
+            );
+            continue;
+          }
         }
       }
 
@@ -1910,14 +1970,25 @@ class SEOReviewer {
       },
     ];
     for (const deprecated of deprecatedTerms) {
-      const regex = new RegExp(deprecated.term, "gi"); // Case-insensitive global replacement
-      if (updatedContentBody.match(regex)) {
-        updatedContentBody = updatedContentBody.replace(
-          regex,
-          deprecated.preferred
-        );
-        console.log(
-          `- Replaced "${deprecated.term}" with "${deprecated.preferred}" in content.`
+      try {
+        // Safely escape regex special characters to prevent ReDoS attacks
+        const escapedTerm = this.escapeRegex(deprecated.term);
+        const regex = new RegExp(`\\b${escapedTerm}\\b`, "gi"); // Word boundary for precise matching
+
+        if (regex.test(updatedContentBody)) {
+          // Reset regex for replacement
+          const replaceRegex = new RegExp(`\\b${escapedTerm}\\b`, "gi");
+          updatedContentBody = updatedContentBody.replace(
+            replaceRegex,
+            deprecated.preferred
+          );
+          console.log(
+            `- Replaced "${deprecated.term}" with "${deprecated.preferred}" in content.`
+          );
+        }
+      } catch (error) {
+        console.warn(
+          `- Skipped replacement of "${deprecated.term}": ${error.message}`
         );
       }
     }
@@ -1949,7 +2020,7 @@ class SEOReviewer {
 
         // Use safer, more specific regex patterns
         try {
-          const escapedPath = imagePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const escapedPath = this.escapeRegex(imagePath);
 
           // Safety check: Skip if this path appears in import statements or JSX props
           const hasImportStatement =
@@ -2028,19 +2099,28 @@ class SEOReviewer {
     );
     const newFileContent = `---\n${newFrontmatterString}\n---\n${updatedContentBody}`;
 
-    // Atomic file write using temporary file
-    const tempFile = `${validatedPath}.tmp`;
+    // Atomic file write using unique temporary file to prevent race conditions
+    const tempFile = `${validatedPath}.tmp.${Date.now()}.${Math.random()
+      .toString(36)
+      .substring(2)}`;
     try {
       await fs.promises.writeFile(tempFile, newFileContent, "utf8");
       await fs.promises.rename(tempFile, validatedPath);
+      console.log(
+        `✓ File updated successfully: ${path.relative(
+          process.cwd(),
+          validatedPath
+        )}`
+      );
     } catch (error) {
       // Clean up temp file on error
       try {
         await fs.promises.unlink(tempFile);
       } catch (cleanupError) {
-        // Ignore cleanup errors
+        // Log but ignore cleanup errors
+        console.warn(`Warning: Could not clean up temporary file: ${tempFile}`);
       }
-      throw error;
+      throw new Error(`Failed to update file: ${error.message}`);
     }
   }
 
