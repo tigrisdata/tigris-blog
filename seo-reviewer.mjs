@@ -1753,16 +1753,22 @@ class SEOReviewer {
     let updatedContentBody = this.extractContent(fileContent);
 
     // Apply meta description changes
-    const suggestedDescMatch = analysis.suggestions.find(
-      (s) =>
-        s.startsWith("Suggested improved description:") ||
-        s.startsWith("Suggested meta description:") ||
-        s.startsWith("Suggested shortened description:")
-    );
+    const suggestedDescMatch = analysis.suggestions.find((s) => {
+      const text = this.getSuggestionText(s);
+      return (
+        text.startsWith("Suggested improved description:") ||
+        text.startsWith("Suggested meta description:") ||
+        text.startsWith("Suggested shortened description:")
+      );
+    });
     if (suggestedDescMatch) {
-      const newDescription = suggestedDescMatch.match(/"([^"]*)"/)[1];
-      updatedFrontmatterData.description = newDescription;
-      console.log(`- Applied new meta description: "${newDescription}"`);
+      const suggestionText = this.getSuggestionText(suggestedDescMatch);
+      const descriptionMatch = suggestionText.match(/"([^"]*)"/);
+      if (descriptionMatch) {
+        const newDescription = descriptionMatch[1];
+        updatedFrontmatterData.description = newDescription;
+        console.log(`- Applied new meta description: "${newDescription}"`);
+      }
     }
 
     // Apply tag changes (additions, casing, positioning)
@@ -1789,10 +1795,10 @@ class SEOReviewer {
 
       // Add suggested tags
       const suggestedTagsMatch = analysis.suggestions.find((s) =>
-        s.startsWith("Consider adding tags:")
+        this.getSuggestionText(s).startsWith("Consider adding tags:")
       );
       if (suggestedTagsMatch) {
-        const tagsToAdd = suggestedTagsMatch
+        const tagsToAdd = this.getSuggestionText(suggestedTagsMatch)
           .match(/tags: (.*)/)[1]
           .split(", ")
           .map((t) => t.trim());
@@ -1929,7 +1935,7 @@ class SEOReviewer {
     for (const suggestion of captionSuggestions) {
       const suggestionText = this.getSuggestionText(suggestion);
       const imagePathMatch = suggestionText.match(
-        /Image (?:missing alt text|Alt text too short for image): ([^.]+\.[^.]+)/
+        /Image (?:missing alt text|Alt text too short for image): ([^\s]+\.[a-zA-Z0-9]+)/
       );
       const captionMatch = suggestionText.match(
         /Consider using the caption text: "([^"]+)"/
@@ -1945,12 +1951,34 @@ class SEOReviewer {
         try {
           const escapedPath = imagePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+          // Safety check: Skip if this path appears in import statements or JSX props
+          const hasImportStatement =
+            updatedContentBody.includes(`import `) &&
+            updatedContentBody.includes(imagePath);
+          const hasJSXProp = updatedContentBody.match(
+            new RegExp(`\\w+={[^}]*${escapedPath}[^}]*}`)
+          );
+
+          if (hasImportStatement || hasJSXProp) {
+            console.log(
+              `- Skipped caption application for ${imagePath}: Found in import/JSX context`
+            );
+            continue;
+          }
+
           // Handle markdown images: ![old_alt](image_path) -> ![caption_text](image_path)
           const markdownPattern = `!\\[([^\\]]*)\\]\\(([^)]*${escapedPath}[^)]*)\\)`;
           const markdownImageRegex = new RegExp(markdownPattern, "g");
-          if (updatedContentBody.includes(imagePath)) {
+
+          // Only apply if we find actual markdown image syntax, not just the path
+          if (markdownImageRegex.test(updatedContentBody)) {
+            // Reset regex for actual replacement
+            const markdownImageRegexForReplace = new RegExp(
+              markdownPattern,
+              "g"
+            );
             updatedContentBody = updatedContentBody.replace(
-              markdownImageRegex,
+              markdownImageRegexForReplace,
               `![${captionText}]($2)`
             );
             console.log(
@@ -1962,24 +1990,30 @@ class SEOReviewer {
           }
 
           // Handle HTML images with more targeted approach
+          // Only match actual <img> tags, not JSX props or imports
           const imgTagPattern = `<img([^>]*src=["'][^"']*${escapedPath}[^"']*["'][^>]*)>`;
           const htmlImageRegex = new RegExp(imgTagPattern, "g");
 
-          updatedContentBody = updatedContentBody.replace(
-            htmlImageRegex,
-            (match, attributes) => {
-              if (attributes.includes("alt=")) {
-                // Replace existing alt text
-                return match.replace(
-                  /alt=["'][^"']*["']/,
-                  `alt="${captionText}"`
-                );
-              } else {
-                // Add alt text
-                return `<img${attributes} alt="${captionText}">`;
+          // Only apply if we find actual <img> tags, and avoid JSX/imports
+          if (htmlImageRegex.test(updatedContentBody)) {
+            // Reset regex for actual replacement
+            const htmlImageRegexForReplace = new RegExp(imgTagPattern, "g");
+            updatedContentBody = updatedContentBody.replace(
+              htmlImageRegexForReplace,
+              (match, attributes) => {
+                if (attributes.includes("alt=")) {
+                  // Replace existing alt text
+                  return match.replace(
+                    /alt=["'][^"']*["']/,
+                    `alt="${captionText}"`
+                  );
+                } else {
+                  // Add alt text
+                  return `<img${attributes} alt="${captionText}">`;
+                }
               }
-            }
-          );
+            );
+          }
         } catch (error) {
           console.warn(
             `- Skipped caption application for ${imagePath}: ${error.message}`
