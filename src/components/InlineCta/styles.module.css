@@ -5,3 +5,14 @@
 [data-theme="dark"] .InlineCta {
   background-color: #142229;
 }
+
+.ContainerWidth {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 1280px) {
+  .ContainerWidth {
+    max-width: 36rem; /* xl equivalent */
+  }
+}
