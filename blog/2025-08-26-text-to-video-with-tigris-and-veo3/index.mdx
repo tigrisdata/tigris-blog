@@ -79,7 +79,7 @@ const VEO3_MODEL_NAME = "veo-3.0-generate-preview";
 
 async function generateVideoFromText(
   prompt: string,
-  numberOfVideos = 1,
+  numberOfVideos = 1
 ): Promise<string> {
   let operation = await ai.models.generateVideos({
     model: VEO3_MODEL_NAME,
@@ -169,7 +169,7 @@ const s3 = new S3Client({
 async function uploadObject(
   buffer: Buffer,
   contentType: string,
-  objectKey: string,
+  objectKey: string
 ) {
   await s3.send(
     new PutObjectCommand({
@@ -177,7 +177,7 @@ async function uploadObject(
       Key: objectKey,
       Body: buffer,
       ContentType: contentType,
-    }),
+    })
   );
 }
 
@@ -321,7 +321,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || "Failed to generate" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
