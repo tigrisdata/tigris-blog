@@ -1,43 +1,34 @@
-Build a text-to-video app with Veo3 and Tigris
+# Build a text-to-video app with Veo3 and Tigris
 
-<!-- Demo placeholder removed: use an image or video embed here if needed. -->
-
-Veo3 dramatically lowers the barrier to creating high‑quality video. Here’s a
-sample I generated with this prompt:
+One of the AI modes I’m excited about is Veo3, especially because it lowers the
+barrier to creating high-quality video content. Here’s a sample I generated with
+this prompt:
 
 ```text
-Cinematic. An Over-the-Shoulder Shot slowly zooming in on a dark interview
-room. A detective is intensely interrogating a rubber duck. The prominent
-sound of a ticking clock fills the tense air as the detective sternly asks,
-"Where were you last night?"
+Cinematic. An Extreme Close-Up of a scientist’s trembling hands holding a test tube filled with glowing green liquid. Sirens blare in the background as red warning lights flash across the lab. She whispers into a recorder, “If this works, humanity has one last chance."
 ```
 
-<!-- Video placeholder removed: embed a <video> tag with a src or an image/gif. -->
+Truth be told, the model isn’t perfect (yet), but it’s impressive and a huge
+step forward for video generation. Even if the cost of inference remains
+expensive (~$3 per generation), it’s still far inexxpesnvie comparatively to
+buying and maintaining camera gear. I can see a future where most videos will be
+generated with models like Veo3.
 
-It’s not perfect (yet), but it’s impressive—a big leap for video generation.
-Even at ~$3 per generation today, it’s far cheaper than a full video setup.
-Expect a lot more video content to be model‑generated in the near future.
-
-In this tutorial, you’ll build a text‑to‑video app powered by Google’s Veo3. You
-can follow along in Python (Jupyter Notebook) or TypeScript (Next.js).
+In this post, you’ll learn how to build a video generator app using Google’s
+Veo3.
 
 ## Requirements
 
+- Node:
 - Google AI Studio: prompt enhancement and text‑to‑video generation
 - Tigris: S3‑compatible object storage
 
 ## Getting started
 
-### Jupyter Notebook
-
-If you prefer Python, follow the step‑by‑step Jupyter Notebook in the
-accompanying GitHub repository.
-
-### Next.js
-
-If you prefer TypeScript, clone the example repository and follow the
-instructions. You can use the `03-enhance-prompt` branch if you don’t want to
-implement the Veo and Tigris code yourself. Project structure:
+Clone the
+[GitHub repository](https://github.com/tigrisdata/examples/tree/00-start/veo3/typescript)
+and follow the instructions. You can use the `03-enhance-prompt` branch if you
+don’t want to implement the Veo and Tigris code yourself. Project structure:
 
 veo3/ └─ typescript/ ├─ public/ ├─ src/ │ ├─ app/ │ │ ├─ api/ │ │ │ └─ generate/
 │ │ │ └─ route.ts │ │ ├─ favicon.ico │ │ ├─ globals.css │ │ ├─ layout.tsx │ │ └─
@@ -47,13 +38,16 @@ page.tsx ├─ eslint.config.mjs ├─ next-env.d.ts ├─ next.config.ts ├
 Let’s wire up Veo3 in our API. First, create a Google API key via Google Cloud
 and AI Studio.
 
-### Create a Google AI Studio API key
+## Create a Google AI Studio API key
 
-- Create a Google Cloud project (if you don’t have one).
-- In AI Studio, click “Get API key” (top‑right) → “Create API key”.
+- Create a
+  [Google Cloud project](https://developers.google.com/workspace/guides/create-project)
+  (if you don’t have one).
+- In [AI Studio](https://aistudio.google.com/), click “Get API key” (top‑right)
+  → “Create API key”.
 - Link the key to your project (“Create API key in existing project”).
 - In your Next.js app, add a `.env` file with:
-  - `GOOGLE_API_KEY=<your_key>`
+  - `API_KEY=<your_key>`
 
 ## Text‑to‑video generation with Veo3
 
@@ -124,9 +118,8 @@ there.
 Tigris is S3‑compatible distributed object storage optimized for low latency.
 Storing videos on Tigris makes them globally available on demand.
 
-1. Create a bucket at `https://storage.new` (you’ll be prompted to create a
-   Tigris account if needed). Name it, e.g., “veo3-generations”, and click
-   Create.
+1. Create a bucket at https://storage.new (you’ll be prompted to create a Tigris
+   account if needed). Name it, e.g., “veo3-generations”, and click Create.
 2. Create an access key with Read/Write. Toggle “Environment variables” and copy
    them into your Next.js `.env`.
 3. In “Bucket Rules”, grant Editor permissions.
