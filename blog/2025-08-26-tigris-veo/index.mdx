@@ -1,0 +1,399 @@
+---
+slug: video-generation-veo3-tigris
+title: "Build a text-to-video app with Veo3 and Tigris"
+description: |
+  Learn how to build a text-to-video generation app using Google's Veo3 model and Tigris object storage to create high-quality video content from text prompts.
+image: ./ty-scientist.webp
+keywords:
+  - veo3
+  - video generation
+  - google ai studio
+authors:
+  - raouf
+tags:
+  - AI
+  - Video Generation
+---
+
+One of the AI modes I’m excited about is Veo3, especially because it lowers the
+barrier to creating high-quality video content. Here’s a sample I generated with
+this prompt:
+
+```text
+Cinematic. An Extreme Close-Up of a scientist’s trembling hands holding a test tube filled with glowing green liquid. Sirens blare in the background as red warning lights flash across the lab. She whispers into a recorder, “If this works, humanity has one last chance."
+```
+
+<video controls width="100%">
+  <source
+    src="/blog/img/blog/veo3-tigris/veo3-scientist.mp4"
+    type="video/mp4"
+  />
+  Download the <a href="/blog/img/blog/veo3-tigris/veo3-scientist.mp4">MP4</a> version.
+</video>
+
+Truth be told, the model isn’t perfect (yet), but it’s impressive and a huge
+step forward for video generation. Even if the cost of inference remains
+expensive (~$3 per generation), it’s still far cheaper than buying and
+maintaining camera gear. I can see a future where most videos will be generated
+with models like Veo3.
+
+In this post, you’ll learn how to build a video generator app using Google’s
+Veo3.
+
+## Requirements
+
+- Node: v20.11.0 or later
+- [Google AI Studio](https://aistudio.google.com/): prompt enhancement and
+  text‑to‑video generation
+- [Tigris](https://storage.new): S3‑compatible distributed object storage
+
+## Getting started
+
+Clone the
+[GitHub repository](https://github.com/tigrisdata-community/veo3-example) and
+move to the `veo3-example` directory to follow the instructions.
+
+```bash
+git clone https://github.com/tigrisdata-community/veo3-example
+cd veo3-example
+```
+
+The project structure looks like this:
+
+```text
+veo3/
+  └─ typescript/
+     ├─ public/
+     ├─ src/
+     │  ├─ app/
+     │  │  ├─ api/
+     │  │  │  └─ generate/
+     │  │  │     └─ route.ts
+     │  │  ├─ favicon.ico
+     │  │  ├─ globals.css
+     │  │  ├─ layout.tsx
+     │  │  └─ page.tsx
+     ├─ eslint.config.mjs
+     ├─ next-env.d.ts
+     ├─ next.config.ts
+     ├─ package.json
+     ├─ postcss.config.mjs
+     ├─ README.md
+     └─ tsconfig.json
+```
+
+## Create a Google AI Studio API key
+
+Let’s wire up Veo3 in our API. First, create a Google API key via Google Cloud
+and AI Studio.
+
+<video controls width="100%">
+  <source
+    src="/blog/img/blog/veo3-tigris/ai-studio-get-api-key.mp4"
+    type="video/mp4"
+  />
+  Download the <a href="/blog/img/blog/veo3-tigris/ai-studio-get-api-key">
+    MP4
+  </a> version.
+</video>
+
+- Create a
+  [Google Cloud project](https://developers.google.com/workspace/guides/create-project)
+  (if you don’t have one).
+- In [AI Studio](https://aistudio.google.com/), click “Get API key” (top‑right)
+  → “Create API key”.
+- Link the key to your project (“Create API key in existing project”).
+- In your Next.js app, add a `.env` file with:
+  - `API_KEY=<your_key>`
+
+## Text‑to‑video generation with Veo3
+
+Let's now write the code to generate videos using Veo3 and the Google GenAI SDK.
+To get started, install the Google GenAI SDK:
+
+```bash
+npm install @google/genai
+```
+
+Let's add the `generateVideoFromText` function to `generate/route.ts`:
+
+```typescript
+import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenAI, GeneratedVideo } from "@google/genai";
+
+const API_KEY = process.env.GOOGLE_API_KEY;
+const ai = new GoogleGenAI({
+  apiKey: API_KEY,
+});
+const VEO3_MODEL_NAME = "veo-3.0-generate-preview";
+
+async function generateVideoFromText(
+  prompt: string,
+  numberOfVideos = 1
+): Promise<string> {
+  let operation = await ai.models.generateVideos({
+    model: VEO3_MODEL_NAME,
+    prompt,
+    config: {
+      numberOfVideos,
+      aspectRatio: "16:9",
+    },
+  });
+
+  while (!operation.done) {
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+    console.log("...Generating...");
+    operation = await ai.operations.getVideosOperation({ operation });
+  }
+
+  if (operation?.response) {
+    const videos = operation.response?.generatedVideos;
+    if (videos === undefined || videos.length === 0) {
+      throw new Error("No videos generated");
+    }
+
+    console.log(videos);
+
+    const uri = `${videos[0].video?.uri}&key=${API_KEY}`;
+    console.log("Downloading video from:", uri);
+    return uri;
+  } else {
+    throw new Error("No videos generated");
+  }
+}
+```
+
+The above function takes the prompt as an input and calls Veo3 using Google’s
+GenAI SDK generateVideos function. The video generation process takes about a
+minute to complete. That’s why we loop through and check for operation.done
+before extracting the URI. The returned URI represents the download link to the
+video.
+
+Now that we can generate a video, let’s persist it to Tigris and serve it from
+there.
+
+## Set up a Tigris bucket
+
+Tigris is S3‑compatible distributed object storage optimized for low latency.
+Storing videos on Tigris makes them globally available on demand.
+
+<video controls width="100%">
+  <source
+    src="/blog/img/blog/veo3-tigris/tigris_create_access_keys.mp4"
+    type="video/mp4"
+  />
+  Download the <a href="/blog/img/blog/veo3-tigris/tigris_create_access_keys.mp4">
+    MP4
+  </a> version.
+</video>
+
+1. Create a bucket at https://storage.new (you’ll be prompted to create a Tigris
+   account if needed). Name it, e.g., “veo3-generations”, and click Create.
+2. Create an access key with Read/Write. Toggle “Environment variables” and copy
+   them into your Next.js `.env`.
+3. In “Bucket Rules”, grant Editor permissions.
+
+Add this to `generate/route.ts`:
+
+```typescript
+import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenAI, GeneratedVideo } from "@google/genai";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+const API_KEY = process.env.GOOGLE_API_KEY;
+const ai = new GoogleGenAI({
+  apiKey: API_KEY,
+});
+const VEO3_MODEL_NAME = "veo-3.0-generate-preview";
+
+const TIGRIS_BUCKET_NAME = "veo3-generations";
+const TIGRIS_REGION = "auto";
+const TIGRIS_ENDPOINT = "https://t3.storage.dev";
+const TIGRIS_FORCE_PATH_STYLE = false;
+
+const s3 = new S3Client({
+  region: S3_REGION,
+  endpoint: S3_ENDPOINT,
+  forcePathStyle: S3_FORCE_PATH_STYLE,
+  credentials: {
+    accessKeyId: process.env.TIGRIS_STORAGE_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.TIGRIS_STORAGE_SECRET_ACCESS_KEY!,
+  },
+});
+
+async function uploadObject(
+  buffer: Buffer,
+  contentType: string,
+  objectKey: string
+) {
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: S3_BUCKET_NAME,
+      Key: objectKey,
+      Body: buffer,
+      ContentType: contentType,
+    })
+  );
+}
+
+async function getObject(bucket: string, objectKey: string) {
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: objectKey,
+  });
+  return await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
+}
+```
+
+In the code above, we created an S3 client. Tigris is S3 compatible and supports
+S3 SDK and CLI. We also added two functions (`uploadObject` and `getObject`) to
+upload the videos to our bucket, and then read the video from it.
+
+Use `uploadObject` and `getObject` in `generateVideoFromText`:
+
+```typescript
+async function generateVideoFromText(
+  prompt: string,
+  numberOfVideos = 1,
+): Promise<string[]> {
+  …
+
+  if (operation?.response) {
+    const videos = operation.response?.generatedVideos;
+    if (videos === undefined || videos.length === 0) {
+      throw new Error('No videos generated');
+    }
+
+    return await Promise.all(
+      videos.map(async (generatedVideo: GeneratedVideo, index: number) => {
+        const uri = `${generatedVideo.video?.uri || ''}?key=${API_KEY}`;
+        const res = await fetch(uri);
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch video: ${res.status} ${res.statusText}`);
+        }
+        const contentType = res.headers.get('content-type') || 'application/octet-stream';
+        const arrayBuffer = await res.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const extension = contentType.includes('mp4') ? '.mp4' : contentType.includes('quicktime') ? '.mov' : '';
+        const uniqueId = (global as any).crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const objectKey = `videos/${uniqueId}${extension || `.mp4`}`;
+
+        await uploadObject(buffer, contentType, objectKey);
+
+        const videoUrl = await getObject(S3_BUCKET_NAME, objectKey);
+        return videoUrl;
+      }),
+    );
+  } else {
+    throw new Error('No videos generated');
+  }
+}
+```
+
+## Enhance the Veo3 prompt
+
+<video controls width="100%">
+  <source
+    src="/blog/img/blog/veo3-tigris/enhance-prompt.mp4"
+    type="video/mp4"
+  />
+  Download the <a href="/blog/img/blog/veo3-tigris/enhance-prompt">MP4</a> version.
+</video>
+
+With text‑to‑video working and objects stored on Tigris, let’s boost prompt
+quality—and video quality—by structuring the inputs.
+
+Break down the idea into parameters:
+
+- Subject
+- Action
+- Scene
+- Camera Angle
+- Camera Movement
+- Lens Effects
+- Style
+- Temporal Elements
+- Sound Effects
+- Dialogue
+
+If you have filmmaking experience, these will be second nature. If not, the
+`api/enhance` route uses Gemini 2.5 Flash to propose a strong parameter set.
+
+Here’s the instruction prompt:
+
+```typescript
+const instruction = `You are a world-class film prompt designer. Given the user's raw idea below, PROPOSE a rich, cinematic parameter set that best realizes the intent. You may infer tasteful, plausible details and be creative, as long as you remain consistent with the user's idea (do not contradict hard constraints like characters, time period, or tone).
+
+Return a JSON object with EXACTLY these keys:
+  subject # @param {type: 'string'}
+  action # @param {type: 'string'}
+  scene # @param {type: 'string'}
+
+  camera_angle # @param ["None", "Eye-Level Shot", "Low-Angle Shot", "High-Angle Shot", "Bird's-Eye View", "Top-Down Shot", "Worm's-Eye View", "Dutch Angle", "Canted Angle", "Close-Up", "Extreme Close-Up", "Medium Shot", "Full Shot", "Long Shot", "Wide Shot", "Establishing Shot", "Over-the-Shoulder Shot", "Point-of-View (POV) Shot"]
+  camera_movement # @param ["None", "Static Shot (or fixed)", "Pan (left)", "Pan (right)", "Tilt (up)", "Tilt (down)", "Dolly (In)", "Dolly (Out)", "Zoom (In)", "Zoom (Out)", "Truck (Left)", "Truck (Right)", "Pedestal (Up)", "Pedestal (Down)", "Crane Shot", "Aerial Shot", "Drone Shot", "Handheld", "Shaky Cam", "Whip Pan", "Arc Shot"]
+  lens_effects # @param ["None", "Wide-Angle Lens (e.g., 24mm)", "Telephoto Lens (e.g., 85mm)", "Shallow Depth of Field", "Bokeh", "Deep Depth of Field", "Lens Flare", "Rack Focus", "Fisheye Lens Effect", "Vertigo Effect (Dolly Zoom)"]
+  style # @param ["None", "Photorealistic", "Cinematic", "Vintage", "Japanese anime style", "Claymation style", "Stop-motion animation", "In the style of Van Gogh", "Surrealist painting", "Monochromatic black and white", "Vibrant and saturated", "Film noir style", "High-key lighting", "Low-key lighting", "Golden hour glow", "Volumetric lighting", "Backlighting to create a silhouette"]
+  temporal_elements # @param ["None", "Slow-motion", "Fast-paced action", "Time-lapse", "Hyperlapse", "Pulsating light", "Rhythmic movement"]
+
+  sound_effects # @param ["None", "Sound of a phone ringing", "Water splashing", "Soft house sounds", "Ticking clock", "City traffic and sirens", "Waves crashing", "Quiet office hum"]
+  dialogue # @param {type: 'string'}
+
+Creative rules:
+- Prefer concrete, evocative values. Only use "None" when a field is truly irrelevant.
+- Keep each value a concise phrase (no multi-sentence essays).
+- Be safe and non-offensive.
+
+Output rules:
+- Output ONLY a single JSON object. No markdown, no code fences, no commentary.
+- Every key MUST appear.
+
+User idea:\n${rawPrompt}`;
+```
+
+You can find the full code here.
+
+Once we have the parameters, synthesize them into a single cinematic prompt:
+
+```typescript
+async function enhancePrompt(input: string): Promise<string> {
+  const geminiPrompt = `You are an expert video prompt engineer for Google's Veo model. Your task is to construct the most effective and optimal prompt string using the following keywords. Every single keyword MUST be included. Synthesize them into a single, cohesive, and cinematic instruction. Do not add any new core concepts. Output ONLY the final prompt string, without any introduction or explanation. Mandatory Keywords: ${input}`;
+
+  const result = await ai.models.generateContent({
+    model: PROMPT_ENHANCER_MODEL,
+    contents: geminiPrompt,
+  });
+
+  return result.text || "";
+}
+```
+
+Finally, use the enhanced prompt in the API route:
+
+```typescript
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const numberOfVideos = 1;
+
+    const prompt = await enhancePrompt(body.prompt as string | "");
+
+    const urls = await generateVideoFromText(prompt, numberOfVideos);
+    return NextResponse.json({ urls });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err?.message || "Failed to generate" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+Et voilà! You now have a working video‑generation app using Veo3, Gemini 2.5
+Flash, and Tigris. Let me know what you think—and what you’d like to see next.
