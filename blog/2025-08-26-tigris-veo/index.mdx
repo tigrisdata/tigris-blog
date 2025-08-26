@@ -42,9 +42,10 @@ Veo3.
 
 ## Requirements
 
-- Node:
-- Google AI Studio: prompt enhancement and text‑to‑video generation
-- Tigris: S3‑compatible object storage
+- Node: v20.11.0 or later
+- [Google AI Studio](https://aistudio.google.com/): prompt enhancement and
+  text‑to‑video generation
+- [Tigris](https://storage.new): S3‑compatible distributed object storage
 
 ## Getting started
 
@@ -75,10 +76,20 @@ veo3/
      └─ tsconfig.json
 ```
 
+## Create a Google AI Studio API key
+
 Let’s wire up Veo3 in our API. First, create a Google API key via Google Cloud
 and AI Studio.
 
-## Create a Google AI Studio API key
+<video controls width="100%">
+  <source
+    src="/blog/img/blog/veo3-tigris/ai-studio-get-api-key.mp4"
+    type="video/mp4"
+  />
+  Download the <a href="/blog/img/blog/veo3-tigris/ai-studio-get-api-key">
+    MP4
+  </a> version.
+</video>
 
 - Create a
   [Google Cloud project](https://developers.google.com/workspace/guides/create-project)
@@ -91,13 +102,14 @@ and AI Studio.
 
 ## Text‑to‑video generation with Veo3
 
-Install the Google GenAI SDK:
+Let's now write the code to generate videos using Veo3 and the Google GenAI SDK.
+To get started, install the Google GenAI SDK:
 
 ```bash
 npm i @google/genai
 ```
 
-Add `generateVideoFromText` to `generate/route.ts`:
+Let's add the `generateVideoFromText` function to `generate/route.ts`:
 
 ```typescript
 import { NextRequest, NextResponse } from "next/server";
@@ -145,10 +157,11 @@ async function generateVideoFromText(
 }
 ```
 
-The function takes the prompt as an input and calls Veo3 using Google’s GenAI
-SDK generateVideos function. The video generation process takes about a minute
-to complete. That’s why we loop through and check for operation.done before
-extracting the URI. The returned URI represents the download link to the video.
+The above function takes the prompt as an input and calls Veo3 using Google’s
+GenAI SDK generateVideos function. The video generation process takes about a
+minute to complete. That’s why we loop through and check for operation.done
+before extracting the URI. The returned URI represents the download link to the
+video.
 
 Now that we can generate a video, let’s persist it to Tigris and serve it from
 there.
@@ -269,6 +282,14 @@ async function generateVideoFromText(
 ```
 
 ## Enhance the Veo3 prompt
+
+<video controls width="100%">
+  <source
+    src="/blog/img/blog/veo3-tigris/enhance-prompt.mp4"
+    type="video/mp4"
+  />
+  Download the <a href="/blog/img/blog/veo3-tigris/enhance-prompt">MP4</a> version.
+</video>
 
 With text‑to‑video working and objects stored on Tigris, let’s boost prompt
 quality—and video quality—by structuring the inputs.
