@@ -25,7 +25,7 @@ Cinematic. An Extreme Close-Up of a scientist’s trembling hands holding a test
 
 <video controls width="100%">
   <source
-    src="/blog/img/blog/iam-policy-builder/iam-editor-demo.mp4"
+    src="/blog/img/blog/veo3-tigris/veo3-scientist.mp4"
     type="video/mp4"
   />
   Download the <a href="/blog/img/blog/veo3-tigris/veo3-scientist.mp4">
@@ -55,10 +55,27 @@ Clone the
 and follow the instructions. You can use the `03-enhance-prompt` branch if you
 don’t want to implement the Veo and Tigris code yourself. Project structure:
 
-veo3/ └─ typescript/ ├─ public/ ├─ src/ │ ├─ app/ │ │ ├─ api/ │ │ │ └─ generate/
-│ │ │ └─ route.ts │ │ ├─ favicon.ico │ │ ├─ globals.css │ │ ├─ layout.tsx │ │ └─
-page.tsx ├─ eslint.config.mjs ├─ next-env.d.ts ├─ next.config.ts ├─ package.json
-├─ postcss.config.mjs ├─ README.md └─ tsconfig.json
+```text
+veo3/
+  └─ typescript/
+     ├─ public/
+     ├─ src/
+     │  ├─ app/
+     │  │  ├─ api/
+     │  │  │  └─ generate/
+     │  │  │     └─ route.ts
+     │  │  ├─ favicon.ico
+     │  │  ├─ globals.css
+     │  │  ├─ layout.tsx
+     │  │  └─ page.tsx
+     ├─ eslint.config.mjs
+     ├─ next-env.d.ts
+     ├─ next.config.ts
+     ├─ package.json
+     ├─ postcss.config.mjs
+     ├─ README.md
+     └─ tsconfig.json
+```
 
 Let’s wire up Veo3 in our API. First, create a Google API key via Google Cloud
 and AI Studio.
