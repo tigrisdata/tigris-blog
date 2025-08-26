@@ -195,10 +195,10 @@ const ai = new GoogleGenAI({
 });
 const VEO3_MODEL_NAME = "veo-3.0-generate-preview";
 
-const S3_BUCKET_NAME = "veo3-generations";
-const S3_REGION = "auto";
-const S3_ENDPOINT = "https://t3.storage.dev";
-const S3_FORCE_PATH_STYLE = false;
+const TIGRIS_BUCKET_NAME = "veo3-generations";
+const TIGRIS_REGION = "auto";
+const TIGRIS_ENDPOINT = "https://t3.storage.dev";
+const TIGRIS_FORCE_PATH_STYLE = false;
 
 const s3 = new S3Client({
   region: S3_REGION,
