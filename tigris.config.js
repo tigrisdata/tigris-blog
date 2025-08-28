@@ -1,6 +1,6 @@
 module.exports = {
   dashboardUrl: "https://console.tigris.dev/",
-  loginUrl: "https://console.tigris.dev/",
+  loginUrl: "https://console.tigris.dev/signin",
   signUpUrl: "https://console.tigris.dev/signup",
   earlyAccessUrl: "https://hello.tigrisdata.com/forms/early-access/",
   consoleUrl: "https://console.tigris.dev/",
