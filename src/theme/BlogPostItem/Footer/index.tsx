@@ -1,6 +1,6 @@
 import React, { type ReactNode } from "react";
 import clsx from "clsx";
-import { useBlogPost } from "@docusaurus/theme-common/internal";
+import { useBlogPost } from "@docusaurus/plugin-content-blog/client";
 import TagsListInline from "@theme/TagsListInline";
 import BlogPostItemHeaderInfo from "../Header/Info";
 

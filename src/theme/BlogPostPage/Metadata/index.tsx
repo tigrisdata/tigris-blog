@@ -1,6 +1,6 @@
 import React, { type ReactNode } from "react";
 import { PageMetadata } from "@docusaurus/theme-common";
-import { useBlogPost } from "@docusaurus/theme-common/internal";
+import { useBlogPost } from "@docusaurus/plugin-content-blog/client";
 
 export default function BlogPostPageMetadata(): ReactNode {
   const { assets, metadata } = useBlogPost();
