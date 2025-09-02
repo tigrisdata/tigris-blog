@@ -7,6 +7,7 @@
   max-width: 600px;
   width: 100%;
   margin: 0 auto; /* center horizontally */
+  margin-bottom: 1rem;
 }
 
 .header {
@@ -32,6 +33,12 @@
   line-height: 1.2;
 }
 
+.title {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.125;
+}
+
 .userId {
   color: oklch(86.9% 0.022 252.894); /* slate‑300 */
   font-size: 14px;
@@ -39,12 +46,17 @@
 }
 
 .content {
-  margin: 12px 0;
+  margin-top: 12px;
   font-size: 16px;
   line-height: 1.5;
 }
 
+.content > p {
+  margin-bottom: 0;
+}
+
 .timestamp {
+  margin-top: 1rem;
   font-size: 14px;
   color: oklch(86.9% 0.022 252.894); /* slate‑700 */
 }
