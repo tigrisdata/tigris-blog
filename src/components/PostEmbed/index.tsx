@@ -3,13 +3,15 @@ import styles from "./styles.module.css";
 
 interface PostEmbedProps {
   /** URL to the post’s Bluesky page */
-  link: string;
+  link?: string;
   /** user handle, e.g. "cr3ative.co.uk" */
   userId: string;
   /** display name, e.g. "Paul Curry" */
   username: string;
+  /** title, eg "Head of Engineering @ fal.ai" */
+  title?: string;
   /** RFC3339 timestamp, e.g. "2025-07-11T13:46:00Z" */
-  timestamp: string;
+  timestamp?: string;
   /** image link */
   imageUrl: string;
   /** the actual post text */
@@ -20,6 +22,7 @@ const PostEmbed: React.FC<PostEmbedProps> = ({
   link,
   userId,
   username,
+  title,
   imageUrl,
   timestamp,
   children,
@@ -44,7 +47,15 @@ const PostEmbed: React.FC<PostEmbedProps> = ({
       <div className={styles.header}>
         <img src={imageUrl} alt={username} className={styles.avatar} />
         <div className={styles.userInfo}>
-          <span className={styles.username}>{username}</span>
+          <span className={styles.username}>
+            {username}{" "}
+            {title !== undefined && (
+              <>
+                {" "}
+                &mdash; <span className={styles.title}>{title}</span>
+              </>
+            )}
+          </span>
           <span className={styles.userId}>@{userId}</span>
         </div>
       </div>
@@ -53,14 +64,20 @@ const PostEmbed: React.FC<PostEmbedProps> = ({
       <div className={styles.content}>{children}</div>
 
       {/* Timestamp */}
-      <div className={styles.timestamp}>{formatted}</div>
-
-      <div className={styles.divider} />
+      {timestamp !== undefined && (
+        <div className={styles.timestamp}>{formatted}</div>
+      )}
 
       {/* Source link */}
-      <a href={link} className={styles.sourceLink}>
-        Link to the source
-      </a>
+      {link !== undefined && (
+        <>
+          <div className={styles.divider} />
+
+          <a href={link} className={styles.sourceLink}>
+            Link to the source
+          </a>
+        </>
+      )}
     </div>
   );
 };
