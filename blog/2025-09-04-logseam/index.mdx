@@ -1,0 +1,228 @@
+---
+slug: case-study-logseam
+title: "How LogSeam Searches 500 Million Logs per second"
+description: |
+  LogSeam transforms log management with Tigris, achieving massive cost savings and performance improvements in their security data lake architecture.
+image: ./ty-logseam.webp
+keywords:
+  - LogSeam
+  - security data lake
+  - log management
+  - cost optimization
+  - performance improvement
+  - Tigris object storage
+  - SIEM
+  - security analytics
+authors:
+  - xe
+  - ks
+tags:
+  - Case Study
+  - Security
+  - Data Lake
+  - Performance
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import LogseamArchitectureDiagram from "@site/src/components/LogseamArchitectureDiagram";
+import heroimage from "./ty-logseam.webp";
+import BreakoutQuote from "@site/src/components/BreakoutQuote";
+import danielWileyImage from "./daniel-wiley.jpg";
+
+<style>
+  {`@media (min-width: 1536px) {
+  img:not(.hero-image) {
+    max-width: 48rem; /* 3xl equivalent */
+  }
+}
+
+.hero-image {
+  margin-bottom: 1rem;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+p:not(:has(img)) {
+  max-width: 42rem; /* 2xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+h2, h3, h4, h5, h6, blockquote, .theme-admonition, ul, ol {
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.theme-code-block {
+  max-width: 42rem; /* 2xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table {
+  max-width: 42rem; /* 4xl equivalent - wider for tables */
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td, th {
+  padding: 0.75rem;
+  text-align: left;
+}
+
+img:not(.hero-image) {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}`}
+</style>
+
+<img src={heroimage} class="hero-image" />
+
+<center>
+  <small>
+    <em>
+      Ty the tiger collaborating with LogSeam on next-generation log analytics.
+    </em>
+  </small>
+</center>
+{/* truncate */}
+
+For incident responders, log search isn’t just a tool — it’s the clock ticking
+down on containment. Every second waiting for a query is an extra second of
+stress during an active incident. LogSeam is the security data lake house built
+to turn massive log volumes into sub-second answers. Its AI-driven features add
+another layer: autonomous agents that continuously scan logs for anomalies, and
+natural-language threat hunting that makes querying intuitive. Faster queries,
+plus smarter detection, net you faster response and fewer sleepless nights
+doomscrolling your status page.
+
+LogSeam searches through 500M+ logs/sec, exceeding 1.5+ terabytes/sec
+throughput. Just drop files into a bucket, and the system handles the rest. No
+patchwork of 15 services. No worries about scale or throughput. Deploy anywhere:
+in LogSeam’s managed service or inside your own cloud.
+
+## Faster Queries over Bigger Data
+
+LogSeam builds a security data lake house for your logs, cutting through the
+mass of ingestion and querying tooling to provide a simplified tool that does it
+all. This single pane of glass lets you see what’s going on, add natural
+language filters for your apps, and trace your complicated systems as threats
+evolve. Every login attempt, API call, firewall hit, and user click gets
+centralized in LogSeam so that you can stay ahead of issues before they happen.
+
+All your historical data is hot, ready, and easy to search because storage is
+scaled independently (and cheaply, due to object storage). If there’s a breach
+or insider threat, you can go back and trace it in detail, not just hope your
+logs weren’t already deleted. It’s a game-changer for compliance, fraud
+detection, and AI-driven anomaly spotting. LogSeam provides provide per-tenant,
+independently scaling compute layers to power fast queries, backed by a globally
+distributed data lakehouse.
+
+## The Architecture
+
+As the CEO of LogSeam, Dan Wiley, describes, “When you’re doing log analysis,
+you get small chunk files which are the **Achilles’ heel** of log file analysis.
+What’s novel is we put the logs into the exact size file format, arranging and
+compressing them, as we put them into Tigris. 50+TB of logs per day is no
+problem. You don’t need 15+ services to ingest logs.”
+
+On ingestion, LogSeam refactors your billions of JSON logs into efficient,
+columnar Parquet files and applies Zstandard compression to cut log volume by
+100x. This dramatically reduces storage size through compression and optimizes
+logs for sequential scans, so queries run faster and at lower cost. Logs are
+written into globally distributed storage, positioned close to where they’ll be
+queried. The result: terabytes of history searchable in seconds.
+
+When it’s time to search, LogSeam spins up elastic compute dedicated to each
+query. Dozens or hundreds of nodes can each sustain multi-GB/s reads off the
+backing object storage. Once the job is done, compute shuts down so cost maps
+directly to usage. Analysts and AI agents never contend for resources, which
+means consistent, predictable performance even during peak investigations.
+
+Files are organized for sequential access and stored in Tigris, which keeps
+small objects inline and keys ordered so sequential reads map to contiguous
+storage blocks. The result is that query engines can coalesce millions of small
+reads into large, efficient network operations. This is exactly what LogSeam’s
+compute layer needs to sustain multi-GB/s per node.
+
+<LogseamArchitectureDiagram
+  leftBoxes={[
+    {
+      title: "Interface Layer",
+      subtitle:
+        "Analysts and AI agents access logs via UI, API, or MCP for AI-driven scanning.",
+    },
+    {
+      title: "Data Ingestion",
+      subtitle:
+        "Logs flow from any source into Tigris object storage, with small-object optimizations that let billions of events be read without bottlenecks.",
+    },
+    {
+      title: "Data Processing",
+      subtitle:
+        "Logs are reorganized into Parquet and compressed with Zstandard, cutting volume by 100×. Optimized files are stored near compute for fast access.",
+    },
+  ]}
+  rightBoxes={[
+    {
+      title: "Object Storage",
+      subtitle:
+        "Tigris replicates active data to the right regions, eliminating cross-region transfers and latency.",
+    },
+    {
+      title: "Compute",
+      subtitle:
+        "Queries trigger elastic compute pools — dozens or hundreds of nodes reading at multi-GB/s — that shut down when the job completes.",
+    },
+    {
+      title: "Unified Data Plane",
+      subtitle:
+        "All components act as one globally aware system, removing the complexity and cost of stitching together multiple services.",
+    },
+  ]}
+  centerTitle="LogSeam Security Data Lake House"
+  centerSubtitle="Powered by Tigris Object Storage"
+/>
+{/* truncate */}
+
+## Global storage that’s actually global
+
+Threats don’t respect geography, and neither should log search. When your
+compute jobs are global, your logs are global too. LogSeam’s global replication
+ensures an analyst in Sydney gets the same sub-second results as a peer in New
+York, without cross-region delays or hidden costs.
+
+<BreakoutQuote
+  username="Daniel Wiley"
+  title="Co-Founder & CEO, LogSeam"
+  imageUrl={danielWileyImage}
+>
+When LogSeam needed a global object storage solution we looked far and wide. One day we found Tigris Data and what happened next was short of amazing. We found a Globally Performant Object Store that could scale with us, instead of working against us. We pushed over 1.5 TB/s (that's a big B) of search using 20 commodity compute engines searching over 500 Million logs per second....And all that with global replication and data protections.
+
+Oh and they are just great to work with.
+
+</BreakoutQuote>
+
+## Conclusion: Search, Unlimited
+
+The result is a log search architecture that does not require trade-offs between
+cost, speed, and scale. It eliminates the tangle of services traditionally
+needed to make object storage viable for analytics, replacing it with a
+streamlined path from ingestion to query.
+
+For teams operating at scale — whether supporting Incident Response
+investigations across continents or enabling AI-driven log analysis — LogSeam’s
+design provides the performance headroom to keep up with the data you already
+have, and the flexibility to handle what is coming next.
+
+<InlineCta
+  title="Check out what makes LogSeam so fast"
+  subtitle="LogSeam proves what Tigris can do. Now put Tigris behind your own stack and never worry about scaling or performance again."
+  button="Get Started"
+  link="https://www.tigrisdata.com/docs/get-started/"
+/>
