@@ -6,7 +6,8 @@
   font-family: system-ui, sans-serif;
   max-width: 600px;
   width: 100%;
-  margin: 0 auto; /* center horizontally */
+  margin: 0 auto;
+  position: relative;
 }
 
 .attribution {
@@ -16,16 +17,9 @@
   justify-content: flex-end;
   margin-top: 16px;
   gap: 12px;
-  flex-wrap: nowrap;
-  transform: translateX(24px);
-}
-
-/* Ensure horizontal layout on all screen sizes */
-@media (max-width: 768px) {
-  .attribution {
-    flex-direction: row;
-    align-items: center;
-  }
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
 }
 
 .avatar {
@@ -40,8 +34,6 @@
   flex-direction: column;
   text-align: right;
   justify-content: center;
-  min-width: 0;
-  flex-shrink: 1;
 }
 
 .username {
@@ -51,7 +43,7 @@
 }
 
 .title {
-  color: oklch(86.9% 0.022 252.894); /* slate‑300 */
+  color: oklch(86.9% 0.022 252.894);
   font-size: 14px;
   line-height: 1.2;
 }
