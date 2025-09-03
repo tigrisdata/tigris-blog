@@ -2137,6 +2137,89 @@ class SEOReviewer {
   }
 
   /**
+   * Detect if we're in or near a blog post directory
+   * @returns {string|null} Path to blog post file if found, null otherwise
+   */
+  async detectBlogPost() {
+    const currentDir = process.cwd();
+    const blogDirPath = path.resolve(this.blogDir);
+
+    // Check if current directory has index.mdx or index.md
+    const indexMdx = path.join(currentDir, "index.mdx");
+    const indexMd = path.join(currentDir, "index.md");
+
+    if (await this.fileExists(indexMdx)) {
+      return indexMdx;
+    }
+    if (await this.fileExists(indexMd)) {
+      return indexMd;
+    }
+
+    // Check if we're inside the blog directory structure
+    const relativePath = path.relative(blogDirPath, currentDir);
+    if (!relativePath.startsWith("..") && !path.isAbsolute(relativePath)) {
+      // We're inside blog directory - look for the nearest blog post
+      const parts = relativePath.split(path.sep);
+
+      // If we're in a blog post directory (like "2025-08-07-qwen-image")
+      if (parts.length > 0 && parts[0].match(/^\d{4}-\d{2}-\d{2}-/)) {
+        const blogPostDir = path.join(blogDirPath, parts[0]);
+        const postMdx = path.join(blogPostDir, "index.mdx");
+        const postMd = path.join(blogPostDir, "index.md");
+
+        if (await this.fileExists(postMdx)) {
+          return postMdx;
+        }
+        if (await this.fileExists(postMd)) {
+          return postMd;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Resolve post path from user input - can be a blog post name, partial path, or full path
+   * @param {string} input - User input for blog post
+   * @returns {string|null} Resolved path to blog post file
+   */
+  async resolvePostPath(input) {
+    // If it's already a valid file path, use it
+    if (await this.fileExists(input)) {
+      return input;
+    }
+
+    // Check if it's a blog post directory name or partial name
+    const blogDirs = await fs.promises.readdir(this.blogDir);
+    const matchingDirs = blogDirs.filter((dir) => {
+      return dir.includes(input) || dir.endsWith(`-${input}`);
+    });
+
+    if (matchingDirs.length === 1) {
+      const blogPostDir = path.join(this.blogDir, matchingDirs[0]);
+      const postMdx = path.join(blogPostDir, "index.mdx");
+      const postMd = path.join(blogPostDir, "index.md");
+
+      if (await this.fileExists(postMdx)) {
+        return postMdx;
+      }
+      if (await this.fileExists(postMd)) {
+        return postMd;
+      }
+    }
+
+    if (matchingDirs.length > 1) {
+      console.error(`Multiple blog posts match "${input}":`);
+      matchingDirs.forEach((dir) => console.error(`  - ${dir}`));
+      console.error("Please be more specific.");
+      return null;
+    }
+
+    return null;
+  }
+
+  /**
    * Main execution function
    * @param {string|null} postPathArg - Optional path to a specific post.
    * @param {boolean} applyChanges - Whether to apply suggestions directly to files.
@@ -2155,23 +2238,53 @@ class SEOReviewer {
         console.log("Analyzing all posts...");
         targetPaths = (await this.analyzeAllPosts()).map((a) => a.filePath);
       } else if (postPathArg) {
-        targetPaths.push(postPathArg);
-      } else {
-        const currentDir = process.cwd();
-        const indexMdx = path.join(currentDir, "index.mdx");
-        const indexMd = path.join(currentDir, "index.md");
-
-        if (await this.fileExists(indexMdx)) {
-          targetPaths.push(indexMdx);
-          console.log(`Auto-detected blog post: ${path.basename(currentDir)}`);
-        } else if (await this.fileExists(indexMd)) {
-          targetPaths.push(indexMd);
-          console.log(`Auto-detected blog post: ${path.basename(currentDir)}`);
-        } else {
+        const resolvedPath = await this.resolvePostPath(postPathArg);
+        if (resolvedPath) {
+          targetPaths.push(resolvedPath);
           console.log(
-            "No specific post detected, analyzing all posts by default."
+            `Analyzing: ${path.basename(path.dirname(resolvedPath))}`
           );
-          targetPaths = (await this.analyzeAllPosts()).map((a) => a.filePath);
+        } else {
+          console.error(`Error: Could not find blog post: ${postPathArg}`);
+          process.exit(1);
+        }
+      } else {
+        // Try to auto-detect blog post from current location
+        const detectedPost = await this.detectBlogPost();
+
+        if (detectedPost) {
+          targetPaths.push(detectedPost);
+          const blogPostName = path.basename(path.dirname(detectedPost));
+          console.log(`Auto-detected blog post: ${blogPostName}`);
+        } else {
+          // Provide helpful guidance instead of analyzing all posts
+          console.log("❓ No blog post auto-detected from current location.\n");
+          console.log("To analyze a specific blog post, you can:");
+          console.log(
+            "  • cd into a blog post directory (e.g., cd blog/2025-08-07-qwen-image)"
+          );
+          console.log(
+            "  • Specify a blog post name: npm run seo:review qwen-image"
+          );
+          console.log(
+            "  • Use the full path: npm run seo:review blog/2025-08-07-qwen-image/index.mdx"
+          );
+          console.log("  • Analyze all posts: npm run seo:review:all\n");
+
+          // List recent blog posts for convenience
+          const allPosts = await this.analyzeAllPosts();
+          const recentPosts = allPosts
+            .map((post) => path.basename(path.dirname(post.filePath)))
+            .sort()
+            .reverse()
+            .slice(0, 10);
+
+          console.log("Recent blog posts:");
+          recentPosts.forEach((postName) => {
+            console.log(`  • ${postName}`);
+          });
+
+          process.exit(0);
         }
       }
 
@@ -2247,11 +2360,7 @@ async function main() {
       }
     }
 
-    if (postPathArg && !(await reviewer.fileExists(postPathArg))) {
-      console.error(`Error: File not found: ${postPathArg}`);
-      process.exit(1);
-    }
-
+    // Remove the direct file existence check here since resolvePostPath() will handle it
     await reviewer.run(postPathArg, applyChanges, analyzeAllExplicitly);
   } catch (error) {
     console.error("Error:", error.message);
