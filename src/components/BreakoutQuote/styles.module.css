@@ -10,6 +10,7 @@
   margin: 0 auto;
   position: relative;
   isolation: isolate;
+  margin-bottom: 2rem;
 }
 
 .attribution {
@@ -53,4 +54,8 @@
 .content {
   font-size: 16px;
   line-height: 1.5;
+}
+
+.content > p {
+  margin-bottom: 0;
 }
