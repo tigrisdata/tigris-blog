@@ -11,7 +11,7 @@
   margin-right: auto;
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1024px) {
   .ContainerWidth {
     max-width: 36rem; /* xl equivalent */
   }

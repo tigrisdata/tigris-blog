@@ -28,58 +28,9 @@ import heroimage from "./ty-logseam.webp";
 import BreakoutQuote from "@site/src/components/BreakoutQuote";
 import HorizontalRule from "@site/src/components/HorizontalRule";
 import danielWileyImage from "./daniel-wiley.jpg";
+import styles from "!!raw-loader!./styles.css";
 
-<style>
-  {`@media (min-width: 1536px) {
-  img:not(.hero-image) {
-    max-width: 48rem; /* 3xl equivalent */
-  }
-}
-
-.hero-image {
-  margin-bottom: 1rem;
-  width: 100%;
-  height: auto;
-  max-width: 100%;
-}
-
-p:not(:has(img)) {
-  max-width: 42rem; /* 2xl equivalent */
-  margin-left: auto;
-  margin-right: auto;
-}
-
-h2, h3, h4, h5, h6, blockquote, .theme-admonition, ul, ol {
-  max-width: 42rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.theme-code-block {
-  max-width: 42rem; /* 2xl equivalent */
-  margin-left: auto;
-  margin-right: auto;
-}
-
-table {
-  max-width: 42rem; /* 4xl equivalent - wider for tables */
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-  border-collapse: collapse;
-}
-
-td, th {
-  padding: 0.75rem;
-  text-align: left;
-}
-
-img:not(.hero-image) {
-  margin-left: auto;
-  margin-right: auto;
-  display: block;
-}`}
-</style>
+<style>{styles}</style>
 
 <img src={heroimage} class="hero-image" />
 
@@ -90,7 +41,6 @@ img:not(.hero-image) {
     </em>
   </small>
 </center>
-{/* truncate */}
 
 **We are Tigris, the next generation of globally distributed Object Storage,
 built to scale at the rate of AI. Companies like fal.ai, Beam, and Lance already
@@ -99,6 +49,8 @@ achieves 500M log searches per second using Tigris. If you’re training AI
 models, running inference, or storing generations, give Tigris a try, and let us
 know how we can make your experience with object storage even better. Enjoy the
 read!**
+
+{/* truncate */}
 
 Summary
 
@@ -160,8 +112,6 @@ imageUrl={danielWileyImage}
 When you’re doing log analysis, you get small chunk files which are the Achilles’ heel of log file analysis. What’s novel is we put the logs into the exact size file format, arranging and compressing them, as we put them into Tigris. 50+TB of logs per day is no problem. You don’t need 15+ services to ingest logs.
 
 </BreakoutQuote>
-
-{/* truncate */}
 
 On ingestion, LogSeam refactors your billions of JSON logs into efficient,
 columnar Parquet files and applies Zstandard compression to cut log volume by
