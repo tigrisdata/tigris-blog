@@ -1,0 +1,225 @@
+name: Image Aspect Ratio Check
+
+on:
+  pull_request:
+    paths:
+      - "blog/**/index.mdx"
+      - "blog/**/*.jpg"
+      - "blog/**/*.jpeg"
+      - "blog/**/*.png"
+      - "blog/**/*.webp"
+      - "blog/**/*.gif"
+  push:
+    branches:
+      - main
+    paths:
+      - "blog/**/index.mdx"
+      - "blog/**/*.jpg"
+      - "blog/**/*.jpeg"
+      - "blog/**/*.png"
+      - "blog/**/*.webp"
+      - "blog/**/*.gif"
+
+jobs:
+  check-image-aspect-ratios:
+    runs-on: ubuntu-latest
+    name: Check Image Aspect Ratios for Changed Posts
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history to compare commits
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get changed blog posts and images
+        id: changed-files
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # For PRs, compare against the base branch
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            # For pushes to main, compare against the previous commit
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          echo "Comparing $BASE_SHA...$HEAD_SHA"
+
+          # Get list of changed blog post files
+          CHANGED_POSTS=$(git diff --name-only $BASE_SHA...$HEAD_SHA | grep '^blog/.*/index\.mdx$' || true)
+
+          # Get list of changed image files
+          CHANGED_IMAGES=$(git diff --name-only $BASE_SHA...$HEAD_SHA | grep '^blog/.*\.\(jpg\|jpeg\|png\|webp\|gif\)$' || true)
+
+          # Get blog directories that had image changes
+          IMAGE_DIRS=""
+          if [ -n "$CHANGED_IMAGES" ]; then
+            IMAGE_DIRS=$(echo "$CHANGED_IMAGES" | xargs -I {} dirname {} | sort -u | xargs -I {} echo "{}/index.mdx" | xargs -I {} test -f {} && echo {} || true)
+          fi
+
+          # Combine changed posts and posts with changed images
+          ALL_CHANGED=$(echo -e "$CHANGED_POSTS\n$IMAGE_DIRS" | sort -u | grep -v '^$' || true)
+
+          if [ -z "$ALL_CHANGED" ]; then
+            echo "No blog posts or images changed"
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            echo "files=" >> $GITHUB_OUTPUT
+          else
+            echo "Blog posts to check:"
+            echo "$ALL_CHANGED"
+            
+            # Convert to space-separated list for the linter
+            FILES_LIST=$(echo "$ALL_CHANGED" | tr '\n' ' ' | sed 's/ $//')
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+            echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run image aspect ratio linter on changed posts
+        if: steps.changed-files.outputs.has-changes == 'true'
+        run: |
+          echo "🔍 Running image linter on changed posts..."
+          FILES="${{ steps.changed-files.outputs.files }}"
+
+          # Initialize summary
+          TOTAL_CHECKED=0
+          TOTAL_ERRORS=0
+          TOTAL_WARNINGS=0
+          TOTAL_SUCCESS=0
+
+          # Create a summary file
+          echo "# Image Aspect Ratio Check Results" > check_summary.md
+          echo "" >> check_summary.md
+
+          # Run the linter for each changed file
+          EXIT_CODE=0
+          for file in $FILES; do
+            if [ -f "$file" ]; then
+              echo "Checking $file..."
+              TOTAL_CHECKED=$((TOTAL_CHECKED + 1))
+              
+              # Run linter and capture output
+              if OUTPUT=$(node image-aspect-linter.mjs "$file" 2>&1); then
+                echo "✅ $file passed"
+                TOTAL_SUCCESS=$((TOTAL_SUCCESS + 1))
+                echo "- ✅ \`$file\`: Passed" >> check_summary.md
+              else
+                echo "❌ $file failed"
+                echo "$OUTPUT"
+                EXIT_CODE=1
+                
+                # Parse output for errors vs warnings
+                if echo "$OUTPUT" | grep -q "Errors: [1-9]"; then
+                  TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+                  echo "- ❌ \`$file\`: Failed with errors" >> check_summary.md
+                elif echo "$OUTPUT" | grep -q "Warnings: [1-9]"; then
+                  TOTAL_WARNINGS=$((TOTAL_WARNINGS + 1))
+                  echo "- ⚠️ \`$file\`: Has aspect ratio warnings" >> check_summary.md
+                fi
+                
+                # Add details to summary
+                echo "  \`\`\`" >> check_summary.md
+                echo "$OUTPUT" >> check_summary.md
+                echo "  \`\`\`" >> check_summary.md
+                echo "" >> check_summary.md
+              fi
+              echo "---"
+            else
+              echo "⚠️ File $file not found (may have been deleted)"
+            fi
+          done
+
+          # Add summary statistics
+          echo "" >> check_summary.md
+          echo "## Summary" >> check_summary.md
+          echo "- **Total files checked:** $TOTAL_CHECKED" >> check_summary.md
+          echo "- **✅ Success:** $TOTAL_SUCCESS" >> check_summary.md
+          echo "- **⚠️ Warnings:** $TOTAL_WARNINGS" >> check_summary.md
+          echo "- **❌ Errors:** $TOTAL_ERRORS" >> check_summary.md
+
+          # Output summary to console
+          echo ""
+          echo "📊 Final Results:"
+          echo "  Files checked: $TOTAL_CHECKED"
+          echo "  Success: $TOTAL_SUCCESS"
+          echo "  Warnings: $TOTAL_WARNINGS"
+          echo "  Errors: $TOTAL_ERRORS"
+
+          # Exit with error if any file had issues
+          if [ $EXIT_CODE -eq 1 ]; then
+            echo ""
+            echo "❌ Some files have image aspect ratio issues. Please fix them before merging."
+          else
+            echo ""
+            echo "✅ All checked files have correct image aspect ratios!"
+          fi
+
+          exit $EXIT_CODE
+
+      - name: Upload check results
+        if: always() && steps.changed-files.outputs.has-changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-aspect-check-results
+          path: check_summary.md
+          retention-days: 30
+
+      - name: Comment PR with results
+        if:
+          always() && github.event_name == 'pull_request' &&
+          steps.changed-files.outputs.has-changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = './check_summary.md';
+
+            if (fs.existsSync(path)) {
+              const summary = fs.readFileSync(path, 'utf8');
+              
+              // Find existing comment
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number
+              });
+              
+              const botComment = comments.data.find(comment => 
+                comment.user.type === 'Bot' && 
+                comment.body.includes('Image Aspect Ratio Check Results')
+              );
+              
+              const commentBody = `🖼️ **Image Aspect Ratio Check Results**\n\n${summary}`;
+              
+              if (botComment) {
+                // Update existing comment
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: commentBody
+                });
+              } else {
+                // Create new comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: commentBody
+                });
+              }
+            }
+
+      - name: No changes detected
+        if: steps.changed-files.outputs.has-changes == 'false'
+        run: |
+          echo "✅ No blog posts or images were modified in this commit"
