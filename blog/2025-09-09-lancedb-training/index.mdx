@@ -1,0 +1,361 @@
+---
+slug: lancedb-training
+title: "Distributed Training with LanceDB and Tigris"
+description: |
+  Discover how to efficiently train large-scale ML models using LanceDB and Tigris. This guide details streaming massive datasets directly from object storage to PyTorch, simplifying distributed training and eliminating infrastructure complexities for scalable AI.
+image: ./ty-meditation.webp
+keywords:
+  - LanceDB
+  - Lance
+  - Distributed training
+  - AI
+  - Artificial Intelligence
+authors:
+  - xe
+tags:
+  - Build with Tigris
+  - AI
+  - training
+---
+
+import InlineCTA from "@site/src/components/InlineCta";
+import heroimage from "./ty-meditation.webp";
+import styles from "!!raw-loader!./styles.css";
+
+<style>{styles}</style>
+
+<img
+  src={heroimage}
+  className="hero-image"
+  alt="A cartoon tiger meditating in an open office on top of a runic magic circle with the LanceDB logo projecting out of his crown chakra."
+/>
+
+<center>
+  <small>
+    <em>
+      A cartoon tiger meditating in an open office on top of a runic magic
+      circle with the LanceDB logo projecting out of his crown chakra.
+    </em>
+  </small>
+</center>
+
+Training datasets, especially multi modal ones, tend to grow rapidly, quickly
+outgrowing any single disk that any cloud provider can provide. A common
+solution has been to use a networked filesystem, accessible to all the nodes in
+your distributed training job. You figure out how to chunk your datasets to be
+smaller than ram, and swallow the cost of managing this overhead.
+
+{/* truncate */}
+
+This does work, but what if there was a better way to do this? What if you could
+just store however much data you wanted and then let the infrastructure layer
+figure it all out for you? This is possible with the combination of
+[LanceDB](https://www.lancedb.com/), a Multimodal Lakehouse layer for your data,
+and Tigris, a globally performant object storage backend that puts your files
+close to where they’re being used. LanceDB uses the Lance columnar format (built
+on Apache Arrow) to store data ranging from images, videos, text, or embedding
+vectors, all with features like versioning, fast random access, and eager
+look-ahead caching. LanceDB can also store raw bytes as columns, so you don’t
+need to manage your data separately from your database.
+
+In this guide, we’ll show how you can use LanceDB on top of Tigris to manage
+massive training datasets and stream them into model training, all without
+having to manage any infrastructure yourself. We’ll walk through practical steps
+and code examples for:
+
+- Storing training data such as the
+  [Food101 Dataset](https://www.kaggle.com/datasets/dansbecker/food-101) in the
+  Lance format and uploading it to Tigris.
+- Authenticating and connecting LanceDB to Tigris using environment variables or
+  hardcoded credentials.
+- Loading and streaming data from Tigris into PyTorch using LanceDB’s
+  `LanceDataset`
+- Integrating LanceDB into your PyTorch `DataLoader` and typical training loops.
+
+By the end, you’ll be able to scale your training workflows with a LanceDB \+
+Tigris stack, this lets you keep your datasets close to where they’re being used
+in a multimodal lakehouse on the cloud without having to worry about local
+storage, data placement, or egress fees. LanceDB and Tigris handle those hard
+parts for you so you can get back to training and using your models.
+
+### Prerequisites
+
+To get started, you need the following:
+
+- A **Python environment** with **PyTorch** and **TorchVision** (for the Food101
+  dataset) installed. Install the Lance library via pip: `pip install lance`.
+- A LanceDB Dataset connected to Tigris (link to guide)
+
+## Loading LanceDB data for Training with PyTorch
+
+Once your dataset is in Lance format on Tigris, you can train your models
+without ever fully downloading the dataset to your training machine.
+[`LanceDataset`](https://lancedb.github.io/lance-python-doc/all-modules.html#lance.LanceDataset)
+treats the dataset as a stream of data. It reads batches of data directly from
+the LanceDB store instead of relying on the PyTorch `DataLoader` class. In our
+case, `LanceDataset` will stream from the Lance file we created on Tigris and
+yield one batch at a time.
+
+One thing to note: `LanceDataset` yields data in sequence. Any preprocessing
+should be done _within_ the `LanceDataset`’s `to_tensor_fn` callback. In other
+words, since we aren’t using the native `DataLoader` collation function to
+transform raw data (as we would in the in-memory style of dataset), we have to
+provide a function that takes the raw batch and convert it into PyTorch tensors.
+This is the same rough idea as a collation function, but it happens when the
+dataset is being iterated. If your LanceDB table contains multimodal data (like
+our image bytes), you **must** decode them in `to_tensor_fn` because the raw
+bytes can’t be directly turned into Torch tensors without conversion.
+
+Let’s create a `LanceDataset` for our training data and include a decoding
+function:
+
+<details>
+<summary>Dataset massaging code</summary>
+
+:::note
+
+Make sure to set environment variables with your Tigris credentials:
+
+```sh
+export AWS_ACCESS_KEY_ID=tid_access_key_id
+export AWS_SECRET_ACCESS_KEY=tsec_secret_access_key
+export AWS_REGION=auto
+export AWS_ENDPOINT_URL_S3=https://t3.storage.dev
+```
+
+or:
+
+```py
+import os
+
+os.environ['AWS_ACCESS_KEY_ID'] = 'tid_access_key_id'
+os.environ['AWS_SECRET_ACCESS_KEY'] = 'tsec_secret_access_key'
+os.environ['AWS_REGION'] = 'auto'
+os.environ['AWS_ENDPOINT_URL_S3'] = 'https://t3.storage.dev'
+```
+
+:::
+
+```py
+import torch
+from PIL import Image
+from torchvision import transforms
+from lance.torch.data import LanceDataset
+from torch.utils.data import DataLoader
+
+# Define transformation for images (resize to 224x224 and convert to tensor)
+_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # optional normalization
+])
+
+def decode_batch(record_batch):
+    """Decode a pyarrow RecordBatch of images and labels into a batch of tensors."""
+    images = []
+    labels = []
+    # Convert Arrow batch to list of Python dicts
+    for item in record_batch.to_pylist():
+        # Decode image bytes to PIL, then apply transform to get tensor
+        img = Image.open(io.BytesIO(item["image"])).convert("RGB")
+        img_tensor = _transform(img)
+        images.append(img_tensor)
+        labels.append(item["label"])
+    # Stack images and labels into tensors
+    return {
+        "image": torch.stack(images),
+        "label": torch.tensor(labels, dtype=torch.long)
+    }
+
+# Specify your Tigris bucket name for output URIs
+bucket_name = "my-bucket"  # Replace with your Tigris bucket name
+train_uri = f"s3://{bucket_name}/food101_train.lance"
+test_uri  = f"s3://{bucket_name}/food101_test.lance"
+
+# Initialize LanceDataset for the training set (reading directly from Tigris)
+dataset = LanceDataset(train_uri, batch_size=128, to_tensor_fn=decode_batch)
+# Use a DataLoader to iterate (num_workers=0 because LanceDataset handles batching internally)
+loader = DataLoader(dataset, batch_size=None, num_workers=0)
+
+# Fetch one batch to demonstrate
+batch = next(iter(loader))
+print("Batch images shape:", batch["image"].shape)  # e.g., [128, 3, 224, 224]
+print("Batch labels shape:", batch["label"].shape)  # e.g., [128]
+```
+
+</details>
+
+In this snippet, we open the data in the `LanceDataset` and use our
+`decode_batch` function to process them fragment by fragment. We set
+`num_workers=0` here to disable the native DataLoader parallelism because that
+will stomp over what LanceDB does internally to make things safely parallel.
+Internally, LanceDB uses a sharded batch sample to read contiguous chunks of
+rows from each fragment across multiple workers or processes (keep reading for
+multi-GPU training tips). The result is that each iteration of the DataLoader
+returns a dictionary that’s ready to feed into the model.
+
+:::note
+
+In the code above, there’s a commented out normalization transformation. If you
+are using a pretrained model, uncomment that transformation.
+
+:::
+
+## Choosing Between `LanceDataset` and `SafeLanceDataset`
+
+Both dataset types let you stream your training data from LanceDB to Tigris, but
+picking the right option depends on your use case:
+
+- Use `SafeLanceDataset` (map-style) for standard **finite** datasets. This
+  should be your default choice. If your data can be indexed (most image, text,
+  or tabular datasets fall in this category), `SafeLanceDataset` will allow
+  random reads and is compatible with multi-worker loading, giving you the best
+  performance. You’ll gain the benefits of PyTorch’s prefetching and
+  multiprocessing. This is ideal for normal supervised learning datasets like
+  ImageNet, COCO, CIFAR, text corpuses, etc. It’s also required if you want to
+  maximize data loading throughput with `num_workers > 0`, since only map-style
+  datasets can be efficiently split among workers. If you are in doubt, start
+  with a map-style dataset.
+- Use `LanceDataset` (iterable-style) in specialized scenarios, such as:
+  - **Streaming or unbounded data sources:** If your dataset is more like a
+    continual stream (such as a real-time data feed, social media posts, or
+    other infinite sources of data), you need an iterable dataset.
+    `LanceDataset` will let you iterate without a predefined length and
+    continuously yield new data as it arrives.
+  - **Very large datasets:** If your data is so large that it’s impractical to
+    even store an index of it in memory, you will need to stream through the
+    data. `LanceDataset` will let you scan through shards of the Lance format on
+    the fly.
+  - **Custom sampling or sharding logic:** If you need to walk through the data
+    in ways that standard sampling can’t handle (such as specialized distributed
+    sharding or non-uniform sampling), `LanceDataset` can be configured with
+    custom samplers. One of the main reasons to use `LanceDataset` is that it
+    uses its own optimized sharded batch handler that deeply understands the
+    internal structure of Lance files. This can outperform naïve sampling for
+    certain large-scale scenarios. In distributed training, `LanceDataset` uses
+    a `ShardedFragmentSampler` to ensure each process reads a distinct fragment
+    of the dataset without having to coordinate. This means you don’t need to
+    rely on the sharding logic of PyTorch’s `DistributedSampler` that you would
+    with `SafeLanceDataset`.
+
+In practice, many teams will find that `SafeLanceDataset` meets all their needs
+for training on fixed datasets. Use `LanceDataset` when you have a compelling
+reason like data streaming or when experimenting with LanceDB’s advanced
+sampling capabilities. It’s worth noting that you can achieve the same final
+results with either approach; both will get you to the same goal but each have
+tradeoffs that may be useful in some use cases.
+
+## What About Distributed Training?
+
+If you use **Distributed Data Parallel (DDP)** for multi-GPU training with
+`SafeLanceDataset`, you should use `DistributedSampler` or the `shuffle=True`
+option (with the standard PyTorch DDP sharding behavior) to ensure each process
+gets different data. In practice, you might initialize the DataLoader with
+something like:
+
+```py
+sampler = DistributedSampler(train_dataset_map) if using_ddp else None
+train_loader = DataLoader(train_dataset_map, batch_size=32, sampler=sampler, ... )
+```
+
+Just make sure to keep this set of tradeoffs in mind: With `LanceDataset`
+(iterable), Lance provides its own `ShardedBatchSampler` and
+`ShardedFragmentSampler` that are already aware of DDP. You can specify these
+when creating the `LanceDataset` (via the `sampler=` argument). For example,
+`LanceDataset(..., sampler=ShardedBatchSampler(...))` will ensure that every DDP
+process gets its own section of the batch. This gives you perfect load-balancing
+across GPUs by dividing batches for you. If you initialize the `LanceDataset`
+with no sampler in a DDP context, it will make every process read the entire
+dataset; this is exactly what you don’t want for training. It’s important to use
+shard-aware samplers in distributed mode with `LanceDataset`.
+
+Here’s what it looks like to use `LanceDataset` with DDP:
+
+```py
+# Assuming world_size and rank are given by the DDP environment
+from lance.torch.data import ShardedBatchSampler
+sampler = ShardedBatchSampler(rank=rank, world_size=world_size)
+dataset = LanceDataset(train_uri, batch_size=128, to_tensor_fn=decode_batch, sampler=sampler)
+loader = DataLoader(dataset, batch_size=None, num_workers=0)
+```
+
+This ensures each GPU gets its own portion of each batch, splitting the work up
+equally. Either way, LanceDB on Tigris enables distributed training directly
+from cloud storage without manually sharding the dataset or duplicating data per
+node. Each worker will fetch exactly the data it needs from the shared Lance
+dataset in Tigris thanks to these samplers.
+
+## How can you make training with object storage fast?
+
+Normally training from object storage can be slow compared to training from the
+disk. If a read from a local nVME drive takes 25 microseconds, an object storage
+read can easily take 25 milliseconds. That's a 1000x difference and your GPUs
+will notice it.
+
+Lance supports
+[look-ahead caching](https://blog.lancedb.com/file-readers-in-depth-parallelism-without-row-groups/),
+meaning that fetching one group from your dataset actually results in fetching
+many fragments in advance. This means that making your data load fast is as easy
+as changing your dataset initialization code:
+
+```py
+from lance.torch.data import LanceDataset
+from torch.utils.data import DataLoader
+
+# Configure caching and performance tuning options
+reader_options = {
+    "max_lookahead_batches": 3,     # Number of batches to prefetch
+    "fragment_readahead": 2,        # Fragments to readahead per scan
+    "prefetch_queue_depth": 8,      # Max concurrent prefetch reads
+    "cache_enabled": True,          # Enable internal caching
+    "cache_size_limit": 8 * 1024**3 # Optional: cache size limit in bytes (e.g., 8GB)
+}
+
+dataset = LanceDataset(
+    "s3://my-bucket/my-dataset/",
+    batch_size=1024,
+    reader_options=reader_options
+)
+dataloader = DataLoader(dataset, batch_size=None)
+
+for batch in dataloader:
+    train_step(batch)
+```
+
+This will prefetch up to 3 batches of data every time you fetch one batch of
+data. This cache prefetching runs every time data is scanned over and makes sure
+that the data is always ready to train on.
+
+## Conclusion
+
+When you use LanceDB as a multimodal lakehouse on top of Tigris, this lets ML
+engineers scale their training pipelines with ease. Today we learned how to take
+a dataset that lived on the local disk and move it into LanceDB (with all the
+benefits of versioning, efficient I/O, and raw multimodal data storage) so you
+can leverage Tigris’ bottomless object storage and global availability. The
+LanceDB Python integration via `LanceDataset` makes it simple to load this
+remote data into your training loop with minimal changes. You can still use your
+familiar PyTorch DataLoader patterns like you’re used to. The techniques we
+showed off today can extend to other data types (just change out the
+`to_tensor_fn` as facts and circumstances demand). This lets LanceDB act as your
+unified solution for handling complex ML datasets.
+
+By offloading data storage to Tigris, you eliminate the need to manage storage
+infrastructure, worry about network filesystems, or any of the overhead
+associated with either of those problems. Your training jobs can run anywhere
+with a high-speed internet connection and pull multimodal data from the LanceDB
+lakehouse as it’s needed. LanceDB ensures that the performance of your data
+loading is optimized and that your data management (such as rolling back a bad
+change) is straightforward and simple.
+
+When you combine LanceDB and Tigris, you get an invincible power team that lets
+you treat data as data, no matter where it happens to be located; this gives you
+fearless scaling from research to development to production. Happy training!
+
+<InlineCTA
+  title={"Train your models directly off object storage"}
+  subtitle={
+    "AI training needs data to get to your GPUs fast. Tigris and Lance combine to make that data get to you as fast as possible, and then a little bit faster with automatic global performance."
+  }
+  button={"Learn more"}
+/>
