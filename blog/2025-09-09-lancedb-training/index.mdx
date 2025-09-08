@@ -284,6 +284,49 @@ from cloud storage without manually sharding the dataset or duplicating data per
 node. Each worker will fetch exactly the data it needs from the shared Lance
 dataset in Tigris thanks to these samplers.
 
+## How can you make training with object storage fast?
+
+Normally training from object storage can be slow compared to training from the
+disk. If a read from a local nVME drive takes 25 microseconds, an object storage
+read can easily take 25 milliseconds. That's a 1000x difference and your GPUs
+will notice it.
+
+Lance supports
+[look-ahead caching](https://blog.lancedb.com/file-readers-in-depth-parallelism-without-row-groups/),
+meaning that fetching one group from your dataset actually results in fetching
+many fragments in advance. This means that making your data load fast is as easy
+as changing your dataset initialization code:
+
+```py
+from lance.torch.data import LanceDataset
+from torch.utils.data import DataLoader
+
+# Configure caching and performance tuning options
+reader_options = {
+    "max_lookahead_batches": 3,     # Number of batches to prefetch
+    "fragment_readahead": 2,        # Fragments to readahead per scan
+    "prefetch_queue_depth": 8,      # Max concurrent prefetch reads
+    "cache_enabled": True,          # Enable internal caching
+    "cache_size_limit": 8 * 1024**3 # Optional: cache size limit in bytes (e.g., 8GB)
+}
+
+dataset = LanceDataset(
+    "s3://my-bucket/my-dataset/",
+    batch_size=1024,
+    reader_options=reader_options
+)
+dataloader = DataLoader(dataset, batch_size=None)
+
+for batch in dataloader:
+    train_step(batch)
+```
+
+This will prefetch up to 3 batches of data every time you fetch one batch of
+data. This cache prefetching runs every time data is scanned over and makes sure
+that the data is always ready to train on. Combine that with zero egress fees
+and automatic global performance and you get hot replicas colocated with your
+training jobs and zero egress fees between them.
+
 ## Conclusion
 
 When you use LanceDB as a multimodal lakehouse on top of Tigris, this lets ML
