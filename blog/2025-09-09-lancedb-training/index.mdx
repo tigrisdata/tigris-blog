@@ -53,9 +53,9 @@ figure it all out for you? This is possible with the combination of
 and Tigris, a globally performant object storage backend that puts your files
 close to where they’re being used. LanceDB uses the Lance columnar format (built
 on Apache Arrow) to store data ranging from images, videos, text, or embedding
-vectors, all with features like versioning and fast random access. LanceDB can
-also store raw bytes as columns, so you don’t need to manage your data
-separately from your database.
+vectors, all with features like versioning, fast random access, and eager
+look-ahead caching. LanceDB can also store raw bytes as columns, so you don’t
+need to manage your data separately from your database.
 
 In this guide, we’ll show how you can use LanceDB on top of Tigris to manage
 massive training datasets and stream them into model training, all without
@@ -323,9 +323,7 @@ for batch in dataloader:
 
 This will prefetch up to 3 batches of data every time you fetch one batch of
 data. This cache prefetching runs every time data is scanned over and makes sure
-that the data is always ready to train on. Combine that with zero egress fees
-and automatic global performance and you get hot replicas colocated with your
-training jobs and zero egress fees between them.
+that the data is always ready to train on.
 
 ## Conclusion
 
