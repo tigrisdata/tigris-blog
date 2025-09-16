@@ -1,0 +1,19 @@
+.horizontalRule {
+  width: 100%;
+  max-width: 42rem;
+  height: 1px;
+  background-color: #e5e7eb;
+  border: none;
+  margin: 2rem auto;
+}
+
+[data-theme="dark"] .horizontalRule {
+  background-color: #374151;
+}
+
+@media (max-width: 768px) {
+  .horizontalRule {
+    margin: 1.5rem auto;
+    max-width: 42rem;
+  }
+}

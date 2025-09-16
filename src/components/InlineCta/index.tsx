@@ -12,9 +12,11 @@ interface Props {
 const InlineCta = ({ title, subtitle, button, link }: Props) => {
   const linkUrl = link !== undefined ? link! : tigrisConfig.getStartedUrl;
   return (
-    <div>
+    <div
+      style={{ maxWidth: "36.5rem", marginLeft: "auto", marginRight: "auto" }}
+    >
       <div>
-        <div className="is--color_gradient_back">
+        <div className={`is--color_gradient_back ${styles.ContainerWidth}`}>
           <div
             className={`${styles.InlineCta} sl_card_m-2 card_static cta-flex`}
           >

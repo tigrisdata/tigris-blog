@@ -1,0 +1,61 @@
+.container {
+  background-color: oklch(12.9% 0.042 264.695);
+  border-radius: 16px;
+  padding: 16px;
+  padding-bottom: 80px;
+  color: oklch(98.4% 0.003 247.858);
+  font-family: system-ui, sans-serif;
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  isolation: isolate;
+  margin-bottom: 2rem;
+}
+
+.attribution {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 16px;
+  gap: 12px;
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  justify-content: center;
+}
+
+.username {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.title {
+  color: oklch(86.9% 0.022 252.894);
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.content {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.content > p {
+  margin-bottom: 0;
+}

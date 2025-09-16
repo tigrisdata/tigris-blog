@@ -1,7 +1,7 @@
 import React, { type ReactNode } from "react";
 import clsx from "clsx";
 import Link from "@docusaurus/Link";
-import { useBlogPost } from "@docusaurus/theme-common/internal";
+import { useBlogPost } from "@docusaurus/plugin-content-blog/client";
 import type { Props } from "@theme/BlogPostItem/Header/Title";
 
 import styles from "./styles.module.css";
@@ -44,6 +44,10 @@ export default function BlogPostItemHeaderTitle({
               src={assets.image}
               alt={metadata.title}
               className={clsx(styles.titleImage, styles.zoomImage)}
+              loading="lazy"
+              width={400}
+              height={225}
+              sizes="(max-width: 768px) 100vw, (max-width: 996px) 50vw, 400px"
             />
           </Link>
         )}
