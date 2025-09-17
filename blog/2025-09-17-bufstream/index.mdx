@@ -1,0 +1,232 @@
+---
+slug: bufstream
+title: "Unlimited Message Retention with BufStream and Tigris"
+description: |
+  Get unlimited message retention and truly global operation with BufStream and Tigris.
+image: ./ty-stream-surfing.webp
+keywords:
+  - Buf
+  - BufStream
+  - Kafka
+  - Tigris Object Storage
+  - bottomless durable message queue
+  - S3-compatible object store
+  - Docker Compose deployment
+  - globally distributed storage
+  - multi-cloud object storage
+  - cloud-native message broker
+  - Kafka alternative
+  - unlimited message storage
+authors:
+  - ks
+tags:
+  - Build with Tigris
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroimage from "./ty-stream-surfing.webp";
+import styles from "!!raw-loader!./styles.css";
+
+<style>{styles}</style>
+
+<img
+  src={heroimage}
+  className="hero-image"
+  alt="A blue tiger surfing a stream of messages."
+/>
+
+<center>
+  <small>
+    <em>
+      A cartoon tiger surfing a stream of messages from the Golden Gate Bridge
+      to the Space Needle.
+    </em>
+  </small>
+</center>
+
+[Bufstream](https://buf.build/product/bufstream) is the
+[Kafka®](https://kafka.apache.org/)-compatible message queue built for the data
+lakehouse era. It's a drop-in replacement for Apache Kafka®, but instead of
+requiring expensive machines with large attached disks, Bufstream builds on top
+of off-the-shelf technologies like Object Storage and Postgres, providing a
+Kafka implementation designed for the cloud-native era.
+
+Tigris is a globally distributed, multi-cloud object storage platform with
+native S3 API support and zero egress fees. It dynamically places data in the
+region where it’s being accessed—eliminating cross-cloud data transfer costs
+without sacrificing performance.
+
+When you combine the two, you get unlimited message retention and truly global
+operation. Combining zero egress fees with typed streams means that your
+applications can scale across the globe fearlessly.
+
+{/* truncate */}
+
+## **Parts overview**
+
+[Bufstream](https://buf.build/product/bufstream) is a fully self-hosted drop-in
+replacement for Apache Kafka® that writes data to S3-compatible object storage.
+It’s 100% compatible with the Kafka protocol, including support for exactly-once
+semantics (EOS) and transactions. Bufstream is more cost-effective to operate,
+and a single cluster can elastically scale to hundreds of GB/s of throughput
+without sacrificing performance. It's the universal Kafka replacement for the
+modern age.
+
+Even better, for teams sending Protobuf messages across their Kafka topics,
+Bufstream can enforce data quality and governance requirements on the broker
+with [Protovalidate](https://protovalidate.com/). Bufstream can even store
+topics as [Apache Iceberg™](https://iceberg.apache.org/) tables, reducing
+time-to-insight in popular data lakehouse products like Snowflake and
+ClickHouse.
+
+To interact with Bufstream, we’ll use
+[Kafkactl](https://deviceinsight.github.io/kafkactl/), a CLI tool for
+interacting with Apache Kafka and compatible tools.
+
+In addition, we’ll use Docker, the universal package format for the Internet.
+Docker lets you put your application and all its dependencies into a container
+image so that it can’t conflict with anything else on the system.
+
+## **Pre-reqs**
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) or a similar
+  app, like [Podman Desktop.](https://podman-desktop.io/)
+- A Tigris account; if you don’t have one, you can create one at
+  [storage.new](http://storage.new).
+
+## **Clone the example repo**
+
+Clone the
+[bufstream-getting-started](https://github.com/tigrisdata-community/bufstream-tigris)
+demo repo to your laptop and open it in your editor of choice. You'll come back
+to it later to add configuration details.
+
+```shell
+git clone https://github.com/tigrisdata-community/bufstream-tigris.git
+cd bufstream-getting-started
+```
+
+## **Create a Tigris bucket**
+
+Create a new bucket at [storage.new](https://storage.new/) in the Standard
+access tier. Copy its name down into your notes. You’ll need it later for
+configuration.
+
+Create a new [access key](https://storage.new/accesskey) with Editor permissions
+for that bucket. Open the `.env` file included in the repository and add the
+access key ID and secret access key values to the block shown below:
+
+```shell
+# Add your Tigris access key ID and its secret below.
+TIGRIS_ACCESS_KEY_ID=
+TIGRIS_SECRET_ACCESS_KEY=
+```
+
+## **Configure Bufstream for Tigris**
+
+Open the `bufstream.yaml` file, and add your bucket’s name beside the `bucket:`
+key. Leave `region` set to `auto` so that Tigris routes to the closest region:
+
+```
+storage:
+  provider: S3
+  region: auto
+  bucket: # Add your Tigris bucket name here.
+  endpoint: <https://t3.storage.dev>
+  # Don't update these: they're references to environment variable names.
+  access_key_id:
+    env_var: TIGRIS_ACCESS_KEY_ID
+  secret_access_key:
+    env_var: TIGRIS_SECRET_ACCESS_KEY
+```
+
+We’re ready to start Bufstream and begin writing data to Tigris\!
+
+## **Start Bufstream**
+
+Start the environment, using `-d` to run the Compose project in detached mode,
+returning your to a prompt after all services start.
+
+```shell
+docker compose up -d
+```
+
+You should see the following output:
+
+```shell
+ ✔ Network bufstream-on-tigris_bufstream_net  Created                          0.0s
+ ✔ Container cli                              Started                          0.3s
+ ✔ Container postgres                         Healthy                         10.9s
+ ✔ Container bufstream                        Started                         11.1s
+```
+
+## **Create a topic**
+
+Use `kafkactl` to create a Kafka topic in Bufstream. In your terminal, run the
+following:
+
+```shell
+docker exec cli kafkactl create topic bufstream-on-tigris
+```
+
+When it completes, you’ll see the following output:
+
+```
+topic created: bufstream-on-tigris
+```
+
+## **Produce to the topic**
+
+Now that you’ve created a topic, let’s write some data. In the example repo,
+we’ve included a sample message in `messages.txt`.
+
+Run the following in your terminal:
+
+```shell
+docker exec cli kafkactl produce bufstream-on-tigris --file=/messages.txt
+```
+
+When it’s done, you’ll see the following message:
+
+```shell
+7 messages produced
+```
+
+## **Consume messages**
+
+Let’s read the messages back. Consume the last 100 messages from the topic:
+
+```shell
+docker exec cli kafkactl consume bufstream-on-tigris --tail=100
+```
+
+You’ll see the seven messages from `messages.txt` that were published to the
+topic:
+
+```shell
+Hello, world!
+This
+is
+Bufstream
+running
+on
+Tigris!
+```
+
+It works! You’ve successfully produced data to a topic and then consumed it.
+From here, you can rest easy knowing that Tigris securely backs up your data,
+and you can access it from anywhere in the world.
+
+If you open your Tigris console to the bucket you created, you’ll see
+Bufstream’s added a number of keys to store your topic data. Feel free to keep
+using `kafkactl`—or your own code—to add more messages and topics, keeping an
+eye on the bucket for changes.
+
+<InlineCta
+  title="Global storage for your files and feeds"
+  subtitle={
+    "Fast, global, reliable: pick three. Tigris lets you store your datasets, models, streams, backups, and more close to where they're needed."
+  }
+  button="Read the Docs"
+  link="https://www.tigrisdata.com/docs/"
+/>
