@@ -62,7 +62,7 @@ applications can scale across the globe fearlessly.
 
 {/* truncate */}
 
-## **Parts overview**
+## Parts overview
 
 [Bufstream](https://buf.build/product/bufstream) is a fully self-hosted drop-in
 replacement for Apache Kafka® that writes data to S3-compatible object storage.
@@ -87,14 +87,14 @@ In addition, we’ll use Docker, the universal package format for the Internet.
 Docker lets you put your application and all its dependencies into a container
 image so that it can’t conflict with anything else on the system.
 
-## **Pre-reqs**
+## Pre-reqs
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or a similar
   app, like [Podman Desktop.](https://podman-desktop.io/)
 - A Tigris account; if you don’t have one, you can create one at
   [storage.new](http://storage.new).
 
-## **Clone the example repo**
+## Clone the example repo
 
 Clone the
 [bufstream-getting-started](https://github.com/tigrisdata-community/bufstream-tigris)
@@ -106,7 +106,7 @@ git clone https://github.com/tigrisdata-community/bufstream-tigris.git
 cd bufstream-getting-started
 ```
 
-## **Create a Tigris bucket**
+## Create a Tigris bucket
 
 Create a new bucket at [storage.new](https://storage.new/) in the Standard
 access tier. Copy its name down into your notes. You’ll need it later for
@@ -122,7 +122,7 @@ TIGRIS_ACCESS_KEY_ID=
 TIGRIS_SECRET_ACCESS_KEY=
 ```
 
-## **Configure Bufstream for Tigris**
+## Configure Bufstream for Tigris
 
 Open the `bufstream.yaml` file, and add your bucket’s name beside the `bucket:`
 key. Leave `region` set to `auto` so that Tigris routes to the closest region:
@@ -142,7 +142,7 @@ storage:
 
 We’re ready to start Bufstream and begin writing data to Tigris\!
 
-## **Start Bufstream**
+## Start Bufstream
 
 Start the environment, using `-d` to run the Compose project in detached mode,
 returning your to a prompt after all services start.
@@ -160,7 +160,7 @@ You should see the following output:
  ✔ Container bufstream                        Started                         11.1s
 ```
 
-## **Create a topic**
+## Create a topic
 
 Use `kafkactl` to create a Kafka topic in Bufstream. In your terminal, run the
 following:
@@ -175,7 +175,7 @@ When it completes, you’ll see the following output:
 topic created: bufstream-on-tigris
 ```
 
-## **Produce to the topic**
+## Produce to the topic
 
 Now that you’ve created a topic, let’s write some data. In the example repo,
 we’ve included a sample message in `messages.txt`.
@@ -192,7 +192,7 @@ When it’s done, you’ll see the following message:
 7 messages produced
 ```
 
-## **Consume messages**
+## Consume messages
 
 Let’s read the messages back. Consume the last 100 messages from the topic:
 
