@@ -47,9 +47,20 @@ class SEOReviewer {
     this.recommendations = [];
 
     // Pre-compile regex patterns for better performance
-    this.markdownImagePattern = /!\[([^\]]*)\]\(([^)]+)\)/g;
-    this.htmlImagePattern =
-      /<img[^>]*src=["']([^"']+)["'][^>]*(?:alt=["']([^"']+)["'][^>]*)?>/g;
+    this.compiledRegexes = {
+      markdownImage: /!\[([^\]]*)\]\(([^)]+)\)/g,
+      htmlImage:
+        /<img[^>]*src=["']([^"']+)["'][^>]*(?:alt=["']([^"']+)["'][^>]*)?>/g,
+      frontmatter: /^---\n((?:[^\n]|\n(?!---))*)\n---/,
+      headings: /^(#{1,6})\s+(.+)$/gm,
+      // Safe regex patterns for terminology replacement
+      safeWordBoundary: (term) =>
+        new RegExp(`\\b${this.escapeRegex(term)}\\b`, "gi"),
+    };
+
+    // Legacy patterns for backward compatibility
+    this.markdownImagePattern = this.compiledRegexes.markdownImage;
+    this.htmlImagePattern = this.compiledRegexes.htmlImage;
 
     // Content size limit (10MB)
     this.MAX_CONTENT_SIZE = 10 * 1024 * 1024;
@@ -103,6 +114,15 @@ class SEOReviewer {
    * @param {string|Object} suggestion - Suggestion item
    * @returns {string} The suggestion text
    */
+  /**
+   * Safely escape regex special characters
+   * @param {string} text - Text to escape
+   * @returns {string} Escaped text
+   */
+  escapeRegex(text) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   getSuggestionText(suggestion) {
     return typeof suggestion === "string" ? suggestion : suggestion.body;
   }
@@ -169,11 +189,19 @@ class SEOReviewer {
   validateFilePath(filePath) {
     const resolvedPath = path.resolve(filePath);
     const resolvedBase = path.resolve(this.blogDir);
+    const resolvedCwd = path.resolve(process.cwd());
 
-    if (
-      !resolvedPath.startsWith(resolvedBase) &&
-      !resolvedPath.startsWith(process.cwd())
-    ) {
+    // Use path.relative to check containment more securely
+    const relativeToBase = path.relative(resolvedBase, resolvedPath);
+    const relativeToCwd = path.relative(resolvedCwd, resolvedPath);
+
+    // Check if path escapes allowed directories using .. or absolute paths
+    const isOutsideBase =
+      relativeToBase.startsWith("..") || path.isAbsolute(relativeToBase);
+    const isOutsideCwd =
+      relativeToCwd.startsWith("..") || path.isAbsolute(relativeToCwd);
+
+    if (isOutsideBase && isOutsideCwd) {
       throw new Error("Invalid file path: outside allowed directory");
     }
 
@@ -186,8 +214,17 @@ class SEOReviewer {
    * @returns {string} Sanitized path
    */
   sanitizeImagePath(imagePath) {
-    // Only allow alphanumeric, hyphens, dots, slashes, underscores
-    return imagePath.replace(/[^a-zA-Z0-9\-./_ ]/g, "");
+    // Stricter validation first - only allow safe characters
+    if (!/^[a-zA-Z0-9\-./_ ]+$/.test(imagePath)) {
+      throw new Error("Invalid image path: contains unsafe characters");
+    }
+
+    // Additional length check to prevent overly long paths
+    if (imagePath.length > 500) {
+      throw new Error("Invalid image path: path too long");
+    }
+
+    return imagePath.trim();
   }
 
   /**
@@ -211,7 +248,15 @@ class SEOReviewer {
     let data;
 
     try {
-      data = yaml.load(rawFrontmatter) || {};
+      // Use safe schema to prevent YAML bombs and restrict to safe types
+      data =
+        yaml.load(rawFrontmatter, {
+          schema: yaml.FAILSAFE_SCHEMA, // Only allow basic YAML types
+          json: true, // Only JSON-compatible types
+          onWarning: (warning) => {
+            console.warn(`YAML parsing warning: ${warning.message}`);
+          },
+        }) || {};
     } catch (error) {
       throw new Error(`Invalid YAML in frontmatter: ${error.message}`);
     }
@@ -1160,7 +1205,9 @@ class SEOReviewer {
       frontmatter.description || ""
     } ${headings.map((h) => h.text).join(" ")} ${content}`.toLowerCase();
     const currentTags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
-    const currentTagsLower = currentTags.map((t) => t.toLowerCase());
+    const currentTagsLower = currentTags
+      .map((t) => t?.toLowerCase?.() || "")
+      .filter(Boolean);
 
     // Category tags that must be at the top of the list and should never be moved/removed
     const categoryTags = [
@@ -1602,8 +1649,21 @@ class SEOReviewer {
             directories.push(dir);
           }
         } catch (error) {
-          // Skip files that can't be accessed
-          continue;
+          // Categorize and handle different error types appropriately
+          if (error.code === "ENOENT") {
+            // File doesn't exist - expected, continue
+            continue;
+          } else if (error.code === "EACCES") {
+            console.warn(`Permission denied: ${fullPath}`);
+            continue;
+          } else {
+            // Unexpected error - log and continue
+            console.error(
+              `Unexpected error accessing ${fullPath}:`,
+              error.message
+            );
+            continue;
+          }
         }
       }
 
@@ -1753,16 +1813,22 @@ class SEOReviewer {
     let updatedContentBody = this.extractContent(fileContent);
 
     // Apply meta description changes
-    const suggestedDescMatch = analysis.suggestions.find(
-      (s) =>
-        s.startsWith("Suggested improved description:") ||
-        s.startsWith("Suggested meta description:") ||
-        s.startsWith("Suggested shortened description:")
-    );
+    const suggestedDescMatch = analysis.suggestions.find((s) => {
+      const text = this.getSuggestionText(s);
+      return (
+        text.startsWith("Suggested improved description:") ||
+        text.startsWith("Suggested meta description:") ||
+        text.startsWith("Suggested shortened description:")
+      );
+    });
     if (suggestedDescMatch) {
-      const newDescription = suggestedDescMatch.match(/"([^"]*)"/)[1];
-      updatedFrontmatterData.description = newDescription;
-      console.log(`- Applied new meta description: "${newDescription}"`);
+      const suggestionText = this.getSuggestionText(suggestedDescMatch);
+      const descriptionMatch = suggestionText.match(/"([^"]*)"/);
+      if (descriptionMatch) {
+        const newDescription = descriptionMatch[1];
+        updatedFrontmatterData.description = newDescription;
+        console.log(`- Applied new meta description: "${newDescription}"`);
+      }
     }
 
     // Apply tag changes (additions, casing, positioning)
@@ -1789,10 +1855,10 @@ class SEOReviewer {
 
       // Add suggested tags
       const suggestedTagsMatch = analysis.suggestions.find((s) =>
-        s.startsWith("Consider adding tags:")
+        this.getSuggestionText(s).startsWith("Consider adding tags:")
       );
       if (suggestedTagsMatch) {
-        const tagsToAdd = suggestedTagsMatch
+        const tagsToAdd = this.getSuggestionText(suggestedTagsMatch)
           .match(/tags: (.*)/)[1]
           .split(", ")
           .map((t) => t.trim());
@@ -1904,14 +1970,25 @@ class SEOReviewer {
       },
     ];
     for (const deprecated of deprecatedTerms) {
-      const regex = new RegExp(deprecated.term, "gi"); // Case-insensitive global replacement
-      if (updatedContentBody.match(regex)) {
-        updatedContentBody = updatedContentBody.replace(
-          regex,
-          deprecated.preferred
-        );
-        console.log(
-          `- Replaced "${deprecated.term}" with "${deprecated.preferred}" in content.`
+      try {
+        // Safely escape regex special characters to prevent ReDoS attacks
+        const escapedTerm = this.escapeRegex(deprecated.term);
+        const regex = new RegExp(`\\b${escapedTerm}\\b`, "gi"); // Word boundary for precise matching
+
+        if (regex.test(updatedContentBody)) {
+          // Reset regex for replacement
+          const replaceRegex = new RegExp(`\\b${escapedTerm}\\b`, "gi");
+          updatedContentBody = updatedContentBody.replace(
+            replaceRegex,
+            deprecated.preferred
+          );
+          console.log(
+            `- Replaced "${deprecated.term}" with "${deprecated.preferred}" in content.`
+          );
+        }
+      } catch (error) {
+        console.warn(
+          `- Skipped replacement of "${deprecated.term}": ${error.message}`
         );
       }
     }
@@ -1929,7 +2006,7 @@ class SEOReviewer {
     for (const suggestion of captionSuggestions) {
       const suggestionText = this.getSuggestionText(suggestion);
       const imagePathMatch = suggestionText.match(
-        /Image (?:missing alt text|Alt text too short for image): ([^.]+\.[^.]+)/
+        /Image (?:missing alt text|Alt text too short for image): ([^\s]+\.[a-zA-Z0-9]+)/
       );
       const captionMatch = suggestionText.match(
         /Consider using the caption text: "([^"]+)"/
@@ -1943,14 +2020,36 @@ class SEOReviewer {
 
         // Use safer, more specific regex patterns
         try {
-          const escapedPath = imagePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const escapedPath = this.escapeRegex(imagePath);
+
+          // Safety check: Skip if this path appears in import statements or JSX props
+          const hasImportStatement =
+            updatedContentBody.includes(`import `) &&
+            updatedContentBody.includes(imagePath);
+          const hasJSXProp = updatedContentBody.match(
+            new RegExp(`\\w+={[^}]*${escapedPath}[^}]*}`)
+          );
+
+          if (hasImportStatement || hasJSXProp) {
+            console.log(
+              `- Skipped caption application for ${imagePath}: Found in import/JSX context`
+            );
+            continue;
+          }
 
           // Handle markdown images: ![old_alt](image_path) -> ![caption_text](image_path)
           const markdownPattern = `!\\[([^\\]]*)\\]\\(([^)]*${escapedPath}[^)]*)\\)`;
           const markdownImageRegex = new RegExp(markdownPattern, "g");
-          if (updatedContentBody.includes(imagePath)) {
+
+          // Only apply if we find actual markdown image syntax, not just the path
+          if (markdownImageRegex.test(updatedContentBody)) {
+            // Reset regex for actual replacement
+            const markdownImageRegexForReplace = new RegExp(
+              markdownPattern,
+              "g"
+            );
             updatedContentBody = updatedContentBody.replace(
-              markdownImageRegex,
+              markdownImageRegexForReplace,
               `![${captionText}]($2)`
             );
             console.log(
@@ -1962,24 +2061,30 @@ class SEOReviewer {
           }
 
           // Handle HTML images with more targeted approach
+          // Only match actual <img> tags, not JSX props or imports
           const imgTagPattern = `<img([^>]*src=["'][^"']*${escapedPath}[^"']*["'][^>]*)>`;
           const htmlImageRegex = new RegExp(imgTagPattern, "g");
 
-          updatedContentBody = updatedContentBody.replace(
-            htmlImageRegex,
-            (match, attributes) => {
-              if (attributes.includes("alt=")) {
-                // Replace existing alt text
-                return match.replace(
-                  /alt=["'][^"']*["']/,
-                  `alt="${captionText}"`
-                );
-              } else {
-                // Add alt text
-                return `<img${attributes} alt="${captionText}">`;
+          // Only apply if we find actual <img> tags, and avoid JSX/imports
+          if (htmlImageRegex.test(updatedContentBody)) {
+            // Reset regex for actual replacement
+            const htmlImageRegexForReplace = new RegExp(imgTagPattern, "g");
+            updatedContentBody = updatedContentBody.replace(
+              htmlImageRegexForReplace,
+              (match, attributes) => {
+                if (attributes.includes("alt=")) {
+                  // Replace existing alt text
+                  return match.replace(
+                    /alt=["'][^"']*["']/,
+                    `alt="${captionText}"`
+                  );
+                } else {
+                  // Add alt text
+                  return `<img${attributes} alt="${captionText}">`;
+                }
               }
-            }
-          );
+            );
+          }
         } catch (error) {
           console.warn(
             `- Skipped caption application for ${imagePath}: ${error.message}`
@@ -1994,19 +2099,28 @@ class SEOReviewer {
     );
     const newFileContent = `---\n${newFrontmatterString}\n---\n${updatedContentBody}`;
 
-    // Atomic file write using temporary file
-    const tempFile = `${validatedPath}.tmp`;
+    // Atomic file write using unique temporary file to prevent race conditions
+    const tempFile = `${validatedPath}.tmp.${Date.now()}.${Math.random()
+      .toString(36)
+      .substring(2)}`;
     try {
       await fs.promises.writeFile(tempFile, newFileContent, "utf8");
       await fs.promises.rename(tempFile, validatedPath);
+      console.log(
+        `✓ File updated successfully: ${path.relative(
+          process.cwd(),
+          validatedPath
+        )}`
+      );
     } catch (error) {
       // Clean up temp file on error
       try {
         await fs.promises.unlink(tempFile);
       } catch (cleanupError) {
-        // Ignore cleanup errors
+        // Log but ignore cleanup errors
+        console.warn(`Warning: Could not clean up temporary file: ${tempFile}`);
       }
-      throw error;
+      throw new Error(`Failed to update file: ${error.message}`);
     }
   }
 
@@ -2020,6 +2134,89 @@ class SEOReviewer {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Detect if we're in or near a blog post directory
+   * @returns {string|null} Path to blog post file if found, null otherwise
+   */
+  async detectBlogPost() {
+    const currentDir = process.cwd();
+    const blogDirPath = path.resolve(this.blogDir);
+
+    // Check if current directory has index.mdx or index.md
+    const indexMdx = path.join(currentDir, "index.mdx");
+    const indexMd = path.join(currentDir, "index.md");
+
+    if (await this.fileExists(indexMdx)) {
+      return indexMdx;
+    }
+    if (await this.fileExists(indexMd)) {
+      return indexMd;
+    }
+
+    // Check if we're inside the blog directory structure
+    const relativePath = path.relative(blogDirPath, currentDir);
+    if (!relativePath.startsWith("..") && !path.isAbsolute(relativePath)) {
+      // We're inside blog directory - look for the nearest blog post
+      const parts = relativePath.split(path.sep);
+
+      // If we're in a blog post directory (like "2025-08-07-qwen-image")
+      if (parts.length > 0 && parts[0].match(/^\d{4}-\d{2}-\d{2}-/)) {
+        const blogPostDir = path.join(blogDirPath, parts[0]);
+        const postMdx = path.join(blogPostDir, "index.mdx");
+        const postMd = path.join(blogPostDir, "index.md");
+
+        if (await this.fileExists(postMdx)) {
+          return postMdx;
+        }
+        if (await this.fileExists(postMd)) {
+          return postMd;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Resolve post path from user input - can be a blog post name, partial path, or full path
+   * @param {string} input - User input for blog post
+   * @returns {string|null} Resolved path to blog post file
+   */
+  async resolvePostPath(input) {
+    // If it's already a valid file path, use it
+    if (await this.fileExists(input)) {
+      return input;
+    }
+
+    // Check if it's a blog post directory name or partial name
+    const blogDirs = await fs.promises.readdir(this.blogDir);
+    const matchingDirs = blogDirs.filter((dir) => {
+      return dir.includes(input) || dir.endsWith(`-${input}`);
+    });
+
+    if (matchingDirs.length === 1) {
+      const blogPostDir = path.join(this.blogDir, matchingDirs[0]);
+      const postMdx = path.join(blogPostDir, "index.mdx");
+      const postMd = path.join(blogPostDir, "index.md");
+
+      if (await this.fileExists(postMdx)) {
+        return postMdx;
+      }
+      if (await this.fileExists(postMd)) {
+        return postMd;
+      }
+    }
+
+    if (matchingDirs.length > 1) {
+      console.error(`Multiple blog posts match "${input}":`);
+      matchingDirs.forEach((dir) => console.error(`  - ${dir}`));
+      console.error("Please be more specific.");
+      return null;
+    }
+
+    return null;
   }
 
   /**
@@ -2041,23 +2238,53 @@ class SEOReviewer {
         console.log("Analyzing all posts...");
         targetPaths = (await this.analyzeAllPosts()).map((a) => a.filePath);
       } else if (postPathArg) {
-        targetPaths.push(postPathArg);
-      } else {
-        const currentDir = process.cwd();
-        const indexMdx = path.join(currentDir, "index.mdx");
-        const indexMd = path.join(currentDir, "index.md");
-
-        if (await this.fileExists(indexMdx)) {
-          targetPaths.push(indexMdx);
-          console.log(`Auto-detected blog post: ${path.basename(currentDir)}`);
-        } else if (await this.fileExists(indexMd)) {
-          targetPaths.push(indexMd);
-          console.log(`Auto-detected blog post: ${path.basename(currentDir)}`);
-        } else {
+        const resolvedPath = await this.resolvePostPath(postPathArg);
+        if (resolvedPath) {
+          targetPaths.push(resolvedPath);
           console.log(
-            "No specific post detected, analyzing all posts by default."
+            `Analyzing: ${path.basename(path.dirname(resolvedPath))}`
           );
-          targetPaths = (await this.analyzeAllPosts()).map((a) => a.filePath);
+        } else {
+          console.error(`Error: Could not find blog post: ${postPathArg}`);
+          process.exit(1);
+        }
+      } else {
+        // Try to auto-detect blog post from current location
+        const detectedPost = await this.detectBlogPost();
+
+        if (detectedPost) {
+          targetPaths.push(detectedPost);
+          const blogPostName = path.basename(path.dirname(detectedPost));
+          console.log(`Auto-detected blog post: ${blogPostName}`);
+        } else {
+          // Provide helpful guidance instead of analyzing all posts
+          console.log("❓ No blog post auto-detected from current location.\n");
+          console.log("To analyze a specific blog post, you can:");
+          console.log(
+            "  • cd into a blog post directory (e.g., cd blog/2025-08-07-qwen-image)"
+          );
+          console.log(
+            "  • Specify a blog post name: npm run seo:review qwen-image"
+          );
+          console.log(
+            "  • Use the full path: npm run seo:review blog/2025-08-07-qwen-image/index.mdx"
+          );
+          console.log("  • Analyze all posts: npm run seo:review:all\n");
+
+          // List recent blog posts for convenience
+          const allPosts = await this.analyzeAllPosts();
+          const recentPosts = allPosts
+            .map((post) => path.basename(path.dirname(post.filePath)))
+            .sort()
+            .reverse()
+            .slice(0, 10);
+
+          console.log("Recent blog posts:");
+          recentPosts.forEach((postName) => {
+            console.log(`  • ${postName}`);
+          });
+
+          process.exit(0);
         }
       }
 
@@ -2133,11 +2360,7 @@ async function main() {
       }
     }
 
-    if (postPathArg && !(await reviewer.fileExists(postPathArg))) {
-      console.error(`Error: File not found: ${postPathArg}`);
-      process.exit(1);
-    }
-
+    // Remove the direct file existence check here since resolvePostPath() will handle it
     await reviewer.run(postPathArg, applyChanges, analyzeAllExplicitly);
   } catch (error) {
     console.error("Error:", error.message);
