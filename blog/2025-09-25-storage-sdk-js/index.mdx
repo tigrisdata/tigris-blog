@@ -1,0 +1,347 @@
+---
+slug: storage-sdk
+title: "Announcing the Tigris Storage SDK"
+description: |
+  Introducing the Tigris Storage SDK for JavaScript and TypeScript - a simplified alternative to AWS S3 SDK with environment-based configuration, error-as-values pattern, and streamlined object storage operations.
+image: ./rhadamanthus.webp
+keywords:
+  - Tigris Storage SDK
+  - JavaScript SDK
+  - TypeScript SDK
+  - object storage
+  - AWS S3 alternative
+  - storage SDK
+  - cloud storage
+  - NPM package
+  - client uploads
+  - presigned URLs
+  - multipart uploads
+  - error handling
+  - environment configuration
+  - S3 compatible
+authors:
+  - xe
+  - abdullah
+tags:
+  - Build with Tigris
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+import CodeBlock from "@theme/CodeBlock";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+import BigButton from "./BigButton";
+import VSplit from "./VSplit";
+
+import heroimage from "./rhadamanthus.webp";
+import styles from "!!raw-loader!./styles.css";
+
+<style>{styles}</style>
+
+<img
+  src={heroimage}
+  className="hero-image"
+  alt="A blue tiger with a laptop under his shoulder walks to work, greeting a floating robotic datacentre technician on his way to his office."
+/>
+
+<center>
+  <small>
+    <em>
+      A blue tiger with a laptop under his shoulder walks to work, greeting a
+      floating robotic datacentre technician on his way to his office.
+    </em>
+  </small>
+</center>
+
+At Tigris, we do object storage. However, in order to use Tigris in your
+JavaScript or TypeScript projects, you normally have to import a library from
+AWS. We want you to import Tigris to use Tigris, so we made the
+[Tigris Storage SDK](https://www.tigrisdata.com/docs/sdks/tigris/) to make
+interactions with object storage simpler. Here’s how you use it compared to the
+AWS S3 SDK:
+
+{/* truncate */}
+
+import s3PutObject from "!!raw-loader!./examples/s3-putobject.js";
+import tigrisPutObject from "!!raw-loader!./examples/tigris-putobject.js";
+
+<VSplit
+  right={
+    <>
+      <p style={{ fontWeight: "600", fontSize: "1.125rem" }}>AWS S3 SDK</p>
+      <CodeBlock language="javascript">{s3PutObject}</CodeBlock>
+    </>
+  }
+  left={
+    <>
+      <p style={{ fontWeight: "600", fontSize: "1.125rem" }}>
+        Tigris Storage SDK
+      </p>
+      <CodeBlock language="javascript">{tigrisPutObject}</CodeBlock>
+    </>
+  }
+/>
+
+You can get started with the Tigris Storage SDK by installing the NPM package
+[`@tigrisdata/storage`](https://www.npmjs.com/package/@tigrisdata/storage):
+
+export const Install = () => (
+  <Tabs>
+    <TabItem value="npm" label="NPM">
+      <CodeBlock language="bash">{`npm install --save @tigrisdata/storage`}</CodeBlock>
+    </TabItem>
+    <TabItem value="yarn" label="Yarn">
+      <CodeBlock language="bash">{`yarn add @tigrisdata/storage`}</CodeBlock>
+    </TabItem>
+  </Tabs>
+);
+
+<Install />
+
+From there, [create a bucket](https://console.tigris.dev/createbucket),
+[create an Editor keypair for that bucket](https://console.tigris.dev/createaccesskey),
+and add the following to your `.env` file (or to the project’s environment in
+your runtime of choice):
+
+```sh
+TIGRIS_STORAGE_ACCESS_KEY_ID=tid_access_key_id
+TIGRIS_STORAGE_SECRET_ACCESS_KEY=tsec_secret_access_key
+TIGRIS_STORAGE_BUCKET=mybucket
+```
+
+That’s it!
+
+export const ButtonArray = () => (
+  <center>
+    <p style={{ marginLeft: "auto", marginRight: "auto" }}>
+      <BigButton
+        color="red"
+        text="📦 NPM"
+        href="https://www.npmjs.com/package/@tigrisdata/storage"
+      />
+      <BigButton
+        color="teal"
+        text="💻 GitHub"
+        href="https://github.com/tigrisdata/storage"
+      />
+      <BigButton
+        color="green"
+        text="📓 Examples"
+        href="https://github.com/tigrisdata-community/storage-sdk-examples"
+      />
+      <BigButton
+        color="gray"
+        text="🤓 Docs"
+        href="https://www.tigrisdata.com/docs/sdks/tigris/"
+      />
+    </p>
+  </center>
+);
+
+<ButtonArray />
+
+## Why make a storage SDK?
+
+Object storage is a very simple concept that ended up being complicated in
+practice. When we designed the Tigris Storage SDK, we wanted to pare it down to
+the bare essentials. If you need to put an object into Tigris, you use the `put`
+function. This automatically figures out where to store things, what credentials
+to use, and all the other minutæ you have to deal with. You just put, get, list,
+and delete objects.
+
+This adds up to give you the ability to glance at the code and have a good idea
+of what is actually going on. Compare these two code snippets:
+
+import s3List from "!!raw-loader!./examples/s3-list.js";
+import tigrisList from "!!raw-loader!./examples/tigris-list.js";
+
+<VSplit
+  left={
+    <>
+      <p style={{ fontWeight: "600", fontSize: "1.125rem" }}>
+        Tigris Storage SDK
+      </p>
+      <CodeBlock language="javascript">{tigrisList}</CodeBlock>
+    </>
+  }
+  right={
+    <>
+      <p style={{ fontWeight: "600", fontSize: "1.125rem" }}>AWS S3 SDK</p>
+      <CodeBlock language="javascript">{s3List}</CodeBlock>
+    </>
+  }
+/>
+
+Which one would you rather read in your codebase? The cognitive complexity
+reduction in the Tigris Storage SDK is subtle but significant. By default, the
+Tigris Storage SDK loads all of its configuration
+[from the environment](https://12factor.net/config) like any good twelve-factor
+app should.
+
+| Tigris Storage SDK                 | AWS                                              |
+| :--------------------------------- | :----------------------------------------------- |
+| `TIGRIS_STORAGE_ACCESS_KEY_ID`     | `AWS_ACCESS_KEY_ID`                              |
+| `TIGRIS_STORAGE_SECRET_ACCESS_KEY` | `AWS_SECRET_ACCESS_KEY`                          |
+| `TIGRIS_STORAGE_BUCKET`            | No equivalent, you must set it manually per call |
+
+However, if you need to `put` things into a different bucket, you can do that
+with the `config` argument:
+
+```javascript
+import { put } from "@tigrisdata/storage";
+
+const { data, error } = put(`avatars/${user.id}`, avatarBlob, {
+  addRandomSuffix: true,
+  config: {
+    bucket: "contoso-user-data",
+  },
+});
+
+if (error !== undefined) {
+  throw error; // or whatever else you do in your project
+}
+
+console.log(`Data uploaded to tigris as ${data.path}`);
+```
+
+This will put a user’s avatar data into the Tigris bucket `contoso-user-data`
+and suffix the name with the time (in Unix milliseconds) and random data. You
+can also
+[set the access key id, secret access key, and API endpoint on a per-bucket basis](https://www.tigrisdata.com/docs/sdks/tigris/using-sdk/#authentication).
+
+You may have noticed something interesting in that last example:
+
+```javascript
+const { data, error } = put(`avatars/${user.id}`, avatarBlob);
+
+if (error !== undefined) {
+  throw error; // or whatever else you do in your project
+}
+
+// use data
+```
+
+When possible, we return errors as _values_ instead of throwing exceptions up
+the stack. This pattern allows you to handle errors inline to your code so they
+aren’t surprises when they come up in practice. This adds up to reduce the
+cognitive complexity of your code so you can go back to shipping your multicloud
+agentic SaaS of your dreams\!
+
+This also means you don’t have to instantiate classes or ferry around a client
+global when you want to do basic operations:
+
+import s3Get from "!!raw-loader!./examples/s3-get.js";
+import tigrisGet from "!!raw-loader!./examples/tigris-get.js";
+
+<VSplit
+  left={
+    <>
+      <p style={{ fontWeight: "600", fontSize: "1.125rem" }}>
+        Tigris Storage SDK
+      </p>
+      <CodeBlock language="javascript">{tigrisGet}</CodeBlock>
+    </>
+  }
+  right={
+    <>
+      <p style={{ fontWeight: "600", fontSize: "1.125rem" }}>AWS S3 SDK</p>
+      <CodeBlock language="javascript">{s3Get}</CodeBlock>
+    </>
+  }
+/>
+
+Need to upload a large file? The multipart upload feature is there for you\!
+
+```javascript
+const videoStream = new ReadableStream({
+  start(controller) {
+    controller.enqueue(new TextEncoder().encode("Hello, World!"));
+    controller.close();
+  },
+});
+const { data, error } = await put("videos/large-video.mp4", videoStream, {
+  multipart: true,
+  onUploadProgress: ({ percentage }) => {
+    console.log(`Upload progress: ${percentage}%`);
+  },
+});
+
+if (error !== nil) {
+  throw error; // or whatever else you do in your project
+}
+
+console.log(data);
+```
+
+## Client uploads
+
+Tigris
+[does not charge egress fees](https://www.tigrisdata.com/docs/pricing/#zero-egress-fees),
+but the provider you run your app on likely does. This means that uploading data
+to Tigris from your app can run up a cost per gigabyte. To work around this,
+we’ve created the
+[client upload pattern](https://www.tigrisdata.com/docs/sdks/tigris/client-uploads/).
+This makes your app return a
+[presigned `PUT` URL](https://www.tigrisdata.com/docs/objects/presigned/) to the
+client and then the client uploads the data directly to Tigris, sidestepping the
+entire part where your app needs to stream data from the client and then upload
+it to Tigris.
+
+In order to implement this, you need to do the following:
+
+- Expose an upload endpoint that creates pre-signed URLs, for example:
+  `/api/upload`
+- Call the `upload` function from `@tigrisdata/storage/client` module like this:
+
+```javascript
+import { upload } from "@tigrisdata/storage/client";
+
+const { data, error } = await upload(file.name), file, {
+  url: "/api/upload", // or whatever endpoint you use
+  access: "private", // or public
+  onUploadProgress: ({ loaded, total, percentage }) => {
+    console.log({ loaded, total, percentage });
+  },
+};
+
+if (error !== undefined) {
+  throw error; // or whatever you do normally
+}
+
+console.log(data);
+```
+
+And then your data is uploaded by the client instead of having to pipe it
+through to the server\! Make sure to secure this API endpoint appropriately, add
+rate limits, and all the other protections you should do for production
+services. Note that you may need to combine this with
+[setting CORS for your bucket](https://www.tigrisdata.com/docs/buckets/cors/)
+and
+[using custom branded presigned URLs](https://www.tigrisdata.com/docs/objects/presigned/#presigned-url-with-custom-domain)
+for the best effect.
+
+## Conclusion
+
+If you want to try the Tigris Storage SDK, install it from NPM:
+
+<Install />
+
+If you want to learn more about the Tigris Storage SDK, check out these links
+for more information:
+
+<ButtonArray />
+
+<InlineCta
+  title="Globally performant object storage"
+  subtitle={
+    <>
+      Tigris is dedicated to making sure that your experience with object
+      storage is the best it can possibly be, and then we go the extra mile to
+      make it even better.
+    </>
+  }
+  button="I want that on a T-shirt!"
+  link="https://www.tigrisdata.com/docs/sdks/tigris/"
+/>
