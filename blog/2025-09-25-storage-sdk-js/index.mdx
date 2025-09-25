@@ -243,7 +243,7 @@ const { data, error } = await put("videos/large-video.mp4", videoStream, {
   },
 });
 
-if (error !== nil) {
+if (error !== undefined) {
   throw error; // or whatever else you do in your project
 }
 
