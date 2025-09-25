@@ -1,8 +1,8 @@
 import { get } from '@tigrisdata/storage';
 
-const { data, error } = get("object.txt, "string");
+const { data, error } = get("object.txt", "string");
 
-if (error !== nil) {
+if (error !== undefined) {
   // or whatever else you do in your project
   throw error;
 }
