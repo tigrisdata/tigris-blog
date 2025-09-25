@@ -3,7 +3,6 @@
 .innerContainer {
   max-width: 1200px; /* container */
   margin: 0 auto; /* mx-auto */
-  padding: 1rem; /* p-4 */
 }
 
 @media (min-width: 640px) {
@@ -100,7 +99,7 @@
 
 @media (min-width: 1024px) {
   .panel {
-    width: 50%; /* md:w-1/2 */
+    max-width: 50%; /* md:w-1/2 */
     display: block !important; /* md:block */
   }
 }

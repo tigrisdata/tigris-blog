@@ -33,6 +33,8 @@ import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
 import BigButton from "./BigButton";
+import ButtonArray from "./ButtonArray";
+import Install from "./Install";
 import VSplit from "./VSplit";
 
 import heroimage from "./rhadamanthus.webp";
@@ -87,17 +89,6 @@ import tigrisPutObject from "!!raw-loader!./examples/tigris-putobject.js";
 You can get started with the Tigris Storage SDK by installing the NPM package
 [`@tigrisdata/storage`](https://www.npmjs.com/package/@tigrisdata/storage):
 
-export const Install = () => (
-  <Tabs>
-    <TabItem value="npm" label="npm">
-      <CodeBlock language="bash">{`npm install --save @tigrisdata/storage`}</CodeBlock>
-    </TabItem>
-    <TabItem value="yarn" label="Yarn">
-      <CodeBlock language="bash">{`yarn add @tigrisdata/storage`}</CodeBlock>
-    </TabItem>
-  </Tabs>
-);
-
 <Install />
 
 From there, [create a bucket](https://console.tigris.dev/createbucket),
@@ -112,33 +103,6 @@ TIGRIS_STORAGE_BUCKET=mybucket
 ```
 
 That’s it!
-
-export const ButtonArray = () => (
-  <center>
-    <p style={{ marginLeft: "auto", marginRight: "auto" }}>
-      <BigButton
-        color="red"
-        text="📦 npm"
-        href="https://www.npmjs.com/package/@tigrisdata/storage"
-      />
-      <BigButton
-        color="teal"
-        text="💻 GitHub"
-        href="https://github.com/tigrisdata/storage"
-      />
-      <BigButton
-        color="green"
-        text="📓 Examples"
-        href="https://github.com/tigrisdata-community/storage-sdk-examples"
-      />
-      <BigButton
-        color="gray"
-        text="🤓 Docs"
-        href="https://www.tigrisdata.com/docs/sdks/tigris/"
-      />
-    </p>
-  </center>
-);
 
 <ButtonArray />
 
@@ -178,13 +142,24 @@ Which one would you rather read in your codebase? The cognitive complexity
 reduction in the Tigris Storage SDK is subtle but significant. By default, the
 Tigris Storage SDK loads all of its configuration
 [from the environment](https://12factor.net/config) like any good twelve-factor
-app should.
+app should:
+
+<div className="table-container">
 
 | Tigris Storage SDK                 | AWS                                              |
 | :--------------------------------- | :----------------------------------------------- |
 | `TIGRIS_STORAGE_ACCESS_KEY_ID`     | `AWS_ACCESS_KEY_ID`                              |
 | `TIGRIS_STORAGE_SECRET_ACCESS_KEY` | `AWS_SECRET_ACCESS_KEY`                          |
 | `TIGRIS_STORAGE_BUCKET`            | No equivalent, you must set it manually per call |
+
+</div>
+<div className="phone-container">
+
+- `AWS_ACCESS_KEY_ID` ➡️ `TIGRIS_STORAGE_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY` ➡️ `TIGRIS_STORAGE_SECRET_ACCESS_KEY`
+- `TIGRIS_STORAGE_BUCKET` ➡️ No equivalent, you must set it manually per call
+
+</div>
 
 However, if you need to `put` things into a different bucket, you can do that
 with the `config` argument:

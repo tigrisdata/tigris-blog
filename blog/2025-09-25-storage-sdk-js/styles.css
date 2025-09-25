@@ -38,10 +38,32 @@ ol {
   margin-right: auto;
 }
 
-table {
+.table-container {
+  overflow-x: auto;
+  width: 100%;
   max-width: 42rem; /* 2xl equivalent */
   margin-left: auto;
   margin-right: auto;
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .table-container {
+    display: block;
+  }
+}
+
+.phone-container {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .phone-container {
+    display: block;
+  }
+}
+
+table {
   width: 100%;
   border-collapse: collapse;
 }
