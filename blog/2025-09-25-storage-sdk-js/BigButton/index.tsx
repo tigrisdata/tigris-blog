@@ -1,7 +1,17 @@
 import React from "react";
 import styles from "./styles.module.css";
 
-const BigButton = ({ href = "#", text = "Click Me", color = "teal" }) => {
+export interface BigButtonProps {
+  href: string;
+  text: string;
+  color: string;
+}
+
+const BigButton = ({
+  href = "#",
+  text = "Click Me",
+  color = "teal",
+}: BigButtonProps) => {
   // Color-specific classes mapping
   const colorSchemes = {
     red: styles.red,

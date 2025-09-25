@@ -1,4 +1,4 @@
-import { get } from '@tigrisdata/storage';
+import { get } from "@tigrisdata/storage";
 
 const { data, error } = get("object.txt", "string");
 

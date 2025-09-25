@@ -1,3 +1,4 @@
+import React from "react";
 import BigButton from "../BigButton";
 
 export default function ButtonArray() {

@@ -1,14 +1,19 @@
 import React, { useState } from "react";
 import styles from "./styles.module.css";
 
-/**
- * @component VSplit
- * @description A responsive React component that displays two panels passed as props.
- * On medium screens and larger (desktop), the panels are shown side-by-side.
- * On smaller screens (mobile), the panels are displayed in a tabbed view.
- * @param {{ left: React.ReactNode, right: React.ReactNode }} props - The components for the left and right panels.
- */
-const VSplit = ({ left, leftTitle = "Tigris", right, rightTitle = "AWS" }) => {
+export interface VSplitProps {
+  left: React.ReactNode;
+  leftTitle: string;
+  right: React.ReactNode;
+  rightTitle: string;
+}
+
+const VSplit = ({
+  left,
+  leftTitle = "Tigris",
+  right,
+  rightTitle = "AWS",
+}: VSplitProps) => {
   // State to manage which tab is currently active in the mobile view.
   // It defaults to 'left', showing the first panel initially.
   const [activeTab, setActiveTab] = useState("left");
