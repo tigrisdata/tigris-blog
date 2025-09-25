@@ -3,3 +3,4 @@ external/
 blog/2025-05-20-fake-captchas/markdownChunk.js
 blog/2025-05-20-fake-captchas/markdownChunk2.js
 blog/2025-05-20-fake-captchas/markdownChunk3.js
+blog/2025-09-25-storage-sdk-js/examples/*.js
