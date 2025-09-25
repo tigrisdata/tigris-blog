@@ -8,7 +8,7 @@ import styles from "./styles.module.css";
  * On smaller screens (mobile), the panels are displayed in a tabbed view.
  * @param {{ left: React.ReactNode, right: React.ReactNode }} props - The components for the left and right panels.
  */
-const VSplit = ({ left, right }) => {
+const VSplit = ({ left, leftTitle = "Tigris", right, rightTitle = "AWS" }) => {
   // State to manage which tab is currently active in the mobile view.
   // It defaults to 'left', showing the first panel initially.
   const [activeTab, setActiveTab] = useState("left");
@@ -27,7 +27,7 @@ const VSplit = ({ left, right }) => {
                 : styles.tabButtonInactive
             }`}
           >
-            Dashboard
+            {leftTitle}
           </button>
           <button
             onClick={() => setActiveTab("right")}
@@ -37,7 +37,7 @@ const VSplit = ({ left, right }) => {
                 : styles.tabButtonInactive
             }`}
           >
-            Settings
+            {rightTitle}
           </button>
         </div>
 
