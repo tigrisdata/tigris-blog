@@ -10,7 +10,8 @@
       "fisher": true
     },
     "ghcr.io/devcontainer-community/devcontainer-features/atuin.sh:1": {},
-    "ghcr.io/devcontainers-extra/features/neovim-apt-get:1": {}
+    "ghcr.io/devcontainers-extra/features/neovim-apt-get:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "initializeCommand": "mkdir -p ${localEnv:HOME}${localEnv:USERPROFILE}/.local/share/atuin",
   "postCreateCommand": "npm ci",

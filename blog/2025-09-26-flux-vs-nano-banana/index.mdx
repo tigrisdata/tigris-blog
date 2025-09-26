@@ -16,15 +16,20 @@ tags:
   - Image Generation
 ---
 
+import PostEmbed from "@site/src/components/PostEmbed";
+
 Long ago the GPU supply chains existed in harmony. Then, everything changed once
 GPT 4o image generation landed and the “Ghiblify” trend happened. I have since
 somewhat stopped seeing my Twitter (it’ll always be Twitter to me) feed flooded
 with as many Ghibli-styled AI generated images, but one thing is certain, image
 models have changed the way we think about image content.
 
-:::note In this post I’m calling these models “image models”, but they are
-actually complex multi-modal models that are really good at image generation and
-editing. :::
+:::note
+
+In this post I’m calling these models “image models”, but they are actually
+complex multi-modal models that are really good at image generation and editing.
+
+:::
 
 <PostEmbed
   link="https://x.com/sama/status/1905296867145154688"
@@ -62,7 +67,7 @@ other models you want to see us add.
 {/* truncate */}
 
 <video controls width="100%">
-  <source src="/img/blog/flux-vs-nano-banana/demo.mp4" type="video/mp4" />
+  <source src={require("./demo.mp4").default} type="video/mp4" />
   Download the <a href="/img/blog/flux-vs-nano-banana/demo.mp4">MP4</a> version.
 </video>
 
@@ -83,9 +88,9 @@ Render a single 4K photoreal scene of a rainy neon alley at dusk reflected in a 
 
 Output:
 
-| gpt-image-1                                           | gemini-2.5-flash-image-preview                                | flux-kontext-pro                                       |
-| ----------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------ |
-| ![](/img/blog/flux-vs-nano-banana/gpt-generation.png) | ![](/img/blog/flux-vs-nano-banana/nano-banana-generation.png) | ![](/img/blog/flux-vs-nano-banana/flux-generation.png) |
+| gpt-image-1                | gemini-2.5-flash-image-preview     | flux-kontext-pro            |
+| -------------------------- | ---------------------------------- | --------------------------- |
+| ![](./gpt-generation.webp) | ![](./nano-banana-generation.webp) | ![](./flux-generation.webp) |
 
 All generations look quite good in my opinion. They all render the teapot along
 with the origami and include the cyclist in the background. However when it
@@ -119,7 +124,7 @@ for input text and images.
 For example, editing a 2000 token image will cost approximately $0.2 using
 `gpt-image-1` and $0.34 using `nano-banana`.
 
-![](/img/blog/flux-vs-nano-banana/image-editing.png)
+![](./image-editing.webp)
 
 `flux-kontext-pro` wins this round since it’s both fast and cheap, but with the
 slightest of margins against nano-banana, while `gpt-image-1` ‘s pricing remains
@@ -132,13 +137,15 @@ at image editing with a very high image preservation and are almost a
 replacement to traditional image editing tools, while `gpt-image-1` does a
 decent job at editing images.
 
-![](/img/blog/flux-vs-nano-banana/original-image.png)
+![](./original-image.webp)
 
-| gpt-image-1                                           | nano-banana                                             | flux-kontext-pro                                 |
-| ----------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------ |
-| ![](/img/blog/flux-vs-nano-banana/gpt-image-edit.png) | ![](/img/blog/flux-vs-nano-banana/nano-banana-edit.png) | ![](/img/blog/flux-vs-nano-banana/flux-edit.png) |
+| gpt-image-1                | nano-banana                  | flux-kontext-pro      |
+| -------------------------- | ---------------------------- | --------------------- |
+| ![](./gpt-image-edit.webp) | ![](./nano-banana-edit.webp) | ![](./flux-edit.webp) |
 
 **Overall comparison**
+
+<div style={{marginRight:"auto", marginLeft: "auto", justifyContent: "center"}}>
 
 | Metric               | `gpt-image-1` | `nano-banana` | `flux-kontext-pro` |
 | -------------------- | ------------- | ------------- | ------------------ |
@@ -147,6 +154,8 @@ decent job at editing images.
 | Cost per generation  | $0.16         | $0.039        | $0.04              |
 | Cost per edit        | $0.2          | $0.339        | $0.04              |
 | Image preservation   | Low           | High          | High               |
+
+</div>
 
 ## Conclusion
 
