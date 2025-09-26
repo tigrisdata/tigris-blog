@@ -15,6 +15,7 @@ tags:
   - AI
   - Image Generation
 ---
+import PostEmbed from "@site/src/components/PostEmbed";
 
 Long ago the GPU supply chains existed in harmony. Then, everything changed once
 GPT 4o image generation landed and the “Ghiblify” trend happened. I have since
@@ -24,7 +25,10 @@ models have changed the way we think about image content.
 
 :::note In this post I’m calling these models “image models”, but they are
 actually complex multi-modal models that are really good at image generation and
-editing. :::
+editing.
+:::
+
+{/* truncate */}
 
 <PostEmbed
   link="https://x.com/sama/status/1905296867145154688"
@@ -62,7 +66,7 @@ other models you want to see us add.
 {/* truncate */}
 
 <video controls width="100%">
-  <source src="/img/blog/flux-vs-nano-banana/demo.mp4" type="video/mp4" />
+  <source src={require("./demo.mp4").default} type="video/mp4" />
   Download the <a href="/img/blog/flux-vs-nano-banana/demo.mp4">MP4</a> version.
 </video>
 
