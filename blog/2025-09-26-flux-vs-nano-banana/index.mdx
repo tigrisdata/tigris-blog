@@ -17,6 +17,7 @@ tags:
 ---
 
 import PostEmbed from "@site/src/components/PostEmbed";
+import InlineCta from "@site/src/components/InlineCta";
 
 Long ago the GPU supply chains existed in harmony. Then, everything changed once
 GPT 4o image generation landed and the “Ghiblify” trend happened. I have since
@@ -49,22 +50,37 @@ complex multi-modal models that are really good at image generation and editing.
 
 </PostEmbed>
 
-At Tigris we love multi-modal and image models, not just because our blog covers
-are generated, but because some of our biggest customers train on and store
-images. They also have become an essential part of how we think about content
-and art. From thumbnails to storyboards, there is an increasing number of
-use-cases where image models have become indispensable.
+We're excited about multi-modal and image models, not just because our blog
+covers are generated, but because many Tigris customers use us to store and
+distribute generative media like images and video. From ideation and
+storyboarding to post-processing and editing, image models have become
+indispensable tools in the creative process.
 
 Since the Ghibli moment, several companies such as Black Forest Labs, Google and
 Alibaba have released state-of-art after state-of-the art models, with the most
 recent being Gemini 2.5 Flash Image a.k.a Nano Banana. Which begs the question:
-which of these models should you use? That’s why we published image-models.dev,
-an app for you to compare image models’ generation and editing capabilities. For
-now, we’ve picked the following models: gpt-image-1,
-gemini-2.5-flash-image-preview and flux-kontext-pro. Let us know if there are
-other models you want to see us add.
+which of these models should you use? That’s why we published
+[image-models.dev](https://image-models.dev), an app for you to compare image
+models’ generation and editing capabilities. For now, we’ve picked the following
+models: gpt-image-1, gemini-2.5-flash-image-preview and flux-kontext-pro.
 
 {/* truncate */}
+
+<InlineCta
+  title="Try image-models.dev"
+  subtitle={
+    <>
+      Try image-models.dev and let us know if there are other models you want to
+      see us add..
+    </>
+  }
+  button="Try Image Models Dev now"
+  link="https://www.image-models.dev"
+/>
+
+{/* truncate */}
+
+<br />
 
 <video controls width="100%">
   <source src={require("./demo.mp4").default} type="video/mp4" />
