@@ -202,7 +202,7 @@ const config = {
             items: [
               {
                 label: "About",
-                href: `${tigrisConfig.docsUrl}/about/`,
+                href: `https://www.tigrisdata.com/about/`,
                 target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
