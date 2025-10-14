@@ -1,0 +1,154 @@
+---
+slug: what-tigris-looks-forward-to-pytorch-conference
+title: What Tigris Data Is Excited About at PyTorch Conference 2025
+description: |
+  Five talks we're most excited about at PyTorch Conference 2025, showcasing innovation in AI infrastructure, storage, and performance optimization.
+image: ./pytorch-hero.webp
+keywords:
+  - PyTorch
+  - AI Infrastructure
+  - Storage
+  - Performance
+  - Conference
+  - Machine Learning
+  - GPU Optimization
+  - Distributed Training
+  - Model Serving
+authors:
+  - ks
+tags:
+  - PyTorch
+  - AI Infrastructure
+  - Storage
+  - Performance
+  - Conference
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./pytorch-hero.webp";
+
+<img
+  src={heroImage}
+  alt="PyTorch Conference 2025 - What Tigris Data looks forward to"
+  style={{ width: "100%", height: "auto" }}
+/>
+<p
+  style={{
+    textAlign: "center",
+    fontStyle: "italic",
+    marginTop: "0.5rem",
+    color: "var(--docs-color-text-100)",
+  }}
+>
+  What Tigris Data Is Excited About at PyTorch Conference 2025
+</p>
+
+With PyTorch Conference 2025 kicking off in San Francisco next week (Oct 22-23),
+we're gearing up to connect with the AI community and dive deep into the
+sessions pushing the boundaries of **AI infrastructure, storage, and
+performance**.  
+Here are the five talks we're most looking forward to, each one showcasing
+performance optimizations for AI workloads.
+
+### 1. Scaling KV Caches for LLMs: How LMCache + NIXL Handle Network and Storage Heterogeneity (NVIDIA, University of Chicago)
+
+Large Language Models generate huge key–value caches, and this
+[session](https://pytorchconference.sched.com/event/27QEg/scaling-kv-caches-for-llms-how-lmcache-+-nixl-handle-network-and-storage-heterogeneity-junchen-jiang-university-of-chicago-moein-khazraee-nvidia?iframe=yes&w=100%&sidebar=yes&bg=no)
+by **Junchen Jiang (University of Chicago)** and **Moein Khazraee (NVIDIA)**
+explores how LMCache makes these caches reusable across memory tiers — from GPU
+RAM to object storage — while NIXL accelerates transfers across heterogeneous
+storage and network backends.
+
+It’s a dive into **smart caching for AI workloads**, the kind of intelligent
+data movement we think about daily at Tigris when building globally distributed
+storage systems.
+
+### 2. Enabling Lightweight, High-Performance FSDP With NVIDIA GPU (NVIDIA)
+
+This
+[talk](https://pytorchconference.sched.com/event/27QDK/enabling-lightweight-high-performance-fsdp-with-nvidia-gpu-jianbin-chang-cn-cory-ye-xuwen-chen-sangkug-lym-nvidia?iframe=no)
+by **Xuwen Chen, Jianbin Chang, Sangkug Lym, and Cory Ye (all NVIDIA)** dives
+into NVIDIA’s optimized implementation of Fully Sharded Data Parallel (FSDP).  
+By offloading collective communication to NVLink and InfiniBand SHARP and
+reducing GPU memory fragmentation, they achieve remarkable training efficiency.
+
+It’s a perfect showcase of **hardware-aware optimization**, where deep learning
+frameworks evolve to squeeze every ounce of performance from modern compute
+infrastructure.
+
+### 3. Amazingly Fast and Incredibly Scalable Inference With NVIDIA’s Dynamo and TensorRT-LLM (NVIDIA)
+
+In this
+[session](https://pytorchconference.sched.com/event/28d9k/sponsored-session-amazingly-fast-and-incredibly-scalable-inference-with-nvidias-dynamo-and-tensorrt-llm-harry-kim-laikh-tewari-nvidia?iframe=no),
+**Harry Kim** and **Laikh Tiwari (NVIDIA)** pair **NVIDIA Dynamo’s disaggregated
+inference architecture** with **TensorRT-LLM’s optimized execution engine**. It
+shows lightning-fast model serving through intelligent workload splitting and
+GPU kernel optimization.
+
+It’s the kind of performance-first engineering that mirrors how we enable
+high-throughput data pipelines at Tigris — precise, efficient, and scalable.
+
+### 4. Efficient MoE Pre-training at Scale on AMD GPUs With TorchTitan (AMD, Meta)
+
+This
+[talk](https://pytorchconference.sched.com/event/27QCY/efficient-moe-pre-training-at-scale-on-amd-gpus-with-torchtitan-liz-li-yanyuan-qin-amd-matthias-reso-meta?iframe=no)
+by **Liz Li (AMD)**, **Yanyuan Qin (AMD)**, and **Less Wright (Meta)** showcases
+how TorchTitan scales massive Mixture-of-Experts (MoE) models on AMD MI300X
+GPUs.
+
+With 4D parallelism, FP8 precision, and PyTorch-native distributed training, it
+highlights how PyTorch is becoming **more open, flexible, and
+hardware-agnostic** — an exciting direction for AI infrastructure engineers
+building across diverse compute environments.
+
+### 5. No GPU Left Behind: Scaling Online LLM Training With Co-located vLLM in TRL (IBM Research)
+
+In this
+[session](https://pytorchconference.sched.com/event/27QDQ/no-gpu-left-behind-scaling-online-llm-training-with-co-located-vllm-in-trl-mert-toslali-yu-chin-fabian-lim-ibm-research?iframe=no),
+**Mert Toslali** and **Yu Chin Fabian Lim (IBM Research)** tackle inefficiencies
+in LLM training loops by co-locating inference and training on the same GPUs.
+This clever design removes network latency, eliminates idle GPUs, and improves
+throughput by 1.7×.
+
+It’s a brilliant example of **smart system placement** — moving computation to
+where data already lives — a principle we embrace when building
+performance-critical distributed infrastructure.
+
+## Why These Talks Stand Out for Infrastructure Engineers
+
+All five sessions share a common thread: they treat **performance as a
+first-class goal**. Each talk digs into eliminating bottlenecks, improving
+caching, or optimizing hardware utilization. From LMCache’s multi-tier cache
+strategy to vLLM’s co-located inference, these sessions prove that efficiency
+often comes not from bigger machines but from smarter design. Data locality,
+reuse, and reduced latency are recurring themes, echoing what we see daily in
+distributed storage and database systems. The best latency, after all, is no
+latency — when data is already where it needs to be.
+
+At the same time, these talks highlight the intersection of hardware and
+software. From NVIDIA’s NVLink and InfiniBand offloads to AMD’s MI300X-based MoE
+training, PyTorch developers are using hardware-aware optimizations to redefine
+what scale looks like. Together, they reveal how infrastructure innovation —
+caching layers, optimized pipelines, distributed coordination — is shaping the
+next generation of generative AI. The PyTorch community continues to blur the
+lines between ML research and infrastructure craftsmanship, and these sessions
+show that innovation often happens where storage, compute, and architecture
+meet.
+
+At Tigris, we build the storage layer for developers who care about performance,
+reliability, and simplicity. We're looking forward to learning, connecting, and
+bringing these insights back to our mission of making data infrastructure
+effortless at scale.
+
+See you in San Francisco!
+
+Want to keep up with us the conference live? Follow
+[@TigrisData](https://twitter.com/tigrisdata) for live updates during PyTorch
+Conference 2025.
+
+<InlineCta
+  title="Power Your AI Infrastructure with Tigris"
+  subtitle="Ready to build on high-performance storage? Join the developers scaling AI workloads with Tigris."
+  button="Check out the Docs"
+  link="https://www.tigrisdata.com/docs/"
+/>
