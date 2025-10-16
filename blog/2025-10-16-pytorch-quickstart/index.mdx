@@ -1,0 +1,253 @@
+---
+slug: pytorch-quickstart
+title: Getting started with PyTorch and Tigris
+description: |
+  Want to get started training your language models using PyTorch and Tigris? Here's how to get started!
+image: ./fishing-vibes.webp
+keywords:
+  - PyTorch
+  - AI Infrastructure
+  - Storage
+  - Performance
+  - Conference
+  - Machine Learning
+  - GPU Optimization
+  - Distributed Training
+  - Model Serving
+authors:
+  - xe
+tags:
+  - Build With Tigris
+  - AI Infrastructure
+  - Storage
+  - Performance
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./fishing-vibes.webp";
+
+<img
+  src={heroImage}
+  alt="A cartoon tiger fishing off the side of a tropical island"
+  style={{ width: "100%", height: "auto" }}
+/>
+<p
+  style={{
+    textAlign: "center",
+    fontStyle: "italic",
+    marginTop: "0.5rem",
+    color: "var(--docs-color-text-100)",
+  }}
+>
+  A cartoon tiger fishing off the side of a tropical island.
+</p>
+
+Training modern AI models requires two key ingredients: a powerful framework
+like **PyTorch** and a massive amount of data. But how do you efficiently feed
+that data from cloud storage into your GPU for training? Storing datasets in a
+scalable, affordable object storage service like **Tigris** is the first step,
+but bridging the gap to your training script is where the magic happens. ✨
+
+This guide will show you how to stream data directly from a Tigris bucket into
+your PyTorch training loop, creating a seamless and high-performance data
+pipeline.
+
+## Getting Started: Setting Up Your Tigris Bucket
+
+First things first, you need a place to store your data and a way for PyTorch to
+access it. This involves two quick steps: creating a bucket and generating
+access keys.
+
+1.  **Create a New Bucket**: Head over to
+    **[storage.new](https://storage.new)**. Give your bucket a descriptive name
+    (e.g., `my-image-datasets`). For most training use cases, the **Standard**
+    storage tier is the perfect choice.
+2.  **Create an Access Keypair**: Now, go to
+    **[storage.new/accesskey](https://storage.new/accesskey)**. Create a new
+    keypair, giving it a memorable name. For security, grant it **Editor**
+    permissions for only the specific bucket you just created.
+
+Once you click "Create," copy the **Access Key ID** and **Secret Access Key**
+somewhere safe, like a password manager. You won't see the secret key again\!
+
+## Bridging the Gap: Connecting PyTorch to S3
+
+To enable PyTorch to talk to an S3-compatible service like Tigris, we need a
+special connector library. The
+[s3torchconnector](https://github.com/awslabs/s3-connector-for-pytorch) package
+is built exactly for this purpose.
+
+Install it using pip or however you install dependencies:
+
+```sh
+pip install s3torchconnector
+```
+
+This package provides custom PyTorch `Dataset` classes that know how to stream
+objects directly from an S3 bucket.
+
+## Choosing Your Data Access Strategy
+
+With the connector installed, you need to decide _how_ you want to access your
+data. The library offers two main approaches, and choosing the right one is key
+for performance.
+
+Then import the necessary classes into your Python script:
+
+```py
+from s3torchconnector import S3IterableDataset, S3MapDataset, S3ClientConfig
+```
+
+Now, let's pick a dataset style:
+
+- 🗺️ **Map-Style (`S3MapDataset`)**: This acts like a giant list or array. It
+  first lists _all_ the objects in your bucket prefix, which lets you know the
+  total size (`len()`) and access any object by its index (e.g.,
+  `dataset[123]`). This is great for smaller, finite datasets where you need to
+  shuffle the entire collection or access items randomly. **Warning**: The
+  initial listing can be slow if you have millions of objects.
+- ➡️ **Iterable-Style (`S3IterableDataset`)**: This acts like a stream. It
+  fetches objects one by one as you iterate over it, without knowing the total
+  count beforehand. This is **highly recommended for large-scale training**, as
+  it has a low memory footprint and starts feeding data immediately. It's
+  perfect for massive or even infinite datasets.
+
+For most deep learning workflows, `S3IterableDataset` is the way to go. Let's
+set one up to read from our Tigris bucket:
+
+```py
+# Define your Tigris bucket and prefix (folder)
+bucket_name = "my-dataset-bucket"
+prefix = "train/images"
+dataset_uri = f"s3://{bucket_name}/{prefix}"
+
+# Create an iterable dataset pointing to Tigris
+dataset = S3IterableDataset.from_prefix(
+    dataset_uri,
+    region="auto",                      # Tigris is global, so "auto" works great
+    endpoint="https://t3.storage.dev",  # The Tigris S3 endpoint
+    enable_sharding=True                # Important for multi-worker data loading!
+)
+```
+
+We've pointed the dataset to our bucket's URI and specified the Tigris
+`endpoint`. We also set `enable_sharding=True`, which is crucial for ensuring
+that when we use multiple data loading processes, each one gets a unique slice
+of the data.
+
+## From Raw Files to Training Tensors
+
+The dataset now knows how to fetch files, but your model needs **tensors**, not
+raw image files. We'll define a `transform` function to handle this conversion
+on the fly. This function will take a file object from S3 and turn it into a
+tensor (and a label) ready for training.
+
+Let's assume our bucket contains images, and the label is encoded in the file
+path (e.g., `train/images/7/img123.png`, where `7` is the class label).
+
+```python
+from PIL import Image
+import io
+import torchvision.transforms as T
+
+# A standard image transformation pipeline
+transform_pipeline = T.Compose([
+    T.Resize((224, 224)),
+    T.ToTensor(),
+    T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+])
+
+def obj_to_tensor(obj):
+    # 1. Read the raw bytes of the S3 object
+    byte_data = obj.read()
+
+    # 2. Convert bytes to a PIL image
+    image = Image.open(io.BytesIO(byte_data)).convert("RGB")
+
+    # 3. Apply our transformation pipeline to get a tensor
+    tensor = transform_pipeline(image)
+
+    # 4. Extract the label from the object key (file path)
+    # Example key: "train/images/7/img123.png"
+    label_str = obj.key.split("/")[-2]  # This gets "7"
+    label = int(label_str)
+
+    return tensor, label
+```
+
+Now, we just need to tell our dataset to use this function. We can pass it
+directly during creation:
+
+```python
+dataset = S3IterableDataset.from_prefix(
+    dataset_uri,
+    region="auto",
+    endpoint="https://t3.storage.dev",
+    transform=obj_to_tensor, # Apply our function to each object!
+    enable_sharding=True
+)
+```
+
+## Firing Up the Training Loop with `DataLoader`
+
+With our dataset ready to stream and transform data, the final piece is the
+PyTorch `DataLoader`. This powerful utility wraps our dataset and automatically
+handles batching, shuffling (for map-style datasets), and parallel data loading
+using multiple worker processes.
+
+Here’s how to set up an efficient `DataLoader` for streaming:
+
+```python
+import torch
+from torch.utils.data import DataLoader
+
+loader = DataLoader(
+    dataset,
+    batch_size=32,
+    num_workers=4,           # Use multiple processes to fetch data in parallel
+    pin_memory=True,         # Speeds up CPU to GPU memory transfers
+    persistent_workers=True  # Avoids restarting workers every epoch
+)
+```
+
+**A quick breakdown of these settings:**
+
+- `num_workers=4`: This is a game-changer. It spawns 4 separate processes that
+  fetch and transform data from Tigris simultaneously, preventing your GPU from
+  sitting idle waiting for data.
+- `pin_memory=True`: Pre-allocates memory on the CPU in a way that makes copying
+  it to the GPU much faster.
+- `persistent_workers=True`: Keeps the worker processes alive between epochs,
+  saving on setup overhead.
+
+Now you can use this `loader` in a standard PyTorch training loop:
+
+```python
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = ... # Your neural network model
+model.to(device)
+optimizer = ...
+criterion = ...
+
+model.train()
+for epoch in range(num_epochs):
+    for batch_idx, (images, labels) in enumerate(loader):
+        # Move data to the GPU (non_blocking is faster with pin_memory=True)
+        images = images.to(device, non_blocking=True)
+        labels = labels.to(device, non_blocking=True)
+
+        # Forward pass, backpropagation, and optimization
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        if batch_idx % 50 == 0:
+            print(f"Epoch {epoch} | Batch {batch_idx} | Loss: {loss.item():.4f}")
+```
+
+And that's it! Your training loop is now seamlessly pulling data from Tigris,
+processing it on the fly, and feeding it to your GPU in efficient batches.
+You've built a robust, scalable data pipeline for your machine learning
+projects. Happy training! 🚀
