@@ -49,12 +49,11 @@ Fork your data like you fork your code.
 
 With Tigris, you can instantly create an isolated copy of your data for
 development, testing, or experimentation. Have a massive production dataset you
-want to play with? You don't need to wait for a full copy. Just fork your
-source bucket, experiment freely, throw it away, and spin up a new one —
-instantly.
+want to play with? You don't need to wait for a full copy. Just fork your source
+bucket, experiment freely, throw it away, and spin up a new one — instantly.
 
-Forked buckets are isolated. Their timelines diverge from the source bucket
-at the moment of the fork. It's the many-worlds version of object storage.
+Forked buckets are isolated. Their timelines diverge from the source bucket at
+the moment of the fork. It's the many-worlds version of object storage.
 
 import demo from "./bucket-forking-ui.avif";
 
@@ -176,14 +175,14 @@ own copy of the data. Let's walk through the pattern using Tigris:
   </TabItem>
   <TabItem value="javascript" label="JavaScript">
     ```javascript
-    import { createBucket } from "@tigrisdata/storage";
+    import { createBucket, createBucketSnapshot, listBucketSnapshots } from "@tigrisdata/storage";
 
     // Create a seed bucket
     const seedBucketName = "agent-seed";
     const bucketResult = await createBucket(SEED_BUCKET_NAME, {
       enableSnapshot: true,
     });
-    
+
     if (bucketResult.error) {
       console.error('Error creating seed bucket:', bucketResult.error);
       return;
