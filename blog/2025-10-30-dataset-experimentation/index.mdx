@@ -83,7 +83,10 @@ you’d cull the list to minimize the number of parallel datasets. Or you’d sh
 data across experiments and track the changes. But with forking, you can
 instantly make a copy so you can try all of them at once. Trivially.
 
-Let’s try running experiments using bucket forks.
+We're going to make changes across the entire dataset to optimize the data for
+the models we want to train. Instead of making multiple copies of the dataset,
+we're going to use bucket forking for these experiments. But, in order to talk
+about that, first we need to talk about parallel universes.
 
 ## Dataset experimentation with parallel universes
 
@@ -287,10 +290,12 @@ Then we can make a snapshot of the bucket in this state:
 botw_only_snapshot_id = create_bucket_snapshot(botw_only_bucket, "Dataset filtered down to only images of Breath of the Wild")
 ```
 
-### Experiment 1: Caption Synthesis
+### Fork 1: Caption Synthesis
 
-From here we need to create the captions for this dataset. Let’s start by
-diverging the timeline for captioning and make a fork:
+I use this dataset for other training projects so I don't want to apply the
+captions to the common dataset. I want to leave the underlying / central data
+the same and add my captions in its own little fork. Let’s start by diverging
+the timeline for captioning and make a fork:
 
 ```py
 caption_bucket = f"{BUCKET_NAME}-captions"
@@ -477,12 +482,23 @@ caption_snapshot_id = create_bucket_snapshot(caption_bucket, "Added captions to 
 caption_snapshot_id
 ```
 
-### Experiment 2: Better captioning and different models
+### Fork 2: Better captioning and different models
 
 When I was looking through the dataset I noticed that some of the captions
-weren’t ideal. Let’s see if we can try and fix this. I took one of the
-few-shotted images and asked Gemini Pro 2.5 to describe it as a Stable Diffusion
-prompt:
+weren’t ideal, so I thought that I should redo them by changing the prompting
+theory to be closer to what Stable Diffusion XL natively prefers. However, I
+don't know if this new method will be any better. I want to preserve the old
+captions so I can compare them. Let’s see if a different captioning method will
+work better. I want to preserve the first experiment so I can compare; thus I
+forked the bucket.
+
+```py
+better_caption_bucket = f"{BUCKET_NAME}-better-captions"
+create_bucket_fork(better_caption_bucket, botw_only_bucket, botw_only_snapshot_id)
+```
+
+I took one of the few-shotted images and asked Gemini Pro 2.5 to describe it as
+a Stable Diffusion prompt:
 
 import gerudoShrine from "./img/gerudo-shrine.jpg";
 
@@ -506,8 +522,6 @@ when doing training. I made a new timeline forked from before I made captions
 the first time:
 
 ```py
-better_caption_bucket = f"{BUCKET_NAME}-better-captions"
-create_bucket_fork(better_caption_bucket, botw_only_bucket, botw_only_snapshot_id)
 ds = load_timeline(better_caption_bucket)
 
 text_data = [""] * len(ds)
@@ -606,29 +620,33 @@ Then I investigated a few image-caption pairs:
 
 This would be much better to train a LoRA on\!
 
-### Experiment 3: Resizing to train Stable Diffusion
+### Fork 3: Resizing to train Stable Diffusion
 
-When training Stable Diffusion LoRAs, you generally want your images to meet the
-following sizes:
+Now that I have the images and captions, I want to start optimizing the image
+size for the model I want to train. This requires a destructive action across
+every image in the dataset.
+
+When training Stable Diffusion, you generally want your images to meet specific
+resolutions:
 
 - If you are using Stable Diffusion v1.5, you want the resolution of your images
   to add up to 1024 (eg 512x512, 768x384, etc.)
 - If you are using Stable Diffusion XL, you want the resolution of your images
   to add up to 2048 (eg 1024x1024, 1344x768, etc.)
 
-Based on the fact that all of my images are 1280x720, without upscaling them the
-best model to train against is Stable Diffusion v1.5. There’s probably better
-models I could use, but I’m on a deadline and I think that Stable Diffusion v1.5
-has absolutely unmatched vibes that later models can’t really match. In order to
-do this, I need to fork the timeline:
+Actions across the entire dataset like this are a poster child for making a
+fork:
 
 ```py
 resized_bucket = f"{BUCKET_NAME}-512-centre-crop"
 create_bucket_fork(resized_bucket, better_caption_bucket)
-ds = load_timeline(resized_bucket)
 ```
 
-Then resize all the images serially:
+Based on the fact that all of my images are 1280x720, without upscaling them the
+best model to train against is Stable Diffusion v1.5. This means I need to
+centre crop the images to 512x512. Another experiment/fork could involve
+resizing the images to something like 768x384 to get closer to the original 16:9
+aspect ratio. Here's how I resized all the images in the dataset:
 
 ```py
 from PIL import Image
@@ -647,6 +665,7 @@ def resize_row(row):
     row["image"] = center_crop_resize(row["image"])
     return row
 
+ds = load_timeline(resized_bucket)
 ds = ds.map(resize_row)
 ```
 
@@ -659,16 +678,38 @@ snapshot_id = create_bucket_snapshot(resized_bucket)
 
 Et voila! I can do my Stable Diffusion v1.5 training fearlessly.
 
-## Thinking with time travel
+## Thinking with portals
 
-As you can see, from here all you have to do is submit your dataset to be
-trained with models like Stable Diffusion XL or Flux. I’d suggest doing some
-more filtering such as removing rows with keywords like “menu”, “message”, or
-“text” in them, but this is something you can freely experiment with on your
-own. If you want to check out the dataset I filtered out when I was writing this
-post, I posted
+In the process of working on this, we ended up with four different forks of our
+dataset. These are:
+
+- The base dataset (mostly unaltered from the original Switch SD card)
+- A version of it that only has screenshots of Breath of the Wild
+- A version of it with a first pass at captioning
+- A version of it with a better pass at captioning
+- A version of the better pass at captioning but cropped and resized for Stable
+  Diffusion training
+
+See how this maps more cleanly to the experimental process? The artifacts of
+this are easily visible and nothing was deleted in the process. This is how you
+think with ~~portals~~ bucket forking!
+
+From here all you have to do is submit your dataset to be trained. I’d suggest
+doing some more filtering before training such as removing rows with keywords
+like “menu”, “message”, or “text” in them, but this is something you can freely
+experiment with on your own. If you want to check out the dataset I filtered out
+when I was writing this post, I posted
 [a copy of it](https://huggingface.co/datasets/XeIaso/botw-screenshots-captioned)
-to Hugging Face. I plan to train Stable Diffusion on it when I get the time.
+to Hugging Face.
+
+- The raw set of all of my Switch screenshots:
+  [XeIaso/switch-screenshots](https://huggingface.co/datasets/XeIaso/switch-screenshots).
+- The Breath of the Wild screenshots with better captions:
+  [XeIaso/botw-screenshots-captioned](https://huggingface.co/datasets/XeIaso/botw-screenshots-captioned).
+- The centre cropped screenshots with better captions:
+  [XeIaso/botw-screenshots-captioned-square](https://huggingface.co/datasets/XeIaso/botw-screenshots-captioned-square).
+
+I plan to train Stable Diffusion on it when I get the time.
 
 The important thing to keep in mind is that this model of being able to reset
 things and fork the timeline when they go awry or you want to try multiple
