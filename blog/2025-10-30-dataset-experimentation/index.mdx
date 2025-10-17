@@ -63,7 +63,7 @@ dataset, do your experimentation and development, and then merge your updated
 data back into main. Just like git, and it’s as fast as forking a git repo.
 
 When you fork a bucket, you get an isolated copy that’s a metadata reference to
-your original dataset. Writes to the parent bucket aren’t replicated to the
+your original dataset. Writes to the source bucket aren’t replicated to the
 fork: their timelines have diverged at the moment of the fork. Tigris only
 stores the changes, so there’s no duplication.
 
@@ -716,9 +716,9 @@ things and fork the timeline when they go awry or you want to try multiple
 different things. What if you tried using a different model for describing the
 screenshots? What if you tried a different few shot prompting flow? What if your
 filtering logic was different? Each of those can be cleanly forked off and tried
-in their own little universes without impacting any of the data. All of the
-source data remains safe in Tigris even though we’ve been whittling it down as
-things get filtered out.
+in their own little universes without impacting any of the data. All of the data
+in the source bucket remains safe in Tigris even though we’ve been whittling it
+down as things get filtered out.
 
 See how this maps to the normal experimental workflow we do with things like
 chemistry, physics, and other natural sciences? If at first you don’t succeed by
