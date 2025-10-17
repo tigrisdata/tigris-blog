@@ -15,12 +15,15 @@ tags:
 import InlineCta from "@site/src/components/InlineCta";
 
 If you’re building an agent, chances are, you have or you are considering
-implementing a form of forking into your workflow to prevent “rogue” agentic
-behavior.
+implementing a form of forking, isolating agents from one another, into your
+workflow to prevent “rogue” agentic behavior.
 
-Cursor’s checkpoints, for example, let developers revert code edits, while Devin
-takes full VM snapshots using its open‑source Blockdiff system. This speaks of
-both the need and complexity of having duplicate environments for agents.
+(Cursor’s checkpoints)[https://cursor.com/docs/agent/chat/checkpoints], for
+example, let developers revert code edits, while (Devin[https://cognition.ai/])
+takes full VM snapshots using its open‑source
+(Blockdiff)[https://cognition.ai/blog/blockdiff#primer-linux-filesystem-concepts]
+system. This speaks of both the need and complexity of having duplicate
+environments for agents.
 
 While these approaches work, they’re heavy. They duplicate data and are not
 designed for serving a swarm of agents working in parallel in the same workspace
@@ -29,8 +32,9 @@ sandbox without copying terabytes of data.
 
 ## State of the agent world
 
-LangChain’s Harrison Chase describes four components that make an agent:
-planning, tool use, memory, and reflection.
+LangChain’s (Harrison Chase)[https://x.com/hwchase17] describes (four components
+that make an agent)[https://www.youtube.com/watch?v=pBBe1pk8hf4]: planning, tool
+use, memory, and reflection.
 
 <div style={{ textAlign: "center" }}>
   <img
@@ -51,8 +55,9 @@ planning, tool use, memory, and reflection.
 
 As shown in Figure 1, agents are connected to tools to interact with their
 environment via custom functions, APIs or Model Context Protocol (MCP) servers.
-If you use a coding agent like Cursor, there are hundreds of MCP servers you can
-use to access infrastructure resources like databases, object storage and more.
+If you use a coding agent like Cursor, there are hundreds of (MCP
+servers)[https://cursor.directory/mcp] you can use to access infrastructure
+resources like databases, object storage and more.
 
 <InlineCta
   title="Learn more about the Tigris MCP server"
@@ -136,14 +141,15 @@ const result = await createBucket("forked-bucket", {
 });
 ```
 
-Read more about bucket forking and snapshots in the docs.
+Read more about bucket forking and snapshots in the
+[docs](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/#using-snapshots-and-forks).
 
 ## Parallel agents, parallel risk
 
 The way we build with AI is changing. Agents now operate in parallel, often
 sharing the same resources and environments.
 
-As Simon Willison puts it, vibe engineering is working with AI systems as
+As (Simon Willison)[https://x.com/simonw] puts it, (vibe engineering)[https://simonwillison.net/2025/Oct/7/vibe-engineering/] is working with AI systems as
 collaborators rather than tools. This shift means we don’t just write code, we
 orchestrate concurrent Claude Code or Cursor tabs, Background Agents, writing in
 the same workspace to shorten development cycles.
@@ -265,3 +271,10 @@ Are you building agents? Give bucket forking a try and let us know how we can
 make your experience using Tigris better.
 
 Happy coding (and forking!)
+
+<InlineCta
+  title="Ready to fork your data like code?"
+  subtitle="Get instant, isolated copies of your data for development, testing, or experimentation."
+  button="Read the Bucket Forking Docs"
+  link="https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/"
+/>
