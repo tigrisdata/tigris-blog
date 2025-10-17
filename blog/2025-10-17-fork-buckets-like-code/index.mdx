@@ -1,0 +1,245 @@
+---
+slug: fork-buckets-like-code
+title: Fork Buckets Like You Fork Code
+description: |
+  Fork your data like you fork your code. With Tigris, create isolated copies of your data for development, testing, or experimentation without waiting for full copies.
+image: ./fork-buckets.webp
+keywords:
+  - Bucket Forks
+  - Data Versioning
+  - Object Storage
+  - Snapshots
+  - Immutable Storage
+  - Development Workflows
+  - Data Isolation
+  - Tigris
+  - Git-like Storage
+  - Agent Workflows
+authors:
+  - ks
+tags:
+  - Updates
+  - Engineering
+  - Features
+  - Snapshots
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import heroImage from "./fork-buckets.webp";
+
+<img
+  src={heroImage}
+  alt="Fork Buckets Like You Fork Code"
+  style={{ width: "100%", height: "auto" }}
+/>
+<p
+  style={{
+    textAlign: "center",
+    fontStyle: "italic",
+    marginTop: "0.5rem",
+    color: "var(--docs-color-text-100)",
+  }}
+>
+  Fork Buckets Like You Fork Code
+</p>
+
+Fork your data like you fork your code.
+
+With Tigris, you can instantly create an isolated copy of your data for
+development, testing, or experimentation. Have a massive production dataset you
+want to play with? You don't need to wait for a full copy. Just fork your
+source bucket, experiment freely, throw it away, and spin up a new one —
+instantly.
+
+Forked buckets are isolated. Their timelines diverge from the source bucket
+at the moment of the fork. It's the many-worlds version of object storage.
+
+import demo from "./bucket-forking-ui.avif";
+
+<img
+  src={demo}
+  className="hero-image"
+  alt="An demo of creating a snapshot enabled bucket and forking it in the Tigris Console."
+/>
+
+## Time travel for your entire bucket
+
+Traditional object storage treats a bucket as a flat mutable namespace. You can
+version individual objects, but there's no consistent view of the entire bucket
+at a point in time.
+
+And if you want to experiment, by spinning up an isolated copy of your dataset,
+you're forced to copy every object into a new bucket: a storm of I/O, duplicated
+data, and waiting around for terabytes to move.
+
+Imagine if your code repo didn't have `git clone` or `git branch`, or if you
+couldn't fall back to a prior version of your AI generated code during
+development. That's where object storage has been stuck– until now.
+
+In Tigris, every object is immutable. Each write creates a new version,
+timestamped and preserved. That immutability allows us to version the entire
+bucket, and capture it as a single snapshot. Each object maintains its own
+version chain, and a snapshot is an atomic cut across all those chains at a
+specific moment in time.
+
+## How bucket forks work
+
+Forks are built on top of snapshots. A snapshot freezes your entire bucket at a
+point in time. A fork creates a new bucket from that snapshot, sharing data
+without copying it.
+
+Under the hood, Tigris uses a distributed key-value store (FoundationDB) to
+store object metadata ordered by time. Each write appends a new immutable record
+to a globally ordered log (using negative epoch timestamps for efficient
+lookup). Instead of scanning the KV store for an object key name, we scan by
+timestamp. Each write appends a new immutable record into a globally ordered
+log.
+
+So when you create a fork, Tigris simply references the correct object versions
+from the snapshot, no data movement required.
+
+Retrieving a snapshot to make a fork is:
+
+```
+Scanning by timestamp,
+  for each object,
+      return the newest version ≤ snapshot timestamp
+      write new metadata pointing to the fork bucket name
+```
+
+It's fast, and it's cheap. Make as many as you want.
+
+## Why forks matter
+
+Restoring from snapshots fits the classic storage model: "Oops, something broke!
+Roll back to the snapshot." Forking, though, unlocks a whole new set of
+workflows.
+
+### Isolated development environments
+
+Safely test transformations, migrations, or experiments without touching
+production. Every developer or job can have their own fork, an isolated copy of
+the data that behaves like the real thing.
+
+### Built in dataset versioning and reproducibility
+
+Data version control is an entire class of product. Instead of bolting on (and
+paying for) a catalog or a proxy, version control is built directly into object
+storage. Keep a frozen, isolated dataset copy linked to the model version and
+training metadata.
+
+### A/B testing and multi-model experiments
+
+If two models train or evaluate on slightly different datasets, comparisons fall
+apart. Forks let you lock each data split (train/validation/test) to an
+immutable copy for perfect reproducibility.
+
+### Many agent workflows
+
+Agents are nondeterministic, and often chaotic. Forks make it easy to sandbox
+them. Seed a bucket with everything your agent needs to operate (code,
+unstructured data, configs), and fork it per agent. Each agent gets its own
+world: no collisions, no corruption, full reproducibility.
+
+## Example: For each agent, its own fork
+
+Tens or even thousands of agents can safely work in parallel, each with their
+own copy of the data. Let's walk through the pattern using Tigris:
+
+<Tabs groupId="languages">
+  <TabItem value="python" label="Python">
+    ```python
+    from tigris_boto3_ext import (
+        create_snapshot_bucket,
+        create_snapshot,
+        get_snapshot_version,
+    )
+
+    # Create a seed bucket
+    seed_bucket_name = 'agent-seed'
+    create_snapshot_bucket(s3, seed_bucket_name)
+
+    # Create snapshot
+    result = create_snapshot(s3_client, seed_bucket_name, snapshot_name='agent-seed-v1')
+    snapshot_version = get_snapshot_version(result)
+
+    # Fork the bucket from the snapshot for a new agent
+    agent_bucket_name = f"{seed_bucket_name}-agent-{agent_id}";
+    create_fork(s3_client, agent_bucket_name, seed_bucket_name, snapshot_version=snapshot_version)
+
+    # Start the agent using the forked bucket
+    start_agent(agent_bucket_name)
+    ```
+
+  </TabItem>
+  <TabItem value="javascript" label="JavaScript">
+    ```javascript
+    import { createBucket } from "@tigrisdata/storage";
+
+    // Create a seed bucket
+    const seedBucketName = "agent-seed";
+    const bucketResult = await createBucket(SEED_BUCKET_NAME, {
+      enableSnapshot: true,
+    });
+    
+    if (bucketResult.error) {
+      console.error('Error creating seed bucket:', bucketResult.error);
+      return;
+    }
+    // We'll omit the error handling from now on for brevity, but you should check for errors!
+
+    // Create snapshot
+    const snapshotResult = await createSnapshot(seedBucketName, { snapshotName: "agent-seed-v1" });
+    const snapshotVersion = getSnapshotVersion(snapshotResult);
+
+    // Fork the bucket from the snapshot for a new agent
+    const agentBucketName = `${SEED_BUCKET_NAME}-agent-${Date.now()}`;
+    const forkResult = await createBucket(agentBucketName, {
+      sourceBucketName: SEED_BUCKET_NAME,
+      sourceBucketSnapshot: snapshotVersion,
+    });
+
+    // Start the agent using the forked bucket
+    await startAgent(agentBucketName);
+    ```
+
+  </TabItem>
+</Tabs>
+
+This pattern gives every agent its own isolated fork. You can scale this up — a
+fork per swarm, per run, or even per task.
+
+### What gets easier with bucket forks
+
+When each agent (or developer, or experiment) has its own fork:
+
+- **No collisions**: Writes are isolated; rogue processes can't clobber shared
+  data.
+- **Instant rollback**: Delete a fork and start again from the snapshot.
+- **Perfect consistency**: Data is frozen at creation time, no re-listing, no
+  locking, no reconciliation.
+- **Cleaner debugging**: Restore a snapshot, rerun the code, and get identical
+  results.
+
+## Conclusion: Share data safely with forks
+
+Bucket forking turns your object storage into a controlled lab.
+
+Every experiment is isolated. Every result is reproducible. Every rollback is
+instant.
+
+And since forks are built on top of snapshots, you get all the snapshotting
+power too: full time travel for your data.
+
+Whether you're training AI models, running analytics pipelines, or building with
+hundreds of agents, bucket forking helps you move fast without breaking
+production.
+
+<InlineCta
+  title="Ready to fork your data like code?"
+  subtitle="Get instant, isolated copies of your data for development, testing, or experimentation."
+  button="Read the Bucket Forking Docs"
+  link="https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/"
+/>
