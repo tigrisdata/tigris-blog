@@ -14,17 +14,25 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 
-If you’re building an agent, chances are, you have or you are considering implementing a form of forking into your workflow to prevent “rogue” agentic behavior.
+If you’re building an agent, chances are, you have or you are considering
+implementing a form of forking into your workflow to prevent “rogue” agentic
+behavior.
 
-Cursor’s checkpoints, for example, let developers revert code edits, while Devin takes full VM snapshots using its open‑source Blockdiff system. This speaks of both the need and complexity of having duplicate environments for agents.
+Cursor’s checkpoints, for example, let developers revert code edits, while Devin
+takes full VM snapshots using its open‑source Blockdiff system. This speaks of
+both the need and complexity of having duplicate environments for agents.
 
-While these approaches work, they’re heavy. They duplicate data and are not designed for serving a swarm of agents working in parallel in the same workspace and files. Tigris’ bucket forking changes that by giving every agent its own sandbox without copying terabytes of data.
+While these approaches work, they’re heavy. They duplicate data and are not
+designed for serving a swarm of agents working in parallel in the same workspace
+and files. Tigris’ bucket forking changes that by giving every agent its own
+sandbox without copying terabytes of data.
 
 ## State of the agent world
 
-LangChain’s Harrison Chase describes four components that make an agent: planning, tool use, memory, and reflection.
+LangChain’s Harrison Chase describes four components that make an agent:
+planning, tool use, memory, and reflection.
 
-<div style={{textAlign: "center"}}>
+<div style={{ textAlign: "center" }}>
   <img
     src="/blog/img/blog/build-agents-with-bucket-forking/agent-design-pattern.png"
     alt="Figure 1: The four components of an agent: planning, tool use, memory, and reflection"
@@ -35,20 +43,23 @@ LangChain’s Harrison Chase describes four components that make an agent: plann
 <center>
   <small>
     <em>
-      Figure 1: The four components of an agent: planning, tool use, memory, and reflection
+      Figure 1: The four components of an agent: planning, tool use, memory, and
+      reflection
     </em>
   </small>
 </center>
 
-
-As shown in Figure 1, agents are connected to tools to interact with their environment via custom functions, APIs or Model Context Protocol (MCP) servers. If you use a coding agent like Cursor, there are hundreds of MCP servers you can use to access infrastructure resources like databases, object storage and more.
-
+As shown in Figure 1, agents are connected to tools to interact with their
+environment via custom functions, APIs or Model Context Protocol (MCP) servers.
+If you use a coding agent like Cursor, there are hundreds of MCP servers you can
+use to access infrastructure resources like databases, object storage and more.
 
 <InlineCta
   title="Learn more about the Tigris MCP server"
   subtitle={
     <>
-      The Tigris MCP server is a tool that allows you to use Tigris as an MCP server in your agent.
+      The Tigris MCP server is a tool that allows you to use Tigris as an MCP
+      server in your agent.
     </>
   }
   button="I want that on a T-shirt!"
@@ -58,9 +69,10 @@ As shown in Figure 1, agents are connected to tools to interact with their envir
 <br />
 <br />
 
-As agents become more autonomous and multi‑threaded, giving access to the same data sources raises the risk of data corruption.
+As agents become more autonomous and multi‑threaded, giving access to the same
+data sources raises the risk of data corruption.
 
-<div style={{textAlign: "center"}}>
+<div style={{ textAlign: "center" }}>
   <img
     src="/blog/img/blog/build-agents-with-bucket-forking/multi-agent-single-bucket.png"
     alt="Figure 2: Multi-agent single bucket"
@@ -68,31 +80,45 @@ As agents become more autonomous and multi‑threaded, giving access to the same
   />
 </div>
 
-In the below example, I created an app that shows multiple agents connected to the same bucket‑with‑snapshots bucket. The agent here has a simple task: generate a random image and save it to the bucket under the same `original_image.png` file name.
+In the below example, I created an app that shows multiple agents connected to
+the same bucket‑with‑snapshots bucket. The agent here has a simple task:
+generate a random image and save it to the bucket under the same
+`original_image.png` file name.
 
-You can find the demo app code here: [tigrisdata-community/bucket-forking-with-parallel-agents](https://github.com/tigrisdata-community/bucket-forking-with-parallel-agents).
+You can find the demo app code here:
+[tigrisdata-community/bucket-forking-with-parallel-agents](https://github.com/tigrisdata-community/bucket-forking-with-parallel-agents).
 
-When we trigger one single agent, the file is replaced by the agent’s generation. But what happens when multiple agents all access the bucket in parallel?
+When we trigger one single agent, the file is replaced by the agent’s
+generation. But what happens when multiple agents all access the bucket in
+parallel?
 
 <video controls width="100%">
   <source
     src="/blog/img/blog/build-agents-with-bucket-forking/parallel-agent-1.mp4"
     type="video/mp4"
   />
-  Download the <a href="/blog/img/blog/build-agents-with-bucket-forking/parallel-agent-1.mp4">MP4</a> version.
+  Download the <a href="/blog/img/blog/build-agents-with-bucket-forking/parallel-agent-1.mp4">
+    MP4
+  </a> version.
 </video>
 
-As expected, the file is replaced by the latest and newest agent generation, and that’s an issue if the agent needs the exact file it generated.
+As expected, the file is replaced by the latest and newest agent generation, and
+that’s an issue if the agent needs the exact file it generated.
 
 ## Isolated environments with bucket forking
 
-Bucket forking makes it possible to contain that chaos. Tigris’s bucket forking allows agents to create instant isolated copies of buckets, and we believe it is an essential component to building safer agents. Some of the benefits include:
+Bucket forking makes it possible to contain that chaos. Tigris’s bucket forking
+allows agents to create instant isolated copies of buckets, and we believe it is
+an essential component to building safer agents. Some of the benefits include:
 
-- **Instant copies**: child buckets are ready in milliseconds, regardless of size
-- **Deduplication**: parent and child buckets share data up to the fork point, storing only new blocks, with no duplication and maximum efficiency
-- **Isolation and integrity**: each agent works in a sandboxed environment, ensuring experiments never corrupt the original dataset
+- **Instant copies**: child buckets are ready in milliseconds, regardless of
+  size
+- **Deduplication**: parent and child buckets share data up to the fork point,
+  storing only new blocks, with no duplication and maximum efficiency
+- **Isolation and integrity**: each agent works in a sandboxed environment,
+  ensuring experiments never corrupt the original dataset
 
-<div style={{textAlign: "center"}}>
+<div style={{ textAlign: "center" }}>
   <img
     src="/blog/img/blog/build-agents-with-bucket-forking/multi-agent-forking.png"
     alt="Figure 3: Multi-agent forking"
@@ -114,15 +140,28 @@ Read more about bucket forking and snapshots in the docs.
 
 ## Parallel agents, parallel risk
 
-The way we build with AI is changing. Agents now operate in parallel, often sharing the same resources and environments.
+The way we build with AI is changing. Agents now operate in parallel, often
+sharing the same resources and environments.
 
-As Simon Willison puts it, vibe engineering is working with AI systems as collaborators rather than tools. This shift means we don’t just write code, we orchestrate concurrent Claude Code or Cursor tabs, Background Agents, writing in the same workspace to shorten development cycles.
+As Simon Willison puts it, vibe engineering is working with AI systems as
+collaborators rather than tools. This shift means we don’t just write code, we
+orchestrate concurrent Claude Code or Cursor tabs, Background Agents, writing in
+the same workspace to shorten development cycles.
 
-In the same article, Simon also stresses the importance of automated testing. Agents should be able to perform a task and test it to make sure it meets expectations. The need for safe concurrent access and testing is not specific to coding agents, and can generalize to all agents doing more than just RAG.
+In the same article, Simon also stresses the importance of automated testing.
+Agents should be able to perform a task and test it to make sure it meets
+expectations. The need for safe concurrent access and testing is not specific to
+coding agents, and can generalize to all agents doing more than just RAG.
 
-In Tigris, every forked bucket inherits the data from its parent, but remains isolated until merged. Agents can experiment freely without risking the original dataset. Snapshots ensure that, even if an agent corrupts its fork, the baseline remains untouched.
+In Tigris, every forked bucket inherits the data from its parent, but remains
+isolated until merged. Agents can experiment freely without risking the original
+dataset. Snapshots ensure that, even if an agent corrupts its fork, the baseline
+remains untouched.
 
-In my demo app, I now enable forking, and create new agents. Each agent is linked to its own bucket fork. Now, when I run parallel generations, I can see that my buckets are totally isolated and each bucket gets its own version of `original_image.png` file, without ever altering my source bucket.
+In my demo app, I now enable forking, and create new agents. Each agent is
+linked to its own bucket fork. Now, when I run parallel generations, I can see
+that my buckets are totally isolated and each bucket gets its own version of
+`original_image.png` file, without ever altering my source bucket.
 
 <video controls width="100%">
   <source
@@ -131,12 +170,16 @@ In my demo app, I now enable forking, and create new agents. Each agent is linke
     loop
     autoplay
   />
-  Download the <a href="/blog/img/blog/build-agents-with-bucket-forking/parallel-agents-2.mp4">MP4</a> version.
+  Download the <a href="/blog/img/blog/build-agents-with-bucket-forking/parallel-agents-2.mp4">
+    MP4
+  </a> version.
 </video>
 
-This means AI agents can scale: you can have dozens of agents performing tasks at once, without breaking your source of truth.
+This means AI agents can scale: you can have dozens of agents performing tasks
+at once, without breaking your source of truth.
 
-In code, the SDK allows you to create a fork from a source bucket, then save your files using the `put` function and specifying the target bucket.
+In code, the SDK allows you to create a fork from a source bucket, then save
+your files using the `put` function and specifying the target bucket.
 
 ```typescript
 // /api/fork/route.ts
@@ -174,7 +217,8 @@ export async function POST(req: NextRequest) {
   // image gen init ...
   const url = new URL(req.url);
   const bucketName = url.searchParams.get("bucketName");
-  const targetFileName = url.searchParams.get("targetFileName") || "original_image.png";
+  const targetFileName =
+    url.searchParams.get("targetFileName") || "original_image.png";
 
   if (!bucketName) {
     return new NextResponse("Missing bucketName", { status: 400 });
@@ -201,17 +245,23 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, data: putResult });
   } catch (err: any) {
-    return new NextResponse(`Failed to upload image: ${err?.message || "unknown"}`, {
-      status: 500,
-    });
+    return new NextResponse(
+      `Failed to upload image: ${err?.message || "unknown"}`,
+      {
+        status: 500,
+      }
+    );
   }
 }
 ```
 
 ## Conclusion
 
-Agents are meant to work in parallel and be autonomous. Because of the unpredictability this implies, AI agents are in need of safe environments and sandboxes for testing and experimenting, and that’s what bucket forking offers.
+Agents are meant to work in parallel and be autonomous. Because of the
+unpredictability this implies, AI agents are in need of safe environments and
+sandboxes for testing and experimenting, and that’s what bucket forking offers.
 
-Are you building agents? Give bucket forking a try and let us know how we can make your experience using Tigris better.
+Are you building agents? Give bucket forking a try and let us know how we can
+make your experience using Tigris better.
 
 Happy coding (and forking!)
