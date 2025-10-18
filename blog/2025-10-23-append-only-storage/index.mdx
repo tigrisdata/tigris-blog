@@ -119,7 +119,9 @@ immutable objects.
     Tigris' design is influenced by my time at Uber. My co-founders and I built
     Uber's global storage platform, scaling to hundreds of billions of requests
     daily. We migrated Uber's core trips data from a single Postgres instance to
-    <a href="https://www.uber.com/blog/schemaless-part-one-mysql-datastore/">Schemaless</a>, which has a similar append-only data model.
+    <a href="https://www.uber.com/blog/schemaless-part-one-mysql-datastore/">
+      Schemaless
+    </a>, which has a similar append-only data model.
   </em>
 </div>
 
@@ -247,6 +249,7 @@ create_fork(
 ```
 
 Or if you want to fork from a specific snapshot:
+
 ```python
 from tigris_boto3_ext import (
   create_snapshot,
@@ -326,7 +329,6 @@ afterthought — it's the architecture.
 If you care about immutability and version control at the storage layer, **try
 bucket snapshots and forks in Tigris** — and see what happens when your object
 store really becomes your source of truth.
-
 
 <InlineCta
   title="Experience Inside-Out Object Storage"
