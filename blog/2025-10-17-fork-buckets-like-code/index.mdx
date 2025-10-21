@@ -28,6 +28,9 @@ import InlineCta from "@site/src/components/InlineCta";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import heroImage from "./fork-buckets.webp";
+import styles from "!!raw-loader!./styles.css";
+
+<style>{styles}</style>
 
 <img
   src={heroImage}
@@ -61,7 +64,8 @@ import demo from "./bucket-forking-ui.avif";
 <center style={{ marginLeft: "auto", marginRight: "auto" }}>
   <img
     src={demo}
-    style={{ maxWidth: "40rem" }}
+    class="animation"
+    style={{ maxWidth: "40rem", minWidth: "12rem" }}
     alt="An demo of creating a snapshot enabled bucket and forking it in the Tigris Console."
   />
 </center>
