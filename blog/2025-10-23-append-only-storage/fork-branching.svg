@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 650" style="background: white;">
+  <defs>
+    <style>
+      @font-face {
+        font-family: 'Hanken Grotesk';
+        src: url('/fonts/HankenGrotesk-Regular.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      .text-regular {
+        font-family: 'Hanken Grotesk', sans-serif;
+        font-size: 16px;
+      }
+      .text-small {
+        font-family: 'Hanken Grotesk', sans-serif;
+        font-size: 14px;
+      }
+      .text-bold {
+        font-family: 'Hanken Grotesk', sans-serif;
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .text-code {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+      }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="700" y="35" class="text-bold" text-anchor="middle" fill="#2e3338">
+    Fork Branching: Multi-Agent ML Experiments
+  </text>
+
+  <!-- Main/Parent branch -->
+  <g id="main-branch">
+    <!-- Branch line -->
+    <line x1="120" y1="200" x2="1300" y2="200" stroke="#5B9BD5" stroke-width="4"/>
+
+    <!-- Commit nodes -->
+    <circle cx="200" cy="200" r="10" fill="#5B9BD5" stroke="#4A8AC0" stroke-width="2"/>
+    <circle cx="400" cy="200" r="10" fill="#5B9BD5" stroke="#4A8AC0" stroke-width="2"/>
+    <circle cx="650" cy="200" r="14" fill="#ED7D31" stroke="#E67E22" stroke-width="3"/>
+    <circle cx="950" cy="200" r="10" fill="#5B9BD5" stroke="#4A8AC0" stroke-width="2"/>
+    <circle cx="1200" cy="200" r="10" fill="#5B9BD5" stroke="#4A8AC0" stroke-width="2"/>
+
+    <!-- Branch label -->
+    <text x="120" y="185" class="text-regular" fill="#5B9BD5" font-weight="600">ml-baseline</text>
+
+    <!-- Commit labels with object operations -->
+    <text x="200" y="165" class="text-small" text-anchor="middle" fill="#646464">PUT</text>
+    <text x="200" y="235" class="text-code" text-anchor="middle" fill="#52B788">train.parquet</text>
+
+    <text x="400" y="165" class="text-small" text-anchor="middle" fill="#646464">PUT</text>
+    <text x="400" y="235" class="text-code" text-anchor="middle" fill="#52B788">test.parquet</text>
+
+    <text x="650" y="145" class="text-regular" text-anchor="middle" fill="#ED7D31" font-weight="600">📌 snapshot</text>
+    <text x="650" y="270" class="text-small" text-anchor="middle" fill="#646464">fork point</text>
+
+    <text x="950" y="165" class="text-small" text-anchor="middle" fill="#646464">PUT</text>
+    <text x="950" y="235" class="text-code" text-anchor="middle" fill="#52B788">features_v2.parquet</text>
+
+    <text x="1200" y="165" class="text-small" text-anchor="middle" fill="#646464">PUT</text>
+    <text x="1200" y="235" class="text-code" text-anchor="middle" fill="#52B788">checkpoint.pkl</text>
+  </g>
+
+  <!-- Fork 1: hyperparameter tuning -->
+  <g id="fork-agent-a">
+    <!-- Branch line curving from snapshot -->
+    <path d="M 650 216 Q 700 280, 750 350 L 1300 350" fill="none" stroke="#8E7CC3" stroke-width="4"/>
+
+    <!-- Commit nodes -->
+    <circle cx="950" cy="350" r="10" fill="#8E7CC3" stroke="#7A68A8" stroke-width="2"/>
+    <circle cx="1200" cy="350" r="10" fill="#8E7CC3" stroke="#7A68A8" stroke-width="2"/>
+
+    <!-- Branch label -->
+    <text x="750" y="335" class="text-regular" fill="#8E7CC3" font-weight="600">ml-hyperparam-sweep</text>
+
+    <!-- Commit labels -->
+    <text x="950" y="315" class="text-small" text-anchor="middle" fill="#646464">PUT</text>
+    <text x="950" y="385" class="text-code" text-anchor="middle" fill="#52B788">train.parquet</text>
+    <text x="950" y="403" class="text-small" text-anchor="middle" fill="#646464" font-style="italic">(augmented)</text>
+
+    <text x="1200" y="315" class="text-small" text-anchor="middle" fill="#646464">PUT</text>
+    <text x="1200" y="385" class="text-code" text-anchor="middle" fill="#52B788">model_lr0.001.pkl</text>
+    <text x="1200" y="403" class="text-small" text-anchor="middle" fill="#646464" font-style="italic">(experiment result)</text>
+  </g>
+
+  <!-- Fork 2: feature engineering -->
+  <g id="fork-agent-b">
+    <!-- Branch line curving from snapshot -->
+    <path d="M 650 216 Q 700 400, 750 500 L 1300 500" fill="none" stroke="#9B59B6" stroke-width="4"/>
+
+    <!-- Commit nodes -->
+    <circle cx="950" cy="500" r="10" fill="#9B59B6" stroke="#8E44AD" stroke-width="2"/>
+    <circle cx="1200" cy="500" r="10" fill="#9B59B6" stroke="#8E44AD" stroke-width="2"/>
+
+    <!-- Branch label -->
+    <text x="750" y="485" class="text-regular" fill="#9B59B6" font-weight="600">ml-feature-eng</text>
+
+    <!-- Commit labels -->
+    <text x="950" y="465" class="text-small" text-anchor="middle" fill="#646464">PUT</text>
+    <text x="950" y="535" class="text-code" text-anchor="middle" fill="#52B788">train.parquet</text>
+    <text x="950" y="553" class="text-small" text-anchor="middle" fill="#646464" font-style="italic">(normalized)</text>
+
+    <text x="1200" y="465" class="text-small" text-anchor="middle" fill="#646464">PUT</text>
+    <text x="1200" y="535" class="text-code" text-anchor="middle" fill="#52B788">embeddings.npy</text>
+    <text x="1200" y="553" class="text-small" text-anchor="middle" fill="#646464" font-style="italic">(new features)</text>
+  </g>
+
+  <!-- Shared data annotation -->
+  <g id="shared-region">
+    <rect x="120" y="75" width="380" height="90" fill="#E8F5E9" stroke="#52B788" stroke-width="2" stroke-dasharray="5,3" rx="4"/>
+    <text x="310" y="100" class="text-small" text-anchor="middle" fill="#52B788" font-weight="600">Shared Training Data (Zero-Copy)</text>
+    <text x="310" y="120" class="text-code" text-anchor="middle" fill="#646464">train.parquet (2GB), test.parquet (500MB)</text>
+    <text x="310" y="138" class="text-small" text-anchor="middle" fill="#646464">Both experiments reference same dataset</text>
+    <text x="310" y="155" class="text-small" text-anchor="middle" fill="#646464">until modified • saves storage and time</text>
+  </g>
+
+  <!-- Copy-on-write annotation -->
+  <g id="cow-annotation">
+    <rect x="920" y="75" width="370" height="90" fill="#FFF4E6" stroke="#ED7D31" stroke-width="2" rx="4"/>
+    <text x="1105" y="100" class="text-small" text-anchor="middle" fill="#ED7D31" font-weight="600">Divergence on Write</text>
+    <text x="1105" y="120" class="text-small" text-anchor="middle" fill="#646464">Each experiment modifies train.parquet differently:</text>
+    <text x="1105" y="138" class="text-small" text-anchor="middle" fill="#646464">• Fork 1: augmentation creates new version in fork only</text>
+    <text x="1105" y="155" class="text-small" text-anchor="middle" fill="#646464">• Fork 2: normalization creates independent version</text>
+  </g>
+
+  <!-- Key insight -->
+  <text x="700" y="600" class="text-regular" text-anchor="middle" fill="#52B788" font-weight="700">
+    ✓ Instant fork creation • Shared datasets until modified • Parallel experiments without duplication
+  </text>
+</svg>
