@@ -1,0 +1,171 @@
+.container {
+  /* CSS Reset */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+  box-sizing: border-box;
+
+  /* Component styles */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.card {
+  max-width: 48rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  border: 1px solid rgba(39, 39, 42, 0.5);
+  background-color: rgb(39, 39, 42);
+  color: rgb(244, 244, 245);
+  padding: 1.5rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: rgb(161, 161, 170);
+  margin-top: 0.25rem;
+}
+
+.content {
+  margin-top: 1.5rem;
+}
+
+.orderNote {
+  font-size: 0.75rem;
+  color: rgb(161, 161, 170);
+  margin-bottom: 0.5rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  /* CSS Reset for tables */
+  border-collapse: collapse;
+  border-spacing: 0;
+
+  /* Component styles */
+  min-width: 100%;
+  text-align: left;
+  font-size: 0.875rem;
+  background-color: rgb(39, 39, 42);
+}
+
+.tableHead {
+  border-bottom: 1px solid rgb(39, 39, 42);
+  background-color: rgb(39, 39, 42);
+}
+
+.tableHeader {
+  /* CSS Reset */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+  font-weight: normal;
+  text-align: inherit;
+
+  /* Component styles */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 1rem;
+  color: rgb(161, 161, 170);
+  background-color: rgb(39, 39, 42);
+}
+
+.tableRow {
+  border-bottom: 1px solid rgba(39, 39, 42, 0.6);
+  background-color: rgb(39, 39, 42);
+}
+
+.tableRow:last-child {
+  border-bottom: 0;
+}
+
+.tableCell {
+  /* CSS Reset */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+
+  /* Component styles */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 1rem;
+  background-color: rgb(39, 39, 42);
+}
+
+.labelCell {
+  /* CSS Reset */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+
+  /* Component styles */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 1rem;
+  font-weight: 500;
+  background-color: rgb(39, 39, 42);
+}
+
+.monoCell {
+  /* CSS Reset */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  vertical-align: baseline;
+
+  /* Component styles */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  background-color: rgb(39, 39, 42);
+}
+
+.breakAllCell {
+  /* CSS Reset */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  vertical-align: baseline;
+
+  /* Component styles */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  word-break: break-all;
+  background-color: rgb(39, 39, 42);
+}
+
+.note {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: rgb(113, 113, 122);
+}

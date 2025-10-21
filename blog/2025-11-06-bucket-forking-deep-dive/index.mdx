@@ -60,22 +60,22 @@ new buckets in milliseconds with the power of time travel.
 ## Snapshots are time travel for state
 
 Snapshots record the state of a thing so that you can revisit that state in the
-future. One of the easiest ways to think about snapshots is via a linked list
-recording the changes to an integer counter:
+future. One of the easiest ways to think about snapshots is via a list recording
+the changes to a TODO list:
 
-TODO: Live diagram: a counter app vsplit by a view of the history of changes as
-a list. The snapshot button makes a sparkle emoji button show up next to the
-current change, when you click that button after making changes, the counter app
-and list revert back to the state as of that snapshot.
+<noscript>
+  If you have JavaScript disabled for this page, consider enabling it. Many of
+  the examples/diagrams on the page require JavaScript.
+</noscript>
 
 import TODODiagram from "./TODODiagram";
 
 <TODODiagram />
 
-Instead of just recording a single counter value, the snapshotting approach has
-you record the changes to that counter and set flags on events so you can get
-back to where the counter was at that point in time. There’s a few ways to
-implement this, but for now let’s assume this is implemented as an
+Instead of just recording a value with all the TODOs in it, the snapshotting
+approach has you record the changes to that counter and set flags on events so
+you can get back to where the counter was at that point in time. There’s a few
+ways to implement this, but for now let’s assume this is implemented as an
 append-only-log: or a data structure where the only event you’re allowed to take
 is appending new data on the end of it.
 
@@ -152,8 +152,9 @@ When you
 [create a snapshot](https://www.tigrisdata.com/docs/sdks/tigris/snapshots-and-forks/#create-a-snapshot-from-the-bucket),
 Tigris computes a single numerical value:
 
-TODO: time.Now().UTC().UnixNano() in JS, update on refresh or when user clicks
-refresh button
+import HexTime from "./HexTime";
+
+<HexTime />
 
 That’s it. A snapshot is just a single 64 bit number. This number represents the
 number of nanoseconds since January 1, 1970 at midnight UTC. To understand how
@@ -202,20 +203,18 @@ func EncodeVersion(tm time.Time) []byte {
 
 This produces values like the following:
 
-TODO: compute three timestamps 3 days apart each but out of order, side by side
-/ table view of what they look like
+import HexTimeDaysApart from "./HexTimeDaysApart";
 
-The really cool part happens when you sort them:
+<HexTimeDaysApart />
 
-![A diagram showing how the most recent version is sorted to the top](./img/revsort-time.webp)
-
-This is inherently ordered such that the most recent timestamp will always be
-sorted to the top. So when the Tigris gateway goes in and asks for an object, it
-asks FoundationDB to return the value of the key that comes after
-`bucket-name/object-name`, and then whenever objects are created, updated, or
-deleted, Tigris creates a new version of the object metadata and inserts it on
-top of the existing object metadata. All the older versions of objects are
-neatly frozen in time.
+The really cool part happens when you sort them. Each of these values is ordered
+such that as time increases, the value _decreases_. This backwards ordering
+means that the most recent timestamp will always be sorted to the top. So when
+the Tigris gateway goes in and asks for an object, it asks FoundationDB to
+return the value of the key that comes after `bucket-name/object-name`, and then
+whenever objects are created, updated, or deleted, Tigris creates a new version
+of the object metadata and inserts it on top of the existing object metadata.
+All the older versions of objects are neatly frozen in time.
 
 This effectively turns each Tigris object into its own write-ahead log. Combine
 this with FoundationDB’s inherent ordering superpowers, and then you can recover
@@ -271,19 +270,34 @@ if err := fout.Close(); err != nil {
 
 If you model this out in a timeline, it could look like this:
 
-TODO: diagram where the timeline forks on each fallible event
+```mermaid
+flowchart LR
+    CF{Create foo.txt}
+    WF{Write to file}
+    CloseF{Close file}
+    Fail(Failure)
+    Start(Start)
+    End(Success)
 
-This basic idea is how we handle bucket forking. When you create a new bucket
-forked out of an existing snapshot, you basically create a new timeline for that
-bucket that diverges from the bucket’s old timeline:
+    Start --> CF
+    CF -->|Can't open| Fail
+    CF --> WF
+    WF -->|Can't write| Fail
+    WF --> CloseF
+    CloseF -->|Can't close| Fail
+    CloseF --> End
+```
+
+Every single thing that can fail creates a "fork" in the timeline for when it
+does fail. This basic idea is how we handle bucket forking. When you create a
+new bucket forked out of an existing snapshot, you basically create a new
+timeline for that bucket that diverges from the bucket’s old timeline:
 
 ![](./img/bucket-forking-timeline.webp)
 
 So if every object in a forkable bucket is effectively a write-ahead log, then
 you can implement temporal divergence by just adding a layer of recursive
 indirection to object lookups.
-
-TODO: diagram of that above flowchart
 
 When you modify data in a forked bucket, that new data is inserted into the
 child bucket just like any other object. When the service notices that the child
@@ -304,8 +318,41 @@ affecting the source bucket in the slightest.
 
 Consider this code:
 
-TODO: tigris SDK example of putting a value into a bucket, then taking a
-snapshot and creating a fork of that snapshot.
+```js
+import { createBucket, createBucketSnapshot, put } from "@tigrisdata/storage";
+
+// Create a seed bucket
+const seedBucketName = "agent-seed";
+await createBucket(seedBucketName, {
+  enableSnapshot: true,
+});
+
+// Put some data in it
+put("hello.txt", "Hello, world!", {
+  config: {
+    bucket: seedBucketName,
+  },
+});
+
+// Create snapshot
+const snapshot = await createBucketSnapshot(seedBucketName, {
+  name: "agent-seed-v1",
+});
+
+const snapshotVersion = snapshot.data?.snapshotVersion;
+
+// Fork the bucket from the snapshot for a new agent
+const agentBucketName = `${seedBucketName}-agent-${Date.now()}`;
+const forkResult = await createBucket(agentBucketName, {
+  sourceBucketName: seedBucketName,
+  sourceBucketSnapshot: snapshotVersion,
+});
+
+if (forkResult.data) {
+  // Start the agent using the forked bucket
+  await startAgent(agentBucketName);
+}
+```
 
 This puts 4 values into a bucket, takes a snapshot, and then forks a new bucket
 from that snapshot. From here, you can do whatever you want to the forked bucket
@@ -313,13 +360,33 @@ without hurting the data in the parent bucket.
 
 Consider this code:
 
-TODO: tigris SDK example of deleting the data in the child bucket
+```js
+import { remove } from "@tigrisdata/storage";
+
+remove("hello.txt",
+  config: {
+    bucket: agentBucketName,
+  },
+)
+```
 
 Now the child bucket is empty. But, we can still view the data in the parent
 bucket:
 
-TODO: tigris SDK example of fetching the data from the parent bucket even though
-it can’t from the child bucket
+```js
+import { get } from "@tigrisdata/storage";
+
+const [data, err] = get("hello.txt", "string",
+  config: {
+    bucket: seedBucketName,
+  },
+);
+if (err !== undefined) {
+  throw err;
+}
+
+console.log(data)
+```
 
 This means you can avoid entire categories of threats by handing out data via
 forks of your buckets instead of the raw buckets themselves. Your AI agents,
@@ -328,8 +395,7 @@ go completely off the rails and delete everything, nothing is truly lost. The
 data is still accessible via the snapshot. Especially if your data in the source
 bucket is deleted.
 
-TODO: diagram of child being able to access data before a deletion tombstone in
-the parent
+![](./img/undelete.webp)
 
 ## Object storage with quantum immortality
 
