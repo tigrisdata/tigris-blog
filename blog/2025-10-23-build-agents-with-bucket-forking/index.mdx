@@ -18,10 +18,10 @@ If you’re building an agent, chances are, you have or you are considering
 implementing a form of forking, isolating agents from one another, into your
 workflow to prevent “rogue” agentic behavior.
 
-(Cursor’s checkpoints)[https://cursor.com/docs/agent/chat/checkpoints], for
-example, let developers revert code edits, while (Devin[https://cognition.ai/])
+[Cursor's checkpoints](https://cursor.com/docs/agent/chat/checkpoints), for
+example, let developers revert code edits, while [Devin](https://cognition.ai/)
 takes full VM snapshots using its open‑source
-(Blockdiff)[https://cognition.ai/blog/blockdiff#primer-linux-filesystem-concepts]
+[Blockdiff](https://cognition.ai/blog/blockdiff#primer-linux-filesystem-concepts)
 system. This speaks of both the need and complexity of having duplicate
 environments for agents.
 
@@ -32,9 +32,9 @@ sandbox without copying terabytes of data.
 
 ## State of the agent world
 
-LangChain’s (Harrison Chase)[https://x.com/hwchase17] describes (four components
-that make an agent)[https://www.youtube.com/watch?v=pBBe1pk8hf4]: planning, tool
-use, memory, and reflection.
+LangChain’s [Harrison Chase](https://x.com/hwchase17) describes
+[four components that make an agent](https://www.youtube.com/watch?v=pBBe1pk8hf4):
+planning, tool use, memory, and reflection.
 
 <div style={{ textAlign: "center" }}>
   <img
@@ -55,8 +55,8 @@ use, memory, and reflection.
 
 As shown in Figure 1, agents are connected to tools to interact with their
 environment via custom functions, APIs or Model Context Protocol (MCP) servers.
-If you use a coding agent like Cursor, there are hundreds of (MCP
-servers)[https://cursor.directory/mcp] you can use to access infrastructure
+If you use a coding agent like Cursor, there are hundreds of
+[MCP servers](https://cursor.directory/mcp) you can use to access infrastructure
 resources like databases, object storage and more.
 
 <InlineCta
@@ -75,7 +75,7 @@ resources like databases, object storage and more.
 <br />
 
 As agents become more autonomous and multi‑threaded, giving access to the same
-data sources raises the risk of data corruption.
+data sources raises the risk of race conditions and data corruption.
 
 <div style={{ textAlign: "center" }}>
   <img
@@ -84,6 +84,8 @@ data sources raises the risk of data corruption.
     width="50%"
   />
 </div>
+
+## Multi-agent, single bucket
 
 In the below example, I created an app that shows multiple agents connected to
 the same bucket‑with‑snapshots bucket. The agent here has a simple task:
@@ -95,7 +97,9 @@ You can find the demo app code here:
 
 When we trigger one single agent, the file is replaced by the agent’s
 generation. But what happens when multiple agents all access the bucket in
-parallel?
+parallel? They overwrite files that other agents might be using. In the sample
+app below, the agents access the same files for generating new media, causing
+inconsistent behavior
 
 <video controls width="100%">
   <source
@@ -107,8 +111,10 @@ parallel?
   </a> version.
 </video>
 
-As expected, the file is replaced by the latest and newest agent generation, and
-that’s an issue if the agent needs the exact file it generated.
+The input file is overwritten by each latest agent generation. This is a simple
+example, but it illustrates the data consistency issue when having multiple
+agents share data. Let's make a better flow with bucket forks so our agents are
+guaranteed not to collide.
 
 ## Isolated environments with bucket forking
 
@@ -149,10 +155,11 @@ Read more about bucket forking and snapshots in the
 The way we build with AI is changing. Agents now operate in parallel, often
 sharing the same resources and environments.
 
-As (Simon Willison)[https://x.com/simonw] puts it, (vibe engineering)[https://simonwillison.net/2025/Oct/7/vibe-engineering/] is working with AI systems as
-collaborators rather than tools. This shift means we don’t just write code, we
-orchestrate concurrent Claude Code or Cursor tabs, Background Agents, writing in
-the same workspace to shorten development cycles.
+As [Simon Willison](https://x.com/simonw) puts it,
+[vibe engineering](https://simonwillison.net/2025/Oct/7/vibe-engineering/) is
+working with AI systems as collaborators rather than tools. This shift means we
+don’t just write code, we orchestrate concurrent Claude Code or Cursor tabs,
+Background Agents, writing in the same workspace to shorten development cycles.
 
 In the same article, Simon also stresses the importance of automated testing.
 Agents should be able to perform a task and test it to make sure it meets
