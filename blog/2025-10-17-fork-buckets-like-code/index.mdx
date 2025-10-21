@@ -179,33 +179,32 @@ own copy of the data. Let's walk through the pattern using Tigris:
   </TabItem>
   <TabItem value="javascript" label="JavaScript">
     ```javascript
-    import { createBucket, createBucketSnapshot, listBucketSnapshots } from "@tigrisdata/storage";
+    import { createBucket, createBucketSnapshot } from "@tigrisdata/storage";
 
     // Create a seed bucket
     const seedBucketName = "agent-seed";
-    const bucketResult = await createBucket(SEED_BUCKET_NAME, {
+    await createBucket(seedBucketName, {
       enableSnapshot: true,
     });
 
-    if (bucketResult.error) {
-      console.error('Error creating seed bucket:', bucketResult.error);
-      return;
-    }
-    // We'll omit the error handling from now on for brevity, but you should check for errors!
-
     // Create snapshot
-    const snapshotResult = await createSnapshot(seedBucketName, { snapshotName: "agent-seed-v1" });
-    const snapshotVersion = getSnapshotVersion(snapshotResult);
+    const snapshot = await createBucketSnapshot(seedBucketName, {
+      name: "agent-seed-v1",
+    });
+
+    const snapshotVersion = snapshot.data?.snapshotVersion;
 
     // Fork the bucket from the snapshot for a new agent
-    const agentBucketName = `${SEED_BUCKET_NAME}-agent-${Date.now()}`;
+    const agentBucketName = `${seedBucketName}-agent-${Date.now()}`;
     const forkResult = await createBucket(agentBucketName, {
-      sourceBucketName: SEED_BUCKET_NAME,
+      sourceBucketName: seedBucketName,
       sourceBucketSnapshot: snapshotVersion,
     });
 
-    // Start the agent using the forked bucket
-    await startAgent(agentBucketName);
+    if (forkResult.data) {
+      // Start the agent using the forked bucket
+      await startAgent(agentBucketName);
+    }
     ```
 
   </TabItem>
