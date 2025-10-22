@@ -409,8 +409,9 @@ class SEOReviewer {
     const headings = this.extractHeadings(bodyContent);
     const images = this.extractImages(bodyContent);
 
+    // Use the validated (resolved) path in the analysis object to ensure consistency
     const analysis = {
-      filePath,
+      filePath: validatedPath,
       frontmatter: frontmatter.data, // Pass only the data part to analysis
       fullFrontmatter: frontmatter, // Keep full frontmatter info for writing
       content: bodyContent,
@@ -2041,6 +2042,10 @@ class SEOReviewer {
         console.log("Analyzing all posts...");
         targetPaths = (await this.analyzeAllPosts()).map((a) => a.filePath);
       } else if (postPathArg) {
+        // Explicitly log what we're about to analyze when a path is provided
+        const resolvedPath = path.resolve(postPathArg);
+        console.log(`Analyzing specified post: ${postPathArg}`);
+        console.log(`Resolved to: ${resolvedPath}\n`);
         targetPaths.push(postPathArg);
       } else {
         const currentDir = process.cwd();
