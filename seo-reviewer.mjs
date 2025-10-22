@@ -2048,7 +2048,9 @@ class SEOReviewer {
         console.log(`Resolved to: ${resolvedPath}\n`);
         targetPaths.push(postPathArg);
       } else {
-        const currentDir = process.cwd();
+        // Use INIT_CWD if available (set by npm/yarn when running scripts)
+        // This preserves the directory where the user invoked npm from
+        const currentDir = process.env.INIT_CWD || process.cwd();
         const indexMdx = path.join(currentDir, "index.mdx");
         const indexMd = path.join(currentDir, "index.md");
 
