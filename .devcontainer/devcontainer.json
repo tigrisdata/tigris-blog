@@ -14,7 +14,7 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "initializeCommand": "mkdir -p ${localEnv:HOME}${localEnv:USERPROFILE}/.local/share/atuin",
-  "postCreateCommand": "npm ci",
+  "postCreateCommand": "./.devcontainer/postcreate.sh",
   "mounts": [
     {
       "type": "bind",
