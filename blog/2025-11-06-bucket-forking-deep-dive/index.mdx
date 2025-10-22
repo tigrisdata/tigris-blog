@@ -1,6 +1,6 @@
 ---
 slug: bucket-forking-deep-dive
-title: Copying of terabytes of data in microseconds with time travel
+title: Tigris implements forking by making data immutable
 description: |
   Tigris bucket forking lets you make copies of terabytes of data in microseconds thanks to a clever abuse of FoundationDB by ordering time backwards. This gives you object-level snapshotting, forking, and strong deletion protection, revolutionizing object storage with Git-like branching for massive datasets. Learn more about how we made it happen!
 image: ./absolutely-safe-capsule.webp
@@ -76,49 +76,35 @@ Instead of just recording a value with all the TODOs in it, the snapshotting
 approach has you record the changes to that counter and set flags on events so
 you can get back to where the counter was at that point in time. There’s a few
 ways to implement this, but for now let’s assume this is implemented as an
-append-only-log: or a data structure where the only event you’re allowed to take
-is appending new data on the end of it.
-
-:::note
-
-From here you can implement things like a “CurrentState” event that represents
-the integer state of the counter by reducing/compacting all of the changes to
-the counter to a single integer value and then use that in the future. This is
-trivial and thus an exercise for the reader.
-
-:::
+write-ahead log: or a data structure where the only event you’re allowed to take
+is appending new data on the end of it. This log typically includes the redo and
+undo information so that modifications can be uncomputed or recomputed as
+administrative and replication needs demand.
 
 ### Write ahead logging is one of the core principles of distributed computing
 
 As you can see, this effectively gives you the ability to travel in time to when
 changes were made so you can recover data, undo invalid data insertions, or make
 backups. This core idea is how
-[Postgres implements its replication model](https://www.postgresql.org/docs/current/wal-intro.html),
-how
 [ZFS snapshots](https://docs.oracle.com/cd/E19253-01/819-5461/gbciq/index.html)
 work, and also
 [how git works](https://git-scm.com/book/en/v2/Getting-Started-What-is-Git%3F).
-Postgres’ Write-Ahead-Log files contain the list of changes made to an empty
-database and use them to recreate the state of database tables. ZFS internally
-represents its changelog as a list of changes made to an empty block storage
-device and use them to recreate what the contents of the disks should be. Git is
-a list of patch files applied to an empty directory and uses those patches to
-recreate the state of your source code tree. If you need to read data at an
-earlier point in time (such as the state of a source code tree at a given git
-commit hash or tag), you can ask your git client to uncompute the changes needed
-to take you there.
-
-:::note
-
-The log is the database. Anything else is just a cached view of that log.
-
-:::
+ZFS internally represents its changelog as a list of changes made to an empty
+block storage device and use them to recreate what the contents of the disks
+should be. Git is a list of patch files applied to an empty directory and uses
+those patches to recreate the state of your source code tree. If you need to
+read data at an earlier point in time (such as the state of a source code tree
+at a given git commit hash or tag), you can ask your git client to uncompute the
+changes needed to take you there.
 
 This basic model is super powerful and you end up seeing it all over the
 computer science industry. It’s the backbone of how big-scale distributed
 systems like blockchains work. It’s the cornerstone of how paradigms like event
 sourcing and rollback netcode for multiplayer games serve millions of people
 daily.
+
+One way to think about it is that the write-ahead log is the database, and
+anything else is just a cached view of that log to make queries more efficient.
 
 However, this kind of point-in-time snapshotting is usually limited to database
 engines, block storage layers, filesystem layers, multiplayer game
@@ -139,9 +125,8 @@ Pedantically,
 [S3 has the concept of object versioning](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html),
 but it’s only at a per-object level. If you delete a versioned object without
 being very careful to delete only one version of that object, you lose all the
-data forever. Comparatively, Tigris lets you put objects into a state of
-[quantum immortality](https://en.wikipedia.org/wiki/Quantum_suicide_and_immortality)
-where even if you “delete” the data you can get it back as long as you have a
+data forever. Comparatively, Tigris snapshots and bucket forks mean that even if
+you “delete” data, you can still get it back by restoring the objects from a
 snapshot created before the deletion took place.
 
 :::
