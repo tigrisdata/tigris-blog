@@ -1,0 +1,19 @@
+name: PNG Optimization Check
+
+on:
+  pull_request:
+    types:
+      - opened
+
+jobs:
+  check-pngs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure scripts are executable
+        run: chmod +x scripts/check-head-pngs.sh
+
+      - name: Verify new images are optimized
+        run: scripts/check-head-pngs.sh
