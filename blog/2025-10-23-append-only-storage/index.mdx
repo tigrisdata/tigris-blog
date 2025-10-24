@@ -174,7 +174,7 @@ as:
 To preserve descending chronological order, Tigris encodes timestamps as
 **negative Unix epochs**, taking advantage of FoundationDB's lexicographic key
 ordering. This ensures the newest version of each object naturally appears first
-in any range scan.
+in a regular forward range scan.
 
 ![Append-only log architecture showing immutable versions, snapshots as metadata pointers, and time-based reads](./append-only-log.svg)
 
