@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" style="background: white;">
+  <defs>
+    <!-- Font styles -->
+    <style>
+      @font-face {
+        font-family: 'Hanken Grotesk';
+        src: url('/fonts/HankenGrotesk-Regular.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      .text-regular {
+        font-family: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 15px;
+        letter-spacing: 0.3px;
+      }
+      .text-bold {
+        font-family: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      .text-small {
+        font-family: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 13px;
+        letter-spacing: 0.2px;
+      }
+      .text-code {
+        font-family: 'Courier New', 'Monaco', monospace;
+        font-size: 12px;
+      }
+    </style>
+
+    <!-- Arrow markers -->
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#3A7BC8" />
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#8E44AD" />
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#D35400" />
+    </marker>
+
+    <!-- Gradient for pin -->
+    <radialGradient id="pinGradient" cx="35%" cy="35%">
+      <stop offset="0%" style="stop-color:#F39C12;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E67E22;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="32" class="text-bold" text-anchor="middle" fill="#1a1a1a">
+    Append-Only Log: Immutable Versions
+  </text>
+
+  <!-- Main log cylinder -->
+  <g id="log-cylinder">
+    <!-- Left end cap -->
+    <ellipse cx="120" cy="200" rx="28" ry="60" fill="#F8FBFD" stroke="#3A7BC8" stroke-width="2.5"/>
+
+    <!-- Cylinder body -->
+    <rect x="120" y="140" width="1000" height="120" fill="#F8FBFD" stroke="none"/>
+    <line x1="120" y1="140" x2="1120" y2="140" stroke="#3A7BC8" stroke-width="2.5"/>
+    <line x1="120" y1="260" x2="1120" y2="260" stroke="#3A7BC8" stroke-width="2.5"/>
+
+    <!-- Right end cap -->
+    <ellipse cx="1120" cy="200" rx="28" ry="60" fill="#F8FBFD" stroke="#3A7BC8" stroke-width="2.5"/>
+  </g>
+
+  <!-- Write operation label -->
+  <text x="48" y="115" class="text-small" fill="#27AE60" font-weight="500">writes</text>
+  <path d="M 78 118 Q 88 135, 102 155" fill="none" stroke="#27AE60" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- Version boxes inside log -->
+  <!-- V1 -->
+  <g id="v1">
+    <rect x="185" y="170" width="135" height="60" fill="#FFFFFF" stroke="#3A7BC8" stroke-width="1.5" rx="4"/>
+    <text x="252" y="194" class="text-code" text-anchor="middle" fill="#2c3e50" font-weight="500">v1: "Hello"</text>
+    <text x="252" y="215" class="text-small" text-anchor="middle" fill="#7f8c8d">t₀ | -1000000</text>
+  </g>
+
+  <!-- V2 -->
+  <g id="v2">
+    <rect x="365" y="170" width="165" height="60" fill="#FFFFFF" stroke="#3A7BC8" stroke-width="1.5" rx="4"/>
+    <text x="447" y="194" class="text-code" text-anchor="middle" fill="#2c3e50" font-weight="500">v2: "Hello World"</text>
+    <text x="447" y="215" class="text-small" text-anchor="middle" fill="#7f8c8d">t₁ | -2000000</text>
+  </g>
+
+  <!-- Snapshot marker -->
+  <g id="snapshot">
+    <!-- Vertical line from pin to cylinder -->
+    <line x1="555" y1="88" x2="555" y2="140" stroke="#D35400" stroke-width="2.5" stroke-dasharray="6,4"/>
+
+    <!-- Pin circle -->
+    <circle cx="555" cy="78" r="16" fill="url(#pinGradient)" stroke="#C0392B" stroke-width="2.5"/>
+    <circle cx="555" cy="78" r="6" fill="#FFFFFF" opacity="0.4"/>
+
+    <!-- Labels -->
+    <text x="585" y="72" class="text-regular" fill="#D35400" font-weight="600">📌 Snapshot @ t₂</text>
+    <text x="585" y="92" class="text-small" fill="#7f8c8d">(just metadata!)</text>
+  </g>
+
+  <!-- V3 - TOMBSTONE -->
+  <g id="v3">
+    <rect x="575" y="170" width="175" height="60" fill="#FEF5F5" stroke="#C0392B" stroke-width="1.5" stroke-dasharray="6,3" rx="4"/>
+    <text x="662" y="194" class="text-code" text-anchor="middle" fill="#C0392B" font-weight="500">v3: TOMBSTONE 🗑️</text>
+    <text x="662" y="215" class="text-small" text-anchor="middle" fill="#7f8c8d">t₃ | -3000000</text>
+  </g>
+
+  <!-- V4 -->
+  <g id="v4">
+    <rect x="795" y="170" width="165" height="60" fill="#FFFFFF" stroke="#3A7BC8" stroke-width="1.5" rx="4"/>
+    <text x="877" y="194" class="text-code" text-anchor="middle" fill="#2c3e50" font-weight="500">v4: "New Data"</text>
+    <text x="877" y="215" class="text-small" text-anchor="middle" fill="#7f8c8d">t₄ | -4000000</text>
+  </g>
+
+  <!-- Continuation -->
+  <text x="1000" y="202" class="text-regular" fill="#7f8c8d">. . .</text>
+
+  <!-- Read operations -->
+  <!-- Read at current time -->
+  <g id="read-current">
+    <rect x="900" y="355" width="250" height="80" fill="#FDFCFE" stroke="#8E44AD" stroke-width="2" rx="6"/>
+    <text x="1025" y="378" class="text-regular" text-anchor="middle" fill="#8E44AD" font-weight="500">Read @ t₄ (now)</text>
+    <text x="1025" y="400" class="text-small" text-anchor="middle" fill="#555555">finds newest ≤ t₄</text>
+    <text x="1025" y="422" class="text-code" text-anchor="middle" fill="#27AE60">→ v4 "New Data"</text>
+
+    <!-- Arrow to V4 -->
+    <path d="M 955 355 Q 925 295, 900 235" fill="none" stroke="#8E44AD" stroke-width="2.5" marker-end="url(#arrow-purple)"/>
+  </g>
+
+  <!-- Read at snapshot -->
+  <g id="read-snapshot">
+    <rect x="70" y="355" width="270" height="80" fill="#FFFCF8" stroke="#D35400" stroke-width="2" rx="6"/>
+    <text x="205" y="378" class="text-regular" text-anchor="middle" fill="#D35400" font-weight="500">Read @ t₂ (snapshot)</text>
+    <text x="205" y="400" class="text-small" text-anchor="middle" fill="#555555">finds newest ≤ t₂</text>
+    <text x="205" y="422" class="text-code" text-anchor="middle" fill="#27AE60">→ v2 "Hello World"</text>
+
+    <!-- Arrow to V2 -->
+    <path d="M 285 355 Q 345 295, 415 235" fill="none" stroke="#D35400" stroke-width="2.5" marker-end="url(#arrow-orange)"/>
+  </g>
+
+  <!-- Annotations -->
+  <text x="125" y="300" class="text-small" fill="#C0392B" font-weight="500">Never overwrite!</text>
+  <text x="125" y="318" class="text-small" fill="#C0392B" font-weight="500">Only append</text>
+
+  <!-- Timeline axis at bottom -->
+  <line x1="125" y1="505" x2="1125" y2="505" stroke="#95A5A6" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <text x="1145" y="510" class="text-small" fill="#7f8c8d">time</text>
+
+  <!-- Time markers -->
+  <line x1="252" y1="500" x2="252" y2="510" stroke="#95A5A6" stroke-width="1.5"/>
+  <text x="252" y="492" class="text-small" text-anchor="middle" fill="#7f8c8d">t₀</text>
+
+  <line x1="447" y1="500" x2="447" y2="510" stroke="#95A5A6" stroke-width="1.5"/>
+  <text x="447" y="492" class="text-small" text-anchor="middle" fill="#7f8c8d">t₁</text>
+
+  <line x1="555" y1="500" x2="555" y2="510" stroke="#95A5A6" stroke-width="1.5"/>
+  <text x="555" y="492" class="text-small" text-anchor="middle" fill="#7f8c8d">t₂</text>
+
+  <line x1="662" y1="500" x2="662" y2="510" stroke="#95A5A6" stroke-width="1.5"/>
+  <text x="662" y="492" class="text-small" text-anchor="middle" fill="#7f8c8d">t₃</text>
+
+  <line x1="877" y1="500" x2="877" y2="510" stroke="#95A5A6" stroke-width="1.5"/>
+  <text x="877" y="492" class="text-small" text-anchor="middle" fill="#7f8c8d">t₄</text>
+
+  <!-- Key insight callout -->
+  <g id="callout">
+    <rect x="320" y="555" width="560" height="70" fill="#F0FAF5" stroke="#27AE60" stroke-width="2" stroke-dasharray="5,3" rx="8"/>
+    <text x="600" y="582" class="text-regular" text-anchor="middle" fill="#27AE60" font-weight="600">✓ Snapshots = O(1) metadata pointers</text>
+    <text x="600" y="606" class="text-small" text-anchor="middle" fill="#555555">No data copying. Instant, regardless of size.</text>
+  </g>
+</svg>
