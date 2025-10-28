@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" style="background: white;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" style="background: white;">
   <defs>
     <!-- Font styles -->
     <style>
@@ -68,9 +68,9 @@
     <ellipse cx="1120" cy="200" rx="28" ry="60" fill="#F8FBFD" stroke="#3A7BC8" stroke-width="2.5"/>
   </g>
 
-  <!-- Write operation label -->
-  <text x="48" y="115" class="text-small" fill="#27AE60" font-weight="500">writes</text>
-  <path d="M 78 118 Q 88 135, 102 155" fill="none" stroke="#27AE60" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <!-- Write operation label (right side for appending) -->
+  <text x="1050" y="125" class="text-small" fill="#27AE60" font-weight="500">writes</text>
+  <path d="M 1085 127 Q 1105 145, 1115 170" fill="none" stroke="#27AE60" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
 
   <!-- Version boxes inside log -->
   <!-- V1 -->
@@ -165,10 +165,14 @@
   <line x1="877" y1="500" x2="877" y2="510" stroke="#95A5A6" stroke-width="1.5"/>
   <text x="877" y="492" class="text-small" text-anchor="middle" fill="#7f8c8d">t₄</text>
 
+  <!-- Timeline legend -->
+  <text x="125" y="540" class="text-small" fill="#555555" font-style="italic">t₀, t₁, t₂... = logical time</text>
+  <text x="125" y="558" class="text-small" fill="#555555" font-style="italic">-1000000, -2000000... = encoded timestamp</text>
+
   <!-- Key insight callout -->
   <g id="callout">
-    <rect x="320" y="555" width="560" height="70" fill="#F0FAF5" stroke="#27AE60" stroke-width="2" stroke-dasharray="5,3" rx="8"/>
-    <text x="600" y="582" class="text-regular" text-anchor="middle" fill="#27AE60" font-weight="600">✓ Snapshots = O(1) metadata pointers</text>
-    <text x="600" y="606" class="text-small" text-anchor="middle" fill="#555555">No data copying. Instant, regardless of size.</text>
+    <rect x="320" y="585" width="560" height="70" fill="#F0FAF5" stroke="#27AE60" stroke-width="2" stroke-dasharray="5,3" rx="8"/>
+    <text x="600" y="612" class="text-regular" text-anchor="middle" fill="#27AE60" font-weight="600">✓ Snapshots = O(1) metadata pointers</text>
+    <text x="600" y="636" class="text-small" text-anchor="middle" fill="#555555">No data copying. Instant, regardless of size.</text>
   </g>
 </svg>
