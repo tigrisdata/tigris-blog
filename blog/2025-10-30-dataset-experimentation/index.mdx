@@ -44,9 +44,11 @@ import geminiLogo from "@site/static/img/ai-models/gemini.webp";
   </small>
 </center>
 
-Our new feature, bucketing forking, lets you make an isolated copy of your large
-dataset instantly. No more colliding in shared datasets or waiting hours for
-bytes to copy, fork your dataset like you fork your code, and experiment away.
+Our new feature,
+[bucket forking](https://www.tigrisdata.com/blog/fork-buckets-like-code/), lets
+you make an isolated copy of your large dataset instantly with zero copying. No
+more colliding in shared datasets or waiting hours for bytes to copy, fork your
+dataset like you fork your code, and experiment away.
 
 ## Experimentation enabled by bucket forking
 
@@ -119,7 +121,12 @@ This will require the following steps:
 - Filtering out unwanted images (IE: those in menus)
 - Sending it to a GPU for training
 
-### Data cleaning and labeling
+We'll end up with four parallel timelines for our data, each a controlled lab
+for our experiments. Here's a sketch.
+
+![Forking buckets to clean data and try three different experiments](./forks-timeline.svg)
+
+### Fork 1: Data cleaning and labeling
 
 Right now my data is a giant pile of thousands of flat files I copied off of my
 Switch’s SD card. It’s got a bunch of filenames that look like this:
@@ -290,7 +297,7 @@ Then we can make a snapshot of the bucket in this state:
 botw_only_snapshot_id = create_bucket_snapshot(botw_only_bucket, "Dataset filtered down to only images of Breath of the Wild")
 ```
 
-### Fork 1: Caption Synthesis
+### Fork 2: Caption Synthesis
 
 I use this dataset for other training projects so I don't want to apply the
 captions to the common dataset. I want to leave the underlying / central data
@@ -482,7 +489,7 @@ caption_snapshot_id = create_bucket_snapshot(caption_bucket, "Added captions to 
 caption_snapshot_id
 ```
 
-### Fork 2: Better captioning and different models
+### Fork 3: Better captioning and different models
 
 When I was looking through the dataset I noticed that some of the captions
 weren’t ideal, so I thought that I should redo them by changing the prompting
@@ -620,7 +627,7 @@ Then I investigated a few image-caption pairs:
 
 This would be much better to train a LoRA on\!
 
-### Fork 3: Resizing to train Stable Diffusion
+### Fork 4: Resizing to train Stable Diffusion
 
 Now that I have the images and captions, I want to start optimizing the image
 size for the model I want to train. This requires a destructive action across
@@ -736,5 +743,6 @@ the fear of overwriting something important.
   subtitle={
     "Tigris lets you take your data, store it globally, and then fork it fearlessly; all without egress fees. Try it today!"
   }
-  button={"Get Started"}
+  button="Check out the docs"
+  link="https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/"
 />
