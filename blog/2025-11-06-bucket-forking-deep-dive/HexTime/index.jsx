@@ -20,7 +20,11 @@ export default function HexTimeCard() {
     <div className={styles.container}>
       <div className={styles.card}>
         <h2 className={styles.title}>Current Hex Time (Big‑Endian U64)</h2>
-        <p className={styles.description}>Based on <span className={styles.monoText}>MAX_U64 - unix_nanos(UTC)</span>. Updates every second.</p>
+        <p className={styles.description}>
+          Based on{" "}
+          <span className={styles.monoText}>MAX_U64 - unix_nanos(UTC)</span>.
+          Updates every second.
+        </p>
 
         <div className={styles.section}>
           <div className={styles.label}>UTC now</div>
@@ -33,7 +37,8 @@ export default function HexTimeCard() {
         </div>
 
         <div className={styles.note}>
-          Note: JavaScript dates are millisecond precision; nanoseconds are approximated by multiplying ms × 1,000,000.
+          Note: JavaScript dates are millisecond precision; nanoseconds are
+          approximated by multiplying ms × 1,000,000.
         </div>
       </div>
     </div>

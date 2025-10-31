@@ -27,10 +27,14 @@ export default function HexTimeCard({ baseDate }) {
     <div className={styles.container}>
       <div className={styles.card}>
         <h2 className={styles.title}>Hex Timestamps (Big‑Endian U64)</h2>
-        <p className={styles.subtitle}>Three static timestamps, each 3 days apart, shown out of order.</p>
+        <p className={styles.subtitle}>
+          Three static timestamps, each 3 days apart, shown out of order.
+        </p>
 
         <div className={styles.content}>
-          <div className={styles.orderNote}>Out-of-order view: [T+6d, T, T+3d]</div>
+          <div className={styles.orderNote}>
+            Out-of-order view: [T+6d, T, T+3d]
+          </div>
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead className={styles.tableHead}>
@@ -54,7 +58,8 @@ export default function HexTimeCard({ baseDate }) {
         </div>
 
         <div className={styles.note}>
-          Note: JavaScript dates are millisecond precision; nanoseconds are approximated by multiplying ms × 1,000,000.
+          Note: JavaScript dates are millisecond precision; nanoseconds are
+          approximated by multiplying ms × 1,000,000.
         </div>
       </div>
     </div>
