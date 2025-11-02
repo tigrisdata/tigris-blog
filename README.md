@@ -76,14 +76,14 @@ npm run serve
 This command generates static content into the `build` directory and can be
 served using any static contents hosting service.
 
-# # Code Quality
+## Code Quality
 
-## 1. Linting
+### 1. Linting
 
 The coding style rules are defined by [Prettier](https://prettier.io/) and
 enforced by [Eslint](https://eslint.org)
 
-## 2. Git Hooks
+### 2. Git Hooks
 
 We use [pre-commit](https://pre-commit.com/index.html) to automatically setup
 and run git hooks.
