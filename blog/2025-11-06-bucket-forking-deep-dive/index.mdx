@@ -2,7 +2,7 @@
 slug: bucket-forking-deep-dive
 title: "Immutable by Design: The Deep Tech Behind Tigris Bucket Forking"
 description: |
-  Tigris bucket forking lets you make copies of terabytes of data in microseconds thanks to a clever abuse of FoundationDB by ordering time backwards. This gives you object-level snapshotting, forking, and strong deletion protection, revolutionizing object storage with Git-like forking for massive datasets. Learn more about how we made it happen!
+  Tigris bucket forking lets you make copies of terabytes of data in microseconds thanks to making objects immutable and ordering time backwards. This gives you object-level snapshotting, forking, and strong deletion protection, revolutionizing object storage with Git-like forking for massive datasets. Learn more about how we made it happen!
 image: ./absolutely-safe-capsule.webp
 keywords:
   - object storage
@@ -82,8 +82,8 @@ you can get back to where the counter was at that point in time.
 There’s a few ways to implement this, but for now let’s assume this is
 implemented as an write-ahead log: a data structure where the only event you’re
 allowed to take is appending new data on the end of it. This log typically
-includes the redo and undo information so that modifications can be uncomputed
-or recomputed as administrative and replication needs demand.
+includes the redo and undo information so that modifications can be undone or
+redone as administrative and replication needs demand.
 
 ### Write ahead logging is one of the core principles of distributed computing
 
@@ -153,29 +153,17 @@ implemented changes to object metadata storage to support bucket forking. Once
 you see how it’s implemented for a single object, it’s pretty easy to understand
 how this extrapolates out to entire buckets with terabytes of data.
 
-Tigris rebuilt object storage from the core by  
-[fully realizing the distributed nature of FoundationDB](https://www.tigrisdata.com/blog/talks/2025/global-replication/).
-FoundationDB is an ordered key-value store implemented as a fleet of
-microservices. Before we implemented snapshotting, the keyspace (namespace for
-keys) for objects in buckets looked something like this:
-
-```
-bucket-name/object-name
-```
-
-This allows the Tigris gateway server to get a request from a user and instantly
-make a 1:1 correlation of where to find the object in FoundationDB. When we
-implemented snapshotting, we added the concept of object versions to objects in
-snapshot-enabled buckets. This makes the keyspace for objects in buckets look
-something like this:
+When you use a bucket with snapshotting and forking enabled, the keyspace
+(namespace for object keys) for objects in buckets looks something like this:
 
 ```
 bucket-name/object-name/version-id-timestamp
 ```
 
-Remember when I said that FoundationDB is an **ordered** key value store? That
-order is a crucially important part of this setup. As users manipulate objects,
-they could end up with potentially infinite numbers of versions. We
+Something important to keep in mind is that FoundationDB is an **ordered** key
+value store. That order is a crucially important part of this setup. As users
+manipulate objects, they could end up with potentially infinite numbers of
+versions. We
 [don’t ever want to sacrifice performance](https://www.tigrisdata.com/blog/benchmark-small-objects/),
 even if that sacrifice comes in the name of delivering features like snapshots
 and bucket forking. So, we use that inherent ordered property of FoundationDB to
@@ -388,10 +376,10 @@ without the ability to mutate the source. Even if they go completely off the
 rails and delete everything, nothing is truly lost. The data is still accessible
 in the source bucket, and in any snapshots.
 
-## Object storage with quantum immortality
+## Object storage with deletion protection
 
-In conclusion, snapshots and forks give your data quantum immortality: your data
-survives across timelines. Though this level of durability represents a huge
+In conclusion, snapshots and forks give your data durable survivability even if
+you accidentally delete it. Though this level of durability represents a huge
 change in how Tigris works under the hood, we stand by the same guarantees about
 durability (99.999999999%),
 [availability](https://www.tigrisdata.com/blog/availability-metrics-public/)
@@ -410,7 +398,6 @@ The following caveats apply at the time of writing:
   or
   [object time-to-live (auto-deletion)](https://www.tigrisdata.com/docs/buckets/settings/#ttl-configuration)
   yet.
-- You can only create one snapshot every nanosecond.
 - Our model of time storage only really lasts until 2550 or thereabouts.
 
 We’re pretty confident that future generations will be up to the task of
