@@ -32,10 +32,8 @@ Apache Kafka has been the standard for event streaming and building reliable,
 high-throughput, event-driven systems. However, as Kafka deployments scale
 across clouds and regions, its core architectural choices start showing limits.
 
-Modern workloads demand elasticity, regional distribution, and cloud efficiency.
-This post walks through Kafka's core mechanics, its scaling bottlenecks, and how
-pairing AutoMQ with Tigris lets you redefine what a Kafka-compatible system can
-be.
+In this post, we'll walk through Kafka's fundamentals, its scaling bottlenecks,
+and how AutoMQ with Tigris lets you scale storage and compute independently.
 
 ## What is AutoMQ
 
@@ -52,7 +50,7 @@ When you combine AutoMQ and Tigris:
 - Storage is globally distributed with zero egress fees
 - Compute and storage scale independently
 
-The result is a Kafka-compatible system designed for cloud elasticity.
+Below is the architecture overview of AutoMQ and Tigris.
 
 ![](./automq-figure-1.webp)
 
@@ -65,7 +63,7 @@ including:
 - Slow, data-heavy partition reassignment
 - Manual and operationally complex cluster balancing
 
-To understand why these issues appear, we'll first recap Kafka's fundamental
+To understand why these issues appear, we'll first explore Kafka's fundamental
 design.
 
 ## Kafka in a nutshell
@@ -82,8 +80,8 @@ On the server side, Kafka is built around three core abstractions:
 - **Partitions**: each topic is divided into one or multiple partitions
 - **Brokers**: servers that store partitions locally on disk
 
-Producers append messages to partitions; consumers read them sequentially. Kafka
-guarantees ordering within a partition and durable persistence on disk.
+Producers append messages to partitions while consumers read them sequentially.
+Kafka guarantees ordering within a partition and durable persistence on disk.
 
 ![](./automq-figure-2.webp)
 
@@ -100,7 +98,7 @@ writes to disk via page cache. Followers then fetch the new data from the leader
 that they persist and report back to the leader.
 
 The downside with this approach is that every partition write becomes a fan-out
-stream to multiple brokers. At high throughput, the internal replication traffic
+stream to multiple brokers. At high throughput, the replication traffic
 dominates network usage, which forces operators to scale to larger EC2 instances
 and/or higher-bandwidth connections.
 
@@ -121,23 +119,19 @@ across regions. Through this design:
 - There is no follower lag or ISR management
 - Write throughput increases because internal fan-out disappears
 
-AutoMQ retains Kafka's protocol behavior while removing the operational weight
-of traditional replication.
-
 Additionally, Tigris distributes the data globally, ensuring regional latencies
 for Producers and Consumers.
 
 ![](./automq-figure-5.webp)
 
 The diagram illustrates how AutoMQ operates when backed by Tigris object
-storage. A producer sends records to any AutoMQ broker, which remains stateless
-and handles only protocol-level logic. Instead of writing log segments to local
-disk or replicating them across brokers, the broker streams each segment
-directly into Tigris. Tigris stores these segments as immutable objects per
-partition (P1, P2, P3) and replicates them across multiple regions. Because
-replication happens entirely within the storage layer, all brokers in any region
-see the same partition data without ISR management, follower lag, or
-inter-broker traffic.
+storage. A producer sends records to any AutoMQ broker, which remains stateless.
+Instead of writing log segments to local disk or replicating them across
+brokers, the broker streams each segment directly into Tigris. Tigris stores
+these segments as immutable objects per partition (P1, P2, P3) and replicates
+them across multiple regions. Because replication happens entirely within the
+storage layer, all brokers in any region see the same partition data without ISR
+management, follower lag, or inter-broker traffic.
 
 ## Partition and cluster rebalancing
 
@@ -153,8 +147,6 @@ Kafka must:
 This involves heavy disk I/O, large data movement, and long rebalancing
 workflows. Redistributing data can take hours or days, disrupting cluster
 performance.
-
-### AutoMQ eliminates this entire burden
 
 AutoMQ eliminates this entire burden by shifting persistence to Tigris. By
 decoupling storage and compute, brokers scale independently, ensuring reads and
@@ -178,7 +170,7 @@ KAFKA_S3_SECRET_KEY=tsec_YOUR_SECRET_KEY_HERE
 ```
 
 Follow our guide on how to
-[connect Tigris to an AutoMQ instance](https://www.tigrisdata.com/docs/integrations/automq/)
+[connect Tigris to an AutoMQ instance](https://www.tigrisdata.com/docs/quickstarts/automq/)
 running locally using Docker.
 
 More importantly, AutoMQ's wire protocol mirrors Apache Kafka's, so existing
@@ -188,16 +180,14 @@ AutoMQ behaves like Kafka but removes the storage management dimension.
 ## Conclusion
 
 As Kafka scales, its dependence on local disks, ISR replication, and manual
-balancing becomes the dominant source of operational pain. AutoMQ's architecture
-breaks that bottleneck by moving durability, replication, and data distribution
-into Tigris' globally replicated object storage layer. Brokers become stateless,
-scaling becomes instantaneous, and rebalancing turns into a metadata update
-instead of a multi-hour migration. The result is a Kafka-compatible system that
-behaves the same to your applications but drastically reduces cost, complexity,
-and operational risk.
+balancing becomes cumbersome. AutoMQ scales Kafka by decoupling storage and
+compute and moving durability, replication, and data distribution into Tigris'
+globally replicated object storage layer. Brokers become stateless, and scale
+instantaneously, while rebalancing becomes a metadata update.
 
 <InlineCta
-  title="Ready to simplify your Kafka architecture?"
+  title="Ready to scale your Kafka architecture?"
   subtitle="If you're ready to run a globally distributed, fully elastic streaming engine, try AutoMQ on Tigris and experience the future of event streaming."
-  button="https://www.tigrisdata.com/docs/integrations/automq/"
+  button="Get Started with AutoMQ and Tigris"
+  link="https://www.tigrisdata.com/docs/quickstarts/automq/"
 />
