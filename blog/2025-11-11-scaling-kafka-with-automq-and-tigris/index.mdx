@@ -116,7 +116,7 @@ into Tigris. Tigris stores each segment as an immutable object and replicates it
 across regions. Through this design:
 
 - All brokers can access the same data without replication
-- There is no follower lag or ISR management
+- There is no follower lag or In-Sync Replica management
 - Write throughput increases because internal fan-out disappears
 
 Additionally, Tigris distributes the data globally, ensuring regional latencies
