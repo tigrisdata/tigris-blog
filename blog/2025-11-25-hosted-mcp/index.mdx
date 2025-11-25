@@ -1,0 +1,175 @@
+---
+slug: hosted-mcp
+title: "Tigris' MCP Server Goes Global"
+description: |
+  Tigris' hosted MCP server is now globally available, simplifying integration into AI workflows like ChatGPT, Claude, and agentic coding. Benefit from no installation, OAuth security, and support for multiple Tigris organizations.
+image: ./onwards-we-venture.webp
+keywords:
+  - Tigris
+  - MCP server
+  - object storage
+  - AI workflows
+  - ChatGPT
+authors:
+  - xe
+  - abdullah
+tags:
+  - Build with Tigris
+  - AI Infrastructure
+  - Storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+import heroimage from "./onwards-we-venture.webp";
+import styles from "!!raw-loader!./styles.css";
+
+export const GetStarted = () => (
+  <center style={{ marginBottom: "1rem" }}>
+    <a
+      href="https://mcp.storage.dev"
+      className="install-btn font-xl-lg-font-2xl"
+    >
+      <span>Get started at mcp.storage.dev!</span>
+    </a>
+  </center>
+);
+
+<style>{styles}</style>
+
+<img
+  src={heroimage}
+  className="hero-image"
+  alt="A digital illustration of a cartoon bengal tiger high-fiveing a robot on a backdrop of the astral plane with floating mountains."
+/>
+
+<center>
+  <small>
+    <em>
+      A digital illustration of a cartoon bengal tiger high-fiveing a robot on a
+      backdrop of the astral plane with floating mountains.
+    </em>
+  </small>
+</center>
+
+We’ve made it easier to integrate Tigris into your AI workflows by removing the
+most complicated part of getting started with the MCP server: installing it.
+This lets you integrate Tigris into your ChatGPT, Claude, and agentic coding
+workflows in a snap\!
+
+Here's how you get started:
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+<Tabs>
+  <TabItem value="chatgpt" label="ChatGPT (web)">
+    - Open [ChatGPT Settings](https://chatgpt.com/#settings/Connectors) and click
+      "Create" on top right corner of Settings modal
+    - In the **Name** field, enter "Tigris"
+    - In the MCP Server URL field, enter "https://mcp.storage.dev/mcp"
+    - In the **Authentication** field, select "OAuth"
+    - Click "Create"
+  </TabItem>
+
+<TabItem value="claude-desktop" label="Claude Desktop">
+  - Go to Settings \> Connectors - Click on **Add custom connector** button - In
+  the **Name** field, enter "Tigris" - In the **Remote MCP server URL** field,
+  enter `https://mcp.storage.dev/mcp` - Click "Add" button - Once the connector
+  is added, Click on **"Connect"** button and complete the authentication flow.
+</TabItem>
+
+  <TabItem value="claude-code" label="Claude Code">
+
+    Run this command:
+
+    ```bash
+    claude mcp add --scope user --transport http tigris https://mcp.storage.dev/mcp
+    ```
+
+    Then run `claude` use the `/mcp` command to authenticate.
+
+  </TabItem>
+
+  <TabItem value="cursor" label="Cursor">
+    Click this button:
+
+    <p>
+      <a href="cursor://anysphere.cursor-deeplink/mcp/install?name=tigris&config=eyJ1cmwiOiJodHRwczovL21jcC5zdG9yYWdlLmRldi9tY3AifQ%3D%3D" className="install-btn">
+        <span>Add to Cursor</span>
+      </a>
+    </p>
+
+    Or run this command:
+
+    ```bash
+    npx @tigrisdata/tigris-mcp-server setup cursor
+    ```
+
+  </TabItem>
+
+  <TabItem value="openai-codex" label="OpenAI Codex">
+
+    Run this command:
+
+    ```bash
+    codex mcp add --url https://mcp.storage.dev/mcp tigris
+    ```
+
+    Then run `codex` and use the `/mcp` command to authenticate.
+
+  </TabItem>
+
+  <TabItem value="vscode" label="VS Code">
+    1. Press Control+Shift+P or Command+Shift+P to open the command palette.
+    2. Search for "MCP: Add Server".
+    3. Create a HTTP MCP server.
+    4. Enter the URL [`https://mcp.storage.dev/mcp`](https://mcp.storage.dev/mcp).
+    5. Name the MCP server `tigris`.
+    6. Authenticate with Tigris and get off to work\!
+  </TabItem>
+</Tabs>
+
+## Why are we doing this?
+
+We want to make it easy for you to use Tigris any way you want: from the CLI,
+from the API, from the web, and from your agentic workflows. Hosting a copy of
+the Tigris MCP server means that you have even more flexibility when it comes to
+using Tigris. It also opens up the ability to use Tigris from the ChatGPT or
+Claude web views.
+
+One of the roughest edges of using MCP servers is needing to install and update
+the MCP server in order to run it. There’s tricks to this like using `npx` and
+running update commands regularly, but one of the easiest ways to eliminate that
+entire problem is to not require you to run the MCP server in the first place.
+This makes you always have access to the most recent version of the MCP server
+and you don’t need to take the risk involved with running software published by
+a third party.
+
+Even better, we implemented the MCP OAuth flow. This means you don’t even need
+to load API keys into your agent’s configuration, thus reducing the attack
+surface. We also took the chance to implement accessing multiple Tigris
+organizations at once with this new OAuth flow, meaning that you can get an even
+better experience with our hosted MCP server than you got with running the MCP
+server locally. If you ask your agent to list buckets, it’ll list them across
+all your organizations.
+
+## We need your help
+
+Right now this is an experiment and in a public beta phase. We want to iterate
+and make this the best way to access object storage from your agents, but in
+order to do that we need your feedback on what you like and don’t like about it.
+If things break, please let us know so we can fix it for everyone.
+
+<GetStarted />
+
+Let’s see what we can cook up when we rethink the user experience of object
+storage from scratch.
+
+<InlineCta
+  title="AI-native object storage"
+  subtitle={
+    "Tigris makes it easy to use object storage from anywhere: from the admin console in a browser to the S3 API on your server, and now from any of your AI agents. Tigris makes your storage global out of the box and safe for access from multiple parallel agents with bucket forking."
+  }
+  button="Find out more"
+/>
