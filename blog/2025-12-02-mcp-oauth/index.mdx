@@ -239,8 +239,8 @@ and
 [implicit global replication](https://www.tigrisdata.com/blog/talks/2025/global-replication/)
 works to our advantage. (This does come at the cost of our MCP server being
 unavailable when Tigris is down, but if Tigris is down then you can’t really use
-the Tigris MCP server in the first place… and we’re over 99.99% available
-anyway).
+the Tigris MCP server in the first place... and
+[we’re over 99.99% available anyway](https://www.tigrisdata.com/blog/availability-metrics-public/)).
 
 Here’s what we store in Tigris. It’s a bunch of JSON that could fit into any kv
 store (even Postgres\!):
@@ -302,10 +302,6 @@ sequenceDiagram
     Auth0 ->>- MCP Server: Here's a token
     MCP Server ->>- Client: Here's your access token
 ```
-
-More complicated, certainly, but most of this is handled ambiently by
-authentication providers and library code. In most cases, you’ll only need to
-implement setting up the Provider itself. In addition to the Adapter.
 
 More complicated, certainly, but most of this is handled ambiently by
 authentication providers and library code. In most cases, you’ll only need to
@@ -487,3 +483,9 @@ have been able to ship this at all.
 Let us know if this guide on MCP OAuth was helpful to you or not, we have a few
 more things like this in the pipeline but need your feedback to know how to
 prioritize it.
+
+<InlineCta
+  title="Storage usable from the CLI, Web, API, and Agents"
+  subtitle="Store your files everywhere and use them from anywhere, even if you're using an AI agent."
+  button="Sounds good to me!"
+/>
