@@ -1,0 +1,157 @@
+---
+slug: snapshots
+title: "Bucket snapshots are git tags for your bucket"
+description: |
+  Whole bucket snapshots, like git tags for your bucket. Snapshots enable point-in-time recovery, reproducibility, and version control for object storage - finally bringing snapshot semantics to the entire object storage namespace.
+image: ./bucket-snapshots.avif
+keywords:
+  - Snapshots
+  - Object Storage
+  - Version Control
+  - Bucket Snapshots
+  - Data Recovery
+  - Git Tags
+  - Data Versioning
+authors:
+  - ks
+  - xe
+tags:
+  - Product
+  - Features
+---
+
+import CodeBlock from "@theme/CodeBlock";
+import InlineCta from "@site/src/components/InlineCta";
+import bucketSnapshotDemo from "./bucket-snapshot-demo.avif";
+import heroImage from "./bucket-snapshots.avif";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Bucket snapshots are git tags for your bucket"
+/>
+
+**Whole bucket snapshots, like git tags for your bucket**
+
+Sometimes you wish you could go back in time with your data after things go
+wrong. Say the incorrect data got deleted, or your model started promising to
+[sell a car for $1](https://www.upworthy.com/prankster-tricks-a-gm-dealership-chatbot-to-sell-him-a-76000-chevy-tahoe-for-ex1)
+and you need to figure out which data led to that unexpected behavior. Can you
+go back in time to see how things were so you can figure out where it all went
+wrong? Snapshots enable this– they've been a core component of resilient system
+design since the 60s, and they're finally making it to object storage.
+
+With Tigris, you can snapshot a point in time for your whole bucket. Not just
+individual object versions. The same way you'd `git tag` a release, you can name
+your snapshot with a meaningful version and reference it from other tools. And a
+snapshot can seed a
+[fork](https://www.tigrisdata.com/blog/fork-buckets-like-code/), an instant,
+isolated copy of a bucket. As far as we can tell, Tigris is the only object
+storage system to offer this as a feature.
+
+{/* truncate */}
+
+## Why snapshots matter
+
+Object storage has been thought of as a backup target– databases, VMs, volumes,
+registries, and even entire datacenters can be snapshotted and backed up to
+object storage. But what about snapshotting object storage itself? More and more
+systems, especially cloud native ones, use object storage as the primary data
+store. It's simpler, and it fits the shape of the data: increasingly
+unstructured and multi modal.
+
+If object storage is the primary data store, it needs safety features like
+snapshots. S3's object versioning got us close, but recovery and versioning are
+limited to single objects. Stitching together the state of a bucket at a point
+in time has required touching each object and hoping for consistency. It takes a
+whole bucket snapshot to provide reproducibility, version control, and insurance
+against mistakes.
+
+## Version control built directly into object storage
+
+Here's what's cool: snapshots work for datasets that don't fit into existing
+data version management tools. Think of extremely large, frequently changing
+datasets such as:
+
+- Raw clickstreams
+- Event logs
+- Batch-appended training logs
+- Video streams
+- Kafka message streams
+- Real time inference logs
+
+Anything that's large and changes frequently is tough for traditional tools to
+version. And we as an industry are increasingly feeding live data into our
+systems in a way that can meaningfully change the outputs of our models.
+
+It's lightweight version control for _all_ of your data.
+
+## Whole environments, cloned instantly
+
+Developer sandboxes, AI agent environments, load testing with real production
+data, feature-branch test environments– all of these spin up faster and more
+consistently from a snapshot.
+
+Need to
+[experiment on massive datasets without the risk of hurting the data](https://www.tigrisdata.com/blog/dataset-experimentation/)
+if things go wrong? Put it in a bucket and fork it. Many digital hands make
+light work!
+
+Want to spin up an instance of an AI agent quickly? Store all its dependencies
+in a snapshot, and make a forked bucket from the snapshot on launch. Your agent
+has everything it needs without moving data around.
+
+## How to use snapshots
+
+You can create a snapshot enabled bucket in the Tigris Console, and then create
+a snapshot in it.
+
+<center style={{ marginLeft: "auto", marginRight: "auto" }}>
+  <img
+    src={bucketSnapshotDemo}
+    class="animation"
+    style={{ maxWidth: "40rem", minWidth: "12rem" }}
+    alt="A demo of creating a snapshot in the Tigris Console."
+  />
+</center>
+
+You can also do this from the
+[Tigris SDK for JavaScript and TypeScript](https://www.tigrisdata.com/docs/sdks/tigris/):
+
+```js
+import { createBucketSnapshot } from "@tigrisdata/storage";
+
+const { data, error } = await createBucketSnapshot();
+
+if (error) {
+  console.error("Error creating snapshot:", error);
+} else {
+  console.log("Snapshot created:", data);
+  // output: { snapshotVersion: "1751631910169675092" }
+}
+```
+
+## Conclusion
+
+Snapshots have been around since the 60s. The first snapshots were for the CPU
+registers, memory, and device state of mainframes. And then in the 80s, database
+checkpoints enabled atomic rollbacks and crash recovery. In the 90s, we got
+filesystem level snapshots with ZFS and LVM. And then in the 2000s with the rise
+of virtualization, we adopted snapshotting at the image layer. But we haven't
+had object storage level snapshots until now.
+
+Whole bucket snapshots are a big deal because they extend snapshot semantics,
+normally limited to filesystems, block volumes, or individual objects, to an
+entire object storage namespace. The functionality is similar to what's come
+before, but the way it's implemented is new. Read more in the
+[deep dive on how we built snapshots](https://www.tigrisdata.com/blog/bucket-forking-deep-dive/).
+Spoiler: snapshots are essentially free because Tigris uses an append only log.
+
+Get your entire bucket of objects, all versioned together. Only on Tigris.
+
+<InlineCta
+  title="Try Bucket Snapshots"
+  subtitle="Ready to add version control to your object storage? Get started with snapshots in Tigris."
+  button="Check out the docs"
+  link="https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/"
+/>
