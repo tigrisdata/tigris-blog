@@ -139,6 +139,8 @@ value store. You can use Tigris as your KV store like we did, or any other store
 that is supported by [Keyv](https://github.com/jaredwray/keyv/), like Redis or
 Postgres.
 
+<center>
+
 ```mermaid
 flowchart TD
     subgraph CLIENT_SIDE["Client Side"]
@@ -159,6 +161,8 @@ flowchart TD
     MCP_CLIENT -->|"MCP Requests with<br/>Bearer Access Token"| MCP_SERVER
     MCP_SERVER -.->|"JWT Verification via<br/>/jwks & token introspection"| OIDC_PROVIDER
 ```
+
+</center>
 
 ### Usage: Referencing the Standalone Implementation
 
