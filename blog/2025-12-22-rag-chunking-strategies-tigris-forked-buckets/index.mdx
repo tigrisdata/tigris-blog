@@ -49,6 +49,10 @@ Since vector search runs some type of [euclidean/dot product/cosine distance](ht
 
 This means that if you cut the paragraph at the wrong spot, it may be seen as semantically less relevant. The retriever may miss the broader rationale or cross‑sentence evidence. This hurts recall and makes the LLM hallucinate to fill gaps.
 
+Figure 0: splits document data recursively to keep all paragraphs, sentences then words together as long as possible.
+
+![Image00](./image00.png)
+
 ### **Why forking helps this experiment**
 
 Dataset quality work is rarely one-dimensional. "Better" might mean higher groundedness, or answer relevance, lower hallucination rate or more consistent retrieval. The problem is that most dataset iteration workflows are destructive:
