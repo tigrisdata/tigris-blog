@@ -38,11 +38,18 @@ We built [**a small Python app**](https://github.com/davidmyriel/tigris-rag-lab)
 
 Of course, the secret sauce is [Tigris bucket forking](/fork-buckets-like-code/): an instant, isolated copy of a bucket (seeded from a snapshot) so experiments don't mutate the same underlying dataset state.  
 
-> Note: To run [The Best Chunking Method](https://github.com/davidmyriel/tigris-rag-lab), you will need an API keys from [Tigris Data](https://www.tigrisdata.com), [Qdrant Vector Database](https://qdrant.tech) and [OpenAI](https://openai.com/index/openai-api/) for generation. We also use [CrewAI](https://www.crewai.com) to orchestrate agent operations.
+> Note: To run [The Tigris RAG Lab](https://github.com/davidmyriel/tigris-rag-lab), you will need an API keys from [Tigris Data](https://www.tigrisdata.com), [Qdrant Vector Database](https://qdrant.tech) and [OpenAI](https://openai.com/index/openai-api/) for generation. We also use [CrewAI](https://www.crewai.com) to orchestrate agent operations.
 
 ![Image 0](./image0.png)
 
-### **Why forking matters for dataset quality**
+### Why is chunking a big deal?
+
+When you split up the same content in two different ways, the chunks can become vastly different vectors.
+Since vector search runs some type of [euclidean/dot product/cosine distance](https://qdrant.tech/documentation/concepts/search/), calculating different vector arrays will result in greater or smaller distances.
+
+This means that if you cut the paragraph at the wrong spot, it may be seen as semantically less relevant. The retriever may miss the broader rationale or cross‑sentence evidence. This hurts recall and makes the LLM hallucinate to fill gaps.
+
+### **Why forking helps this experiment**
 
 Dataset quality work is rarely one-dimensional. "Better" might mean higher groundedness, or answer relevance, lower hallucination rate or more consistent retrieval. The problem is that most dataset iteration workflows are destructive:
 
@@ -73,13 +80,14 @@ Forks also work cleanly with snapshots. You can fork from the bucket's current s
 
 ### **Orchestration via CrewAI** 
 
-In this app, [CrewAI](https://www.crewai.com/) is easy because it turns the whole experiment loop into one clear workflow instead of a pile of glue code. The [Streamlit](https://streamlit.io) UI collects the input, then CrewAI runs the same sequence for each chunking strategy:   
+In this app, [CrewAI](https://www.crewai.com/) is easy because it turns the whole experiment loop into one clear workflow instead of a pile of glue code. 
+
+> If you want to dig into how agents, tasks, and tools are modeled, the [CrewAI documentation](https://docs.crewai.com/) walks through the core concepts and examples. The [Streamlit](https://streamlit.io) UI collects the input, then CrewAI runs the same sequence for each chunking strategy:   
+
 1. create a Tigris bucket fork, generate the chunked artifacts in that fork,   
 2. build a matching Qdrant collection,   
 3. run the span based evaluation,  
 4. keep the fork that scores best and delete the rest. 
-
-To use Qdrant Cloud from this app, you'll need an API key. You can create one in the Qdrant Cloud dashboard by following the [Qdrant Cloud API key guide](https://qdrant.tech/documentation/cloud/quick-start/#create-an-api-key). If you prefer a managed control plane for your agents, you can run this workflow on [CrewAI Cloud](https://www.crewai.com/cloud), which handles orchestration and scaling for you.
 
 With CrewAI, you define the steps once, expose reliable tools for each step, and the agents repeat the loop consistently across strategies, which matches the app's "pick strategies, fork, index, evaluate, keep winner" design.  
 
@@ -89,7 +97,9 @@ That's the whole game: bucket forks become the *unit of experimentation*.
 
 ### **Vector indexing and search with Qdrant**
 
-Downstream, each fork's chunk output becomes its own Qdrant collection, giving you a clean 1:1 mapping:
+Downstream, each fork's chunk output becomes its own Qdrant collection, giving you a clean 1:1 mapping. 
+
+> For details on collections, payload schemas, and search parameters, see the [Qdrant documentation](https://qdrant.tech/documentation/):
 
 * **bucket fork** = experiment artifact namespace  
 * **Qdrant collection** = experiment retrieval behavior
@@ -102,7 +112,7 @@ That matters because it keeps comparisons fair: no shared index state, no accide
 
 Each fork contains the dataset artifacts for exactly one hypothesis (one chunking strategy). That means when you later look at results you can say:
 
-"This score came from *that* fork, built from *that* chunking strategy, against *that* indexed collection."
+*"This score came from *that* fork, built from *that* chunking strategy, against *that* indexed collection."*
 
 **Figure 3:** There's no ambiguity because each vector carries a metadata manifest with it. 
 
@@ -115,14 +125,9 @@ Our span-based evaluation directly measures chunk boundary quality by checking w
 1. queries the [Qdrant](https://qdrant.tech/) collection  
 2. retrieves the **top-k chunks**  
 3. checks whether each returned chunk's character range **overlaps** any gold span  
-4. computes metrics across the ranked results:  
-* **Hit@k**: did *any* of the top-k chunks overlap a gold span?  
-* **MRR@k**: what's the rank of the *first* overlapping chunk?  
-* **Coverage@k**: what fraction of the gold span(s) are covered by the retrieved chunks?  
-* **Redundancy@k**: how much overlap exists *between returned chunks* (wasted retrieval budget)?
+4. computes metrics across the ranked results: hit rate, MRR, coverage and redundancy.
 
 This makes boundary failures painfully visible: when a strategy splits answers across chunks, you'll see coverage drop (and sometimes redundancy rise as the system "hunts" around the boundary).
-
 Why are we doing this? Span metrics don't just say "retrieval good/bad." They explain *why*:
 
 * **Coverage@k** tells you whether you're retrieving complete answers or fragments.  
@@ -171,20 +176,10 @@ That's the difference between:
 ### **Try it out!**
 
 Snapshots are great for safety and reproducibility. Forks are what make dataset iteration *practical*.
-
 Tigris bucket forking is great for developers who need feature branches. 
 
 You can isolate experiments, run them cleanly, and then keep the branch that actually shipped the best behavior.
-
-If you're serious about document chunking, check out the **Tigris RAG Lab** …and you'll never have to wonder which dataset variant your "best score" came from again.
-
-### **Annex: App Architecture Overview**
-
-[Tigris RAG Lab is a Streamlit web app](https://github.com/davidmyriel/tigris-rag-lab) that automates RAG chunking experiments using a three-tier architecture: 
-
-- Tigris S3 (dataset versioning via buckets, snapshots, and forks),  
-- Qdrant (vector indexing with per-strategy collections),   
-- CrewAI (orchestrating experiments). 
+If you're serious about document chunking, check out the [Tigris RAG Lab](https://github.com/davidmyriel/tigris-rag-lab) …and you'll never have to wonder which dataset variant your "best score" came from again.
 
 <InlineCta
   title="Unlimited storage; no egress fees"
