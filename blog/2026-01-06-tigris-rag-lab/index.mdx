@@ -1,12 +1,12 @@
 ---
-slug: rag-chunking-strategies-tigris-forked-buckets
+slug: tigris-rag-lab
 title: Test RAG Chunking Strategies With Tigris Forked Buckets
 description: >
   Discover the optimal RAG chunking strategy without manual testing. This Python
   app uses Tigris bucket forking to run parallel experiments, automatically
   comparing multiple chunking strategies and ranking them using objective
   span-based metrics.
-image: ./image1.png
+image: ./image1.webp
 keywords:
   - RAG
   - chunking
@@ -26,7 +26,15 @@ tags:
 import heroimage from "./image1.webp";
 import InlineCta from "@site/src/components/InlineCta";
 
-<img src={heroimage} alt="RAG Chunking Strategies with Tigris Forked Buckets" />
+import styles from "!!raw-loader!./styles.css";
+
+<style>{styles}</style>
+
+<img
+  src={heroimage}
+  className="hero-image"
+  alt="RAG Chunking Strategies with Tigris Forked Buckets"
+/>
 
 _"Did you chunk your documents properly?"_
 
@@ -43,8 +51,8 @@ sentence, markdown, recursive, window, none - and ranks them using objective
 span-based metrics.
 
 Of course, the secret sauce is
-[Tigris bucket forking](/fork-buckets-like-code/): an instant, isolated copy of
-a bucket (seeded from a snapshot) so experiments don't mutate the same
+[Tigris bucket forking](/blog/fork-buckets-like-code/): an instant, isolated
+copy of a bucket (seeded from a snapshot) so experiments don't mutate the same
 underlying dataset state.
 
 > Note: To run
