@@ -1,0 +1,129 @@
+---
+slug: 2025-wrapped
+title: "2025: A Breakthrough Year for Tigris Data"
+description: |
+  Growth exploded, not just in users, but in the product itself. Tigris has matured into the storage backbone for leading AI companies.
+image: ./hero-image.webp
+keywords:
+  - Tigris
+  - 2025
+  - Year in Review
+  - AI Storage
+  - Object Storage
+authors:
+  - ot
+tags:
+  - Updates
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+import tigrisCollage from "./tigris-collage.webp";
+import forkBucketsImage from "./fork-buckets.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="2025: A Breakthrough Year for Tigris Data"
+/>
+
+2025 has been a breakthrough year for Tigris. Growth exploded, not just in users, but in the product itself. Tigris has matured into the storage backbone for leading AI companies like [fal.ai](http://fal.ai), [Hedra](https://www.hedra.com/), and [Krea](https://www.krea.ai/), and now powers [Railway Storage Buckets](https://docs.railway.com/guides/storage-buckets) as the underlying storage layer.
+
+And the pace is only accelerating. This year, we announced our [$25M Series A](https://www.tigrisdata.com/blog/series-a/) to take on Big Cloud by rethinking how storage should work for AI workloads. Big Cloud providers tightly couple storage to their own compute platforms, creating lock-in and limiting how teams build and scale modern systems. We believe storage should be independent, globally performant, and designed to run wherever the best compute lives.
+
+In 2025, Tigris crossed an important threshold. We became a **production-grade, high-performance foundation.** Storage shouldn't dictate architecture or limit ambition. It should fade into the background and just work.
+
+We're deeply grateful to the customers who trusted us and pushed us forward. Everything we shipped this year was driven by one belief: we can build a better future for the cloud.
+
+Here's a look at what we were up to in 2025.
+
+## What we shipped
+
+In 2025, we shipped *a lot* of features. To name a few:
+
+- [Tigris Storage SDKs](https://www.tigrisdata.com/blog/storage-sdk/)
+- [Tigris MCP Server](https://www.tigrisdata.com/blog/hosted-mcp/)
+- [mcp-oidc-provider](https://www.tigrisdata.com/blog/mcp-oidc-provider/)
+- [TigrisFS](https://www.tigrisdata.com/blog/tigrisfs/)
+- [Lifecycle Rules](https://www.tigrisdata.com/blog/lifecycle-rules/)
+- [Partner Integration API](https://www.tigrisdata.com/docs/partner-integrations/)
+- [Unhateable IAM](https://www.tigrisdata.com/blog/iam-policy-builder/)
+- [1-click Bucket Sharing](https://www.tigrisdata.com/blog/bucket-sharing/)
+
+But my favorite feature is [Bucket Forks & Snapshots](https://www.tigrisdata.com/blog/fork-buckets-like-code/), a new storage primitive that brings Git-like workflows to object storage.
+
+## Favorite feature: bucket forks & snapshots
+
+In 2025, we introduced a new storage primitive: bucket forks. Zero-copy clones of your buckets, seeded by an immutable snapshot.
+
+<center>
+  <img
+    src={forkBucketsImage}
+    alt="Bucket forks and snapshots diagram"
+    style={{ width: "50%", height: "auto" }}
+  />
+</center>
+
+Forks and snapshots bring **data version control** to object storage — something the ecosystem has long lacked. Unlike external catalog systems or overlays, versioning is native to Tigris's storage layer.
+
+With forks, experimentation is cheap and mistakes are easy to undo. But this is not just about developer convenience. As AI systems become more autonomous and collaborative, data needs to behave differently. Agents need isolated views of the world. Teams need to explore multiple hypotheses in parallel. Systems need to reason about state, history, and reproducibility as first-class concepts.
+
+Bucket forks and snapshots were built with that future in mind. They enable autonomous agents, multi-agent collaboration, and stateful AI systems at scale. By pushing these concepts into the storage layer, we remove complexity from application code and make new classes of systems possible.
+
+If you want the deep technical story, from the append-only foundations to the architectural tradeoffs that make cheap forking possible, this post captures the philosophy and architecture behind it: [**Immutable by Design: The Deep Tech Behind Tigris Bucket Forking**](https://www.tigrisdata.com/blog/bucket-forking-deep-dive)
+
+## Best developer experience: Tigris storage SDKs
+
+This year, we released our Typescript and JavaScript [Storage SDKs](https://www.tigrisdata.com/blog/storage-sdk/) and [Python boto3 extension](https://github.com/tigrisdata/tigris-boto3-ext). It automatically figures out where to store things, what credentials to use, and all the other minutæ you have to deal with. You just put, get, list, and delete objects, so you get code you can read with a glance.
+
+## Biggest unlock for MCP developers: mcp-oidc-provider
+
+Setting up proper OAuth for our hosted MCP server ended up being a lot harder than we thought it would be. That's why we open sourced our [mcp-oidc-provider](https://github.com/tigrisdata/mcp-oidc-provider): a minimal, production-ready OIDC provider designed specifically for MCP workflows. Plug in any IdP you want; it's vendor neutral, just like Tigris.
+
+## Biggest win: performance
+
+We [benchmarked Tigris against S3 and R2](https://www.tigrisdata.com/blog/benchmark-small-objects/) and found we're **5.3x faster** than S3 and **86.6x faster** than R2 for the small objects common in AI workloads. And throughput was 4x vs S3 and 20x vs R2.
+
+We ran these benchmarks on compute that was not colocated with storage (i.e., not within Tigris or AWS), matching the workload pattern we see with many of our customers, highly distributed compute across neoclouds. Don't take our word for it: you can see [the results](https://github.com/tigrisdata-community/ycsb-benchmarks) and run the benchmark yourself.
+
+This validated years of architectural decisions — from global replication to owning more of the stack — and reinforced that performance and simplicity don't have to be tradeoffs.
+
+## Coolest experience: we met you IRL
+
+We got to meet you! As a mostly remote company, meeting in person is a special treat. We talked tech at conferences, gave out Ty the Tiger crochet kits, and plastered your laptops with stickers.
+
+<img
+  src={tigrisCollage}
+  alt="A collage of photos from Tigris team meetups and conferences in 2025"
+/>
+
+## Engineering blog posts our readers loved most
+
+One of the highlights of 2025 was seeing engineers dive deep into our technical writing. Our most-read posts unpacked the architectural decisions behind Tigris, especially where AI workloads break traditional storage assumptions.
+
+If you missed these popular posts, they're worth a look:
+
+- [mount -t tigrisfs](https://www.tigrisdata.com/blog/tigrisfs/)
+- [Nomadic Infrastructure Design for AI Workloads](https://www.tigrisdata.com/blog/nomadic-compute/)
+- [Fork Buckets Like You Fork Code](https://www.tigrisdata.com/blog/fork-buckets-like-code/)
+- [Immutable by Design: The Deep Tech Behind Tigris Bucket Forking](https://www.tigrisdata.com/blog/bucket-forking-deep-dive)
+- [Small Objects, Big Gains: Benchmarking Tigris Against AWS S3 and Cloudflare R2](https://www.tigrisdata.com/blog/benchmark-small-objects)
+- [Append-Only Object Storage: The Foundation Behind Cheap Bucket Forking](https://www.tigrisdata.com/blog/append-only-storage)
+- [Get your data ducks in a row with DuckLake](https://www.tigrisdata.com/blog/ducklake)
+- [How LogSeam Searches 500 Million Logs per second](https://www.tigrisdata.com/blog/case-study-logseam)
+
+## What's Next in 2026
+
+2026 is shaping up to be another big year for AI. And the storage layer powering it needs to keep up.
+
+We are doubling down on what makes Tigris different: storage that actively enables new architectures instead of constraining them. Bucket forks, snapshots, and TigrisFS open the door to higher-level primitives for AI-native workflows, and we are just beginning to explore what that makes possible.
+
+Like the Tigris river gave rise to civilization, we're also starting something new.
+
+<InlineCta
+  title="Storage built for the new AI cloud"
+  subtitle="Ready to experience the storage layer built for the new AI cloud? Get started with Tigris and see what's possible."
+  button="Check out the docs"
+  link="https://www.tigrisdata.com/docs/"
+/>
+
