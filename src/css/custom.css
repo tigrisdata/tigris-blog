@@ -1209,3 +1209,11 @@ table td {
 .theme-code-block code {
   max-width: 360px;
 }
+
+/* Hero image styling for blog posts */
+.hero-image {
+  margin-bottom: 1rem;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
