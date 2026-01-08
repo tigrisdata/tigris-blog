@@ -19,6 +19,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Check category tags
+        run: ./scripts/check-category-tags.sh
+
       - name: Check types + linting + build
         run: |
           npm install

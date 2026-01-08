@@ -20,6 +20,7 @@
     "test": "npm run test:format && npm run lint && npm run build",
     "test:format": "npx prettier --check .",
     "lint": "npx eslint .",
+    "check:tags": "./scripts/check-category-tags.sh",
     "seo:review": "node seo-reviewer.mjs",
     "seo:review:all": "node seo-reviewer.mjs --all",
     "seo:check": "node seo-reviewer.mjs",
