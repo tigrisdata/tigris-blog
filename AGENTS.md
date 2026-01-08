@@ -93,8 +93,8 @@ Each blog post is in `blog/{date}-{slug}/index.mdx` with frontmatter containing:
 
 ### Tag Categories
 
-**IMPORTANT:** Every blog post MUST have one of the following category tags as the
-FIRST tag in the tags list. This is enforced by CI:
+**IMPORTANT:** Every blog post MUST have one of the following category tags as
+the FIRST tag in the tags list. This is enforced by CI:
 
 - "Engineering" - Technical implementation posts
 - "Build with Tigris" - Tutorial/how-to content
