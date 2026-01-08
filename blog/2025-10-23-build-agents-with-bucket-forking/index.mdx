@@ -242,6 +242,9 @@ export async function GET(req: NextRequest) {
 // /api/generate/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@tigrisdata/storage";
+import styles from "!!raw-loader!./styles.css";
+
+<style>{styles}</style>;
 
 export async function POST(req: NextRequest) {
   // image gen init ...

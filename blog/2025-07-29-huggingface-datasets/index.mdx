@@ -212,6 +212,10 @@ saves the filtered version back to Tigris:
 ```python
 import os
 import tigris
+import styles from "!!raw-loader!./styles.css";
+
+<style>{styles}</style>
+
 from datasets import load_from_disk
 
 def remove_blue(row):

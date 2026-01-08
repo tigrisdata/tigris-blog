@@ -206,6 +206,9 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import styles from "!!raw-loader!./styles.css";
+
+<style>{styles}</style>;
 
 const API_KEY = process.env.GOOGLE_API_KEY;
 const ai = new GoogleGenAI({
