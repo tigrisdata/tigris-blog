@@ -1,0 +1,25 @@
+name: Blog Styles Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  check-blog-styles:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run:
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+
+      - name: Verify blog posts have styles.css imported
+        run:
+          scripts/check-blog-styles.sh "origin/${{
+          github.event.pull_request.base.ref }}"
