@@ -6,8 +6,9 @@
 
 .hero-image {
   margin-bottom: 1rem;
-  max-width: 48rem;
   width: 100%;
+  height: auto;
+  max-width: 100%;
 }
 
 p:not(:has(img)) {

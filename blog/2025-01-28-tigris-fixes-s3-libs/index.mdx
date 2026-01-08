@@ -10,10 +10,11 @@ tags: [updates, object storage]
 ---
 
 import styles from "!!raw-loader!./styles.css";
+import heroImage from "./tools.jpg";
 
 <style>{styles}</style>
 
-![A bunch of wrenches on a tool rack.](./tools.jpg)
+<img src={heroImage} className="hero-image" alt="A bunch of wrenches on a tool rack." />
 
 Recently Amazon
 [made changes to the S3 libraries that broke Tigris support](https://www.tigrisdata.com/blog/downgrade-py-js/).
