@@ -22,7 +22,7 @@ keywords:
 authors:
   - xe
 tags:
-  - build with tigris
+  - Build with Tigris
   - object storage
   - ai
   - training
@@ -31,6 +31,25 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import PullQuote from "@site/src/components/PullQuote";
+import heroImage from "./ukiyo-e-tiger.jpg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A blue tiger surfs the internet waves, object storage in tow. The image has an ukiyo-e style with flat pastel colors and thick outlines."
+/>
+
+<center>
+  <small>
+    <em>
+      A blue tiger surfs the internet waves, object storage in tow. The image
+      has an ukiyo-e style with flat pastel colors and thick outlines. Generated
+      using [Counterfeit v3.0](https://civitai.com/models/4468/counterfeit-v30)
+      using a [ComfyUI](https://www.comfy.org/en/). Originally a sketch by Xe
+      Iaso.
+    </em>
+  </small>
+</center>
 
 When you get started with finetuning AI models, you typically pull the datasets
 and models from somewhere like the Hugging Face Hub. This is generally fine, but
@@ -62,30 +81,6 @@ abstract away the compute layer so that you can focus on the actual work of
 training models. This will help you reduce the risk involved with training AI
 models on custom datasets by importing those datasets and models once, and then
 always using that copy for training and inference.
-
-![A blue tiger surfs the internet waves, object storage in tow. The image has an ukiyo-e style with flat pastel colors and thick outlines.](./ukiyo-e-tiger.jpg)
-
-<div
-  style={{
-    fontSize: "0.75rem",
-    textAlign: "center",
-    padding: "2rem",
-    maxWidth: "65ch",
-    marginLeft: "auto",
-    marginRight: "auto",
-  }}
->
-  A blue tiger surfs the internet waves, object storage in tow. The image has an
-  ukiyo-e style with flat pastel colors and thick outlines.{" "}
-  <div style={{ marginTop: "0.5rem" }} />{" "}
-  <details>
-    <summary style={{ fontWeight: "600" }}>Generation details</summary>
-    Generated using [Counterfeit v3.0](https://civitai.com/models/4468/counterfeit-v30)
-    using a [ComfyUI](https://www.comfy.org/en/) flow stacking several LoRA adapters
-    as well as four rounds of upscaling and denoising. Originally a sketch by Xe
-    Iaso.
-  </details>
-</div>
 
 {/* truncate */}
 

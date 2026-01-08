@@ -1215,10 +1215,15 @@ table td {
 
 /* Hero image - full width */
 .hero-image {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   width: 100%;
   height: auto;
   max-width: 100%;
+}
+
+/* Hero image caption - add bottom margin for spacing before prose */
+.hero-image + center {
+  margin-bottom: 2rem;
 }
 
 /* Constrain non-hero images on large screens */
