@@ -2,8 +2,9 @@
 slug: virtual-hosted-urls
 title: Moving to Virtual Hosted URLs
 description: >
-  We’re transitioning to virtual hosted style URLs for all new buckets created
+  We're transitioning to virtual hosted style URLs for all new buckets created
   after February 19, 2025.
+image: ./hero.webp
 keywords:
   - object storage
   - blob storage
@@ -19,8 +20,15 @@ import CodeBlock from "@theme/CodeBlock";
 import InlineCta from "@site/src/components/InlineCta";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
+import heroImage from "./hero.webp";
 
-We’re transitioning to virtual hosted style URLs for all new buckets created
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Virtual hosted URLs illustration"
+/>
+
+We're transitioning to virtual hosted style URLs for all new buckets created
 after February 19, 2025. For new buckets, we will stop supporting path style
 URLs. Buckets created before February 19, 2025 will continue to work with either
 path style or virtual host style URLs.
