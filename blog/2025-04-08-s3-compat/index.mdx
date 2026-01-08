@@ -15,31 +15,19 @@ keywords:
 authors:
   - ot
 tags:
-  - engineering
+  - Engineering
   - s3
   - distributed systems
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./bucket-compat.webp";
 
-I want you to imagine what life was like before we had object storage. Uploading
-files was a custom process. If you wanted to scale, you ended up having to hire
-storage area network experts that built complicated systems with terms like
-“LUN” and “erasure coding”. Your application had to either shell out to an FTP
-server to handle uploads or put them alongside the source code. Above all
-though: everything had to be planned in advance. You had to do capacity planning
-so that you could know how much storage you needed to buy and when you needed to
-buy it. You couldn’t just insert a credit card and then get all the storage you
-wanted.
-
-In 2006, Amazon invented the concept of object storage, fundamentally changing
-how applications work. Storage became a faucet. If you want more, you simply
-turn the knob. Bottomless storage was revolutionary, and now we’ve come to
-expect storage to be decoupled from physical hardware. S3 paved the way for
-seamless data management across any environment as long as it had a connection
-back to Amazon.
-
-![An anthropomorphic tiger running between datacentres.](./bucket-compat.webp)
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="An anthropomorphic tiger running between datacentres."
+/>
 
 <center>
   <small>
@@ -49,6 +37,23 @@ back to Amazon.
     </em>
   </small>
 </center>
+
+I want you to imagine what life was like before we had object storage. Uploading
+files was a custom process. If you wanted to scale, you ended up having to hire
+storage area network experts that built complicated systems with terms like
+"LUN" and "erasure coding". Your application had to either shell out to an FTP
+server to handle uploads or put them alongside the source code. Above all
+though: everything had to be planned in advance. You had to do capacity planning
+so that you could know how much storage you needed to buy and when you needed to
+buy it. You couldn't just insert a credit card and then get all the storage you
+wanted.
+
+In 2006, Amazon invented the concept of object storage, fundamentally changing
+how applications work. Storage became a faucet. If you want more, you simply
+turn the knob. Bottomless storage was revolutionary, and now we've come to
+expect storage to be decoupled from physical hardware. S3 paved the way for
+seamless data management across any environment as long as it had a connection
+back to Amazon.
 
 {/* truncate */}
 

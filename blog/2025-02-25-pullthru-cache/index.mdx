@@ -13,31 +13,19 @@ keywords:
 authors:
   - xe
 tags:
-  - build with tigris
+  - Build with Tigris
   - docker
   - tigris
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./prone-tiger-vibe.webp";
 
-The Docker Hub is going to drastically decrease the rate limits for free
-accounts on April first. Are you ready for those changes? Here’s a high level
-overview of
-[the rate limit changes we’re about to have](https://docs.docker.com/docker-hub/usage/):
-
-| Account type          | Old rate limit           | New rate limit (April 1st)                                    |
-| :-------------------- | :----------------------- | :------------------------------------------------------------ |
-| Free, authenticated   | 200 image pulls per hour | 100 image pulls per hour                                      |
-| Free, unauthenticated | 100 image pulls per hour | 10 image pulls per hour (per IPv4 address or IPv6 /64 subnet) |
-
-What if you could easily cache images so these rate limits don’t impact your
-workloads? Today I’m going to show you how you can set up your own pull-through
-cache of the docker hub so that your workloads only have to download images
-once.
-
-{/* truncate */}
-
-![A prone cartoon tiger vibing on a pier with coffee](./prone-tiger-vibe.webp)
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A prone cartoon tiger vibing on a pier with coffee"
+/>
 
 <center>
   <small>
@@ -47,6 +35,23 @@ once.
     </em>
   </small>
 </center>
+
+The Docker Hub is going to drastically decrease the rate limits for free
+accounts on April first. Are you ready for those changes? Here's a high level
+overview of
+[the rate limit changes we're about to have](https://docs.docker.com/docker-hub/usage/):
+
+| Account type          | Old rate limit           | New rate limit (April 1st)                                    |
+| :-------------------- | :----------------------- | :------------------------------------------------------------ |
+| Free, authenticated   | 200 image pulls per hour | 100 image pulls per hour                                      |
+| Free, unauthenticated | 100 image pulls per hour | 10 image pulls per hour (per IPv4 address or IPv6 /64 subnet) |
+
+What if you could easily cache images so these rate limits don't impact your
+workloads? Today I'm going to show you how you can set up your own pull-through
+cache of the docker hub so that your workloads only have to download images
+once.
+
+{/* truncate */}
 
 ## Pull-through caches and you
 

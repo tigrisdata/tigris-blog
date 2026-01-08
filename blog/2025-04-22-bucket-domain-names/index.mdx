@@ -7,21 +7,22 @@ description: >
 image: ./bucket-label.jpg
 keywords: [object storage, blob storage, s3]
 authors: [ks, adil]
-tags: [updates, feature]
+tags: [Updates, feature]
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./bucket-label.jpg";
+
+<img src={heroImage} className="hero-image" alt="Bucket domain names" />
 
 On Tigris, you can set any domain name to point to any bucket. Why does this
 matter?
 
 Multi-cloud is all the rage these days. A new neocloud pops up every week
-offering cheap compute, and running your apps on Kubernetes means they’re easily
+offering cheap compute, and running your apps on Kubernetes means they're easily
 ported to another provider. Compute is fungible, but storage is sticky. Using a
 custom domain to front your bucket of data makes it easy to swap out storage
 providers without updating all the code that uses that storage.
-
-![](./bucket-label.jpg)
 
 {/* truncate */}
 

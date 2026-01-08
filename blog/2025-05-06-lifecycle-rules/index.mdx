@@ -7,7 +7,7 @@ description: >
 image: ./objects-transitioned.jpg
 keywords: [object storage, blob storage, s3]
 authors: [xe, ks]
-tags: [updates, s3, feature]
+tags: [Updates, s3, feature]
 ---
 
 import Conv from "@site/src/components/Conv";
@@ -40,6 +40,14 @@ export const Garren = ({ children, top, bottom }) => (
   </Conv>
 );
 
+import heroImage from "./objects-transitioned.jpg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Ty happily transitioning objects between storage tiers"
+/>
+
 **Tigris makes your storage multicloud for you, so you don't have to worry about
 all that.**
 
@@ -49,8 +57,6 @@ object storage systems, but under the hood, it's relatively complex to
 implement. Especially when you're building with global storage across many
 regions. Let's walk through how we built the feature, and where things got a
 little complicated.
-
-![Ty happily transitioning objects between storage tiers](./objects-transitioned.jpg)
 
 {/* truncate */}
 

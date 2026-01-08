@@ -18,25 +18,28 @@ keywords:
 authors:
   - ot
 tags:
-  - engineering
+  - Engineering
   - object storage
   - conditional writes
   - distributed systems
 ---
 
-# What’s the Big Deal with Conditional Writes Support in S3?
+import heroImage from "./twin-formula-1-race-car-drivers-navigating-a-sharp-turn-on-a-track-that-weaves-through-the-bustling--58786778.jpeg";
 
-Twitter has been lit (well, not exactly lit, but let’s say there is a lot of
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Twin Formula 1 race car drivers navigating a sharp turn"
+/>
+
+# What's the Big Deal with Conditional Writes Support in S3?
+
+Twitter has been lit (well, not exactly lit, but let's say there is a lot of
 enthusiasm) with posts about the recent announcement by AWS about support for
 [Conditional Writes in S3](https://aws.amazon.com/about-aws/whats-new/2024/08/amazon-s3-conditional-writes/).
 So I thought I would write something about it as well.
 
-## It’s all about concurrency and races.
-
-<span align="center">
-  ![Tigris globally distributed object
-  storage](twin-formula-1-race-car-drivers-navigating-a-sharp-turn-on-a-track-that-weaves-through-the-bustling--58786778.jpeg)
-</span>
+## It's all about concurrency and races.
 
 <!-- truncate -->
 

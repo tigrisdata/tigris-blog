@@ -15,13 +15,17 @@ keywords:
 authors:
   - xe
 tags:
-  - build with tigris
+  - Build with Tigris
   - customers
   - anubis
   - scraping
 ---
 
-By day I work on DevRel at Tigris Data, and by night I’m
+import heroImage from "./anubis-tigris-motherduck.webp";
+
+<img src={heroImage} className="hero-image" />
+
+By day I work on DevRel at Tigris Data, and by night I'm
 [a virtual anime person that makes software deployed by the United Nations](https://void.rehab/notes/a6tp1qqquesrjpy5).
 A side project of mine took off recently, a Web AI Firewall Utility named
 [Anubis](https://anubis.techaro.lol). Anubis blocks abusive scrapers from taking
@@ -37,9 +41,9 @@ but to be clear I'm not really sure if they are for training generative AI or
 not. However, the worst offender has been Amazon's Alexa team so it's pretty
 easy to take those two points and draw a line between them.
 
-![](./anubis-tigris-motherduck.webp)
-
 {/* truncate */}
+
+## Designing Scraping Prevention
 
 At a high level, Anubis has a big old set of rules in
 [your bot policy file](https://anubis.techaro.lol/docs/admin/policies). If

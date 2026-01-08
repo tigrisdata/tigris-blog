@@ -18,7 +18,7 @@ keywords:
   - cursor
   - claude
 authors: [ks]
-tags: [updates, ai, mcp, vibe coding]
+tags: [Updates, ai, mcp, vibe coding]
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
@@ -47,7 +47,24 @@ export const KS = ({ children, top, bottom }) => (
   </Conv>
 );
 
-“Do this and then do that” is hard. Models need specific, stepwise instructions
+import heroImage from "./ai-project-at-golden-gate.png";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A blue Tiger works with a coworker at a laptop in front of the Golden Gate Bridge."
+/>
+
+<center>
+  <small>
+    <em>
+      A blue Tiger works with a coworker at a laptop in front of the Golden Gate
+      Bridge.
+    </em>
+  </small>
+</center>
+
+"Do this and then do that" is hard. Models need specific, stepwise instructions
 to perform tasks, and even then, they aren’t reliable about completing each step
 in the desired order. When we built the
 [Tigris Model Context Protocol (MCP) Server](https://github.com/tigrisdata/tigris-mcp-server)
@@ -62,17 +79,6 @@ and then creates a shareable URL for it. This should help you use Tigris for
 your apps that require sharing files with your friends. The URLs this tool
 generates will expire in 24 hours or however long you ask. But why is it a
 separate tool in the first place?
-
-![A blue Tiger works with a coworker at a laptop in front of the Golden Gate Bridge.](./ai-project-at-golden-gate.png)
-
-<center>
-  <small>
-    <em>
-      A blue Tiger works with a coworker at a laptop in front of the Golden Gate
-      Bridge.
-    </em>
-  </small>
-</center>
 
 {/* truncate */}
 

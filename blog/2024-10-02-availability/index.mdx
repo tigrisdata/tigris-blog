@@ -21,7 +21,7 @@ authors:
   - ks
   - xe
 tags:
-  - updates
+  - Updates
   - object storage
   - reliability
   - performance
@@ -29,24 +29,28 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import PullQuote from "@site/src/components/PullQuote";
+import heroImage from "./availability-dashboard.webp";
 
-At Tigris Data, we provide object storage to our users. People put bytes into
-our servers with a name, and expect that come hell and high water, when they put
-in the name, they get _the exact same bytes back_. This is a very high trust
-position to be in because when people ask themselves things like “Oh, what would
-happen if my object storage provider is unreliable”, that conversation usually
-involves phrases like “Maybe we should have gone with The Big Cloud afterall”.
-
-Such conversations are rarely good for the business.
-
-![A Grafana dashboard with graphs showing availability over time per region](./availability-dashboard.webp)
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A Grafana dashboard with graphs showing availability over time per region"
+/>
 
 <center>
   <small>
     <em>A screenshot of Tigris' live Availability Dashboard</em>
   </small>
 </center>
-<br />
+
+At Tigris Data, we provide object storage to our users. People put bytes into
+our servers with a name, and expect that come hell and high water, when they put
+in the name, they get _the exact same bytes back_. This is a very high trust
+position to be in because when people ask themselves things like "Oh, what would
+happen if my object storage provider is unreliable", that conversation usually
+involves phrases like "Maybe we should have gone with The Big Cloud afterall".
+
+Such conversations are rarely good for the business.
 
 {/* truncate */}
 
