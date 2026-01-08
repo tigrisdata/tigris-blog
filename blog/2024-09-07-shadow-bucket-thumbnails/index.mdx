@@ -19,13 +19,21 @@ keywords:
 authors:
   - bmi
 tags:
-  - build with tigris
+  - Build with Tigris
   - object storage
   - s3
   - thumbnail
   - images
   - cdn
 ---
+
+import heroImage from "./a-pair-of-scissors-cutting-a-photograph.jpg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A pair of scissors cutting a photograph"
+/>
 
 # Snip, Snap, Serve: Effortless Global Image Delivery with Tigris
 
@@ -55,10 +63,6 @@ components.
 There's a bunch of existing pieces, which could can be combined to fill those
 various roles, but in this blog post we'll explore using Shadow Buckets to
 simplify that setup.
-
-<span align="center">
-  ![Tigris globally distributed object storage](a-pair-of-scissors-cutting-a-photograph.jpg)
-</span>
 
 ## The Setup
 

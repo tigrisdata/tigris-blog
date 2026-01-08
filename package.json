@@ -20,6 +20,7 @@
     "test": "npm run test:format && npm run lint && npm run build",
     "test:format": "npx prettier --check .",
     "lint": "npx eslint .",
+    "check:tags": "./scripts/check-category-tags.sh",
     "seo:review": "node seo-reviewer.mjs",
     "seo:review:all": "node seo-reviewer.mjs --all",
     "seo:check": "node seo-reviewer.mjs",
@@ -54,6 +55,7 @@
     "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-react": "^7.29.4",
+    "playwright": "^1.57.0",
     "prettier": "2.8.8",
     "typescript": "~5.2.2"
   },

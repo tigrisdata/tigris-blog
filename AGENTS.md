@@ -93,12 +93,15 @@ Each blog post is in `blog/{date}-{slug}/index.mdx` with frontmatter containing:
 
 ### Tag Categories
 
-Posts use specific category tags that should appear first:
+**IMPORTANT:** Every blog post MUST have one of the following category tags as
+the FIRST tag in the tags list. This is enforced by CI:
 
 - "Engineering" - Technical implementation posts
 - "Build with Tigris" - Tutorial/how-to content
 - "Customers" - Case studies and success stories
 - "Updates" - Product announcements and releases
+
+Run `npm run check:tags` to validate category tags locally before committing.
 
 ### Tigris Terminology
 

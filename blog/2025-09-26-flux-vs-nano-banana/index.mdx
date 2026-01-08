@@ -12,12 +12,26 @@ keywords:
 authors:
   - raouf
 tags:
+  - Build with Tigris
   - AI
   - Image Generation
 ---
 
 import PostEmbed from "@site/src/components/PostEmbed";
 import InlineCta from "@site/src/components/InlineCta";
+import heroPoster from "./flux-kontext-vs-nano-banana.webp";
+
+<video
+  className="hero-image"
+  controls
+  autoPlay
+  playsInline
+  loop
+  muted
+  poster={heroPoster}
+>
+  <source src={require("./demo.mp4").default} type="video/mp4" />
+</video>
 
 Long ago the GPU supply chains existed in harmony. Then, everything changed once
 GPT 4o image generation landed and the “Ghiblify” trend happened. I have since
@@ -79,13 +93,6 @@ models: gpt-image-1, gemini-2.5-flash-image-preview and flux-kontext-pro.
 />
 
 {/* truncate */}
-
-<br />
-
-<video controls width="100%">
-  <source src={require("./demo.mp4").default} type="video/mp4" />
-  Download the <a href="/img/blog/flux-vs-nano-banana/demo.mp4">MP4</a> version.
-</video>
 
 ## TLDR;
 

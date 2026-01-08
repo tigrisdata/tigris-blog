@@ -16,6 +16,14 @@ tags:
   - Infrastructure
 ---
 
+import heroImage from "./slides/001.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Global replication made easy by Xe Iaso, Senior Cloud Whisperer at Tigris Data"
+/>
+
 export const S = ({ n, d }) => (
   <img
     src={require(`./slides/${String(n).padStart(3, "0")}.webp`).default}
@@ -23,10 +31,6 @@ export const S = ({ n, d }) => (
     style={{ marginBottom: "2rem" }}
   />
 );
-
-import styles from "!!raw-loader!./styles.css";
-
-<style>{styles}</style>
 
 :::note
 
@@ -40,11 +44,6 @@ is much more causal. A video of this talk will be embedded on this page as soon
 as it is available.
 
 :::
-
-<S
-  n={1}
-  d="Global replication made easy by Xe Iaso, Senior Cloud Whisperer at Tigris Data"
-/>
 
 {/* truncate */}
 
@@ -581,9 +580,7 @@ feedback, moral support, and/or contributions towards my plan of total world
 domination. If you’re on this list, you know what you did. If you’re not, you
 know what you need to do.
 
-And with that, I’ve been Xe! Thanks for having me out here. I’ll be around with
+And with that, I've been Xe! Thanks for having me out here. I'll be around with
 stickers and if you have questions about Tigris. Have a great day, I hope the
 coffee is doing more for you than it is for me, and stay temperature out there
-today. It’s gonna be lovely out.
-
-![A tarot style illustration of Ty and Xe working in an open office in San Francisco.](./tarot-sfo.jpg)
+today. It's gonna be lovely out.

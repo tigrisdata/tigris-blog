@@ -17,7 +17,7 @@ keywords:
 authors:
   - xe
 tags:
-  - Build With Tigris
+  - Build with Tigris
   - AI Infrastructure
   - Storage
   - Performance
@@ -28,19 +28,15 @@ import heroImage from "./fishing-vibes.webp";
 
 <img
   src={heroImage}
+  className="hero-image"
   alt="A cartoon tiger fishing off the side of a tropical island"
-  style={{ width: "100%", height: "auto" }}
 />
-<p
-  style={{
-    textAlign: "center",
-    fontStyle: "italic",
-    marginTop: "0.5rem",
-    color: "var(--docs-color-text-100)",
-  }}
->
-  A cartoon tiger fishing off the side of a tropical island.
-</p>
+
+<center>
+  <small>
+    <em>A cartoon tiger fishing off the side of a tropical island.</em>
+  </small>
+</center>
 
 Training modern AI models requires two key ingredients: a powerful framework
 like **PyTorch** and a massive amount of data. But how do you efficiently feed
@@ -199,6 +195,7 @@ Here’s how to set up an efficient `DataLoader` for streaming:
 
 ```python
 import torch
+
 from torch.utils.data import DataLoader
 
 loader = DataLoader(

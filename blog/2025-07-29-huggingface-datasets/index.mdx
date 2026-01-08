@@ -13,15 +13,20 @@ keywords:
   - multi-cloud object storage
 authors: [xe]
 tags:
-  - build with tigris
+  - Build with Tigris
   - python
   - datasets
   - ai
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./dunda-datnybakfu.jpg";
 
-![](./dunda-datnybakfu.jpg)
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Hugging Face datasets with Tigris illustration"
+/>
 
 One of the most popular ways to share datasets is via
 [Hugging Face’s dataset platform](https://huggingface.co/datasets). You can even
@@ -212,6 +217,7 @@ saves the filtered version back to Tigris:
 ```python
 import os
 import tigris
+
 from datasets import load_from_disk
 
 def remove_blue(row):

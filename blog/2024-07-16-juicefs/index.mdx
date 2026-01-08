@@ -6,6 +6,7 @@ description: >
   I show how you can use JuiceFS to turn your bottomless Tigris storage into a
   FUSE mounted filesystem where we persist model data for more efficiently
   running production-scale Ollama on Fly.io
+image: ./hero.webp
 keywords:
   - blob storage
   - caching
@@ -17,12 +18,20 @@ keywords:
 authors:
   - jt
 tags:
-  - build with tigris
+  - Build with Tigris
   - blob storage
   - caching
   - ai
   - filesystem
 ---
+
+import heroImage from "./hero.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="JuiceFS and Tigris for sharing Ollama models"
+/>
 
 If you've been toying around in the AI space over the past few months, you've
 probably heard of [Ollama](https://ollama.com/). Ollama is a tool for running

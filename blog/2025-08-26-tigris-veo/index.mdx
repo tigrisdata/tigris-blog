@@ -11,25 +11,46 @@ keywords:
 authors:
   - raouf
 tags:
+  - Build with Tigris
   - AI
   - Video Generation
 ---
 
-One of the AI modes I’m excited about is Veo3, especially because it lowers the
-barrier to creating high-quality video content. Here’s a sample I generated with
-this prompt:
+import heroPoster from "./ty-scientist.webp";
 
-```text
-Cinematic. An Extreme Close-Up of a scientist’s trembling hands holding a test tube filled with glowing green liquid. Sirens blare in the background as red warning lights flash across the lab. She whispers into a recorder, “If this works, humanity has one last chance."
-```
-
-<video controls width="100%">
+<video
+  className="hero-image"
+  controls
+  autoPlay
+  playsInline
+  loop
+  muted
+  poster={heroPoster}
+>
   <source
     src="/blog/img/blog/veo3-tigris/veo3-scientist.mp4"
     type="video/mp4"
   />
-  Download the <a href="/blog/img/blog/veo3-tigris/veo3-scientist.mp4">MP4</a> version.
 </video>
+
+<div
+  style={{
+    fontSize: "0.75rem",
+    textAlign: "center",
+    maxWidth: "65ch",
+    marginLeft: "auto",
+    marginRight: "auto",
+  }}
+>
+  Cinematic. An Extreme Close-Up of a scientist's trembling hands holding a test
+  tube filled with glowing green liquid. Sirens blare in the background as red
+  warning lights flash across the lab. She whispers into a recorder, "If this
+  works, humanity has one last chance."
+</div>
+
+One of the AI modes I'm excited about is Veo3, especially because it lowers the
+barrier to creating high-quality video content. Here's a sample I generated with
+this prompt:
 
 {/* truncate */}
 

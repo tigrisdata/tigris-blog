@@ -4,7 +4,7 @@ title: Supplemental resources for Affording your AI chatbot friends
 description: >
   Caught the talk at SCaLE but want to learn more? Here's a list of resources
   that were mentioned during the talk.
-image: ./ai-chatbot-friends.webp
+image: ./hero.webp
 keywords:
   - ai
   - chatbot
@@ -14,19 +14,24 @@ keywords:
 authors:
   - xe
 tags:
-  - engineering
+  - Engineering
   - ai
   - chatbot
   - resources
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="AI chatbot friends talk thumbnail"
+/>
 
 Hey! Thanks for catching my talk
 [Affording your AI chatbot friends](https://www.socallinuxexpo.org/scale/22x/presentations/affording-your-ai-chatbot-friends).
 Here's some resources that were mentioned during the talk.
-
-![The title slide for the talk](./slide-01.webp)
 
 {/* truncate */}
 
@@ -50,7 +55,7 @@ The only specs that matter for generative AI:
 - GPU memory bandwidth
 - GPU model year
 
-Models:
+## Models
 
 - [Facebook's Llama series](https://www.llama.com/) - a series of large language
   models that is usually good enough for most tasks
@@ -59,7 +64,7 @@ Models:
 - [DeepSeek R1 and V3](https://www.deepseek.com/) - very large models that score
   very well for their efficiency per watt
 
-Filter models:
+## Filter models
 
 - [Facebook's Llama Guard](https://www.llama.com/docs/model-cards-and-prompt-formats/llama-guard-3/) -
   a filter model that can be used to filter out content that doesn't meet your
@@ -67,7 +72,7 @@ Filter models:
 - [Google's ShieldGemma](https://ai.google.dev/gemma/docs/shieldgemma) - like
   Llama Guard but by Google and in more sizes
 
-Inference Engines:
+## Inference Engines
 
 - [Ollama](https://ollama.com/) - like docker for large language models
 - [Llama.cpp](https://github.com/ggml-org/llama.cpp) - a lower level library and
@@ -75,7 +80,7 @@ Inference Engines:
 - [vllm](https://docs.vllm.ai/en/latest/) - a large language model to OpenAI API
   converter
 
-Nomadic Compute tools:
+## Nomadic Compute tools
 
 - [SkyPilot](https://docs.skypilot.co/en/latest/docs/index.html) - describe what
   you want, it picks the cheapest infrastructure for you
@@ -84,7 +89,7 @@ Nomadic Compute tools:
 - [Tigris](https://tigrisdata.com/) - multi-cloud native object storage for
   files, datasets, and other unstructured data
 
-Terms:
+## Terms
 
 - **AI Agent**: A model that has access to tools that allow it to interact with
   the outside world.
@@ -95,7 +100,7 @@ Terms:
 - **Nomadic Compute**: Structuring your workloads to not rely on specialized
   features of any platform so that it's easily portable between them.
 
-Other tools and platforms referenced in the talk:
+## Other tools and platforms
 
 - [Beam](https://beam.cloud) - a platform for deploying and managing serverless
   AI infrastructure

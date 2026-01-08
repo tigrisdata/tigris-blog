@@ -1,0 +1,190 @@
+/*
+ * ============================================================================
+ * COMMON BLOG POST STYLES
+ * ============================================================================
+ * These styles should be imported in every blog post for consistent layout.
+ * Copy this file to your blog post directory and import it in index.mdx:
+ *
+ *   import styles from "!!raw-loader!./styles.css";
+ *   <style>{styles}</style>
+ *
+ * ============================================================================
+ */
+
+/* Large screen image constraints */
+@media (min-width: 1536px) {
+  img:not(.hero-image) {
+    max-width: 48rem; /* 3xl equivalent */
+  }
+}
+
+/* Hero image - full width at top of post */
+.hero-image {
+  margin-bottom: 1rem;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+/* Paragraph width constraint for readability */
+p:not(:has(img)) {
+  max-width: 42rem; /* 2xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Headings, blockquotes, admonitions, and lists - centered column */
+h2,
+h3,
+h4,
+h5,
+h6,
+blockquote,
+.theme-admonition,
+ul,
+ol {
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Code blocks - centered column */
+.theme-code-block {
+  max-width: 42rem; /* 2xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Tables - centered column */
+table {
+  max-width: 42rem; /* 2xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td,
+th {
+  padding: 0.75rem;
+  text-align: left;
+}
+
+/* Non-hero images - centered */
+img:not(.hero-image) {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+/*
+ * ============================================================================
+ * POST-SPECIFIC STYLES
+ * ============================================================================
+ * The styles below are used by specific posts. They use unique class names
+ * that won't conflict with other posts. Include them here for posts that
+ * need them, or remove them if your post doesn't use these components.
+ * ============================================================================
+ */
+
+/*
+ * Used by: hosted-mcp, mcp-oauth, northflank-registry, tigris-rag-lab
+ * Install button component styling
+ */
+img.install-btn {
+  max-width: 22px;
+}
+
+.install-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-right: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.install-btn:hover {
+  background: rgba(98, 254, 181, 0.15);
+  border-color: rgba(98, 254, 181, 0.3);
+  color: #fff;
+}
+
+/*
+ * Used by: hosted-mcp, mcp-oauth, northflank-registry, tigris-rag-lab
+ * Responsive font sizing utility
+ */
+.font-xl-lg-font-2xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+@media (min-width: 1024px) {
+  .font-xl-lg-font-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
+
+/*
+ * Used by: fork-buckets-like-code
+ * Full-width animation styling (same as hero-image)
+ */
+.animation {
+  margin-bottom: 1rem;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+/*
+ * Used by: storage-sdk-js
+ * Responsive table/phone container toggle
+ */
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+  max-width: 42rem; /* 2xl equivalent */
+  margin-left: auto;
+  margin-right: auto;
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .table-container {
+    display: block;
+  }
+}
+
+.phone-container {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .phone-container {
+    display: block;
+  }
+}
+
+/*
+ * Used by: mcp-oauth
+ * Mermaid diagram centering
+ */
+.docusaurus-mermaid-container {
+  display: flex;
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+}

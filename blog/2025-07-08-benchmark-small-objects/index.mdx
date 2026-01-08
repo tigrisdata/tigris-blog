@@ -16,7 +16,7 @@ keywords:
 authors:
   - ot
 tags:
-  - updates
+  - Updates
   - benchmarks
 ---
 
@@ -55,7 +55,9 @@ export const O = ({ t, s }) => (
   <MetricCell tigrisValue={t} serviceValue={s} unit="ops/sec" higherIsBetter />
 );
 
-![](./benchmark-science.webp)
+import heroImage from "./benchmark-science.webp";
+
+<img src={heroImage} className="hero-image" alt="Benchmark science" />
 
 One of Tigris's standout capabilities is its performance when storing and
 retrieving small objects. To quantify this advantage, we benchmarked Tigris

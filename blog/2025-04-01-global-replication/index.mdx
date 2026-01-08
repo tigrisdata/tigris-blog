@@ -5,7 +5,7 @@ description: >
   Tigris puts your objects all over the world, but how do we do it? Today we'll
   break down the strategies to Tigris' global replication and how it combines
   fundamental parts of distributed systems to make it happen.
-image: ./tiger-globe.webp
+image: ./hero-poster.webp
 keywords:
   - scalability
   - sre
@@ -14,13 +14,28 @@ authors:
   - xe
   - ks
 tags:
-  - engineering
+  - Engineering
   - scalability
   - foundationdb
   - replication
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import heroPoster from "./hero-poster.webp";
+
+<video
+  className="hero-image"
+  autoPlay
+  playsInline
+  loop
+  muted
+  poster={heroPoster}
+>
+  <source
+    src="/blog/img/blog/global-replication/tiger-globe.mp4"
+    type="video/mp4"
+  />
+</video>
 
 At Tigris, globally replicated object storage is our _thing_. But why should you
 want your objects "globally replicated"? Today I'm gonna peel back the curtain
@@ -29,49 +44,6 @@ need them, by default.
 
 Global replication matters because computers are ephemeral and there's a
 tradeoff between performance and reliability. But does there have to be?
-
-<div
-  style={{
-    height: "100%",
-    width: "100%",
-  }}
->
-  <video
-    id="attract-video"
-    autoplay
-    playsInline
-    loop
-    muted
-    style={{
-      width: "100%",
-      height: "auto",
-      maxWidth: "100%",
-      maxHeight: "100%",
-    }}
-    onCanPlayThrough={(ev) => {
-      ev.target.muted = true;
-      ev.target.play();
-    }}
-  >
-    <source
-      src="/blog/img/blog/global-replication/tiger-globe.mp4"
-      type="video/mp4"
-    />
-
-![](./tiger-globe.webp)
-
-  </video>
-  <center>
-    <small>
-      <em>
-        A cartoon tiger laying across the globe, protecting and distributing
-        buckets to users. Image input made with Flux 1.1 [ultra] and video made
-        with Veo 2.
-      </em>
-    </small>
-  </center>
-  <script type="text/javascript" src="data:text/javascript,const v=document.getElementById('attract-video');setTimeout(async()=>{if(v.paused){await v.play();}},250);" />
-</div>
 
 {/* truncate */}
 

@@ -20,7 +20,7 @@ authors:
   - ot
   - firsov
 tags:
-  - updates
+  - Updates
   - cloud
   - big data
   - tigrisfs
@@ -32,6 +32,8 @@ import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
 import ovais from "@site/static/img/avatars/ovais.jpg";
+
+import heroImage from "./tigrisfs.webp";
 
 export const Ovais = ({ children, top, bottom }) => (
   <Conv
@@ -45,7 +47,11 @@ export const Ovais = ({ children, top, bottom }) => (
   </Conv>
 );
 
-![](./tigrisfs.webp)
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="TigrisFS filesystem mount illustration"
+/>
 
 At Tigris we put your big data close to your compute so you don't have to do it
 yourself. However, there's been a small problem with that: most of the programs
