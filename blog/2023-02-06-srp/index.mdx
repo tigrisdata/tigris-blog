@@ -20,7 +20,11 @@ tags:
 
 import heroImage from "./hero.webp";
 
-<img src={heroImage} className="hero-image" alt="SRP authentication illustration" />
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="SRP authentication illustration"
+/>
 
 In computer systems, username and password has become a widely used way to
 authenticate users. The evolution of password storage and authentication methods
@@ -34,44 +38,43 @@ Remote Password (SRP) and the key concepts at each stage:
 
 ## Plain text passwords
 
-In the early days of computing and network
-authentication, passwords were often stored in plain text on servers. This means
-that when a user entered their password, it was stored exactly as entered. The
-main problem with plain text storage is that if the server is compromised,
-attackers can easily obtain the passwords, potentially leading to unauthorized
-access to user accounts.
+In the early days of computing and network authentication, passwords were often
+stored in plain text on servers. This means that when a user entered their
+password, it was stored exactly as entered. The main problem with plain text
+storage is that if the server is compromised, attackers can easily obtain the
+passwords, potentially leading to unauthorized access to user accounts.
 
 ## Password hashing
 
-The next step was to use password hashing to address the
-security weaknesses of plain text passwords. Instead of storing the actual
-password, this approach stores a one-way cryptographic hash of the password on
-the server. Hashing ensures that the original password cannot be easily
-retrieved from the stored value, even if the database is breached. Common
-hashing algorithms used for password storage include MD5, SHA-1, and more secure
-ones like bcrypt, scrypt, and Argon2. These newer algorithms are designed to be
-slow and computationally intensive, making it more difficult for attackers to
-crack passwords through brute force or dictionary attacks.
+The next step was to use password hashing to address the security weaknesses of
+plain text passwords. Instead of storing the actual password, this approach
+stores a one-way cryptographic hash of the password on the server. Hashing
+ensures that the original password cannot be easily retrieved from the stored
+value, even if the database is breached. Common hashing algorithms used for
+password storage include MD5, SHA-1, and more secure ones like bcrypt, scrypt,
+and Argon2. These newer algorithms are designed to be slow and computationally
+intensive, making it more difficult for attackers to crack passwords through
+brute force or dictionary attacks.
 
 ## Salted hashes
 
-The concept of adding salt to password hashes was introduced
-to enhance security. A salt is a random value unique to each user, combined with
-their password before hashing. Salting prevents precomputed rainbow tables and
-ensures that even identical passwords result in different hashes due to the
-unique salts. Combining salt with password hashing significantly improves the
+The concept of adding salt to password hashes was introduced to enhance
+security. A salt is a random value unique to each user, combined with their
+password before hashing. Salting prevents precomputed rainbow tables and ensures
+that even identical passwords result in different hashes due to the unique
+salts. Combining salt with password hashing significantly improves the
 resistance to offline attacks.
 
 ## Secure Remote Password (SRP)
 
-SRP is an advanced authentication protocol
-that addresses the weaknesses in traditional password-based authentication
-systems. In SRP, the password is transformed into a verifier value stored on the
-server, and the actual password is never transmitted during authentication. SRP
-uses cryptographic techniques to provide mutual authentication, where both the
-client and server prove their identities without exchanging plaintext secrets.
-The protocol also defends against a wide range of attacks, including
-man-in-the-middle attacks, replay attacks, and offline password attacks.
+SRP is an advanced authentication protocol that addresses the weaknesses in
+traditional password-based authentication systems. In SRP, the password is
+transformed into a verifier value stored on the server, and the actual password
+is never transmitted during authentication. SRP uses cryptographic techniques to
+provide mutual authentication, where both the client and server prove their
+identities without exchanging plaintext secrets. The protocol also defends
+against a wide range of attacks, including man-in-the-middle attacks, replay
+attacks, and offline password attacks.
 
 In summary, password security has progressed from storing plain text passwords
 to using password hashing with salts and finally to the more advanced and secure
