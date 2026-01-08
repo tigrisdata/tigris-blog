@@ -1210,10 +1210,61 @@ table td {
   max-width: 360px;
 }
 
-/* Hero image styling for blog posts */
+/* Blog post layout styling */
+/* These styles provide consistent layout for all blog posts */
+
+/* Hero image - full width */
 .hero-image {
   margin-bottom: 1rem;
   width: 100%;
   height: auto;
   max-width: 100%;
+}
+
+/* Constrain non-hero images on large screens */
+@media (min-width: 1536px) {
+  .markdown img:not(.hero-image) {
+    max-width: 48rem; /* 3xl equivalent */
+  }
+}
+
+/* Center non-hero images */
+.markdown img:not(.hero-image) {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+/* Constrain text content for readability */
+.markdown p:not(:has(img)) {
+  max-width: 42rem; /* 2xl equivalent - ~672px */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6,
+.markdown blockquote,
+.markdown .theme-admonition,
+.markdown ul,
+.markdown ol {
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.markdown .theme-code-block {
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.markdown table {
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }

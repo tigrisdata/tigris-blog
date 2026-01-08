@@ -424,9 +424,6 @@ expiration is by passing options when creating the JWKS fetcher:
 
 ```ts
 import { createRemoteJWKSet } from "jose";
-import styles from "!!raw-loader!./styles.css";
-
-<style>{styles}</style>;
 
 const jwksUri = new URL("https://your-issuer/.well-known/jwks.json");
 
