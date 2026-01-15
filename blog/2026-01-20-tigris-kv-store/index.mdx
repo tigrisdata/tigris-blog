@@ -1,0 +1,250 @@
+---
+slug: tigris-kv-store
+title: "Using Tigris as a key-value store"
+description: |
+  Learn how to use Tigris object storage as a powerful key-value store for both structured and unstructured data, eliminating the need for separate databases.
+image: ./hero-image.webp
+keywords:
+  - key-value store
+  - object storage
+  - Tigris
+  - TypeScript
+  - Node.js
+authors:
+  - xe
+tags:
+  - Build with Tigris
+  - Engineering
+  - Tutorial
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Using Tigris as a key-value store - visualize data flowing into a unified storage plane"
+/>
+
+At Tigris, we make object storage that scales to as many files you need,
+anywhere you need them, and at any size they happen to be. However even though
+our bread and butter is making it easy to copy files (AI models, training
+datasets, user image uploads, generated artifacts from models, etc), you don't
+have to stop there. Object storage is a generic key-value store with no limits
+on the size or type of data you can store. If you store your data in Tigris you
+can store your structured data and unstructured data in the same global
+namespace with the same code to interact with it.
+
+This doesn't really seem like that big of a deal until you've had to implement
+the "object storage pointer" pattern one too many times. Databases like DynamoDB
+make you have to choose where to store data based on the size of that data,
+usually requiring you to choose where to store that data. Then to join the gap,
+you put the name of the key you just uploaded into object storage into your
+database. I'm not going to lie, this pattern _does_ work, but any time you make
+a service depend on interactions with other services, you run into fun issues
+where data is put into one side and not the other.
+
+Storing this all in object storage by using it as a key-value store means that
+you have a single unified data plane where everything lives together without
+having to partition data into separate services. Less partitions, less code,
+less ways that things can go wrong. Not to mention Tigris' global performance
+making your data fast anywhere with an internet connection.
+
+## When should I pick object storage as a key-value store for my data?
+
+The best usecases for using object storage as a key-value store are when you
+have big unstructured data with small structured data next to it. Think about
+image hosting websites: they have unstructured data (the images people upload)
+next to structured data (metadata about the image, filesizes, descriptions,
+etc). Also consider a Docker registry: there's big blobs of data (image layers)
+next to smaller bits of metadata (image layer order, environment variables,
+etc). Storing this all in object storage means that setting up a Docker registry
+is easy,
+[all you need to do is add object storage](https://www.tigrisdata.com/blog/northflank-registry/).
+
+If you want to use this pattern with MCP servers, a great way to do it is with
+our [mcp-oidc-provider](https://www.tigrisdata.com/blog/mcp-oidc-provider/)
+package for Express applications. This is a one-step integration to help your
+users use MCP and OAuth together fearlessly; all the state is safely stored in
+Tigris.
+
+## Using the Tigris Storage SDK to do basic key-value store operations
+
+If you want to set up a basic key-value store on top of Tigris in JavaScript or
+TypeScript, you can use
+[the Tigris Storage SDK](https://www.tigrisdata.com/docs/sdks/tigris/using-sdk/)
+to set and get values. Here's how you get started:
+
+1. Install the package via NPM:
+
+```shell
+npm install @tigrisdata/storage
+```
+
+2. Add environment variables to your `.env` file:
+
+```shell
+TIGRIS_STORAGE_ACCESS_KEY_ID=tid_access_key_id
+TIGRIS_STORAGE_SECRET_ACCESS_KEY=tsec_secret_access_key
+TIGRIS_STORAGE_BUCKET=bucket_name
+```
+
+3. Import the storage SDK in your code:
+
+```ts
+import { get, put, list, delete } from "@tigrisdata/storage";
+```
+
+4. Store data in in Tigris by serializing it with `JSON.stringify`:
+
+```ts
+const { error } = await put(`users/${user.id}`, JSON.stringify(user));
+
+if (error) {
+  // handle the error
+  throw new Error(`error saving user information: ${error}`);
+}
+```
+
+5. Read the data back and deserialize it with `JSON.parse`:
+
+```ts
+const { data, error } = await get(`users/${userId}`, "string");
+
+if (error) {
+  // handle the error
+  throw new Error(`error saving user information: ${error}`);
+}
+
+const user = JSON.parse(data);
+// do something with user
+```
+
+6. List information with the `list` function:
+
+```ts
+const { data, error } = await list("users/");
+
+if (error) {
+  // handle the error
+  throw new Error(`error saving user information: ${error}`);
+}
+
+console.log(data);
+```
+
+Note that when putting data like this into Tigris, it is a good idea to
+namespace your data by putting the type of data before the ID in its key. For
+example, if you are putting user data into a bucket, prefix its key with
+`users/`. If you are putting information about a video upload into a bucket,
+prefix its key with `video-uploads/`. This will help you keep track of all the
+information and make it easier to search through listing things.
+
+## Using Tigris as a KV store with the Tigris keyv adaptor
+
+If you use JavaScript or TypeScript and want to use Tigris as a high level
+key-value store, we've made
+[an adapter](https://www.npmjs.com/package/@tigrisdata/keyv-tigris) for
+[Keyv](https://keyv.org/), a common implementation-neutral interface for
+key-value stores from memory to SQLite to Tigris. Our
+[@tigrisdata/keyv-tigris](https://www.npmjs.com/package/@tigrisdata/keyv-tigris)
+library makes it easy. Here's how you set it up:
+
+1. Install the package via npm:
+
+```shell
+npm install @tigrisdata/keyv-tigris keyv
+```
+
+2. Add environment variables to your `.env` file:
+
+```shell
+TIGRIS_STORAGE_ACCESS_KEY_ID=tid_access_key_id
+TIGRIS_STORAGE_SECRET_ACCESS_KEY=tsec_secret_access_key
+TIGRIS_STORAGE_BUCKET=bucket_name
+```
+
+3. Configure the Keyv store backend:
+
+```ts
+import Keyv from "keyv";
+import { KeyvTigris } from "@tigrisdata/keyv-tigris";
+
+const store = new KeyvTigris();
+
+// Or pass the configuration directly:
+
+const store = new KeyvTigris({
+  bucket: "your-bucket-name",
+  accessKeyId: "your-access-key",
+  secretAccessKey: "your-secret-key",
+  endpoint: "https://t3.storage.dev",
+});
+
+const keyv = new Keyv({ store });
+```
+
+4. Create a typed keyv store based on a typescript interface
+
+```ts
+export interface Paste {
+  id: string;
+  title: string;
+  body: string;
+  createdAt: Date;
+}
+
+const pastes = new Keyv<Paste>({ store, namespace: "paste" });
+pastes.on("error", (err) => console.error("Store error:", err));
+```
+
+If you want an example of this pattern in action, take a look at
+[the example pastebin backed by Tigris](https://github.com/tigrisdata-community/pastebin).
+It's a simple Express + HTMX app that shows you how create and read calls are
+implemented for one of the most classic utilities on the internet: pastebin
+websites.
+
+## Going even further beyond with snapshots and forks
+
+This pattern works by itself and most of the time you'll be just fine with it,
+however it's the future, we can do more. Most of the time your object storage
+system is your backup. You blindly trust that when you put things into there,
+you'll always be able to get them back out safely. What if there was an extra
+layer of insurance? What if you could **just** snapshot your storage and then
+copy files out of that snapshot in case things go wrong?
+
+Tigris has your back. We've got the ability to
+[snapshot and fork your data](https://www.tigrisdata.com/blog/snapshots/) so an
+agent with its sticky mitts on the "delete" button when it shouldn't doesn't end
+in disaster. Here's some other ways you can integrate forking into your
+application lifecycle:
+
+- Make a "base bucket" for CI and then fork it for each test run. You could even
+  go as far as making separate forks per test suite!
+- Deploying a review app or a new version of your application in staging? Make
+  it use a fork of production data to keep everything isolated.
+- Have a cronjob make weekly snapshots of your data so you can revert if things
+  go awry in production.
+
+Everything will be safely stored in Tigris and globally performant so you can
+[move your compute around to the cheapest providers](https://www.tigrisdata.com/blog/nomadic-compute/)
+as prices change.
+
+## Level up your storage with Tigris
+
+With all this in mind, it's no wonder that companies like Arcjet,
+[Fly.io](http://Fly.io), Depot, Beam, LogSeam, Krea and Techaro use Tigris to
+store their production data. You could be next!
+
+The pattern of storing your structured and unstructured data together in the
+same namespace is really subtle yet powerful as it frees you from having to
+worry about linking everything together. You don't have to leave references
+around your data for places to look elsewhere if you can just store everything
+together like one big happy data family!
+
+<InlineCta
+  title="Ready to unify your data storage?"
+  subtitle="Store your structured and unstructured data together in Tigris. One global namespace, one SDK, no more object storage pointer patterns."
+  button="Get started for free"
+/>
