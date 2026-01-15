@@ -1,0 +1,189 @@
+---
+slug: llms-txt
+title: "Give your agent access to Tigris’ docs!"
+description: |
+  Learn how the new llms.txt standard lets AI agents access Tigris documentation for better, faster answers. Configure AGENTS.md or CLAUDE.md in minutes.
+image: ./corporate-memphis.webp
+keywords:
+  - llms.txt
+  - AI agents
+  - documentation
+  - Claude Code
+  - AGENTS.md
+  - CLAUDE.md
+  - AI developer tools
+  - LLM integration
+authors:
+  - xe
+tags:
+  - Build with Tigris
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import Conv from "@site/src/components/Conv";
+import Reasoning from "@site/src/components/Reasoning";
+import ToolCall from "@site/src/components/MCPCall";
+import ty from "@site/static/img/avatars/ty/happy.webp";
+import xe from "@site/static/img/avatars/xe.jpg";
+import heroImage from "./corporate-memphis.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A swarm of robots looking through a bookshelf labeled 'Tigris Documentation'."
+/>
+
+We’ve added support for the [llms.txt](https://llmstxt.org/) standard across our
+website! This lets you have your agents do lookups into the Tigris documentation
+and get better answers in a snap!
+
+To get started, add a section like this to your [AGENTS.md](https://agents.md/)
+or [CLAUDE.md](https://www.anthropic.com/engineering/claude-code-best-practices)
+file:
+
+```text
+## Helpful Documentation
+
+When asked about various services or tools, use these resources to help you:
+
+- **AutoMQ**: https://www.automq.com/llms.txt
+- **Pixeltable**: https://docs.pixeltable.com/llms.txt
+- **Tigris** or **Tigris Data**: https://www.tigrisdata.com/docs/llms.txt
+  or https://www.tigrisdata.com/llms.txt
+```
+
+## What is llms.txt?
+
+The new [llms.txt](https://llmstxt.org/) standard is intended to give AI agents
+a cheat sheet for interacting with a given product or service. This is a simple
+text file that describes what something is and gives links to helpful
+documentation so that your AI agents can get things done without causing an
+undue burden on server resources. Here’s an example of what’s in there based on
+the contents of the Tigris Docs’ llms.txt:
+
+> Tigris is a globally distributed, S3-compatible object storage service that
+> supports key-value access patterns, fulfills most of the AWS S3 API, enables
+> AI workloads without egress fees, and is not a database or a CDN.
+
+It also includes links to documentation so that agents can intelligently pick
+the best answers from the docs and get you coding fearlessly. Here’s an example
+of this in action where I ask Claude Code to write me some TypeScript using
+[the Tigris Storage SDK](https://www.tigrisdata.com/docs/sdks/tigris/) to fork a
+bucket:
+
+TODO(Xe): reformat
+[https://gist.github.com/Xe/3e5161cfb5ff77a2c924bcfee22e656d](https://gist.github.com/Xe/3e5161cfb5ff77a2c924bcfee22e656d)
+using conv tags
+
+<Conv name="Xe" profilePic={xe} top>
+  How do I fork a Tigris bucket in TypeScript?
+</Conv>
+<Conv name="Ty" profilePic={ty} bottom>
+  I'll help you find the documentation for forking a Tigris bucket in TypeScript. Let me fetch the Tigris documentation.
+
+{" "}
+
+<ToolCall
+  title={
+    <>
+      Called tool <code>web_fetch</code>
+    </>
+  }
+  parameters={{
+    url: "https://www.tigrisdata.com/docs/llms.txt",
+    format: "text",
+  }}
+  result={{
+    content:
+      "# Tigris Object Storage Documentation\n\n> Globally Distributed S3-Compatible Object Storage\n\n[...]",
+  }}
+/>
+
+<Reasoning timeTaken={1}>
+  Let me fetch the specific documentation about snapshots and forks for Tigris
+  to get you the accurate TypeScript implementation details.
+</Reasoning>
+
+<ToolCall
+  title={
+    <>
+      Called tool <code>web_fetch</code>
+    </>
+  }
+  parameters={{
+    url: "https://www.tigrisdata.com/docs/sdks/tigris/snapshots-and-forks",
+    format: "markdown",
+  }}
+  result={{
+    title: "Snapshots and Forks | Tigris Object Storage Documentation",
+    content:
+      "Snapshots and forks extend traditional object versioning beyond individual [...]",
+  }}
+/>
+
+To fork a Tigris bucket in TypeScript, use the @tigrisdata/storage SDK with the
+createBucket function and pass the sourceBucketName option:
+
+```typescript
+import { createBucket } from "@tigrisdata/storage";
+
+// Fork from current state of bucket
+const fork = await createBucket(
+  "llm-fork", // name of the new fork bucket
+  {
+    sourceBucketName: "llm-base", // parent bucket to fork from
+  }
+);
+
+if (fork.error) {
+  console.error("error creating fork", fork.error);
+} else {
+  console.log("bucket fork created");
+}
+```
+
+To fork from a specific snapshot version:
+
+```typescript
+import { createBucket } from "@tigrisdata/storage";
+
+const fork = await createBucket("llm-fork", {
+  sourceBucketName: "llm-base",
+  sourceBucketSnapshot: "1760550614083112540", // specific snapshot version
+});
+
+if (fork.error) {
+  console.error("error creating fork", fork.error);
+} else {
+  console.log("bucket fork created");
+}
+```
+
+Note: The source bucket must have snapshots enabled (`enableSnapshot: true`)
+when it's created. Existing buckets cannot have snapshots enabled.
+
+The documentation I fetched covers the complete API for forking Tigris buckets
+in TypeScript. Is there anything specific you'd like to know more about, such
+as:
+
+- Listing snapshots before forking from a specific one
+- Working with objects in the forked bucket
+- Managing the fork lifecycle
+
+Or would you like help implementing this in a particular context?
+
+</Conv>
+
+## Assemble your agentic infinity gauntlet today!
+
+Try this out and see how you like it! You should also add the `llms.txt` files
+for other services you use to your [AGENTS.md](http://AGENTS.md) file so that
+your agents have all the context they need to succeed. Everything combined lets
+you build apps in a snap!
+
+<InlineCta
+  title="Build AI-native apps with Tigris + full MCP access"
+  subtitle="Get started with Tigris today — the first AI-native object storage platform with complete Model Context Protocol support for seamless agentic integration."
+  button="Check out the docs"
+  link="https://www.tigrisdata.com/docs/"
+/>
