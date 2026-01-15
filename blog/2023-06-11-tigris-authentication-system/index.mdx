@@ -24,7 +24,7 @@ methods. AWS S3 evolved in offerings for their authentication and authorization
 needs. We support what AWS S3 recommends to their users as of now for the AuthN
 and AuthZ needs.
 
-![illustration_authentication_authorization_in_computer_security](authnz.png)
+![illustration_authentication_authorization_in_computer_security](authnz.webp)
 
 {/* truncate */}
 
@@ -52,7 +52,7 @@ This mechanism relies on the access key - Tigris supports IAM’s
 `CreateAccessKey` API to generate access keys. These keys are stored on Tigris
 server in an encrypted form with `AES` `256-bit` encryption.
 
-![Double encryption of access key](double-encryption-of-key.png)
+![Double encryption of access key](double-encryption-of-key.webp)
 
 ### Session Token
 
@@ -94,7 +94,7 @@ public key rendered by Tigris’s authentication service. If the signature is
 valid, Tigris server further validates the claims made by the token. Such as
 issuer, audience, and expiration.
 
-![Session token based authentication](session-token-auth.png)
+![Session token based authentication](session-token-auth.webp)
 
 ## Authorization
 
@@ -146,4 +146,4 @@ with regards to the bucket is pulled if the user is the owner of the bucket.
 With this information, Tigris evaluates the access and grants or denies access
 to the operation.
 
-![Authorization](authorization.png)
+![Authorization](authorization.webp)

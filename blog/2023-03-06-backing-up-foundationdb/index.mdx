@@ -5,7 +5,7 @@ description: >
   Tigris is a globally available, S3 compatible object storage service that uses
   FoundationDB for its metadata storage. This blog post describes how do we
   perform backups on FoundationDB, and what options exist for that purpose.
-image: ./foundationdb-backups.png
+image: ./foundationdb-backups.webp
 keywords:
   - foundationdb
   - backup
@@ -45,7 +45,7 @@ deployment will need the following:
 - If the backup destination is not object store, supply a volume for the backup
   agents where the backup will be stored.
 
-![Architecture](./fdb-backup-architecture.png)
+![Architecture](./fdb-backup-architecture.webp)
 
 There is no limit to the number of backup agents that can connect to a cluster,
 each one will be responsible for a range of keys, which they will either store
