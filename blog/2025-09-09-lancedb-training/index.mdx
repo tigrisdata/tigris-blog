@@ -87,11 +87,10 @@ To get started, you need the following:
 
 Once your dataset is in Lance format on Tigris, you can train your models
 without ever fully downloading the dataset to your training machine.
-[`LanceDataset`](https://lancedb.github.io/lance-python-doc/all-modules.html#lance.LanceDataset)
-treats the dataset as a stream of data. It reads batches of data directly from
-the LanceDB store instead of relying on the PyTorch `DataLoader` class. In our
-case, `LanceDataset` will stream from the Lance file we created on Tigris and
-yield one batch at a time.
+[`LanceDataset`](https://docs.lancedb.com) treats the dataset as a stream of
+data. It reads batches of data directly from the LanceDB store instead of
+relying on the PyTorch `DataLoader` class. In our case, `LanceDataset` will
+stream from the Lance file we created on Tigris and yield one batch at a time.
 
 One thing to note: `LanceDataset` yields data in sequence. Any preprocessing
 should be done _within_ the `LanceDataset`’s `to_tensor_fn` callback. In other

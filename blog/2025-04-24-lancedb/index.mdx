@@ -36,19 +36,18 @@ from there to have your model generate responses rooted in the docs.
 
 There's only one problem: every one of those examples leaves the details as an
 excercise for the reader. Not today! Today I'm going to show you how to ingest
-and search documents with [LanceDB](https://lancedb.github.io/lancedb/) and
-Tigris.
+and search documents with [LanceDB](https://lancedb.com) and Tigris.
 
 {/* truncate */}
 
 ## Vector databases and you
 
-[LanceDB](https://lancedb.github.io/lancedb/) is an open-source vector database
-(like a search engine) that enables you to ingest, and query documents via any
-number of backends, including Tigris. LanceDB sets itself apart from other
-vector databases because you can embed it into the same process that your web
-service runs in. Imagine it as being zero-setup like SQLite, but for vector
-databases instead of relational databases.
+[LanceDB](https://lancedb.com) is an open-source vector database (like a search
+engine) that enables you to ingest, and query documents via any number of
+backends, including Tigris. LanceDB sets itself apart from other vector
+databases because you can embed it into the same process that your web service
+runs in. Imagine it as being zero-setup like SQLite, but for vector databases
+instead of relational databases.
 
 When you ingest a document, image, video, or your secret world domination plans
 into LanceDB, you use an
