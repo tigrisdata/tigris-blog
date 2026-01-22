@@ -32,16 +32,31 @@ function ReadingTime({ readingTime }: { readingTime: number }) {
   return <>{readingTimePlural(readingTime)}</>;
 }
 
+function formatDate(date: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(date));
+}
+
+function DateTime({ date }: { date: string }) {
+  return <time dateTime={date}>{formatDate(date)}</time>;
+}
+
 export default function BlogPostItemHeaderInfo({
   className,
 }: Props): ReactNode {
   const { metadata } = useBlogPost();
-  const { readingTime } = metadata;
+  const { date, readingTime } = metadata;
 
   return (
     <div className={clsx(styles.container, "margin-vert--md", className)}>
+      <DateTime date={date} />
       {typeof readingTime !== "undefined" && (
         <>
+          {" · "}
           <ReadingTime readingTime={readingTime} />
         </>
       )}
