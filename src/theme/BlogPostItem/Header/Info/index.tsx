@@ -32,28 +32,16 @@ function ReadingTime({ readingTime }: { readingTime: number }) {
   return <>{readingTimePlural(readingTime)}</>;
 }
 
-function DateTime({
-  date,
-  formattedDate,
-}: {
-  date: string;
-  formattedDate: string;
-}) {
-  return <time dateTime={date}>{formattedDate}</time>;
-}
-
 export default function BlogPostItemHeaderInfo({
   className,
 }: Props): ReactNode {
   const { metadata } = useBlogPost();
-  const { date, formattedDate, readingTime } = metadata;
+  const { readingTime } = metadata;
 
   return (
     <div className={clsx(styles.container, "margin-vert--md", className)}>
-      <DateTime date={date} formattedDate={formattedDate} />
       {typeof readingTime !== "undefined" && (
         <>
-          {" · "}
           <ReadingTime readingTime={readingTime} />
         </>
       )}
