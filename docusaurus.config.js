@@ -164,6 +164,14 @@ const config = {
             rel: "",
             className: "disable-external-icon",
           },
+          {
+            label: "Community",
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+            href: tigrisConfig.discordUrl,
+          },
           // {
           //   href: tigrisConfig.discordUrl,
           //   className: "pseudo-icon discord-icon",
