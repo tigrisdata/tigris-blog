@@ -273,10 +273,10 @@ const config = {
               //   label: "Videos",
               //   href: "https://www.youtube.com/channel/UCsCQ5Nl3JOh71UNCCNZ3q2g",
               // },
-              // {
-              //   label: "Community",
-              //   href: tigrisConfig.discordUrl,
-              // },
+              {
+                label: "Community",
+                href: tigrisConfig.discordUrl,
+              },
             ],
           },
         ],
