@@ -164,6 +164,14 @@ const config = {
             rel: "",
             className: "disable-external-icon",
           },
+          {
+            label: "Community",
+            position: "left",
+            target: "_self",
+            rel: "",
+            className: "disable-external-icon",
+            href: tigrisConfig.discordUrl,
+          },
           // {
           //   href: tigrisConfig.discordUrl,
           //   className: "pseudo-icon discord-icon",
@@ -273,10 +281,10 @@ const config = {
               //   label: "Videos",
               //   href: "https://www.youtube.com/channel/UCsCQ5Nl3JOh71UNCCNZ3q2g",
               // },
-              // {
-              //   label: "Community",
-              //   href: tigrisConfig.discordUrl,
-              // },
+              {
+                label: "Community",
+                href: tigrisConfig.discordUrl,
+              },
             ],
           },
         ],

@@ -6,7 +6,7 @@ module.exports = {
   consoleUrl: "https://console.tigris.dev/",
   blogUrl: "https://www.tigrisdata.com/blog/",
   websiteUrl: "https://www.tigrisdata.com",
-  discordUrl: "https://www.tigrisdata.com/discord/",
+  discordUrl: "https://community.tigrisdata.com/",
   docsUrl: "https://www.tigrisdata.com/docs",
   statusPageUrl: "https://status.tigris.dev/",
   getStartedUrl: "https://www.tigrisdata.com/docs/get-started/",

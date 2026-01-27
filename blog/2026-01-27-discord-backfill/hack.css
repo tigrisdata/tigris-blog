@@ -1,0 +1,3 @@
+img:not(.hero-image) {
+  margin-bottom: 1rem;
+}
