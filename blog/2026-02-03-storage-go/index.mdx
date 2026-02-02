@@ -1,0 +1,161 @@
+---
+slug: storage-go-announcement
+title: "Deriving the Tigris Go SDK"
+description: >-
+  Tigris now has an official Go SDK! Learn how storage-go provides both an AWS
+  S3 drop-in replacement and an ergonomic high-level interface for Go
+  developers.
+image: ./hero-image.webp
+keywords:
+  - Go
+  - Golang
+  - SDK
+  - object storage
+  - S3-compatible
+  - Tigris
+  - storage-go
+authors:
+  - xe
+tags:
+  - Engineering
+  - Updates
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+Tigris now has an official Go SDK! If you develop Go applications with Tigris,
+this new SDK will help you take advantage of everything Tigris has to offer:
+bucket forking, dynamic data placement, and more! If you want to check it out
+today, install it with `go get`:
+
+```text
+go get github.com/tigrisdata/storage-go@latest
+```
+
+Check out the docs on
+[pkg.go.dev](https://pkg.go.dev/github.com/tigrisdata/storage-go).
+
+## Les je ne sais quois de vivre de storage du objects
+
+The standard way to use object storage in Go is to use the AWS S3 client but
+with the access key and endpoint URL changed out. This does work and with some
+experience you can gain enough finesse to be mostly self sufficient; however the
+ergonomics of the AWS SDKs can leave a lot to be desired. The typical flow for
+using an AWS SDK looks like this:
+
+```go
+result, err := fooClient.VerbNoun(ctx, &foo.VerbNounRequest{ … })
+if err != nil {
+ destroyTheUniverse(err)
+}
+```
+
+Everything looks like their Java API client because everything is constructed in
+the same way that their Java client is: strongly typed per-verb request and
+response pairs. What could this interface look like if we didn't need to support
+that historical baggage?
+
+With that in mind, I set out to make the Tigris Go SDK with the following goals:
+
+1. Create a drop-in replacement for the AWS S3 SDK while also exposing all the
+   Tigris features you could want.
+2. Build a higher-level interface that focuses on the intent of actions rather
+   than how the object storage wire protocol works.
+3. Ensure both are "Go native" so that experienced Go developers (like me) can
+   glance at the code and get a rough idea of what's going on.
+4. Document thoroughly so that intellisense and other tools can hook into it
+   easily.
+
+I think I've hit that goal, and as a result the
+[storage-go](https://github.com/tigrisdata/storage-go) library is ready for your
+development needs.
+
+## When should you use the Tigris Go SDK?
+
+To give you maximum flexibility, storage-go has two main packages:
+
+- [`storage`](https://pkg.go.dev/github.com/tigrisdata/storage-go): a drop-in
+  replacement/wrapper around AWS' S3 client with extra methods for interacting
+  with Tigris.
+- [`simplestorage`](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.4.1/simplestorage):
+  a highly opinionated interface, oriented towards the heart of object storage
+  interactions, from a higher level.
+
+### storage: the unopinionated wrapper
+
+If you already use the AWS S3 SDK and want to use extra Tigris features like
+snapshots or bucket forking, this is made for you. Here's how to use it:
+
+```go
+tigris, err := storage.New(ctx)
+if err != nil {
+  destroyTheUniverse(err)
+}
+
+result, err := tigris.ListBucketSnapshots(ctx, "my-bucket")
+// ...
+```
+
+That's it. All your existing code using the AWS SDK will work as-is. No
+modifications are required. If you want to see what extra Tigris features are
+available, check out
+[the documentation](https://pkg.go.dev/github.com/tigrisdata/storage-go#Client).
+Every method has full copy and paste examples so you can get started quickly.
+
+### `simplestorage`: Object Storage Reimagined
+
+`simplestorage` takes a lot of the lessons that fed the TypeScript SDK's
+development and makes them more ergonomic for Go developers. Before
+demonstrating the API, I want to talk a bit about the philosophy behind the
+design.
+
+At a high level, interacting with object storage means that you have Objects
+represented by Keys in Buckets. As a result, all of the interactions with object
+storage should have those concepts in programming too. Here's how you put an
+object into Tigris with `simplestorage`:
+
+```go
+fin, err := os.Open("./file.txt")
+if err != nil { destroyTheUniverse(err) }
+defer fin.Close()
+
+st, err := fin.Stat()
+if err != nil { destroyTheUniverse(err) }
+
+tigris, err := simplestorage.New(ctx)
+if err != nil { destroyTheUniverse(err) }
+
+result, err := tigris.Put(ctx, &simplestorage.Object{
+  Key: "file.txt",
+  ContentType: "text/plain",
+  Size: st.Size(),
+  Body: fin,
+})
+if err != nil { destroyTheUniverse(err) }
+```
+
+That's it. You just focus on the Object you're inserting. The result of Put is
+another Object with more information populated. This obsession with UX extends
+to the other methods too. Whenever you List, Get, or Put, you deal with Objects.
+
+Most projects only deal with one object storage bucket at once, so
+`simplestorage` loads that bucket from the environment variable
+`TIGRIS_STORAGE_BUCKET` just like the JavaScript SDK. If you need to use another
+bucket, use the `For` method:
+
+```go
+uploadsCli := tigris.For("contoso-user-uploads")
+```
+
+## Get started today
+
+Please try storage-go out and if you like it,
+[join our Discord](https://community.tigrisdata.com) to talk about your
+experiences! Let us know what you're building with simple object storage.
+
+<InlineCta
+  title="Ready to get Go-ing with Tigris?"
+  subtitle="Install storage-go today and experience object storage with a truly Go-native interface."
+  button="Read the storage-go Docs"
+  link="https://pkg.go.dev/github.com/tigrisdata/storage-go"
+/>
