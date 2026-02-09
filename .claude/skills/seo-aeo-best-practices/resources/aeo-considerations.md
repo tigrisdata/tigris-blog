@@ -22,8 +22,9 @@ Lead with the answer, then explain.
 
 **Bad:**
 
-> The history of JavaScript dates back to 1995 when Brendan Eich... [500 words >
-> later] ...JavaScript runs in the browser.
+> The history of JavaScript dates back to 1995 when Brendan Eich... \
+> [500 words later] \
+> ...JavaScript runs in the browser.
 
 **Good:**
 
