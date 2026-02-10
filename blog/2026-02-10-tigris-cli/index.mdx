@@ -1,0 +1,295 @@
+---
+slug: tigris-cli
+title: "A terminal user's next interface to object storage"
+description: |
+  Tigris CLI: Manage object storage from your terminal with this UNIX-philosophy tool.
+  Install with npm and start uploading files in seconds. Try it free today.
+image: ./hero-image.webp
+keywords:
+  - CLI
+  - command line
+  - object storage
+  - npm
+  - terminal
+  - Tigris
+authors:
+  - abdullah
+  - xe
+tags:
+  - Updates
+  - Build with Tigris
+  - Feature
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Terminal window showing the tigris command in action with a colorful table display of uploaded files"
+/>
+
+I live in the terminal. If I can't do it from a shell prompt, it basically
+doesn't exist. In order to make Tigris easier to use for developers like me,
+we've made a brand new Tigris CLI that lets you manage your buckets directly
+from your shell. Take a gander:
+
+```bash
+$ tigris objects put xedn AGENTS.md AGENTS.md
+Uploading object...
+
+┌───────────┬────────┬──────────────┬───────────────────────┐
+│ Path      │ Size   │ Content-Type │ Modified              │
+├───────────┼────────┼──────────────┼───────────────────────┤
+│ AGENTS.md │ 4.2 KB │ text/plain   │ Feb 5, 2026, 12:56 PM │
+└───────────┴────────┴──────────────┴───────────────────────┘
+```
+
+That copied my local [AGENTS.md](http://AGENTS.md) file to
+[my public bucket in Tigris](https://files.xeiaso.net/AGENTS.md). As you can
+see, this new Tigris CLI gives you all the buckety goodness you know and love
+anywhere with a shell prompt. Even Windows. It's just an `npm install` away:
+
+```bash
+npm install -g @tigrisdata/cli
+```
+
+Then `tigris login` and you're good to go!
+
+## Wait, didn't you have a CLI already?
+
+Fun fact: Tigris wasn't always an object storage company. We used to be a
+database company that made a database similar to DynamoDB. When we made that, we
+had a separate `tigris` command that let you interact with the database from the
+command line. Given that product is cancelled and offline, we've deprecated that
+old `tigris` command in favour of this new one that lets you interact with
+object storage.
+
+## What's different about the `tigris` command?
+
+The UNIX philosophy states that each command should be _as simple as possible_
+so that complex functionality can be created by chaining programs together
+[like how 8 simple ingredients at Taco Bell can assemble a wide array of menu options](http://widgetsandshit.com/teddziuba/2010/10/taco-bell-programming.html).
+Each of the subcommands in the `tigris` command follows this rule. Here are some
+examples so you get the idea:
+
+- `tigris login`: Authenticates you to Tigris with a temporary access key.
+- `tigris buckets list`: Lists the buckets in your current Tigris organization.
+- `tigris objects delete`: Delete an object.
+
+At a high level, `tigris` uses this pattern:
+
+```bash
+tigris DOMAIN OPERATION <ARGUMENT> --flags
+```
+
+This maps really cleanly to how you'd intuitively expect it to work:
+
+- **Domain:** the area of concern: objects, buckets, credentials, forks,
+  snapshots, etc.
+- **Operation**: is the verb: `list`, `get`, `put`, `delete`, `copy`, `move`.
+- **Arguments**: what comes after. You'll intuit your way through the rest of
+  the program after one command, ideally so natural that you can squint at a
+  `tigris` command once and then figure your way through the rest of the
+  program.
+
+One neat side effect of this being natural for humans is that it's also natural
+for our artificial coworkers to figure out thanks to them being trained on so
+much CLI tool documentation!
+
+```bash
+❯ Try running tigris objects put --help and copy yeetfile.js to the skynet bucket
+
+⏺ Bash(tigris objects put --help)
+  ⎿  Usage: tigris objects put|p [options] [command] <bucket> <key> <file>
+
+     Upload an object
+     … +14 lines (ctrl+o to expand)
+
+⏺ Bash(ls -la yeetfile.js 2>/dev/null || find . -name "yeetfile.js" -type f 2>/dev/null | head -5)
+  ⎿  -rw-r--r--  1 xe  staff  5010 Jan 12 15:55 yeetfile.js
+
+⏺ Bash(tigris objects put skynet yeetfile.js yeetfile.js)
+  ⎿  ┌─────────────┬────────┬──────────────┬─────────────────────────┐
+     │ Path        │ Size   │ Content-Type │ Modified                │
+     ├─────────────┼────────┼──────────────┼─────────────────────────┤
+     … +2 lines (ctrl+o to expand)
+
+⏺ Done. yeetfile.js has been uploaded to the xe-zohar-copy bucket (4.9 KB).
+```
+
+No hand-holding or custom skill files required! The agent reads the help text
+and just figures it out. This is the kind of design we're aiming for: natural
+enough that both humans and AIs can figure it out without needing to read a
+tutorial beyond `--help`.
+
+## How did we get to this design?
+
+Inside Tigris we use a Request-For-Comment flow for many of these big projects.
+A lot of the time in planning is spent drawing up a formal specification. We
+write this formal spec way before we even _think_ about writing code. Having
+this all specified makes it a lot easier to iterate and gather feedback.
+Needless to say, this project generated _a lot_ of feedback, probably the most
+out of any of these user-facing projects.
+
+When Abdullah was working on the CLI, he wanted to write a formal specification
+for the CLI and then transform that into the scaffolding for the code. This
+eventually evolved into
+[specs.yaml](https://github.com/tigrisdata/cli/blob/main/src/specs.yaml), which
+we parse with some custom code to generate the scaffolding required to wire
+everything up. This spec file ended up serving two purposes: it drove the RFC
+process by being the canonical source of truth for what the CLI should do, but
+it also was reused to generate the CLI itself. Change the spec, regenerate the
+CLI, everything updates and all is balanced as all things should be.
+
+As a neat side effect of this, here's
+[the implementation of the `objects put` command](https://github.com/tigrisdata/cli/blob/main/src/lib/objects/put.ts).
+It's in `src/lib/objects/put.ts` and directly maps to `objects put`. This gives
+us filesystem-based command routing the same way that Next.js gives you
+filesystem based web routing.
+
+This spec-driven approach worked well enough that I think other teams should use
+it too. We're going to evolve this a bit more and make some tooling to generate
+CLI scaffolds in the future. Stay tuned!
+
+## Example commands
+
+Here's some side by side examples comparing the `tigris` and `aws` commands for
+interacting with object storage:
+
+| Tigris Command                                  | AWS S3 Equivalent                                    | Description                               |
+| :---------------------------------------------- | :--------------------------------------------------- | :---------------------------------------- |
+| `tigris ls`                                     | `aws s3 ls`                                          | List buckets or objects                   |
+| `tigris ls <bucket>`                            | `aws s3 ls s3://bucket/`                             | List objects in a bucket                  |
+| `tigris ls <bucket>/path/`                      | `aws s3 ls s3://bucket/path/`                        | List objects in a path                    |
+| `tigris mk <bucket>`                            | `aws s3 mb s3://bucket`                              | Create a new bucket                       |
+| `tigris mk <bucket>/folder/`                    | `aws s3api put-object --bucket bucket --key folder/` | Create a folder                           |
+| `tigris touch <bucket>/key`                     | `aws s3api put-object --bucket bucket --key key`     | Create empty object                       |
+| `tigris cp ./info.json t3://bucket/info.json`   | `aws s3 cp ./info.json s3://bucket/info.json`        | Copy a file from the filesystem to Tigris |
+| `tigris cp t3://bucket/info.json ./info.json`   | `aws s3 cp s3://bucket/info.json ./info.json`        | Copy a file from Tigris to the filesystem |
+| `tigris objects put <bucket> <key> <source>`    | `aws s3 cp <src> s3://<dest>`                        | Copy objects/folders                      |
+| `tigris objects get <bucket> <key> > test.json` | `aws s3 cp file.txt s3://bucket/`                    | Upload file                               |
+| `tigris rm <bucket>/key`                        | `aws s3 rm s3://bucket/key`                          | Delete object                             |
+| `tigris rm <bucket>/`                           | `aws s3 rm s3://bucket/ --recursive`                 | Delete folder recursively                 |
+| `tigris configure`                              | `aws configure`                                      | Save credentials                          |
+| `tigris whoami`                                 | `aws sts get-caller-identity`                        | Show current user info                    |
+| `tigris logout`                                 | (no direct equivalent)                               | End session                               |
+
+:::note
+
+You can also use `t3` as shorthand for `tigris` in the CLI!
+
+:::
+
+See how much simpler that all is? We think that making these commands direct
+like this will make it a lot easier for you to understand and work with Tigris.
+
+## The real star: `tigris cp`
+
+My favorite subcommand is `cp` (copy). It does everything you'd expect from the
+UNIX tool `cp` on your local machine, but it understands `t3://` URLs. This
+means you can copy files between buckets, download stuff, upload stuff—all with
+one command that behaves exactly like you'd expect:
+
+```bash
+# Copy a remote object to a new location
+tigris cp t3://my-bucket/my-path/my-object.json t3://my-bucket/new-path/my-object.json
+
+# Copy a remote folder recursively
+tigris cp -r t3://my-bucket/my-path/ t3://my-bucket/new-path/
+
+# Copy with wildcard
+tigris cp t3://my-bucket/my-path/*.json t3://my-bucket/new-path/
+
+# Download a remote object to local
+tigris cp t3://my-bucket/my-file.txt ./local-file.txt
+
+# Download a folder to local
+tigris cp -r t3://my-bucket/my-path/ ./local-dir/
+
+# Upload a local file to remote
+tigris cp ./local-file.txt t3://my-bucket/my-file.txt
+
+# Upload a local folder to remote
+tigris cp -r ./local-dir/ t3://my-bucket/my-path/
+```
+
+See that `t3://` prefix? That's our URL scheme for Tigris objects. Your brain
+already knows how `cp` works; we just made it work with object storage too.
+
+> "Instead of being fixated on an existing tool, you can do something new"
+> —Abdullah
+
+## Frequently Asked Questions
+
+### Is the Tigris CLI free to use?
+
+Yes! The Tigris CLI is completely free and open source. You can install it with
+`npm install -g @tigrisdata/cli` and start managing your object storage
+immediately. Tigris also offers a generous free tier for storage and bandwidth.
+
+### Does the CLI work on Windows?
+
+Yes, the Tigris CLI is cross-platform and works on Windows, macOS, and Linux.
+Since it's distributed as an npm package, it works anywhere Node.js is
+installed—including Windows PowerShell, Command Prompt, and Windows Terminal.
+
+### Can I use Tigris CLI with existing AWS S3 workflows?
+
+The Tigris CLI follows similar patterns to AWS S3 commands, making migration
+straightforward. See the comparison table above for command equivalents.
+However, the Tigris CLI uses a more intuitive, UNIX-philosophy syntax (like
+`tigris cp` instead of `aws s3 cp`) that's designed to be easier to remember and
+type.
+
+### How do I authenticate with the Tigris CLI?
+
+Run `tigris login` to authenticate with a temporary access key, or use
+`tigris configure` to set up a long-lived authentication keypair. Both methods
+will store your credentials securely for future sessions.
+
+### Is Tigris S3-compatible?
+
+Yes, Tigris provides an S3-compatible API. While the Tigris CLI offers a more
+natural command interface, you can also use existing S3 tools with Tigris if
+needed.
+
+### Can AI assistants use the Tigris CLI?
+
+Yes! The CLI is designed with discoverable help text that AI assistants can
+understand and use. Commands follow the pattern `tigris DOMAIN OPERATION`, so
+you can ask an AI to "upload this file with tigris" and it can typically figure
+out the correct command from `--help` output.
+
+## Conclusion
+
+Please try the CLI out! It's
+[open source on GitHub](https://github.com/tigrisdata/cli). We use it internally
+at Tigris. We plan to replace the AWS CLI with our CLI company-wide–there's only
+so many times you can type `aws s3api` before your fingers fall off.
+
+Install our CLI with `npm`:
+
+```bash
+npm install -g @tigrisdata/cli
+```
+
+Then run `tigris login` to get started or `tigris configure` to set your
+authentication keypair. You'll be authenticated and ready to upload files within
+seconds.
+
+Try it out! Let us know what you think! We're still balancing familiarity with
+natural design, and real feedback beats internal speculation every time. Open
+[an issue on GitHub](https://github.com/tigrisdata/cli), stop by
+[our Discord](https://community.tigrisdata.com) or reply wherever you found this
+post.
+
+The shell is waiting.
+
+<InlineCta
+  title="Ready to control Tigris from your terminal?"
+  subtitle="Install the Tigris CLI with npm and manage your object storage without leaving the command line."
+  button="Get the CLI"
+  link="https://github.com/tigrisdata/cli"
+/>
