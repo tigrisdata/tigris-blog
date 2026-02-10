@@ -36,7 +36,7 @@ we've made a brand new Tigris CLI that lets you manage your buckets directly
 from your shell. Take a gander:
 
 ```bash
-$ tigris objects put xedn AGENTS.md AGENTS.md
+$ tigris cp AGENTS.md t3://xedn/AGENTS.md
 Uploading object...
 
 ┌───────────┬────────┬──────────────┬───────────────────────┐
@@ -47,9 +47,9 @@ Uploading object...
 ```
 
 That copied my local [AGENTS.md](http://AGENTS.md) file to
-[my public bucket in Tigris](https://files.xeiaso.net/AGENTS.md). As you can
-see, this new Tigris CLI gives you all the buckety goodness you know and love
-anywhere with a shell prompt. Even Windows. It's just an `npm install` away:
+[my bucket in Tigris](https://files.xeiaso.net/AGENTS.md). As you can see, this
+new Tigris CLI gives you all the buckety goodness you know and love anywhere
+with a shell prompt. Even Windows. It's just an `npm install` away:
 
 ```bash
 npm install -g @tigrisdata/cli
