@@ -16,7 +16,7 @@
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "blog:new": "NOW=$(date +\"%Y-%m-%d\") && mkdir ./blog/$NOW-$npm_config_slug && cp ./templates/blog-post/* ./blog/$NOW-$npm_config_slug/",
-    "format": "npx prettier -w",
+    "format": "npx prettier -w .",
     "test": "npm run test:format && npm run lint && npm run build",
     "test:format": "npx prettier --check .",
     "lint": "npx eslint .",

@@ -1,0 +1,235 @@
+---
+slug: agentic-documentation
+title: "Give Your AI Agents the Keys to the Documentation Library"
+description: >
+  We've added llms.txt support across the Tigris website. Here's how to give
+  your AI agents direct access to documentation for better, faster results.
+image: ./hero.webp
+keywords:
+  - llms.txt
+  - AI agents
+  - Claude Code
+  - documentation
+  - AGENTS.md
+authors:
+  - xe
+tags:
+  - Engineering
+  - AI
+  - Documentation
+  - llms.txt
+  - Claude Code
+---
+
+import Conv from "@site/src/components/Conv";
+import zhipuLogo from "@site/static/img/ai-models/zhipu.webp";
+import xe from "@site/static/img/avatars/xe.jpg";
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Robotic librarians, standing by to help your agents find what they need"
+/>
+
+<center>
+  <small>
+    <em>
+      Robotic librarians, standing by to help your agents find what they need
+    </em>
+  </small>
+</center>
+
+I love watching AI agents get things wrong.
+
+I mean, let's be real, it can be funny at times. The agent has basically
+everything it needed to succeed except that one missing piece that hooks
+everything together because it couldn't find the right spot in the
+documentation. Agents work on models that have hard training cutoffs and have to
+try and parse the unrestrained madness of HTML through its relatively tiny
+context window. At some level it's a miracle that they get things right as often
+as they do.
+
+At Tigris we've added support for [llms.txt](https://llmstxt.org/) across the
+website. This gives your AI agents a direct line to our documentation—no HTML
+parsing, no context window juggling, just the raw markdown right into their
+veins.
+
+## The Context Window Problem
+
+Large language models are incredible, but they're working with a fundamental
+constraint: the entire process of them generating text is "given this input,
+what should come next?". This is limited by the context window, which is the
+limit of how much text, images, or other data it can parse at once. When an
+agent tries to understand your codebase and the libraries you're using, it's
+juggling:
+
+- Your actual code.
+- Your project's `AGENTS.md` or `CLAUDE.md` files.
+- Whatever MCP tools you have available in your agent.
+- Whatever context survived the HTML-to-markdown conversion.
+
+The agent hallucinates API methods that don't exist because that's what it's
+wont to do.
+
+`llms.txt` fixes this.
+
+## What is llms.txt?
+
+The [llms.txt](https://llmstxt.org/) standard is beautifully simple: a markdown
+file at `/llms.txt` that gives AI agents a curated overview of what a project is
+and where to find the important documentation. It's like a cheat sheet for
+LLMs—human-readable, machine-friendly, and designed to be consumed in a single
+pass.
+
+<Conv name="Xe" profilePic={xe} top bottom>
+  Yes, I also see that it ends in `.txt` and it's a _markdown_ file. We're both
+  going to choose to ignore this and chalk it up to just our industry being
+  weird.
+</Conv>
+
+From Tigris's llms.txt:
+
+> Tigris is a globally distributed, S3-compatible object storage service that
+> supports key-value access patterns, fulfills most of the AWS S3 API, enables
+> AI workloads without egress fees, and is not a database or a CDN.
+
+AI agents crave authoritative statements that explain what a product is and
+does. This matters when companies pivot; Tigris used to be a database company
+and some AI models still repeat that:
+
+<Conv name="Xe" profilePic={xe} top>
+  What does the technology company Tigris Data do?
+</Conv>
+<Conv name="GLM 4.5 Air" profilePic={zhipuLogo} bottom>
+  **Tigris Data** is a modern data‑platform company that builds a
+  high‑performance, distributed database and set of tools for building
+  real‑time, event‑driven applications. At the core of its offering is
+  **Tigris DB**, an open‑source, multi‑model database that blends the
+  reliability and query power of SQL with the flexibility and scalability of
+  NoSQL...
+</Conv>
+
+Newer models have fixed this, but the conflation causes problems. Your users'
+assistants give bad information. The agents aren't wrong—they're following their
+training data—but the confusion hurts.
+
+The `llms.txt` file also includes links to key documentation sections, so agents
+can dive deeper when needed without trawling through navigation menus or
+JavaScript-heavy doc sites.
+
+## Hooking Your Agents Up
+
+Using this is dead simple. Add a section to your `AGENTS.md` or `CLAUDE.md` file
+and you're good to go:
+
+```markdown
+## Helpful Documentation
+
+When asked about various services or tools, use these resources to help you:
+
+- **AutoMQ**: https://www.automq.com/llms.txt
+- **Pixeltable**: https://docs.pixeltable.com/llms.txt
+- **Tigris** or **Tigris Data**: https://www.tigrisdata.com/docs/llms.txt or
+  https://www.tigrisdata.com/llms.txt
+```
+
+Your agents now know where to find the good stuff on these services.
+
+## Seeing It In Action
+
+I asked Claude Code to write some TypeScript using the Tigris Storage SDK to
+fork a bucket. With llms.txt in the mix, it knew exactly what to do:
+
+```typescript
+import { createBucket } from "@tigrisdata/storage";
+
+// Fork from current state
+const fork = await createBucket("llm-fork", {
+  sourceBucketName: "llm-base",
+});
+
+if (fork.error) {
+  console.error("error creating fork", fork.error);
+} else {
+  console.log("bucket fork created");
+}
+
+// Fork from a specific snapshot version
+const forkFromSnapshot = await createBucket("llm-fork", {
+  sourceBucketName: "llm-base",
+  sourceBucketSnapshot: "1760550614083112540",
+});
+```
+
+No hallucinated methods. No confused questions about whether Tigris supports
+forking (it does). Just working code, on the first try, because the agent had
+access to the documentation it needed.
+
+## Why Your Project Should Support llms.txt
+
+If you maintain a library, service, or platform with documentation, add an
+llms.txt file.
+
+### Your Users Are Using AI Agents
+
+They just are. Whether it be Claude Code, Cursor, or GitHub Copilot; developers
+are increasingly pairing with AI to write code faster. If your documentation
+isn't accessible to those agents, you're putting friction between your users and
+success. That makes them more likely to choose alternatives that _don't_ put
+that friction into place.
+
+### It's a Competitive Advantage
+
+When an agent is choosing between two libraries to solve a problem, which one do
+you think it will recommend? The one it can actually understand. Good llms.txt
+support means your project gets recommended more often.
+
+### It Reduces Support Load
+
+Agents with access to good documentation get things right the first time. That
+means fewer confused users in your issue tracker, fewer "how do I..." questions,
+and more people successfully shipping code with your project.
+
+### It's Future-Proof
+
+The llms.txt standard is designed for helping models answer questions at query
+time. As the ecosystem grows, we'll likely see training runs incorporate
+llms.txt files too.
+
+### It's Trivial to Implement
+
+Seriously. If you're using Docusaurus like we are, there's a
+[plugin for that](https://github.com/your-tools/docusaurus-plugin-llms).
+VitePress? Got you covered. Manual implementation? It's just a markdown file
+with a specific structure that you call `.txt` for some reason. The hardest part
+is deciding what goes in the file.
+
+### It Plays Nice With Existing Standards
+
+llms.txt isn't trying to replace sitemaps, robots.txt, or structured data. It
+complements them. Sitemaps are for search engines crawling your entire site.
+llms.txt is for AI agents that need a quick, curated overview. They serve
+different purposes and can coexist happily.
+
+## Assemble Your Agentic Infinity Gauntlet
+
+What we're seeing is a new web designed for both humans and AI agents. The old
+web was HTML, navigation menus, and JavaScript-heavy doc sites built for human
+eyes. The new web adds machine-readable, agent-friendly documentation that lets
+AI systems help us more effectively.
+
+Add llms.txt files for the services you use to your agent configuration. Watch
+how much faster your agents grok your codebase and libraries. If you maintain a
+project with documentation, add an llms.txt file. It takes five minutes and
+makes a real difference for developers using your stuff with AI assistance.
+
+The robots are here to help. Give them the documentation they need.
+
+<InlineCta
+  title="Ready to give your agents better documentation access?"
+  subtitle="Tigris now supports llms.txt across all our documentation. Add it to your agent config and let your AI copilots do their best work."
+  button="Explore Tigris Docs"
+  link="https://www.tigrisdata.com/docs/"
+/>
