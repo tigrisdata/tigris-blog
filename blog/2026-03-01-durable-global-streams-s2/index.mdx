@@ -1,0 +1,301 @@
+---
+slug: durable-global-streams-s2
+title: "Durable global streams in Tigris with S2"
+description: >-
+  S2 Lite turns S3-compatible object storage into a durable streaming platform.
+  Run it on Tigris for globally distributed streams with zero egress fees and
+  automatic multi-region replication.
+image: ./hero-image.webp
+keywords:
+  - S2
+  - streaming
+  - message queue
+  - object storage
+  - Tigris
+  - S2 Lite
+  - durable streams
+  - SlateDB
+  - Kafka alternative
+authors:
+  - xe
+tags:
+  - Build with Tigris
+  - Engineering
+  - Streaming
+  - Open Source
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="An oil painting of a bengal tiger sufing down a river of data streams"
+/>
+
+Message queues are essential parts of production workloads, however most of them
+either do too little or too much. The simple ones will gladly discard your data
+if a consumer disconnects, but the more complicated ones require a dedicated
+team of arcane experts that speak in strange tongues.
+
+There's room in the middle for something between over-engineered and
+under-engineered, and [S2](https://s2.dev/), a compelling alternative to bloated
+message queues like Kafka, fits right into that gap. With
+[S2 Lite](https://github.com/s2-streamstore/s2), you can run it yourself on
+hardware you can look at on top of Tigris. I have it running in my homelab
+Kubernetes cluster to ingest the Bluesky public feed.
+
+## The message queue spectrum
+
+Message queues can get surprisingly complicated based on the levels of
+abstraction and complexity at play. S2 is a message queue with server-side
+scrollback so worker groups can resume where they left off. To understand why
+this is significant, let's cover the different kinds of message queues you will
+see in the wild. None of these are perfect (sometimes you _do_ want to just drop
+data), but each has their own tradeoffs that make things easier or harder.
+
+### Shout to the void
+
+If you've ever used an IRC channel, this is the kind of message queue I'm
+talking about. If nobody is around to hear your message, it is as good as gone.
+If a consumer is disconnected when the message is sent, they won't receive it.
+This is great for things like cache invalidation, typing indicators in chat
+applications, or other fundamentally ephemeral data along that line.
+
+These kinds of queues are usually very cheap to run and have little to no
+resource requirements. Consider these options:
+
+- IRC servers (yes, RFC 1459 is a pub-sub protocol).
+- Redis/Valkey PUBLISH/SUBSCRIBE.
+- NATS Core (without the durability layer JetStream).
+
+### Worker queues
+
+One of the main drawbacks with shout to the void message queues is that they
+work great for broadcast-style messages or unicast-style messages, but they
+don't really have a good way to handle a case where you need one worker out of a
+group to handle a given message. This is where worker queues like Amazon's SQS,
+RabbitMQ, or Redis/Valkey RPUSH/LPOP come into play.
+
+With those queues you build up a bunch of state server-side and then as workers
+grab data, they slowly chew through the backlog until nothing is left. This idea
+is the backbone of many web frameworks (if you've ever gone deep into Rails,
+Sidekiq implements this pattern).
+
+Usually if the worker crashes, the message gets redelivered, however once you
+consume the message, it's _gone_. No replay, no going back.
+
+### Server-side scrollback with resume
+
+One of the other big problems with a "simple" worker queue is that you can only
+have _one_ consumer group handling a queue at once. If you want to have multiple
+worker groups consume the queue at their own paces, you must replicate messages
+to multiple topics or risk data loss by having your consumers do that
+replication after consumption.
+
+This does work (for what it's worth I've seen this pan out at fairly large
+scales with the right kind of discipline), but there's a better option:
+maintaining the scrollback of events on the server side.
+
+This is where NATS JetStream, Redis Streams, and S2 come in. Groups keep track
+of the biggest message ID they've seen and the queue server helps dole out work
+between the consumers. For efficiency the server usually maintains at least a
+day of scrollback, but most of the time you only need a few hours. Your mileage
+may vary.
+
+### Apache Kafka
+
+And finally we have the final boss of message queues: Apache Kafka. Don't set it
+up from scratch, save that for your enemies to do for you. It is a byzantine
+abomination that really earns its name from the
+[kafkaesque](https://en.wikipedia.org/wiki/Franz_Kafka) process you need to go
+through to use it. Once it's set up it's fairly decent, but as a result of it
+being the workhorse in many Fortune 500 companies, it ends up accumulating
+features that you'll probably never need to use at any point in your career.
+
+As a result, you do get _everything_ you could possibly want, at the cost of
+having to maintain the sanity of a slowly dwindling group of experts that end up
+being able to type out JVM flags from memory. I don't think we should encourage
+that if we can avoid it.
+
+### S2 is a level 3 message queue
+
+S2 sits at level 3, but it pushes durability further than its peers. NATS
+JetStream flushes to disk every two minutes before acknowledging (Jepsen
+[found problems](https://jepsen.io/analyses) with this). Redis Streams is
+in-memory first. S2 writes to object storage _before_ acknowledging. Your data
+is durable on S3-compatible storage before S2 tells you the write succeeded.
+This helps avoid the
+[MongoDB problem of data durability](https://youtu.be/b2F-DItXtZs).
+
+## What S2 actually is
+
+S2 is a REST API for durable, ordered, append-only streams. S2 has these
+concepts:
+
+- **Basins** are namespaces (akin to object storage buckets or other generic
+  namespacing concepts)
+- **Streams** are ordered sequences of records within a basin (like a folder
+  really)
+- **Records** are the individual messages: headers, a body (up to 1 MiB), a
+  sequence number, and a timestamp
+
+Three operations cover most of what you need: **append** records to a stream,
+**read** records from any position forward, and **check-tail** to see where the
+stream ends.
+
+The managed cloud service at [s2.dev](https://s2.dev) handles all of this
+serverlessly for you. But for this post, we're taking a look at
+[S2 Lite](https://github.com/s2-streamstore/s2): the open-source, self-hostable,
+MIT-licensed, single-binary implementation you can point at any S3-compatible
+object storage, including Tigris.
+
+Under the hood, S2 Lite uses [SlateDB](https://slatedb.io), an embedded
+key-value database that stores its data entirely in object storage. SlateDB
+writes its SST files and WAL to S3. S2 Lite wraps SlateDB to provide the
+streaming API on top. The whole thing is written in Rust and ships as a single
+Docker image.
+
+## Running S2 Lite on Tigris
+
+First, create a bucket in Tigris to hold your S2 data. You can use the
+[Tigris CLI](/blog/tigris-cli) or the dashboard:
+
+```bash
+tigris mk s2-streams
+```
+
+Then start S2 Lite, pointing it at your Tigris bucket:
+
+```bash
+docker run -p 8080:80 \
+  -e AWS_ACCESS_KEY_ID=$TIGRIS_ACCESS_KEY \
+  -e AWS_SECRET_ACCESS_KEY=$TIGRIS_SECRET_KEY \
+  -e AWS_ENDPOINT_URL_S3=https://t3.storage.dev \
+  ghcr.io/s2-streamstore/s2 lite \
+  --bucket s2-streams \
+  --path s2data
+```
+
+That's it. S2 Lite is now running locally, storing all stream data durably in
+Tigris. Since Tigris replicates globally, your stream data inherits that dynamic
+data placement. A consumer reading from Frankfurt gets low-latency access to
+data written from Virginia.
+
+Install the S2 CLI to interact with it:
+
+```bash
+brew install s2-streamstore/tap/s2
+```
+
+Configure it to talk to your local S2 Lite instance:
+
+```bash
+export S2_ACCOUNT_ENDPOINT=http://localhost:8080
+export S2_BASIN_ENDPOINT=http://localhost:8080
+export S2_ACCESS_TOKEN=ignored
+```
+
+Now create a basin and a stream:
+
+```bash
+s2 create-basin my-basin
+s2 create-stream my-basin/events
+```
+
+Append some records and read them back:
+
+```bash
+echo "hello from s2" | s2 append my-basin/events
+s2 read my-basin/events
+```
+
+Records go in, records come out. The main difference is that those records live
+in Tigris instead of on some disk somewhere. You can read them again tomorrow,
+or next month, or whenever your retention policy allows. The ones that can't fit
+into memory in the server will be seamlessly fetched from Tigris.
+
+## Building things with Bluesky
+
+The use case that got me interested: ingesting the
+[Bluesky firehose](https://docs.bsky.app/docs/advanced-guides/firehose). The AT
+Protocol firehose pushes every post, like, follow, and block across the entire
+network over a WebSocket connection. It's a lot of data, and if your consumer
+crashes, you want to resume from where you left off without missing events.
+
+The raw firehose is also a terrifying amount of data, enough that you'd want to
+avoid wasting Bluesky's bandwidth with making multiple redundant consumers.
+Using a durable message queue like S2 means that you'd be able to have multiple
+apps ingest the data from Bluesky without having to have multiple raw firehose
+feeds active at once.
+
+With S2 on Tigris, you'd write a small service that reads from the firehose
+WebSocket and appends each event to an S2 stream. Downstream consumers (a search
+indexer, a feed generator, a moderation pipeline) each read from the same stream
+at their own pace. If one crashes, it picks up from its last sequence number.
+The data stays in Tigris for as long as you want it. I'd suggest maintaining the
+data for a day or so.
+
+This pattern works for any high-volume event source: webhook ingestion, IoT
+telemetry, CDC streams from your database, logs from code execution sandboxes.
+S2 calls this "high-cardinality streams" because you can create a separate
+stream per user, per session, or per device without worrying about partition
+limits. These partition limits are where queues like Kafka can cause a lot of
+grief, being able to spin up arbitrary amounts of streams with a moment's notice
+is a blessing that you won't really understand until need to and can't.
+
+## Why object storage for streams
+
+If you squint at a durable message stream, it looks a lot like an append-only
+sequence of sort-increasing objects. Object storage is already the cheapest
+durable storage available, with
+[costs based on how much you are storing](https://www.tigrisdata.com/docs/pricing/).
+Using it as the backing store for streams means:
+
+- **Storage costs stay low.** Tigris charges $0.02/GiB/month for storage. A
+  terabyte of retained stream data costs $20/month, not the hundreds you'd pay
+  for EBS volumes backing a Kafka cluster.
+- **No disks to manage.** S2 Lite is a single stateless binary. There's no local
+  disk state to lose, no RAID arrays to rebuild, no volume snapshots to
+  coordinate. You can even run it on a diskless server that boots from the
+  network.
+- **Global distribution comes free.** Tigris replicates data to the regions
+  where it's accessed. You don't configure this; it happens automatically.
+
+The trade-off is latency. Object storage writes are slower than local NVMe
+drives. S2 Lite on standard object storage will have higher tail latencies
+because any internet destination by definition takes longer to get to than local
+storage.
+
+To be clear though: this is fine for most stream processing workloads. Tigris'
+[global performance](https://www.tigrisdata.com/docs/concepts/regions/) will
+mitigate the worst of it. But keep in mind that you probably won't build a
+real-time stock trading platform on this.
+
+## Try it out
+
+S2 Lite is MIT-licensed and [on GitHub](https://github.com/s2-streamstore/s2).
+The managed cloud service at [s2.dev](https://s2.dev) has a free tier if you
+want to skip the self-hosting. Either way, Tigris makes a natural backend: the
+zero egress fees mean your consumers can read as much as they want without
+racking up transfer costs.
+
+I set this up in my homelab to monitor the Bluesky firehose for my own private
+needs and not having to worry about egress fees or paying The Big Cloud for the
+privilege to read my own data is refreshing. Let's be real though, not having to
+know what Zookeeper is or how to fight it is its own reward.
+
+Next on my list is building something to monitor Hacker News and maybe ingest
+the contents into a vector database for advanced semantic search against Silicon
+Valley's collective subconscious. Stay tuned for that!
+
+If you build something interesting with S2 on Tigris, come tell us about it in
+[our Discord](https://community.tigrisdata.com). Otherwise keep warm out there
+and we'll keep telling you about all the cool ways you can use object storage.
+
+<InlineCta
+  title="Need durable storage for your streams?"
+  subtitle="Tigris gives you globally distributed, S3-compatible object storage with zero egress fees. Point S2 Lite at it and start streaming."
+  button="Get started with Tigris"
+/>
