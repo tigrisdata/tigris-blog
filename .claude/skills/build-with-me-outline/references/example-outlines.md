@@ -4,9 +4,8 @@ Reverse-engineered outlines from real "build with me" posts.
 
 ## Discord Backfill
 
-**Subtype**: Project Walkthrough
-**One-liner**: Migrating Q&A data from a forum into Discord using an ETL
-pipeline, AI agents, and Tigris.
+**Subtype**: Project Walkthrough **One-liner**: Migrating Q&A data from a forum
+into Discord using an ETL pipeline, AI agents, and Tigris.
 
 1. **Hook**: We have a Discord now + Answer Overflow. Here's how we solved
    backfilling it so it doesn't look empty.
@@ -24,9 +23,8 @@ pipeline, AI agents, and Tigris.
 
 ## Nomadic Compute
 
-**Subtype**: Architecture Pattern
-**One-liner**: Design AI workloads to hunt for cheap compute dynamically instead
-of paying for idle GPUs.
+**Subtype**: Architecture Pattern **One-liner**: Design AI workloads to hunt for
+cheap compute dynamically instead of paying for idle GPUs.
 
 1. **Hook**: Taco Bell infrastructure -- exciting things from boring components
 2. **Fundamentals**: Compute, Network, Storage (the three pillars)
@@ -38,15 +36,14 @@ of paying for idle GPUs.
    how AI models become insidious dependencies
 5. **Making it production-ready**: Compute/network/storage planes, pass-by-
    reference semantics, the Big Queue
-6. **Code walkthrough**: ScaleToZeroProxy in Go, step by step (search →
-   create → wait → proxy → slay)
+6. **Code walkthrough**: ScaleToZeroProxy in Go, step by step (search → create →
+   wait → proxy → slay)
 7. **Conclusion**: Make your app an orchestrator of cheap compute
 
 ## Lifecycle Rules
 
-**Subtype**: Feature Deep Dive
-**One-liner**: How we implemented automatic storage tier transitions in a
-globally distributed object store.
+**Subtype**: Feature Deep Dive **One-liner**: How we implemented automatic
+storage tier transitions in a globally distributed object store.
 
 1. **Hook**: SRE koan -- "The simpler something looks, the harder it is to make
    it happen."
@@ -63,9 +60,8 @@ globally distributed object store.
 
 ## Dataset Experimentation
 
-**Subtype**: Workflow Demonstration
-**One-liner**: Using bucket forking to manage parallel experiments on an AI
-training dataset.
+**Subtype**: Workflow Demonstration **One-liner**: Using bucket forking to
+manage parallel experiments on an AI training dataset.
 
 1. **Hook**: Bucket forking = instant isolated copies, no collisions
 2. **Scientific method framing**: Hypothesis → experiment → parallel timelines
@@ -75,14 +71,13 @@ training dataset.
 6. **Fork 3** -- Better captioning: Gemini-style prompts, compare with Fork 2
 7. **Fork 4** -- Resize for training: Destructive operation in isolated fork
 8. **Thinking with portals**: Recap of all forks and their purpose
-9. **Conclusion**: Maps to experimental workflow, fork when afraid of
-   destroying data
+9. **Conclusion**: Maps to experimental workflow, fork when afraid of destroying
+   data
 
 ## How We Make Ty
 
-**Subtype**: Project Walkthrough
-**One-liner**: The creative process behind AI-generated blog illustrations and
-the app built to streamline it.
+**Subtype**: Project Walkthrough **One-liner**: The creative process behind
+AI-generated blog illustrations and the app built to streamline it.
 
 1. **Hook**: Cover images matter for SEO, but I want them to convey meaning
 2. **On Ty**: Who is Ty, animated examples
@@ -96,9 +91,8 @@ the app built to streamline it.
 
 ## Object Notifications
 
-**Subtype**: Feature Deep Dive
-**One-liner**: How we built event notifications for a globally distributed
-object store.
+**Subtype**: Feature Deep Dive **One-liner**: How we built event notifications
+for a globally distributed object store.
 
 1. **Hook**: Bucket notifications = inotify for object storage
 2. **Use case**: Photo-sharing app with automatic processing
@@ -113,9 +107,8 @@ object store.
 
 ## Bucket Forking Deep Dive
 
-**Subtype**: Feature Deep Dive
-**One-liner**: How immutable write-ahead logs and reversed timestamps enable
-instant terabyte-scale bucket forking.
+**Subtype**: Feature Deep Dive **One-liner**: How immutable write-ahead logs and
+reversed timestamps enable instant terabyte-scale bucket forking.
 
 1. **Hook**: Koan-like primitives that lead to core lessons (three bullet
    points)
@@ -128,15 +121,14 @@ instant terabyte-scale bucket forking.
    after bucket/object"
 5. **Bucket forking**: Timeline metaphors, Go if-err-nil as timeline forks,
    recursive indirection for lookups
-6. **Snapshots are free**: Copy-on-write, tombstones, code example showing
-   fork → delete → source still intact
+6. **Snapshots are free**: Copy-on-write, tombstones, code example showing fork
+   → delete → source still intact
 7. **Conclusion**: Caveats list, forward-looking
 
 ## LanceDB 101
 
-**Subtype**: Project Walkthrough
-**One-liner**: Set up a vector search database backed by Tigris for RAG
-pipelines.
+**Subtype**: Project Walkthrough **One-liner**: Set up a vector search database
+backed by Tigris for RAG pipelines.
 
 1. **Hook**: AI is the rage, but examples leave the details as exercises. Not
    today.
