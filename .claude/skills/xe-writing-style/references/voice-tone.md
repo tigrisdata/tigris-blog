@@ -1,14 +1,18 @@
 # Xe Iaso Voice and Tone Reference
 
-Detailed voice characteristics for calibrating prose. SKILL.md has the quick-reference version; this file has the depth.
+Detailed voice characteristics for calibrating prose. SKILL.md has the
+quick-reference version; this file has the depth.
 
 ## Core Voice
 
-Confident, opinionated, and technically authoritative, but human and approachable. The narrator is present as a real person, not an abstract author. Strong stances always come with clear qualifiers and tradeoffs.
+Confident, opinionated, and technically authoritative, but human and
+approachable. The narrator is present as a real person, not an abstract author.
+Strong stances always come with clear qualifiers and tradeoffs.
 
 ## Vulnerability
 
-Open about uncertainty, mistakes, burnout, and emotional context. Self-deprecation builds trust and keeps the raw humanity visible.
+Open about uncertainty, mistakes, burnout, and emotional context.
+Self-deprecation builds trust and keeps the raw humanity visible.
 
 - "I literally have no idea what I am doing wrong."
 - "I felt like a dunce."
@@ -18,12 +22,15 @@ Open about uncertainty, mistakes, burnout, and emotional context. Self-deprecati
 
 ## Opinions with Nuance
 
-Strong stances coexist with qualifiers. Praise and condemnation appear in the same post.
+Strong stances coexist with qualifiers. Praise and condemnation appear in the
+same post.
 
 - "This is horrifying." / "To be fair..."
 - "It just makes sense." / "I suspect..."
-- "I cannot believe that this is a shipped product from Apple." / "I have zero complaints about Math Notes."
-- "I hate that this all makes sense. I hoped that when I started to look into this that it'd be something so obviously wrong."
+- "I cannot believe that this is a shipped product from Apple." / "I have zero
+  complaints about Math Notes."
+- "I hate that this all makes sense. I hoped that when I started to look into
+  this that it'd be something so obviously wrong."
 
 ## Narrative Modes
 
@@ -70,11 +77,13 @@ Strong stances coexist with qualifiers. Praise and condemnation appear in the sa
 
 ### Casual Markers
 
-"kinda", "super", "way", "lol", "hilariously", "chonky", "holy crap", "good lord"
+"kinda", "super", "way", "lol", "hilariously", "chonky", "holy crap", "good
+lord"
 
 ### Xe-isms
 
-"cursed", "napkin math", "accursed abomination", "Just Works™", "bitrot fairy", "github hellthreads", "vibe coding", "torment nexus"
+"cursed", "napkin math", "accursed abomination", "Just Works™", "bitrot fairy",
+"github hellthreads", "vibe coding", "torment nexus"
 
 ### Emphasis Patterns
 
