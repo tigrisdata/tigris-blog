@@ -128,24 +128,16 @@ const config = {
             className: "disable-external-icon",
           },
           {
-            href: `${tigrisConfig.docsUrl}/get-started/`,
-            label: "Get Started",
+            href: `${tigrisConfig.websiteUrl}/about`,
+            label: "About",
             position: "left",
             target: "_self",
             rel: "",
             className: "disable-external-icon",
           },
           {
-            href: `${tigrisConfig.docsUrl}/sdks/s3/`,
-            label: "AWS S3 SDKs",
-            position: "left",
-            target: "_self",
-            rel: "",
-            className: "disable-external-icon",
-          },
-          {
-            href: `${tigrisConfig.docsUrl}/migration/`,
-            label: "Migration",
+            href: `${tigrisConfig.docsUrl}/`,
+            label: "Docs",
             position: "left",
             target: "_self",
             rel: "",
@@ -157,7 +149,7 @@ const config = {
             position: "left",
           },
           {
-            href: `${tigrisConfig.docsUrl}/pricing/`,
+            href: "https://www.tigrisdata.com/pricing/",
             label: "Pricing",
             position: "left",
             target: "_self",
@@ -165,12 +157,12 @@ const config = {
             className: "disable-external-icon",
           },
           {
+            href: tigrisConfig.discordUrl,
             label: "Community",
             position: "left",
             target: "_self",
             rel: "",
             className: "disable-external-icon",
-            href: tigrisConfig.discordUrl,
           },
           // {
           //   href: tigrisConfig.discordUrl,
@@ -225,7 +217,7 @@ const config = {
             title: "Resources",
             items: [
               {
-                href: `${tigrisConfig.docsUrl}/pricing/`,
+                href: "https://www.tigrisdata.com/pricing/",
                 label: "Pricing",
                 target: "_self",
                 rel: "",
