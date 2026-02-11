@@ -157,7 +157,7 @@ const config = {
             position: "left",
           },
           {
-            href: `${tigrisConfig.docsUrl}/pricing/`,
+            href: "https://www.tigrisdata.com/pricing/",
             label: "Pricing",
             position: "left",
             target: "_self",
@@ -225,7 +225,7 @@ const config = {
             title: "Resources",
             items: [
               {
-                href: `${tigrisConfig.docsUrl}/pricing/`,
+                href: "https://www.tigrisdata.com/pricing/",
                 label: "Pricing",
                 target: "_self",
                 rel: "",
