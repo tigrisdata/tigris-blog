@@ -1,0 +1,219 @@
+---
+slug: how-i-learned-to-love-reactive-data-models
+title: "How I learned to love reactive data models"
+description: |
+  Afflatus uses Pixeltable and Tigris to search screenshots by vibe. The best data layer is one you describe, not administer.
+image: ./hero-image.webp
+keywords:
+  - pixeltable
+  - reactive data
+  - CLIP
+  - vector search
+  - object storage
+  - machine learning
+  - Python
+authors:
+  - xe
+tags:
+  - "Build with Tigris"
+  - pixeltable
+  - machine-learning
+  - python
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Illustration of a cartoon tiger wearing a beret, holding a paintbrush and palette, standing next to a canvas displaying pixel-art screenshots of retro game scenes"
+/>
+
+There's a Latin word I keep coming back to: _afflatus_. It means "divine breath" -- that moment where inspiration transforms what already exists into something new. Not generation. Remix.
+
+I built an app around this concept. Describe a vibe -- "sunset over water" or "cozy village at night" -- and it searches through my collection of Nintendo Switch screenshots to find the closest match. Eventually it'll use that screenshot as a seed for generative remix, but honestly, the search alone turned out to be the interesting part. Two knowns go in (a text description and a pile of screenshots), one surprise comes out (the image you didn't know you were looking for).
+
+But the interesting part isn't the model or the UI or the storage. It's the data layer.
+
+## The data layer problem
+
+Every ML-backed app has the same grunt work. Set up a database. Configure vector ingestion. Wire up embedding generation. Manage indexes. Write query boilerplate. It's so standard that it _should_ be a layer of abstraction below you, the same way we stopped hand-managing TCP connections decades ago.
+
+Pixeltable makes that grunt work disappear. What if your database worked like reactive programming? You define what a column _means_ -- "this column is the CLIP embedding of that image column" -- and the system handles the rest. Inserts trigger computations. Queries understand similarity natively. It's computed columns and materialized views, but with full Python and actual ML models instead of SQL stored procedures from 2003.
+
+Database people will see this pattern immediately. When you insert an image, the CLIP embedding gets computed automatically. When you query by text similarity, the vector math happens behind the scenes. No separate ingestion pipeline. No cron job. No "remember to run the embedding script after deploys."
+
+For someone who has wired up this kind of plumbing by hand more times than I'd like to admit, discovering Pixeltable felt like the first time I used an ORM after years of hand-rolling SQL. Relief, mostly.
+
+## From grand vision to pragmatic haircut
+
+My original plan was more ambitious. Final Fantasy XIV has a single-player roguelike dungeon called Pilgrim's Traverse where you solo increasingly difficult floors as a single job. I wanted to build a DIY version of Advanced Combat Tracker that worked purely from recorded video -- extract combat stats, track DPS, identify heal timings, all from footage alone. (For the non-XIV players: imagine building a sports analytics tool where your only input is a screen recording of the game.)
+
+So I built the Pydantic schemas for frame-by-frame extraction. Here's a taste of the fossil record:
+
+```python
+# models/dd_solo.py -- the original ambition
+
+class EnemyInfo(BaseModel):
+    """Information about the enemy displayed in red
+    at the top of the frame."""
+    name: Optional[str] = Field(
+        None,
+        description="Enemy name in red text at the top of the frame.",
+    )
+    health_percent: Optional[float] = Field(
+        None,
+        description="Enemy HP percentage (0-100).",
+    )
+
+class DamageSpell(BaseModel):
+    """A single damaging spell entry (orange text under the boss)."""
+    name: Optional[str] = Field(
+        None,
+        description='Spell name such as "Glare III".',
+    )
+    amount: Optional[int] = Field(
+        None,
+        description="Amount of damage dealt by the spell.",
+    )
+```
+
+Pointed GPT-5 at the footage and it... sort of worked? The problem wasn't the model. HEVC video compression is lossy in ways that humans brute-force around but models can't. Those damage numbers floating above enemies, the HP percentages in the corner -- a human can squint at a compressed frame and reconstruct what a "7" probably is from context. At the codec level, that information is literally destroyed. The pixels aren't blurry. They're _gone_. Frontier models aren't failing to read the text; the text doesn't exist in the bitstream anymore.
+
+Between the model reliability issues and whatever cursed interaction uv, PyTorch, and my M3 were having that week, the grand vision needed a haircut.
+
+I already had raw material sitting on Tigris: a few thousand Nintendo Switch screenshots I'd uploaded as a HuggingFace dataset. What if instead of analyzing combat footage, I used those screenshots as creative fuel? Describe a vibe, find a match, remix it. Simpler scope, same interesting data layer underneath.
+
+## The build
+
+### Screenshots on Tigris
+
+The raw material lives on Tigris as 32 Parquet shards, imported from a HuggingFace dataset. The import pipeline is straightforward: point the `datasets` library at an S3-compatible endpoint, stream the shards directly.
+
+```python
+data_files = "s3://xe-zohar-copy/ds/screenshots_sharded/*.parquet"
+storage_options = {"profile": "tigris-dev"}
+
+dataset = load_dataset(
+    "parquet",
+    split="train",
+    data_files=data_files,
+    streaming=False,
+    storage_options=storage_options,
+)
+```
+
+No special Tigris client needed. Tigris is S3-compatible and globally distributed, so the HuggingFace `datasets` library Just Works™ with it -- point it at `t3.storage.dev` and the data is accessible with low latency regardless of where the app runs. No region selection dance required.
+
+### Pixeltable: the reactive data layer
+
+Setting up the screenshots table and making it searchable by vibes takes remarkably little code:
+
+```python
+screenshots = pxt.create_table(
+    "screenshots", source=dataset, if_exists="ignore"
+)
+
+screenshots.add_embedding_index(
+    "image",
+    embedding=clip.using(model_id="openai/clip-vit-large-patch14"),
+    if_exists="replace",
+)
+
+screenshots.add_computed_column(uuid=gen_uuid(), if_exists="ignore")
+```
+
+That `add_embedding_index` call does more than it looks. Every image inserted into this table automatically gets embedded into CLIP's vector space. You don't wire up a separate ingestion step. You don't schedule a background worker. The embedding is a _consequence of the insert_.
+
+:::note
+This is what I mean by reactive. In a traditional stack, you'd write an insert handler, call an embedding API, store the vector, update an index, and pray your background worker doesn't fall behind. Pixeltable collapses all of that into your schema definition.
+:::
+
+Searching is just as terse:
+
+```python
+def perform_search(screenshots: pxt.Table, query: str):
+    sim = screenshots.image.similarity(query)
+    results = (
+        screenshots.order_by(sim, asc=False)
+        .select(
+            uuid=screenshots.uuid,
+            url=screenshots.image.fileurl,
+        )
+        .limit(1)
+    )
+    return results.collect()
+```
+
+Pass in a text string. Pixeltable handles the CLIP text encoding, the cosine similarity math, the index lookup, the ranking. About three lines of actual query logic for a full semantic image search.
+
+Generated images get their own table with computed columns that reference back into the screenshots table:
+
+```python
+generated_images = pxt.create_table(
+    "generated_images",
+    {
+        "input_image_id": pxt.String,
+        "prompt": pxt.String,
+    },
+    if_exists="ignore",
+)
+
+generated_images.add_computed_column(
+    input_image=get_image(generated_images.input_image_id),
+    if_exists="ignore",
+)
+```
+
+That `get_image` call is a Pixeltable query that fetches from the screenshots table by ID. Relational _and_ reactive -- when a generated image row gets inserted, the input image resolves automatically. No manual joins in your application code.
+
+### Flask + HTMX: the deliberately simple UI
+
+Flask because it's been reliable since college. HTMX because the entire paradigm fits on a t-shirt and I did not want a JavaScript build step anywhere near my already-fragile Python environment.
+
+The search interface is one `<input>` element:
+
+```html
+<input
+  class="form-control search"
+  type="search"
+  name="q"
+  placeholder="What do you want to see?"
+  hx-post="/api/search"
+  hx-trigger="input changed delay:500ms, keyup[key=='Enter']"
+  hx-target="#search-results"
+/>
+```
+
+As you type, HTMX fires a POST to `/api/search` after 500ms of inactivity. The server runs the Pixeltable similarity query, generates presigned Tigris URLs for the matching screenshots, and returns an HTML partial. No client-side state management. No React. No webpack. A form that posts and a div that receives HTML. HATEOAS in its purest form -- the server returns HTML, the browser renders it. Revolutionary technology from 1995.
+
+## What didn't work
+
+Python environments broke in ways that felt personally targeted. I must have stepped on a python in a past life or something, because the interaction between uv, PyTorch's CUDA/MPS detection, and the CLIP model weights meant I had to nuke and rebuild my venv three separate times before things stabilized. I don't have a reproducible bug report for you. It just... stopped happening eventually.
+
+GPT-5 not extracting text from compressed video wasn't a model failure. It was me not understanding the implications of HEVC compression at the level I needed to. That information isn't there in the decoded frames. The gap between "a human can kind of read this" and "the data actually exists in the bitstream" is wider than I assumed.
+
+And the codebase has scar tissue everywhere. The `models/dd_solo.py` file with five Pydantic schemas for combat frame analysis. An `experiments/pull-log.py` script that tried extracting video frames via Pixeltable's `FrameIterator`. Commented-out `image_edit` UDFs in `main.py` from when I was going to wire up the generative remix pipeline. These are fossils from the original ambition, left in deliberately. Codebases should be honest about what they tried to be.
+
+## When it clicked
+
+Typing "moody forest" and watching CLIP pull exactly the right Breath of the Wild screenshot from thousands of candidates in under a second -- that was the moment. The search found an image I didn't know I was looking for, and the whole pivot from combat analytics to screenshot vibes suddenly felt like the right call.
+
+:::note
+Explore the full source code at [github.com/tigrisdata-community/afflatus](https://github.com/tigrisdata-community/afflatus). It's messy, it has scar tissue, and it works.
+:::
+
+## The broader lesson
+
+Afflatus -- divine breath -- transforms what exists. Pixeltable's computed columns work the same way: you define the shape of your data, and the system fills it in. No orchestration. No pipelines. Just declarations and consequences.
+
+Pragmatically, the best data layer is one where you stop administering and start describing. Pixeltable gets closer to that ideal than anything else I've found in the Python ecosystem right now. It's not perfect -- the documentation could use more examples, the error messages when computed columns fail are occasionally cryptic, and I have no idea how it'll handle schema migrations at scale. But for prototyping ML-backed apps where the data model is the interesting part, it removed enough friction that I actually shipped something instead of getting lost in plumbing.
+
+Right now, Afflatus makes surprisingly good phone wallpapers from search results. Eventually, I want the remix pipeline wired up -- generating grounded fantasy illustrations for blog posts, anchored in real screenshots instead of hallucinated from whole cloth. But that's a problem for future me and whatever state Python environments are in by then.
+
+<InlineCta
+  title="Ready to store your ML datasets globally?"
+  subtitle="Tigris is S3-compatible and globally distributed, so your data is always close to your compute. No region selection required."
+  button="Get started with Tigris"
+/>
