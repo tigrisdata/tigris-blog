@@ -1,50 +1,57 @@
 # Xe Iaso Story Circle (Reverse Engineered)
 
-Use this as a narrative scaffold when turning a brain dump into a full Xe-style
-post.
+Derived from these posts:
+
+- `lume/src/blog/2025/rolling-ladder-behind-us.mdx`
+- `lume/src/blog/2025/squandered-holy-grail.mdx`
+- `lume/src/blog/2025/anubis-packaging.mdx`
+- `lume/src/blog/anything-message-queue.mdx`
+- `lume/src/blog/nix-flakes-terraform.mdx`
+- `lume/src/blog/video-compression.mdx`
+- `lume/src/blog/paranoid-nixos-2021-07-18.mdx`
+- `lume/src/blog/2022/2022-media.mdx`
+- `lume/src/blog/2026/discord-backfill.mdx`
+- `lume/src/blog/2026/reviewbot.mdx`
+- `lume/src/blog/2025/valve-is-about-to-win-the-console-generation.mdx`
+- `lume/src/blog/2025/bucket-forking-deep-dive.mdx`
+- `lume/src/blog/2025/file-abuse-reports.mdx`
+- `lume/src/blog/2025/dataset-experimentation.mdx`
+
+Use this as a narrative scaffold when turning a brain dump into a full Xe-style post.
 
 ## Core Story Circle (Xe-flavored)
 
 1. **Normal World / Context**
-
    - Open with a concrete scene, historical analogy, or personal memory.
    - Establish the baseline expectations that will be challenged.
-   - Example pattern: long opening paragraph that frames a craft, product, or
-     lived experience.
+   - Example pattern: long opening paragraph that frames a craft, product, or lived experience.
 
 2. **Need / Tension**
-
    - Name the discomfort, contradiction, or loss.
    - Use strong, direct statements or rhetorical questions.
    - Make it personal and grounded in real constraints.
 
 3. **Go / Crossing the Threshold**
-
    - Shift into the present problem or system you are critiquing.
    - Make a clear, opinionated claim about what changed.
    - Introduce the technical stakes or market incentives.
 
 4. **Search / Escalation**
-
    - Walk through evidence, examples, and tradeoffs.
    - Use concrete details: tooling, metrics, screenshots, quotes, or links.
    - Mix long explanation with short emphasis lines.
 
 5. **Find / The Core Insight**
-
-   - Reveal the central insight, often a critique of incentives or a design
-     failure.
+   - Reveal the central insight, often a critique of incentives or a design failure.
    - Keep it blunt and memorable.
    - Anchor it in values: craft, usability, security, or human cost.
 
 6. **Take / Consequences**
-
    - Show what the insight costs: time, safety, craft, trust, people.
    - Include personal stakes and admissions.
    - Use character dialogue if it sharpens the point.
 
 7. **Return / Proposed Path**
-
    - Offer a pragmatic approach, even if partial.
    - Explain tradeoffs and why the plan is "good enough".
    - Give readers steps or criteria for decisions.
@@ -95,8 +102,7 @@ post.
 - **Tension:** Managed NAT Gateway cost pain and cloud billing absurdity.
 - **Threshold:** Pivot to a "better" way, then ground it with a safety aside.
 - **Escalation:** Long-form technical walkthrough with analogies and dialogue.
-- **Insight:** The cursed solution works in theory, but the warning is the
-  point.
+- **Insight:** The cursed solution works in theory, but the warning is the point.
 - **Consequences:** You could do it, but you should not; expertise is required.
 - **Return:** Re-center on what is actually safe to adopt.
 - **Change:** Reader leaves with caution and a concrete mental model.
@@ -108,8 +114,7 @@ post.
 - **Threshold:** Commit to a full tutorial with prerequisites.
 - **Escalation:** Step-by-step build with concrete commands and config.
 - **Insight:** You can glue the worlds together with careful state handling.
-- **Consequences:** Complexity is real; credentials and state must be handled
-  safely.
+- **Consequences:** Complexity is real; credentials and state must be handled safely.
 - **Return:** Deliver a repeatable workflow and expectations.
 - **Change:** Reader leaves with a practical implementation path.
 
@@ -151,8 +156,7 @@ post.
 - **Context:** New community needs a useful forum archive.
 - **Tension:** Empty forums feel dead and unhelpful.
 - **Threshold:** Frame the task as ETL and commit to the pipeline.
-- **Escalation:** Practical steps: permissions, scraping, storage,
-  transformation.
+- **Escalation:** Practical steps: permissions, scraping, storage, transformation.
 - **Insight:** Small, careful pipelines beat big, abstract solutions.
 - **Consequences:** Privacy and load concerns must be handled explicitly.
 - **Return:** Ship the backfill and show how to reuse it.
