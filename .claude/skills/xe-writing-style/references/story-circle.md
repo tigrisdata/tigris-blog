@@ -1,5 +1,22 @@
 # Xe Iaso Story Circle (Reverse Engineered)
 
+Derived from these posts (files are in the GitHub repo Xe/site):
+
+- `lume/src/blog/2025/rolling-ladder-behind-us.mdx`
+- `lume/src/blog/2025/squandered-holy-grail.mdx`
+- `lume/src/blog/2025/anubis-packaging.mdx`
+- `lume/src/blog/anything-message-queue.mdx`
+- `lume/src/blog/nix-flakes-terraform.mdx`
+- `lume/src/blog/video-compression.mdx`
+- `lume/src/blog/paranoid-nixos-2021-07-18.mdx`
+- `lume/src/blog/2022/2022-media.mdx`
+- `lume/src/blog/2026/discord-backfill.mdx`
+- `lume/src/blog/2026/reviewbot.mdx`
+- `lume/src/blog/2025/valve-is-about-to-win-the-console-generation.mdx`
+- `lume/src/blog/2025/bucket-forking-deep-dive.mdx`
+- `lume/src/blog/2025/file-abuse-reports.mdx`
+- `lume/src/blog/2025/dataset-experimentation.mdx`
+
 Use this as a narrative scaffold when turning a brain dump into a full Xe-style
 post.
 
