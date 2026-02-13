@@ -123,10 +123,10 @@ that if we can avoid it.
 
 S2 sits at level 3, but it pushes durability further than its peers. NATS
 JetStream flushes to disk every two minutes before acknowledging (Jepsen
-[found problems](https://jepsen.io/analyses/nats-jetstream-2.9.0) with this). Redis Streams is
-in-memory first. S2 writes to object storage _before_ acknowledging. Your data
-is durable on S3-compatible storage before S2 tells you the write succeeded.
-This helps avoid the
+[found problems](https://jepsen.io/analyses/nats-jetstream-2.9.0) with this).
+Redis Streams is in-memory first. S2 writes to object storage _before_
+acknowledging. Your data is durable on S3-compatible storage before S2 tells you
+the write succeeded. This helps avoid the
 [MongoDB problem of data durability](https://youtu.be/b2F-DItXtZs).
 
 ## What S2 actually is
@@ -248,8 +248,8 @@ is a blessing that you won't really understand until you need to and can't.
 ## Why object storage for streams
 
 If you squint at a durable message stream, it looks a lot like an append-only
-sequence of monotonically increasing objects. Object storage is already the cheapest
-durable storage available, with
+sequence of monotonically increasing objects. Object storage is already the
+cheapest durable storage available, with
 [costs based on how much you are storing](https://www.tigrisdata.com/docs/pricing/).
 Using it as the backing store for streams means:
 
