@@ -1,15 +1,20 @@
 ---
 name: writing-clearly-and-concisely
-description: Apply Strunk's timeless writing rules to ANY prose humans will read—documentation, commit messages, error messages, explanations, reports, or UI text. Makes your writing clearer, stronger, and more professional.
+description:
+  Apply Strunk's timeless writing rules to ANY prose humans will
+  read—documentation, commit messages, error messages, explanations, reports, or
+  UI text. Makes your writing clearer, stronger, and more professional.
 ---
 
 # Writing Clearly and Concisely
 
 ## Overview
 
-William Strunk Jr.'s *The Elements of Style* (1918) teaches you to write clearly and cut ruthlessly.
+William Strunk Jr.'s _The Elements of Style_ (1918) teaches you to write clearly
+and cut ruthlessly.
 
-**WARNING:** `elements-of-style.md` consumes ~12,000 tokens. Read it only when writing or editing prose.
+**WARNING:** `elements-of-style.md` consumes ~12,000 tokens. Read it only when
+writing or editing prose.
 
 ## When to Use This Skill
 
@@ -26,6 +31,7 @@ Use this skill whenever you write prose for humans:
 ## Limited Context Strategy
 
 When context is tight:
+
 1. Write your draft using judgment
 2. Dispatch a subagent with your draft and `elements-of-style.md`
 3. Have the subagent copyedit and return the revision
@@ -33,6 +39,7 @@ When context is tight:
 ## All Rules
 
 ### Elementary Rules of Usage (Grammar/Punctuation)
+
 1. Form possessive singular by adding 's
 2. Use comma after each term in series except last
 3. Enclose parenthetic expressions between commas
@@ -42,6 +49,7 @@ When context is tight:
 7. Participial phrase at beginning refers to grammatical subject
 
 ### Elementary Principles of Composition
+
 8. One paragraph per topic
 9. Begin paragraph with topic sentence
 10. **Use active voice**
@@ -55,8 +63,10 @@ When context is tight:
 18. **Place emphatic words at end of sentence**
 
 ### Section V: Words and Expressions Commonly Misused
+
 Alphabetical reference for usage questions
 
 ## Bottom Line
 
-Writing for humans? Read `elements-of-style.md` and apply the rules. Low on tokens? Dispatch a subagent to copyedit with the guide.
+Writing for humans? Read `elements-of-style.md` and apply the rules. Low on
+tokens? Dispatch a subagent to copyedit with the guide.

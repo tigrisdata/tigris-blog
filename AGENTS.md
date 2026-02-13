@@ -183,9 +183,24 @@ The `seo-reviewer.mjs` script provides comprehensive SEO analysis:
 When reviewing content please use the following skills:
 
 - `convert-images-to-webp`: convert any png files to webp, discarding the
-  original png file
+  original png file.
 - `using-inline-cta`: properly using the InlineCta component to prompt users to
-  take next steps
+  take next steps.
 - `xe-writing-style`: use Xe's writing style guide to ensure that writing is
   real, human, and has that je ne sais quoi de vivre of something made to lift
-  up human efforts
+  up human efforts.
+- `writing-clearly-and-concisely`: use Strunk and White's Writing Clearly and
+  Concisely to help remove problems endemic to overly wordy writing.
+- `stop-slop`: identify and prune AI slop writing patterns.
+- `seo-aeo-best-practices`: investigate blogposts for SEO and AEO (answer engine
+  optimization).
+
+One of the important parts about the writing in this repository is that it's
+meant to make people feel something. When possible, optimize for making people
+feel things.
+
+### Notes for skills
+
+- This blog engine doesn't use Xe's character dialogues. This is a signature
+  feature of Xe's writing, but it is absent in this blog engine. Do not use
+  them.

@@ -1,6 +1,7 @@
 # Structured Data (JSON-LD)
 
-Structured data helps search engines and AI understand your content. JSON-LD is the recommended format.
+Structured data helps search engines and AI understand your content. JSON-LD is
+the recommended format.
 
 ## Why Structured Data Matters
 
@@ -14,7 +15,7 @@ Structured data helps search engines and AI understand your content. JSON-LD is 
 ### Article / Blog Post
 
 ```typescript
-import { Article, WithContext } from 'schema-dts'
+import { Article, WithContext } from "schema-dts";
 
 const articleSchema: WithContext<Article> = {
   "@context": "https://schema.org",
@@ -27,42 +28,42 @@ const articleSchema: WithContext<Article> = {
   author: {
     "@type": "Person",
     name: post.author.name,
-    url: post.author.url
+    url: post.author.url,
   },
   publisher: {
     "@type": "Organization",
     name: "Your Company",
     logo: {
       "@type": "ImageObject",
-      url: "https://example.com/logo.png"
-    }
-  }
-}
+      url: "https://example.com/logo.png",
+    },
+  },
+};
 ```
 
 ### FAQ Page
 
 ```typescript
-import { FAQPage, WithContext } from 'schema-dts'
+import { FAQPage, WithContext } from "schema-dts";
 
 const faqSchema: WithContext<FAQPage> = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: faqs.map(faq => ({
+  mainEntity: faqs.map((faq) => ({
     "@type": "Question",
     name: faq.question,
     acceptedAnswer: {
       "@type": "Answer",
-      text: faq.answer  // Plain text, use pt::text() in GROQ
-    }
-  }))
-}
+      text: faq.answer, // Plain text, use pt::text() in GROQ
+    },
+  })),
+};
 ```
 
 ### Organization
 
 ```typescript
-import { Organization, WithContext } from 'schema-dts'
+import { Organization, WithContext } from "schema-dts";
 
 const orgSchema: WithContext<Organization> = {
   "@context": "https://schema.org",
@@ -72,20 +73,20 @@ const orgSchema: WithContext<Organization> = {
   logo: "https://example.com/logo.png",
   sameAs: [
     "https://twitter.com/company",
-    "https://linkedin.com/company/company"
+    "https://linkedin.com/company/company",
   ],
   contactPoint: {
     "@type": "ContactPoint",
     telephone: "+1-555-555-5555",
-    contactType: "customer service"
-  }
-}
+    contactType: "customer service",
+  },
+};
 ```
 
 ### Product
 
 ```typescript
-import { Product, WithContext } from 'schema-dts'
+import { Product, WithContext } from "schema-dts";
 
 const productSchema: WithContext<Product> = {
   "@context": "https://schema.org",
@@ -97,14 +98,16 @@ const productSchema: WithContext<Product> = {
     "@type": "Offer",
     price: product.price,
     priceCurrency: "USD",
-    availability: "https://schema.org/InStock"
+    availability: "https://schema.org/InStock",
   },
-  aggregateRating: product.rating ? {
-    "@type": "AggregateRating",
-    ratingValue: product.rating.average,
-    reviewCount: product.rating.count
-  } : undefined
-}
+  aggregateRating: product.rating
+    ? {
+        "@type": "AggregateRating",
+        ratingValue: product.rating.average,
+        reviewCount: product.rating.count,
+      }
+    : undefined,
+};
 ```
 
 ## Implementation in Next.js
