@@ -23,45 +23,38 @@ post.
 ## Core Story Circle (Xe-flavored)
 
 1. **Normal World / Context**
-
    - Open with a concrete scene, historical analogy, or personal memory.
    - Establish the baseline expectations that will be challenged.
    - Example pattern: long opening paragraph that frames a craft, product, or
      lived experience.
 
 2. **Need / Tension**
-
    - Name the discomfort, contradiction, or loss.
    - Use strong, direct statements or rhetorical questions.
    - Make it personal and grounded in real constraints.
 
 3. **Go / Crossing the Threshold**
-
    - Shift into the present problem or system you are critiquing.
    - Make a clear, opinionated claim about what changed.
    - Introduce the technical stakes or market incentives.
 
 4. **Search / Escalation**
-
    - Walk through evidence, examples, and tradeoffs.
    - Use concrete details: tooling, metrics, screenshots, quotes, or links.
    - Mix long explanation with short emphasis lines.
 
 5. **Find / The Core Insight**
-
    - Reveal the central insight, often a critique of incentives or a design
      failure.
    - Keep it blunt and memorable.
    - Anchor it in values: craft, usability, security, or human cost.
 
 6. **Take / Consequences**
-
    - Show what the insight costs: time, safety, craft, trust, people.
    - Include personal stakes and admissions.
    - Use character dialogue if it sharpens the point.
 
 7. **Return / Proposed Path**
-
    - Offer a pragmatic approach, even if partial.
    - Explain tradeoffs and why the plan is "good enough".
    - Give readers steps or criteria for decisions.

@@ -178,14 +178,7 @@ The `seo-reviewer.mjs` script provides comprehensive SEO analysis:
 - Checks Tigris terminology consistency
 - Can auto-apply suggested fixes with `--apply` flag
 
-## Relevant skills
+### Review
 
-When reviewing content please use the following skills:
-
-- `convert-images-to-webp`: convert any png files to webp, discarding the
-  original png file
-- `using-inline-cta`: properly using the InlineCta component to prompt users to
-  take next steps
-- `xe-writing-style`: use Xe's writing style guide to ensure that writing is
-  real, human, and has that je ne sais quoi de vivre of something made to lift
-  up human efforts
+When asked to commit a blogpost, please use the `review-writing` skill to take a
+look at the post according to the style guides relevant to this blog.
