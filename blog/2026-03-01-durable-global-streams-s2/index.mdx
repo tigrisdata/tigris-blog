@@ -31,7 +31,7 @@ import heroImage from "./hero-image.webp";
 <img
   src={heroImage}
   className="hero-image"
-  alt="An oil painting of a bengal tiger sufing down a river of data streams"
+  alt="An oil painting of a bengal tiger surfing down a river of data streams"
 />
 
 Message queues are essential parts of production workloads, however most of them
@@ -66,7 +66,7 @@ applications, or other fundamentally ephemeral data along that line.
 These kinds of queues are usually very cheap to run and have little to no
 resource requirements. Consider these options:
 
-- IRC servers (yes, RFC 1459 is a pub-sub protocol).
+- IRC servers (channels work as a simple publish-subscribe mechanism).
 - Redis/Valkey PUBLISH/SUBSCRIBE.
 - NATS Core (without the durability layer JetStream).
 
@@ -123,7 +123,7 @@ that if we can avoid it.
 
 S2 sits at level 3, but it pushes durability further than its peers. NATS
 JetStream flushes to disk every two minutes before acknowledging (Jepsen
-[found problems](https://jepsen.io/analyses) with this). Redis Streams is
+[found problems](https://jepsen.io/analyses/nats-jetstream-2.9.0) with this). Redis Streams is
 in-memory first. S2 writes to object storage _before_ acknowledging. Your data
 is durable on S3-compatible storage before S2 tells you the write succeeded.
 This helps avoid the
@@ -243,12 +243,12 @@ S2 calls this "high-cardinality streams" because you can create a separate
 stream per user, per session, or per device without worrying about partition
 limits. These partition limits are where queues like Kafka can cause a lot of
 grief, being able to spin up arbitrary amounts of streams with a moment's notice
-is a blessing that you won't really understand until need to and can't.
+is a blessing that you won't really understand until you need to and can't.
 
 ## Why object storage for streams
 
 If you squint at a durable message stream, it looks a lot like an append-only
-sequence of sort-increasing objects. Object storage is already the cheapest
+sequence of monotonically increasing objects. Object storage is already the cheapest
 durable storage available, with
 [costs based on how much you are storing](https://www.tigrisdata.com/docs/pricing/).
 Using it as the backing store for streams means:
