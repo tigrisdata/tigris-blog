@@ -159,6 +159,10 @@ const config = {
             position: "right",
           },
           {
+            type: "search",
+            position: "right",
+          },
+          {
             label: "Login",
             href: tigrisConfig.loginUrl,
             position: "right",
