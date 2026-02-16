@@ -112,22 +112,6 @@ const config = {
         },
         items: [
           {
-            href: `${tigrisConfig.docsUrl}/`,
-            label: "Docs",
-            position: "left",
-            target: "_self",
-            rel: "",
-            className: "disable-external-icon",
-          },
-          {
-            href: `${tigrisConfig.docsUrl}/overview/`,
-            label: "Overview",
-            position: "left",
-            target: "_self",
-            rel: "",
-            className: "disable-external-icon",
-          },
-          {
             href: `${tigrisConfig.websiteUrl}/about`,
             label: "About",
             position: "left",
@@ -164,13 +148,13 @@ const config = {
             rel: "",
             className: "disable-external-icon",
           },
-          // {
-          //   href: tigrisConfig.discordUrl,
-          //   className: "pseudo-icon discord-icon",
-          //   position: "right",
-          // },
           {
-            href: "https://twitter.com/TigrisData",
+            href: tigrisConfig.discordUrl,
+            className: "pseudo-icon discord-icon",
+            position: "right",
+          },
+          {
+            href: "https://x.com/tigrisdata",
             className: "pseudo-icon twitter-icon",
             position: "right",
           },
@@ -282,6 +266,16 @@ const config = {
         ],
         copyright: `Copyright © ${new Date().getFullYear()} Tigris Data, Inc. All rights reserved.`,
       },
+      ...(process.env.NEXT_ALGOLIA_APPID && process.env.NEXT_ALGOLIA_APIKEY
+        ? {
+            algolia: {
+              appId: process.env.NEXT_ALGOLIA_APPID,
+              apiKey: process.env.NEXT_ALGOLIA_APIKEY,
+              indexName: "tigrisdata",
+              contextualSearch: true,
+            },
+          }
+        : {}),
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
