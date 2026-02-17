@@ -15,6 +15,7 @@ export default function BlogPostPageMetadata(): ReactNode {
       keywords={keywords}
       image={image}
     >
+      <meta name="twitter:card" content="summary_large_image" />
       <meta property="og:type" content="article" />
       <meta property="article:published_time" content={date} />
       {/* TODO double check those article meta array syntaxes, see https://ogp.me/#array */}
