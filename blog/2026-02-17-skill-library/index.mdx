@@ -1,0 +1,294 @@
+---
+slug: skill-library
+title: "Agent skills automate drudgery so you don't have to do it"
+description: |
+  Discover Tigris' Agent Skills Library - reusable skills that help AI agents
+  automate image optimization, conventional commits, and Tigris SDK operations.
+image: ./hero-image.webp
+keywords:
+  - agent skills
+  - AI automation
+  - skills.sh
+  - Claude Code
+  - conventional commits
+  - webp conversion
+  - Tigris SDK
+authors:
+  - xe
+tags:
+  - Engineering
+  - AI
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A robot arm carefully organizing colorful skill badges on a workspace surface"
+/>
+
+When you are automating things, the dream is to be able to _offload_ the task to
+the automation so you don't have to do it by hand anymore. At Tigris we're
+excited about [agent skills](https://agentskills.io/home) because they let us
+describe how to do things in simple human-friendly language and then put that
+documentation to work with AI agents. We suspect that this will also make
+spinning up new teammates easier as they join our team.
+
+If you want to check out our agent skills library, take a look on
+[skills.sh](http://skills.sh):
+[https://skills.sh/tigrisdata/skills](https://skills.sh/tigrisdata/skills)
+
+## Agent skills are cool as heck
+
+I'm gonna admit, when I first heard of agent skills, I thought they were
+superfluous and a waste of time. We already have MCP, and I tend to prefer
+minimalism when possible. Adding skills seemed like a waste of time because I
+wasn't convinced that it would actually make things better.
+
+After using them for a while, I think I've found the right niche that they fit
+into. Agent skills are halfway between high level documentation for humans and
+low level scripts to automate tasks. They best fit into those shapes of problems
+that you can _describe_ and _validate_ easily, but would take a lot of annoying
+or fiddly code to implement properly.
+
+### The shape where skills are needed
+
+As an example of the right shape of problem, consider the problem of image
+format optimization. In our documentation and blog repositories we ban using png
+files for images that get included into pages. We store all our documentation,
+blogposts, and static assets in a git repository and git
+[is notoriously bad at handling large files properly](https://stackoverflow.com/questions/29393447/why-cant-git-handle-large-files-and-large-repos).
+As a result we end up converting image files to webp with `ffmpeg`:
+
+```
+ffmpeg -i image.png image.webp
+```
+
+This can make images go from filling entire 3d-printed save icons to 50,000
+kilobytes. If the images are smaller, they'll load faster and you can enjoy what
+we write more easily.
+
+At first I thought this was the right shape of problem for a script. If you
+think about it, the core elements are there:
+
+- Clearly defined problem with obvious solutions (convert images, replace
+  references, delete old files).
+- Trivially verifiable output (no png files, images load properly in the
+  websites).
+- Easy to use APIs for parsing and converting the relevant files.
+
+However this doesn't really pan out in practice. There are many ways to include
+an image in a markdown file and adding edge cases for all of them tends to get
+annoying fast, especially when using multi-line HTML tags like our formatter
+does.
+
+As a result, I made the
+[convert image to webp skill](https://github.com/tigrisdata/tigris-blog/blob/main/.claude/skills/convert-images-to-webp/SKILL.md)
+in our blog repo. This automates the entire process and creates trivial to
+review patches. This makes copying blogposts over from Google Docs into our blog
+repo take single digit minutes instead of upwards of an hour at the worst case.
+
+## Our skill library
+
+As I was experimenting with other skills and making my own, I realized that we
+needed to share them so that everyone else can benefit from the best of the
+best. As a result, we now have the
+[Tigris Agent Skills Library](https://skills.sh/tigrisdata/skills) and you can
+install the skills with `npx skills add`:
+
+```
+npx skills add https://github.com/tigrisdata/skills
+```
+
+### Tigris SDK skills
+
+The following skills help your agents use the
+[Tigris SDK](https://www.tigrisdata.com/docs/sdks/tigris/) better:
+
+- [Installing Tigris Storage](https://skills.sh/tigrisdata/skills/installing-tigris-storage):
+  Installing and setting up the Tigris SDK.
+- [Tigris Object Operations](https://skills.sh/tigrisdata/skills/tigris-object-operations):
+  How to do basic object operations in TypeScript.
+- [Tigris Bucket Management](https://skills.sh/tigrisdata/skills/tigris-bucket-management):
+  How to create, list, inspect, and remove buckets in Tigris.
+- [Tigris Snapshots and Forking](https://skills.sh/tigrisdata/skills/tigris-snapshots-forking):
+  How to snapshot and fork buckets in Tigris.
+
+These skills help agents a lot because the Tigris SDK is intended to be very
+intuitive and AI agents don't always have language server integrations. This
+restates parts of the documentation in authoritative text that AI agents can
+easily understand, hook into, and use to help guide you through taking advantage
+of everything that Tigris has to offer. They're also fully suitable for humans
+to learn from, if a bit dry.
+
+#### Object operations
+
+The object operations skill covers the bread and butter of working with Tigris:
+uploading, downloading, deleting, listing, and generating presigned URLs. Every
+method in the Tigris SDK returns a `TigrisStorageResponse<T, E>`, so the skill
+drills into agents that they need to check `result.error` before touching
+`result.data`. This sounds obvious, but without the skill, agents love to just
+assume everything worked and plow ahead.
+
+The skill also covers patterns that trip agents up in practice. Large file
+uploads need multipart configuration. Listing objects requires pagination when
+you have more than a page of results. Downloads come in three flavors (string,
+file, stream) and picking the wrong one leads to confusing bugs.
+
+After installing the skill, you can just ask your agent to do what you need:
+
+```
+> Add a route that lets users upload avatars to the "profiles" bucket and
+  returns a presigned URL for the uploaded image.
+```
+
+The agent picks up the skill automatically, knows to use multipart for large
+files, checks `result.error` before `result.data`, and generates a presigned URL
+with the right expiration. Without the skill, you'd spend half your time
+correcting the agent's assumptions about the API.
+
+#### Snapshots and forking in practice
+
+The snapshots and forking skill is worth calling out specifically because it
+teaches agents about one of Tigris's most powerful features. Snapshots capture
+your entire bucket at a point in time, and forks create instant isolated copies
+using copy-on-write. Even for terabytes of data, forking is essentially free—no
+data copying required.
+
+This is huge for AI agent workflows. Think about it: an agent can snapshot a
+production bucket, fork it into an isolated sandbox, run whatever experiments it
+needs to, and the source data is completely untouched. If the agent deletes
+everything in the fork, the original bucket doesn't care. This makes it safe to
+let agents operate on real data without the risk of catastrophic mistakes.
+
+The skill walks agents through the full lifecycle. Just tell your agent what you
+need:
+
+```
+> Snapshot the "assets" bucket, then fork it into a sandbox I can use for
+  testing the migration script.
+```
+
+The agent knows to create a named snapshot, fork from it, and—critically—it
+knows that the bucket needs `enableSnapshot: true` from creation. Without the
+skill, agents hit a wall trying to enable snapshots on an existing bucket and
+waste your time debugging an API error that has a simple but non-obvious fix.
+
+### Conventional Commits
+
+Tigris uses
+[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) so that
+we can easily glance at commits and pull requests to get a rough idea of what
+they do. If AI models are prompted to write conventional commits in your
+[AGENTS.md](https://agents.md/) file, they'll usually get it somewhat right, but
+we can do better.
+
+The
+[conventional-commits](https://skills.sh/tigrisdata/skills/conventional-commits)
+skill makes AI models get it right _every_ time. Even better, the description is
+filled with the right keywords to make agents latch onto the skills whenever you
+ask to commit something:
+
+```
+name: conventional-commits
+description: >
+  Use when creating git commits, writing commit messages,
+  or following version control workflows.
+```
+
+This results in commits that look like this:
+
+```
+chore: format code with prettier
+
+Run npx prettier -w to format code.
+
+Assisted-by: GLM 4.7 via Claude Code
+Signed-off-by: Xe Iaso <xe@tigrisdata.com>
+```
+
+This is much better than the worst I've seen on some teams where you get
+multi-thousand line commits with messages like "implemented metrics rollups".
+
+You can install just the conventional commits skill with this command:
+
+```
+npx skills add https://github.com/tigrisdata/skills --skill conventional-commits
+```
+
+### Go table-driven tests
+
+When writing tests in [Go](https://go.dev), the idiomatic style is to use a
+[table-driven test](https://go.dev/wiki/TableDrivenTests) where you define a
+table of inputs and expected outputs. This allows you to easily add test cases
+without having to copy and paste your environment setup and teardown code every
+time. Every test gets run as its own subtest so you can see each test's result
+at a glance.
+
+The table-driven tests skill teaches agents how to best implement table-driven
+tests based on advice from the greatest minds in Go programming. In my
+experience this has made tests that are performant, correct, and easy to debug.
+
+You can install just the table-driven tests skill with this command:
+
+```
+npx skills add https://github.com/tigrisdata/skills --skill go-table-driven-tests
+```
+
+## Other cool things we're doing with skills
+
+We've been messing around with Claude Code skills for other things internally on
+my team at Tigris.
+
+When I write something I usually use a chorus of four style guides to do a
+once-over to find glaring issues:
+
+- A style guide based on [the patterns of my blog](https://xeiaso.net/blog),
+  this pass mostly focuses on things that speak _up_ to the reader and avoiding
+  overly corporate phrasing.
+- [SEO & AEO Best Practices](https://skills.sh/sanity-io/agent-toolkit/seo-aeo-best-practices)
+  to make sure that my writing has active voice (being moderately femme of
+  centre makes me more likely to speak in passive voice) and is well understood
+  by search/answer engines.
+- [Humanizer](https://skills.sh/softaworks/agent-toolkit/humanizer) because I am
+  exposed to a lot of AI writing due to my job function. I've kinda adopted some
+  of the AI writing patterns without realizing it and having something call it
+  out helps me not repeat that framing.
+- [Writing Clearly and Concisely](https://skills.sh/obra/the-elements-of-style/writing-clearly-and-concisely),
+  the eternally relevant style guide by Strunk & White for writing clearly and
+  cutting fluff ruthlessly.
+
+This has some interesting side effects, notably AI models will tell me how much
+"myself" my writing is. Having a robot tell you that you need to write more like
+yourself is so excessively cyberpunk that I don't even know where to begin to
+explain it. It really does help when you're going through some mild medical
+stress like I am right now though.
+
+I've also made a skill
+[to help organize notes and brain dumps into deep dive posts](https://github.com/tigrisdata/tigris-blog/blob/main/.claude/skills/build-with-me-outline/SKILL.md).
+Maybe this will be useful, I have to do more experimentation to know for sure.
+
+## Supercharge your agents with skills
+
+Agent skills won't solve every problem, but for that middle ground of
+"describable, verifiable, annoying to code" they're incredibly powerful. They've
+already saved us hours on image optimization and commit hygiene. As we discover
+more use cases, we'll add them to the library. Please be sure to keep an eye out
+for them! We'll post on [our Discord](https://community.tigrisdata.com/) as we
+discover and mint good ones.
+
+If working on things like this sounds neat to you,
+[we're hiring](https://www.tigrisdata.com/careers/). You'll get to work
+alongside me as we reinvent the future of how people interact with object
+storage.
+
+Otherwise, go out and use Tigris to change the world via B2B Saas!
+
+<InlineCta
+  title="Ready to supercharge your AI agents?"
+  subtitle="Install the Tigris Agent Skills Library and help your agents automate tasks like image optimization, conventional commits, and Tigris SDK operations."
+  button="Explore Tigris Skills"
+  link="https://skills.sh/tigrisdata/skills"
+/>
