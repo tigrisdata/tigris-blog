@@ -43,11 +43,9 @@ If you want to check out our agent skills library, take a look on
 ## Agent skills are cool as heck
 
 I'm gonna admit, when I first heard of agent skills, I thought they were
-superfluous and a waste of time. I'm kind of inherently a
-[cynic](<https://en.wikipedia.org/wiki/Cynicism_(philosophy)>) when it comes to
-AI tools as I tend to prefer minimalism when possible. Adding skills around
-seemed like a waste of time because I wasn't convinced that it would actually
-make things better.
+superfluous and a waste of time. We already have MCP, and I tend to prefer
+minimalism when possible. Adding skills seemed like a waste of time because I
+wasn't convinced that it would actually make things better.
 
 After using them for a while, I think I've found the right niche that they fit
 into. Agent skills are halfway between high level documentation for humans and
@@ -124,6 +122,59 @@ restates parts of the documentation in authoritative text that AI agents can
 easily understand, hook into, and use to help guide you through taking advantage
 of everything that Tigris has to offer. They're also fully suitable for humans
 to learn from, if a bit dry.
+
+#### Object operations
+
+The object operations skill covers the bread and butter of working with Tigris:
+uploading, downloading, deleting, listing, and generating presigned URLs. Every
+method in the Tigris SDK returns a `TigrisStorageResponse<T, E>`, so the skill
+drills into agents that they need to check `result.error` before touching
+`result.data`. This sounds obvious, but without the skill, agents love to just
+assume everything worked and plow ahead.
+
+The skill also covers patterns that trip agents up in practice. Large file
+uploads need multipart configuration. Listing objects requires pagination when
+you have more than a page of results. Downloads come in three flavors (string,
+file, stream) and picking the wrong one leads to confusing bugs.
+
+After installing the skill, you can just ask your agent to do what you need:
+
+```
+> Add a route that lets users upload avatars to the "profiles" bucket and
+  returns a presigned URL for the uploaded image.
+```
+
+The agent picks up the skill automatically, knows to use multipart for large
+files, checks `result.error` before `result.data`, and generates a presigned URL
+with the right expiration. Without the skill, you'd spend half your time
+correcting the agent's assumptions about the API.
+
+#### Snapshots and forking in practice
+
+The snapshots and forking skill is worth calling out specifically because it
+teaches agents about one of Tigris's most powerful features. Snapshots capture
+your entire bucket at a point in time, and forks create instant isolated copies
+using copy-on-write. Even for terabytes of data, forking is essentially free—no
+data copying required.
+
+This is huge for AI agent workflows. Think about it: an agent can snapshot a
+production bucket, fork it into an isolated sandbox, run whatever experiments it
+needs to, and the source data is completely untouched. If the agent deletes
+everything in the fork, the original bucket doesn't care. This makes it safe to
+let agents operate on real data without the risk of catastrophic mistakes.
+
+The skill walks agents through the full lifecycle. Just tell your agent what you
+need:
+
+```
+> Snapshot the "assets" bucket, then fork it into a sandbox I can use for
+  testing the migration script.
+```
+
+The agent knows to create a named snapshot, fork from it, and—critically—it
+knows that the bucket needs `enableSnapshot: true` from creation. Without the
+skill, agents hit a wall trying to enable snapshots on an existing bucket and
+waste your time debugging an API error that has a simple but non-obvious fix.
 
 ### Conventional Commits
 
