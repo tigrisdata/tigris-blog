@@ -158,10 +158,9 @@ const config = {
             className: "pseudo-icon twitter-icon",
             position: "right",
           },
-          {
-            type: "search",
-            position: "right",
-          },
+          ...(process.env.NEXT_ALGOLIA_APPID && process.env.NEXT_ALGOLIA_APIKEY
+            ? [{ type: "search", position: "right" }]
+            : []),
           {
             label: "Login",
             href: tigrisConfig.loginUrl,
