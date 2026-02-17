@@ -177,3 +177,8 @@ The `seo-reviewer.mjs` script provides comprehensive SEO analysis:
 - Suggests improvements for LLM optimization
 - Checks Tigris terminology consistency
 - Can auto-apply suggested fixes with `--apply` flag
+
+### Review
+
+When asked to commit a blogpost, please use the `review-writing` skill to take a
+look at the post according to the style guides relevant to this blog.
