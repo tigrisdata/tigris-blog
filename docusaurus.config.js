@@ -275,7 +275,7 @@ const config = {
               appId: process.env.NEXT_ALGOLIA_APPID,
               apiKey: process.env.NEXT_ALGOLIA_APIKEY,
               indexName: "tigrisdata",
-              contextualSearch: true,
+              contextualSearch: false,
             },
           }
         : {}),
