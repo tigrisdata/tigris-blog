@@ -276,6 +276,7 @@ const config = {
               apiKey: process.env.NEXT_ALGOLIA_APIKEY,
               indexName: "tigrisdata",
               contextualSearch: false,
+              externalUrlRegex: "www\\.tigrisdata\\.com/docs",
             },
           }
         : {}),
