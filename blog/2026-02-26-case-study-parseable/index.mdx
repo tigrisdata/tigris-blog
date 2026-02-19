@@ -29,6 +29,7 @@ import HorizontalRule from "@site/src/components/HorizontalRule";
 import heroimage from "./parseable-hero.webp";
 import nitishTiwariImage from "./nitish-tiwari.jpg";
 import ParseableArchitectureDiagram from "@site/src/components/ParseableArchitectureDiagram";
+import QuickSummary from "@site/src/components/QuickSummary";
 
 <img
   src={heroimage}
@@ -42,22 +43,31 @@ import ParseableArchitectureDiagram from "@site/src/components/ParseableArchitec
   </small>
 </center>
 
-<strong>
-
-**TL;DR**
-
-- Parseable is an observability data lake that unifies agent behavior, LLM
-  costs, and infrastructure telemetry in a single queryable platform.
-- All observability data is compressed **80-90%** into Parquet format and stored
-  on Tigris object storage, keeping costs low as data volumes grow.
-- A smart cache layer keeps frequently queried data hot, while cold data stays
-  on cheap, massively scalable object storage.
-- Natural language querying lets you go from question to answer without
-  translating between incompatible query languages.
-
-</strong>
-
-<HorizontalRule></HorizontalRule>
+<QuickSummary
+  readTime="5 min read"
+  items={[
+    {
+      title: "Unified Observability:",
+      description:
+        "Agent behavior, LLM costs, and infrastructure telemetry in a single queryable data lake.",
+    },
+    {
+      title: "80-90% Compression:",
+      description:
+        "All observability data compressed into Parquet format and stored on Tigris object storage.",
+    },
+    {
+      title: "Smart Caching:",
+      description:
+        "Frequently queried data stays hot on local NVMe SSDs, cold data on cheap, scalable object storage.",
+    },
+    {
+      title: "Natural Language Queries:",
+      description:
+        "Go from question to answer without translating between incompatible query languages.",
+    },
+  ]}
+/>
 
 The problem with observability data is there's a lot of it. And most of it isn't
 useful, except for the precious picks that are actually used in debugging. It's
