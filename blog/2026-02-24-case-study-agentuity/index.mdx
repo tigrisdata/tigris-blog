@@ -31,6 +31,7 @@ import BreakoutQuote from "@site/src/components/BreakoutQuote";
 import HorizontalRule from "@site/src/components/HorizontalRule";
 import AgentuityPlatformDiagram from "@site/src/components/AgentuityPlatformDiagram";
 import AgentuityStorageDiagram from "@site/src/components/AgentuityStorageDiagram";
+import QuickSummary from "@site/src/components/QuickSummary";
 import heroImage from "./agentuity-hero.webp";
 
 <img
@@ -45,24 +46,31 @@ import heroImage from "./agentuity-hero.webp";
   </small>
 </center>
 
-<strong>
-
-**TL;DR**
-
-- Agentuity is a full-stack platform for building and deploying AI agents, built
-  on custom infrastructure designed from the ground up for agentic workloads.
-- Agentuity's architecture handles the unpredictable, stateful, and ephemeral
-  nature of agent compute. Agents can run for hours, snapshot themselves, and
-  fork from prior sessions.
-- Tigris powers five storage layers across Agentuity's platform: agent
-  persistent storage, deployment assets, CDN, customer buckets, and sandbox
-  snapshots.
-- Agents get a native filesystem interface backed by Tigris via TigrisFS.
-  Unlimited storage that looks like files on disk but scales globally.
-
-</strong>
-
-<HorizontalRule />
+<QuickSummary
+  readTime="7 min read"
+  items={[
+    {
+      title: "Custom infrastructure for agents.",
+      description:
+        "Agentuity built their own cloud from the ground up for agentic workloads — no Kubernetes, custom orchestration, eBPF-level visibility.",
+    },
+    {
+      title: "Agents that snapshot, fork, and resume.",
+      description:
+        "Long-running agents and ephemeral sandboxes can run for hours, capture full state, and fork from prior sessions.",
+    },
+    {
+      title: "Tigris powers five storage layers.",
+      description:
+        "Agent persistent storage, deployment assets, CDN, customer buckets, and sandbox snapshots — all through one S3-compatible service.",
+    },
+    {
+      title: "Filesystem interface via TigrisFS.",
+      description:
+        "Agents get a mounted /data folder that looks like files on disk but scales globally as object storage.",
+    },
+  ]}
+/>
 
 Roads existed before cars. But once cars showed up, the roads had to change.
 That's the argument [Agentuity](https://agentuity.com/) is making about cloud
