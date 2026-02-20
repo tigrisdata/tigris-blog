@@ -274,9 +274,8 @@ const config = {
             algolia: {
               appId: process.env.NEXT_ALGOLIA_APPID,
               apiKey: process.env.NEXT_ALGOLIA_APIKEY,
-              indexName: "tigrisdata",
+              indexName: "tigris_blog_pages",
               contextualSearch: false,
-              externalUrlRegex: "www\\.tigrisdata\\.com/docs",
             },
           }
         : {}),
