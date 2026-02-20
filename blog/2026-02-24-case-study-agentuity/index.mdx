@@ -110,7 +110,8 @@ pre-provision for workloads when you don't know what you're going to need until
 the agent starts working.
 
 Agentuity went low. They're not on Kubernetes. They built their own
-orchestration layer, what they call the gravity network, running containerd with
+orchestration layer, what they call the
+[Gravity Network](https://github.com/agentuity/gravity), running containerd with
 a control plane called Pilot wrapping each container. They own the runtime down
 to the system call level using eBPF, giving them visibility into every network
 and system call an agent makes. That control means they can lock things down,
@@ -121,10 +122,10 @@ cache aggressively, and move workloads around their fleet.
 Agentuity runs two types of compute that share the same runtime but serve
 different patterns. Long-running agents behave more like traditional VMs,
 listening for requests, idling with fast cold starts and warm starts. Sandboxes
-are ephemeral: one agent can spawn ten sub-agents, creating a graph of compute
-nodes that execute and disappear. Claude Code launching parallel sub-agents is a
-good mental model. Each one is a separate sandbox with its own isolated
-environment.
+are ephemeral: one agent can spawn ten (or thousands of) sub-agents, creating a
+graph of compute nodes that execute and disappear. Claude Code launching
+parallel sub-agents is a good mental model. Each one is a separate sandbox with
+its own isolated environment.
 
 Sandboxes come with aggressive lifecycle management. Agentuity suspends
 workloads after idle time and delivers fast cold starts. Agents opt into
@@ -180,9 +181,14 @@ as globally distributed objects.
   reuse data from a previous session.
 </BreakoutQuote>
 
-Agents access this through TigrisFS, a mounted `/data` folder backed by a Tigris
-bucket. It looks and acts like a POSIX filesystem, but it's object storage
-underneath. Customers use this to share large models across their compute
+Agents access this through
+[TigrisFS](https://www.tigrisdata.com/docs/training/tigrisfs/), a mounted
+`/data` folder backed by a Tigris bucket. It looks and acts like a regular high
+performance filesystem, but it's object storage underneath. By mounting TigrisFS
+to each node in their clusters, they can share all the data across all nodes
+without coordination — all the dependencies and state for each agent are
+available on every node. So an agent can pick up where it left off, on any
+machine. Customers use this to share large models across their compute
 infrastructure, and agents use it for the constant stream of small files they
 generate during work.
 
@@ -248,9 +254,10 @@ and an agent's personal storage. All through one interface.
 </BreakoutQuote>
 
 Agentuity already runs agents on its own infrastructure, watching logs and
-surfacing issues to other agents. The "get started" guide on their blog is a
-prompt: an agent deploys your first agent. The storage layer has to be just as
-dynamic as the compute, and that's what Tigris provides.
+surfacing issues to other agents. The
+["get started" guide on their blog](https://agentuity.com/blog/welcome-agent-lets-get-you-deployed)
+is a prompt: an agent deploys your first agent. The storage layer has to be just
+as dynamic as the compute, and that's what Tigris provides.
 
 <InlineCta
   title="Storage built for what agents need"
