@@ -26,6 +26,7 @@ tags: [Customers, object storage, s3, ai, case study]
 
 import InlineCta from "@site/src/components/InlineCta";
 import PullQuote from "@site/src/components/PullQuote";
+import QuickSummary from "@site/src/components/QuickSummary";
 import heroImage from "./beam.webp";
 
 <img
@@ -42,6 +43,31 @@ import heroImage from "./beam.webp";
     </em>
   </small>
 </center>
+
+<QuickSummary
+  items={[
+    {
+      title: "Serverless GPUs.",
+      description:
+        "Beam provides sub-10s cold starts, 50ms warm starts, and limitless horizontal scale across clouds.",
+    },
+    {
+      title: "Multi-cloud flexibility.",
+      description:
+        "Decoupled compute from storage with Tigris, eliminating cloud lock-in and months of custom replication work.",
+    },
+    {
+      title: "Object storage native.",
+      description:
+        "Tigris dynamically distributes data based on access patterns, keeping models and training data close to GPUs.",
+    },
+    {
+      title: "Open source platform.",
+      description:
+        "Beam open sourced beta9, enabling self-hosted portable workloads on any cloud, on-prem, or hybrid architecture.",
+    },
+  ]}
+/>
 
 # How Beam runs GPUs anywhere
 

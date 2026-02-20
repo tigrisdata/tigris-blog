@@ -28,6 +28,7 @@ import heroimage from "./ty-logseam.webp";
 import BreakoutQuote from "@site/src/components/BreakoutQuote";
 import HorizontalRule from "@site/src/components/HorizontalRule";
 import danielWileyImage from "./daniel-wiley.jpg";
+import QuickSummary from "@site/src/components/QuickSummary";
 
 <img
   src={heroimage}
@@ -43,22 +44,30 @@ import danielWileyImage from "./daniel-wiley.jpg";
   </small>
 </center>
 
-<strong>
-
-**TL;DR**
-
-- LogSeam provides a security-focused data lakehouse and AI-driven anomaly
-  detections built to reduce time-to-response to critical incidents.
-- LogSeam is designed for scale and is capable of searching over **500 million
-  logs per second**, delivering over **1.5 TB/s of throughput**, all while
-  **cutting costs by 40–80%**.
-- LogSeam ingests JSON logs that are reformatted into efficient Parquet files,
-  reducing storage by up to **100× and optimizing sequential scanning**.
-- Tigris enables LogSeam to reduce latencies, increase throughput and to
-  distribute data globally, placing it close to query origins to minimize
-  latency, all while cutting down cost.
-
-</strong>
+<QuickSummary
+  items={[
+    {
+      title: "Security data lakehouse.",
+      description:
+        "LogSeam provides AI-driven anomaly detections built to reduce time-to-response to critical incidents.",
+    },
+    {
+      title: "Massive scale.",
+      description:
+        "Searches over 500 million logs per second, delivering over 1.5 TB/s of throughput while cutting costs by 40–80%.",
+    },
+    {
+      title: "Efficient storage.",
+      description:
+        "JSON logs are reformatted into Parquet files, reducing storage by up to 100× and optimizing sequential scanning.",
+    },
+    {
+      title: "Global distribution with Tigris.",
+      description:
+        "Data is placed close to query origins to minimize latency and increase throughput, all while cutting costs.",
+    },
+  ]}
+/>
 
 <HorizontalRule></HorizontalRule>
 
