@@ -57,7 +57,8 @@ export default function QuickSummary({
         border: "1px solid var(--docs-color-border)",
         borderRadius: "12px",
         padding: "1.5rem",
-        margin: "1.5rem 0",
+        maxWidth: "42rem",
+        margin: "1.5rem auto",
         position: "relative",
         overflow: "hidden",
       }}
