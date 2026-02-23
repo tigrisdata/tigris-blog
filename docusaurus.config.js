@@ -274,7 +274,7 @@ const config = {
             algolia: {
               appId: process.env.NEXT_ALGOLIA_APPID,
               apiKey: process.env.NEXT_ALGOLIA_APIKEY,
-              indexName: "tigris_blog_pages",
+              indexName: "tigrisdata_blog",
               contextualSearch: false,
             },
           }
