@@ -59,7 +59,7 @@ export default function BlogPostPage(props: Props): ReactNode {
       <HtmlClassNameProvider
         className={clsx(
           ThemeClassNames.wrapper.blogPages,
-          ThemeClassNames.page.blogPostPage
+          ThemeClassNames.page.blogPostPage,
         )}
       >
         <BlogPostPageMetadata />

@@ -226,7 +226,7 @@ Edit the `performSEOAnalysis()` method to add new checks:
 // Check for specific keywords
 if (!content.includes("your-important-keyword")) {
   analysis.suggestions.push(
-    'Consider including "your-important-keyword" for better targeting'
+    'Consider including "your-important-keyword" for better targeting',
   );
 }
 ```
@@ -242,7 +242,7 @@ const hasStepByStep =
   content.toLowerCase().includes("first,");
 if (!hasStepByStep) {
   analysis.suggestions.push(
-    "Consider adding step-by-step instructions for better AI comprehension"
+    "Consider adding step-by-step instructions for better AI comprehension",
   );
 }
 ```

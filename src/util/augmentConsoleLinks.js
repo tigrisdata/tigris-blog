@@ -15,7 +15,7 @@ export function onRouteDidUpdate({ location, previousLocation }) {
 
       // Get all anchors that contain the console URL
       const allSignupLinks = document.querySelectorAll(
-        `a[href*="${tigrisConfig.consoleUrl}`
+        `a[href*="${tigrisConfig.consoleUrl}`,
       );
 
       const existingPid = location.searchParams?.get("pid");

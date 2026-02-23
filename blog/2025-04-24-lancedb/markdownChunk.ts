@@ -10,7 +10,7 @@ export type MarkdownSection = {
 export async function chunkify(
   markdown: string,
   maxTokens = 8191,
-  model = "text-embedding-3-small"
+  model = "text-embedding-3-small",
 ): Promise<MarkdownSection[]> {
   const encoding = await encoding_for_model(model);
   const sections: MarkdownSection[] = [];

@@ -6,7 +6,7 @@ type CarouselProps = { children: React.ReactNode[] };
 const Carousel: React.FC<CarouselProps> = ({ children }) => {
   // Shuffle slides once
   const [items] = useState<React.ReactNode[]>(() =>
-    React.Children.toArray(children).sort(() => Math.random() - 0.5)
+    React.Children.toArray(children).sort(() => Math.random() - 0.5),
   );
   const [currentIndex, setCurrentIndex] = useState(0);
   const length = items.length;

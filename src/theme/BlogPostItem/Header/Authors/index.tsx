@@ -24,14 +24,14 @@ export default function BlogPostItemHeaderAuthors({
       className={clsx(
         "margin-top--md margin-bottom--sm",
         imageOnly ? styles.imageOnlyAuthorRow : "row",
-        className
+        className,
       )}
     >
       {authors.map((author, idx) => (
         <div
           className={clsx(
             !imageOnly && (singleAuthor ? "col col--12" : "col col--6"),
-            imageOnly ? styles.imageOnlyAuthorCol : styles.authorCol
+            imageOnly ? styles.imageOnlyAuthorCol : styles.authorCol,
           )}
           key={idx}
         >

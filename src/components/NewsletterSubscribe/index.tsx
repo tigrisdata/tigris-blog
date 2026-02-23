@@ -25,7 +25,7 @@ interface NewsletterSubscribeProps {
 }
 
 export default function NewsletterSubscribe(
-  props: NewsletterSubscribeProps
+  props: NewsletterSubscribeProps,
 ): React.ReactNode {
   const {
     register,
@@ -67,7 +67,7 @@ export default function NewsletterSubscribe(
       })
       .catch(() => {
         // console.error(err);
-      })
+      }),
   );
 
   return (

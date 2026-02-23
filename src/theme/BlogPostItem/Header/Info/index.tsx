@@ -21,8 +21,8 @@ function useReadingTimePlural() {
             'Pluralized label for "{readingTime} min read". Use as much plural forms (separated by "|") as your language support (see https://www.unicode.org/cldr/cldr-aux/charts/34/supplemental/language_plural_rules.html)',
           message: "One min read|{readingTime} min read",
         },
-        { readingTime }
-      )
+        { readingTime },
+      ),
     );
   };
 }

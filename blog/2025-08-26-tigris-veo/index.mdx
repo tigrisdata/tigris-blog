@@ -115,9 +115,8 @@ and AI Studio.
     src="/blog/img/blog/veo3-tigris/ai-studio-get-api-key.mp4"
     type="video/mp4"
   />
-  Download the <a href="/blog/img/blog/veo3-tigris/ai-studio-get-api-key">
-    MP4
-  </a> version.
+  Download the{" "}
+  <a href="/blog/img/blog/veo3-tigris/ai-studio-get-api-key">MP4</a> version.
 </video>
 
 - Create a
@@ -152,7 +151,7 @@ const VEO3_MODEL_NAME = "veo-3.0-generate-preview";
 
 async function generateVideoFromText(
   prompt: string,
-  numberOfVideos = 1
+  numberOfVideos = 1,
 ): Promise<string> {
   let operation = await ai.models.generateVideos({
     model: VEO3_MODEL_NAME,
@@ -205,9 +204,9 @@ Storing videos on Tigris makes them globally available on demand.
     src="/blog/img/blog/veo3-tigris/tigris_create_access_keys.mp4"
     type="video/mp4"
   />
-  Download the <a href="/blog/img/blog/veo3-tigris/tigris_create_access_keys.mp4">
-    MP4
-  </a> version.
+  Download the{" "}
+  <a href="/blog/img/blog/veo3-tigris/tigris_create_access_keys.mp4">MP4</a>{" "}
+  version.
 </video>
 
 1. Create a bucket at https://storage.new (you’ll be prompted to create a Tigris
@@ -252,7 +251,7 @@ const s3 = new S3Client({
 async function uploadObject(
   buffer: Buffer,
   contentType: string,
-  objectKey: string
+  objectKey: string,
 ) {
   await s3.send(
     new PutObjectCommand({
@@ -260,7 +259,7 @@ async function uploadObject(
       Key: objectKey,
       Body: buffer,
       ContentType: contentType,
-    })
+    }),
   );
 }
 
@@ -327,7 +326,8 @@ async function generateVideoFromText(
     src="/blog/img/blog/veo3-tigris/enhance-prompt.mp4"
     type="video/mp4"
   />
-  Download the <a href="/blog/img/blog/veo3-tigris/enhance-prompt">MP4</a> version.
+  Download the <a href="/blog/img/blog/veo3-tigris/enhance-prompt">MP4</a>{" "}
+  version.
 </video>
 
 With text‑to‑video working and objects stored on Tigris, let’s boost prompt
@@ -412,7 +412,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || "Failed to generate" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

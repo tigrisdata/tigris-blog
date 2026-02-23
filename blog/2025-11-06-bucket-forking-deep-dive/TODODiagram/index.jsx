@@ -53,7 +53,7 @@ export default function App() {
     const nextTodos = todos.map((todo) =>
       todo.id === todoToToggle.id
         ? { ...todo, completed: !todo.completed }
-        : todo
+        : todo,
     );
     const eventText = todoToToggle.completed
       ? "Marked TODO as Incomplete"
@@ -98,7 +98,7 @@ export default function App() {
     const originalTodo = todos.find((t) => t.id === todoId);
     const newText = editText.trim();
     const nextTodos = todos.map((todo) =>
-      todo.id === todoId ? { ...todo, text: newText } : todo
+      todo.id === todoId ? { ...todo, text: newText } : todo,
     );
     const nextHistoryEntry = {
       id: Date.now() + Math.random(),
@@ -288,7 +288,7 @@ export default function App() {
                       <button
                         onClick={() => handleRevert(item)}
                         title={`Revert to this state from ${formatTimestamp(
-                          item.timestamp
+                          item.timestamp,
                         )}`}
                         className={styles.revertButton}
                       >

@@ -18,7 +18,7 @@ export default function BlogPostItem({
       className={clsx(
         className,
         { [styles.item]: !isBlogPostPage },
-        isBlogPostPage ? "col--12" : "col--4 margin-bottom--lg"
+        isBlogPostPage ? "col--12" : "col--4 margin-bottom--lg",
       )}
     >
       <BlogPostItemHeader />

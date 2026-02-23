@@ -35,7 +35,7 @@ export default function Navigation({ location }: { location: Location }) {
               to="/blog"
               className={clsx(
                 styles.link,
-                isBlogHomePage(location) && styles.active
+                isBlogHomePage(location) && styles.active,
               )}
             >
               All Posts
@@ -46,7 +46,7 @@ export default function Navigation({ location }: { location: Location }) {
               to="/blog/tags/engineering"
               className={clsx(
                 styles.link,
-                isCategoryActive("engineering", location) && styles.active
+                isCategoryActive("engineering", location) && styles.active,
               )}
             >
               Engineering
@@ -57,7 +57,8 @@ export default function Navigation({ location }: { location: Location }) {
               to="/blog/tags/build-with-tigris"
               className={clsx(
                 styles.link,
-                isCategoryActive("build-with-tigris", location) && styles.active
+                isCategoryActive("build-with-tigris", location) &&
+                  styles.active,
               )}
             >
               Build with Tigris
@@ -68,7 +69,7 @@ export default function Navigation({ location }: { location: Location }) {
               to="/blog/tags/customers"
               className={clsx(
                 styles.link,
-                isCategoryActive("customers", location) && styles.active
+                isCategoryActive("customers", location) && styles.active,
               )}
             >
               Customers
@@ -79,7 +80,7 @@ export default function Navigation({ location }: { location: Location }) {
               to="/blog/tags/updates"
               className={clsx(
                 styles.link,
-                isCategoryActive("updates", location) && styles.active
+                isCategoryActive("updates", location) && styles.active,
               )}
             >
               Updates

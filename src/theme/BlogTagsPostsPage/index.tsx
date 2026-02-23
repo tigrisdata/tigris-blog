@@ -19,7 +19,7 @@ function useBlogTagsPostsPageTitle(tag: Props["tag"]) {
       description: "The title of the page for a blog tag",
       message: 'Posts tagged "{tagName}"',
     },
-    { tagName: tag?.label }
+    { tagName: tag?.label },
   );
 }
 
@@ -50,7 +50,7 @@ export default function BlogTagsPostsPage(props: Props): ReactNode {
     <HtmlClassNameProvider
       className={clsx(
         ThemeClassNames.wrapper.blogPages,
-        ThemeClassNames.page.blogTagPostListPage
+        ThemeClassNames.page.blogTagPostListPage,
       )}
     >
       <BlogTagsPostsPageMetadata {...props} />

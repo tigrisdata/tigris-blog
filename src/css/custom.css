@@ -59,13 +59,14 @@ code {
 :root {
   --ifm-spacing-horizontal: 1.5rem;
 
-  --ifm-font-family-base: "Hanken Grotesk", system-ui, -apple-system, Segoe UI,
-    Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont,
-    "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol";
+  --ifm-font-family-base:
+    "Hanken Grotesk", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
+    Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, "Segoe UI", Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 
-  --ifm-font-family-monospace: "Fira Code VF", SFMono-Regular, Menlo, Monaco,
-    Consolas, "Liberation Mono", "Courier New", monospace;
+  --ifm-font-family-monospace:
+    "Fira Code VF", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 
   --ifm-font-weight-bold: 900;
 
@@ -946,10 +947,10 @@ table td {
   grid-template-rows: auto;
   grid-template-columns:
     minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
-    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(
+    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(
       0,
       1fr
-    )
+    ) minmax(0, 1fr)
     minmax(0, 1fr) minmax(0, 1fr);
   grid-auto-columns: 1fr;
   width: 100%;

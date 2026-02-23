@@ -119,9 +119,11 @@ inconsistent behavior
     src="/blog/img/blog/build-agents-with-bucket-forking/parallel-agent-1.mp4"
     type="video/mp4"
   />
-  Download the <a href="/blog/img/blog/build-agents-with-bucket-forking/parallel-agent-1.mp4">
+  Download the{" "}
+  <a href="/blog/img/blog/build-agents-with-bucket-forking/parallel-agent-1.mp4">
     MP4
-  </a> version.
+  </a>{" "}
+  version.
 </video>
 
 The input file is overwritten by each latest agent generation. This is a simple
@@ -196,9 +198,11 @@ that my buckets are totally isolated and each bucket gets its own version of
     loop
     autoplay
   />
-  Download the <a href="/blog/img/blog/build-agents-with-bucket-forking/parallel-agents-2.mp4">
+  Download the{" "}
+  <a href="/blog/img/blog/build-agents-with-bucket-forking/parallel-agents-2.mp4">
     MP4
-  </a> version.
+  </a>{" "}
+  version.
 </video>
 
 This means AI agents can scale: you can have dozens of agents performing tasks
@@ -226,7 +230,7 @@ export async function GET(req: NextRequest) {
     console.error("Error creating bucket fork:", (forkResult as any).error);
     return new NextResponse(
       `Failed to create bucket fork: ${(forkResult as any).error}`,
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -275,7 +279,7 @@ export async function POST(req: NextRequest) {
       `Failed to upload image: ${err?.message || "unknown"}`,
       {
         status: 500,
-      }
+      },
     );
   }
 }

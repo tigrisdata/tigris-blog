@@ -35,7 +35,7 @@ export default function BlogPostItemHeaderTitle({
       <TitleHeading
         className={clsx(
           className,
-          isBlogPostPage ? styles.titleBlogPostPage : styles.title
+          isBlogPostPage ? styles.titleBlogPostPage : styles.title,
         )}
       >
         {!isBlogPostPage && assets.image && (
