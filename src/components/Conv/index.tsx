@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import React from "react";
 
 import styles from "./styles.module.css";
@@ -6,7 +5,7 @@ import styles from "./styles.module.css";
 interface DiscordMessageProps {
   name: string;
   profilePic: string;
-  children?: JSX.Element[] | JSX.Element;
+  children?: React.ReactNode;
   top?: boolean;
   bottom?: boolean;
   title?: string;
@@ -19,7 +18,7 @@ export default function DiscordMessage({
   top,
   bottom,
   title,
-}: DiscordMessageProps): JSX.Element {
+}: DiscordMessageProps): React.ReactNode {
   return (
     <div
       className={`${styles.container} ${top && styles.containerTop} ${

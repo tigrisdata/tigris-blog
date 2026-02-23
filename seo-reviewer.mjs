@@ -132,7 +132,6 @@ class SEOReviewer {
    */
   findContentLineNumber(content, searchText) {
     const lines = content.split("\n");
-    let inFrontmatter = false;
     let frontmatterEnded = false;
     let dashCount = 0;
 
@@ -141,10 +140,7 @@ class SEOReviewer {
 
       if (line.trim() === "---") {
         dashCount++;
-        if (dashCount === 1) {
-          inFrontmatter = true;
-        } else if (dashCount === 2) {
-          inFrontmatter = false;
+        if (dashCount === 2) {
           frontmatterEnded = true;
         }
         continue;
@@ -443,7 +439,7 @@ class SEOReviewer {
    * @param {Object} analysis - Analysis object to modify
    */
   performSEOAnalysis(analysis) {
-    const { frontmatter, content, fullContent, wordCount, headings, images } =
+    const { frontmatter, fullContent, wordCount, headings, images } =
       analysis;
 
     // Title analysis
@@ -1301,7 +1297,6 @@ class SEOReviewer {
     };
 
     const suggestedTags = new Set();
-    const missingTags = [];
 
     // Pre-compile regex patterns for better performance
     const regexPatterns = new Map();
@@ -1602,7 +1597,7 @@ class SEOReviewer {
           if (stat.isDirectory()) {
             directories.push(dir);
           }
-        } catch (error) {
+        } catch {
           // Skip files that can't be accessed
           continue;
         }
@@ -2004,7 +1999,7 @@ class SEOReviewer {
       // Clean up temp file on error
       try {
         await fs.promises.unlink(tempFile);
-      } catch (cleanupError) {
+      } catch {
         // Ignore cleanup errors
       }
       throw error;

@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import styles from "./styles.module.css";
@@ -27,7 +26,7 @@ interface NewsletterSubscribeProps {
 
 export default function NewsletterSubscribe(
   props: NewsletterSubscribeProps
-): JSX.Element {
+): React.ReactNode {
   const {
     register,
     handleSubmit,
@@ -68,7 +67,6 @@ export default function NewsletterSubscribe(
       })
       .catch(() => {
         // console.error(err);
-        // eslint-disable-next-line @typescript-eslint/comma-dangle
       })
   );
 

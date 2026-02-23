@@ -1,11 +1,10 @@
-/* eslint-disable react/prop-types */
 import React from "react";
 
 import styles from "./styles.module.css";
 
 interface ReasoningCollapsibleProps {
   timeTaken: number; // in seconds
-  children: JSX.Element[] | JSX.Element;
+  children: React.ReactNode;
 }
 
 export default function ReasoningCollapsible({

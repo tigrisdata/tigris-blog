@@ -36,7 +36,7 @@ export function onRouteDidUpdate({ location, previousLocation }) {
         }
       });
     }
-  } catch (e) {
+  } catch {
     console.warn("Error augmenting Tigris Console links with pid query param");
   }
 }
