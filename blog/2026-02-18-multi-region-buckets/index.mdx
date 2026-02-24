@@ -1,0 +1,174 @@
+---
+slug: multi-region-buckets
+title: "Multi-region buckets – simpler locations, clearer consistency"
+description: |
+  Tigris now offers a unified bucket location model—multi-region, dual-region, single-region, and global—so you choose where data lives and get predictable consistency from each location type.
+image: ./preview-image.webp
+keywords:
+  - object storage
+  - multi-region
+  - consistency
+  - S3-compatible
+  - distributed systems
+authors:
+  - davidmyriel
+tags:
+  - Updates
+  - Object storage
+  - Multi-region
+  - Distributed systems
+---
+
+import heroImage from "./preview-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Illustration of Tigris introducing multi-region buckets with a blue tiger scout overlooking a distributed kingdom."
+/>
+
+[**Multi-region buckets are now available in Tigris.**](/docs/buckets/locations/) You can now choose exactly how your data is replicated across regions using four bucket location types—multi-region, dual-region, single-region, and global—each with built‑in availability and consistency guarantees. Instead of tuning low-level flags, you decide where your data should live and how resilient it needs to be, and Tigris does the rest.
+
+Teams already think this way. When you design an object storage strategy, you start from geography and failure domains, not consistency headers. The real questions sound like:
+
+- “What happens if an entire region is down?”
+- “How do I keep data close to users in two specific regions?”
+- “Where exactly is this data allowed to live?”
+
+The new location types are built around those questions and give you a straightforward way to match buckets to the kind of application you’re running.
+
+```text
+Architecture at a glance
+
+Single-region bucket
+--------------------
+  [ bucket ]
+      |
+   [ region A ]
+
+Dual-region bucket
+------------------
+        [ bucket ]
+        /       \
+ [ region A ]  [ region B ]
+
+Multi-region bucket (region group)
+----------------------------------
+          [ bucket ]
+        /     |     \
+ [ region A ][ region B ][ region C ]
+   (same geo / group, e.g. "us")
+
+Global bucket
+-------------
+      [ bucket ]
+          |
+   [ globally distributed copies ]
+    (reads served close to users)
+```
+
+## Always-on applications in a region group
+
+Multi-region buckets are for applications that must keep serving traffic even when a region has a bad day.
+
+When you create a multi-region bucket, Tigris keeps regional copies of your data inside a chosen geography, such as `us` or `europe`. Reads and writes see strong, predictable behavior across that geography, so you can:
+
+- run stateless services in multiple regions,
+- point them all at the same bucket, and
+- know that users see the same objects regardless of which regional deployment they hit.
+
+Good fits include:
+
+- front-end assets (SPA bundles, static assets),
+- critical configuration and feature flags, and
+- user data that needs both low latency and resilience to regional failures.
+
+Instead of hand‑wiring replication jobs between single-region buckets, you create one multi-region bucket and let the platform handle replication and consistency.
+
+## Regional control and residency with dual-region
+
+Some workloads need finer control.
+
+Maybe compliance requires you to keep data in two specific regions, or your latency model is built around two data centers on opposite coasts. Dual-region buckets are designed for that. You choose the pair of regions, and Tigris stores copies of your objects in both.
+
+Within a given region, reads and writes behave strongly consistently, which makes it easy to reason about local operations. When you read from the other region, the system trades a bit of global immediacy for the ability to keep data in the exact pair of locations you’ve chosen.
+
+This fits:
+
+- regulated data that must stay within a specific jurisdiction pair,
+- active/active deployments across two regions, and
+- DR strategies where you want a warm failover region without running extra replication services.
+
+The result is a storage layer that matches the topology of your compute layer without additional glue code.
+
+## Cost-optimized, regional workloads with single-region
+
+Not everything needs to span multiple regions.
+
+Single-region buckets keep data in one region of your choice and are the most cost‑effective option. They’re ideal when you deploy compute and storage side by side:
+
+- staging and test environments,
+- regional APIs and internal tools, and
+- batch jobs, pipelines, and analytics workloads that live in one place.
+
+You still get clear consistency semantics—reads don’t lag writes inside that region—but you don’t pay for replication you don’t need.
+
+If you later decide that a bucket should be more resilient, the location model gives you a way to move to dual-region or multi-region without rewriting how your application talks to storage.
+
+## Simple global distribution for read-heavy workloads
+
+Global buckets are for read‑heavy workloads with users all over the world.
+
+Instead of thinking about individual regions, you think about your dataset as a whole: one logical bucket, accessed from many places. Tigris, as a globally distributed, multi-cloud object storage service, handles getting data close to users and keeping copies in sync.
+
+Typical use cases:
+
+- models and embeddings served to AI/ML workloads,
+- media libraries (images, video, audio), and
+- documentation, artifacts, and static sites that are written infrequently but read everywhere.
+
+You keep a simple configuration and a single bucket name. Tigris serves reads from locations close to users for low-latency access, while still giving you clear expectations around how quickly updates propagate globally.
+
+## How it looks from your application
+
+Although the conceptual model has changed, the way you work with buckets from code stays familiar.
+
+You still:
+
+1. create a bucket,
+2. point your S3-compatible client or SDK at Tigris, and
+3. start reading and writing objects.
+
+The main difference is that you now choose a location type and, where needed, the specific regions or region group. Your application code keeps using the same bucket name and S3 API surface.
+
+That means you can:
+
+- start new workloads directly on multi-region, dual-region, or global buckets, and
+- migrate existing workloads gradually by creating new buckets with the right location type and updating configuration, without rewriting storage logic.
+
+For exact CLI, Terraform, and console steps, see the [Bucket locations guide](/docs/buckets/locations/).
+
+## Choosing the right location type
+
+A quick rule of thumb:
+
+- **Start with multi-region** if you’re building a new, user-facing application that needs to survive a single-region outage within a geography.
+- **Use dual-region** when you have strict residency or topology requirements (for example, two named regions for compliance or latency).
+- **Pick single-region** for cost-sensitive, regional, or non-critical workloads that live alongside a single compute region.
+- **Reach for global** when reads dominate writes and your users are spread across the world.
+
+If you’re unsure, multi-region in your primary geography is usually a safe default for production workloads. You get strong, predictable behavior inside that geography and resilience to most common failure modes.
+
+## What’s next
+
+If you’re already using Tigris, you don’t need to change anything immediately—your existing buckets continue to function as before.
+
+For new workloads, the recommended path is:
+
+1. Read the [Bucket locations guide](/docs/buckets/locations/).
+2. Pick the location type that fits your application’s geography, latency, and resilience needs.
+3. Create new buckets using that model going forward.
+
+The goal of this release is not just to add another feature, but to make the way Tigris handles geography and consistency feel intuitive and industry‑standard. You get a clear mental model for where data lives, the guarantees it comes with, and how to fit that into your architecture.
+
+We’d love to hear how the new model works for your workloads. If you have a pattern that doesn’t fit neatly into the four location types, or if you’re migrating from a more bespoke setup, your feedback will help shape the next round of improvements.
