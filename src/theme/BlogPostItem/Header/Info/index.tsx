@@ -52,7 +52,7 @@ export default function BlogPostItemHeaderInfo({
   const { date, readingTime } = metadata;
 
   return (
-    <div className={clsx(styles.container, "margin-vert--md", className)}>
+    <div className={clsx(styles.container, className)}>
       <DateTime date={date} />
       {typeof readingTime !== "undefined" && (
         <>
