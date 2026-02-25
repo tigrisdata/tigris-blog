@@ -2,6 +2,14 @@
   font-size: 1.25rem;
 }
 
+.titleLink {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.8em;
+}
+
 .titleLink:hover {
   text-decoration: none;
 }
