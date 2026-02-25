@@ -19,16 +19,13 @@
   overflow: hidden;
   border-radius: 0.5rem;
   margin-bottom: 1rem;
-  max-height: 450px;
-  display: flex;
-  justify-content: center; /* horizontal centering */
-  align-items: baseline;
+  aspect-ratio: 2752 / 1536;
 }
 
 .titleImage {
   width: 100%;
-  height: auto;
-
+  height: 100%;
+  object-fit: cover;
   transition: transform 0.3s ease;
 }
 
