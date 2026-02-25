@@ -1,5 +1,12 @@
 .item {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   transition: all 0.3s ease;
+}
+
+.item > *:last-child {
+  margin-top: auto;
 }
 
 .item:hover {

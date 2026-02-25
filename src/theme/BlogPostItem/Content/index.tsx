@@ -13,9 +13,11 @@ export default function BlogPostItemContent({
   const { isBlogPostPage, metadata } = useBlogPost();
 
   if (!isBlogPostPage && metadata.description) {
-    return (
-      <div className={clsx("markdown", className)}>{metadata.description}</div>
-    );
+    const desc =
+      metadata.description.length > 160
+        ? metadata.description.slice(0, 160).trimEnd() + "…"
+        : metadata.description;
+    return <div className={clsx("markdown", className)}>{desc}</div>;
   }
 
   return (
