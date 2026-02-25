@@ -4,6 +4,7 @@ import BlogPostItem from "@theme/BlogPostItem";
 import type { Props } from "@theme/BlogPostItems";
 import clsx from "clsx";
 import { useLocation } from "@docusaurus/router";
+import styles from "./styles.module.css";
 
 export default function BlogPostItems({
   items,
@@ -19,7 +20,7 @@ export default function BlogPostItems({
           content={BlogPostContent}
         >
           <div
-            className={clsx("col col--4", {
+            className={clsx("col col--4", styles.col, {
               "col--4": i < 2 && isHomePage,
             })}
           >
