@@ -1,3 +1,7 @@
 .markdownImage img {
   border-radius: 0.5rem;
 }
+
+.listDescription {
+  flex: 1;
+}

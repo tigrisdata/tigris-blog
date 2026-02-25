@@ -5,10 +5,6 @@
   transition: all 0.3s ease;
 }
 
-.item > *:last-child {
-  margin-top: auto;
-}
-
 .item:hover {
   /* background-color: var(--ifm-code-background); */
 }
