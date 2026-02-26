@@ -1,0 +1,231 @@
+---
+slug: case-study-parseable
+title: "How Parseable Built an Observability Data Lake for AI"
+description: |
+  Parseable unifies agent, LLM, and infrastructure observability in a data lake on globally distributed Tigris object storage, with 80-90% Parquet compression.
+image: ./parseable-hero.webp
+keywords:
+  - Parseable
+  - observability
+  - data lake
+  - AI observability
+  - agent observability
+  - LLM monitoring
+  - Tigris object storage
+  - Parquet
+authors:
+  - ks
+tags:
+  - Customers
+  - Observability
+  - AI
+  - Data Lake
+  - Object Storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import BreakoutQuote from "@site/src/components/BreakoutQuote";
+import HorizontalRule from "@site/src/components/HorizontalRule";
+import heroimage from "./parseable-hero.webp";
+import nitishTiwariImage from "./nitish-tiwari.jpg";
+import ParseableArchitectureDiagram from "@site/src/components/ParseableArchitectureDiagram";
+import QuickSummary from "@site/src/components/QuickSummary";
+
+<img
+  src={heroimage}
+  className="hero-image"
+  alt="Ty the tiger and Parseable building the observability data lake"
+/>
+
+<center>
+  <small>
+    <em>Ty the tiger and Parseable building the observability data lake.</em>
+  </small>
+</center>
+
+<QuickSummary
+  readTime="5 min read"
+  items={[
+    {
+      title: "Unified Observability:",
+      description:
+        "Agent behavior, LLM costs, and infrastructure telemetry in a single queryable data lake.",
+    },
+    {
+      title: "80-90% Compression:",
+      description:
+        "All observability data compressed into Parquet format and stored on Tigris object storage.",
+    },
+    {
+      title: "Smart Caching:",
+      description:
+        "Frequently queried data stays hot on local NVMe SSDs, cold data on cheap, scalable object storage.",
+    },
+    {
+      title: "Natural Language Queries:",
+      description:
+        "Go from question to answer without translating between incompatible query languages.",
+    },
+  ]}
+/>
+
+The problem with observability data is there's a lot of it. And most of it isn't
+useful, except for the precious picks that are actually used in debugging. It's
+rarely queried, the schema changes frequently as new fields get added, and it's
+append-only so the data isn't mutated. If you ignore the existing tooling and
+just look at the shape of the data, observability data looks like data lake
+data.
+
+[Parseable](https://www.parseable.com/) is the data lake for all your
+observability data. Agent behavior, LLM usage, prompts, tokens, and costs live
+alongside Kubernetes events and application telemetry, all in the same place.
+All backed by Tigris object storage.
+
+## Why AI observability needs a data lake
+
+When teams first started running AI systems in production, observability seemed
+like a solved problem. Dashboards, metrics, logs, tracing, alerts. Maybe add
+another dashboard for token use to make sure you don't have to mortgage the
+office space, but it all seemed straightforward.
+
+Then unexpected behavior started showing up that didn't neatly line up with a
+wall of 500s or an outage. An agent still completes tasks, but it takes longer
+and costs more tokens. A model update subtly changes the output, and downstream
+services start handling more edge cases. Infrastructure pressure causes
+intermittent slowdowns, and agent behavior shifts under latency. Nothing
+obviously crashes, but no one can point to a single metric that explains the
+change.
+
+As more teams started suffering from this complexity, agent observability
+platforms were born. Control token usage! Add guardrails for nondeterministic
+behavior! Better dashboards built for your agents! The real result has been
+dashboard sprawl, just AI flavored.
+
+What these agent-exclusive platforms deliver is local visibility. You can see
+what an agent did in a single run and inspect prompts, tool calls, and token
+counts. Any issue that involves your infrastructure or other services is a pain
+to correlate across separate tools. And hundreds of agents making thousands of
+tool calls generate a lot of data to sift through, especially with the rest of
+your telemetry living somewhere else.
+
+<BreakoutQuote
+  username="Nitish Tiwari"
+  title="Co-Founder & CEO, Parseable"
+  imageUrl={nitishTiwariImage}
+>
+  Agent observability cannot happen in isolation while the rest of your
+  observability happens somewhere else. You need visibility across
+  infrastructure.
+</BreakoutQuote>
+
+Observability data is data lake shaped, and Parseable treats it that way.
+
+## The single pane of glass
+
+Traditional observability tooling was built with the assumption that storage was
+expensive and slow. Data had to be sampled early before storing it, and kept hot
+on local disks for fast queries and dashboards. By using Tigris object storage,
+Parseable can store observability data from thousands of agents cheaply, and
+serve it up for queries instantly.
+
+Parseable takes all this data and lets you query it from a single pane of glass
+using the easiest language possible: English. Data lake queries start with
+natural language questions. Translating those into multiple dialects of mutually
+incompatible query languages is busywork that Parseable cuts out.
+
+<video controls width="100%" style={{ borderRadius: "8px", margin: "1rem 0" }}>
+  <source src="https://cdn.parseable.com/new-final.mp4" type="video/mp4" />
+</video>
+
+The same platform handles LLM observability too: token costs, prompt tracking,
+and integrations with popular routers like OpenRouter. Your agents, your
+infrastructure, and your LLM spend all show up in the same interface.
+
+## The compute layer that makes it work
+
+{/* truncate */}
+
+A traditional database plans queries against indices and schemata on local disk.
+Data lakes don't have that luxury. The data arrives via HTTP as JSON, gets
+written once, and sits in a more latent access tier. You need a compute layer
+that's smart about what it reads and where it reads from.
+
+Parseable is built in Rust and runs each node as a single binary with no
+external dependencies. Data flows in via HTTP or Kafka, gets converted to Apache
+Arrow format in memory, then staged to local disk. A background process
+asynchronously compresses those Arrow files into columnar Parquet and uploads
+them to Tigris, achieving 80-90% compression ratios. There is no separate
+consensus layer. Object storage manages all concurrency control, eliminating
+complex coordination overhead.
+
+The query engine is built on [Apache DataFusion](https://datafusion.apache.org/)
+and speaks PostgreSQL-compatible SQL. Instead of scanning every file in storage,
+it consults a data manifest, a metadata file that tracks which columns and time
+ranges live in which Parquet files. The query planner uses this manifest to
+identify exactly which files are relevant, then fetches only the byte ranges it
+needs from Tigris using the S3 `GetRange` API. Cold queries hit object storage
+directly, while hot queries pull from the smart cache.
+
+The smart cache keeps recent Parquet files on local NVMe SSDs on query nodes. A
+scheduler runs every minute, downloading the most recent data first and working
+backward. When the cache fills up, the oldest files get evicted automatically.
+During query execution, the engine checks the cache manifest before making any
+network calls — if the data is local, it skips the object storage round trip
+entirely.
+
+## Why object storage fits
+
+A traditional observability setup requires a separate tool, storage system, and
+dashboard for each data type. With Parseable and Tigris, everything flows
+through a single pipeline.
+
+<ParseableArchitectureDiagram />
+
+Object storage is the natural fit for observability data. It grows continuously,
+the more agents you deploy the more data gets created, and at some point you
+have to decide what to retain. Object storage is massively scalable and cheap,
+so you can store everything without pre-filtering and query what you need later.
+
+Any S3-compatible object storage could back this architecture, but not all
+object storage is equal. A single-region provider means your queries are fast in
+one geography and slow everywhere else. Parseable's compute can move to wherever
+queries originate, and with Tigris the data is already there waiting. Tigris
+replicates globally, so Parseable doesn't have to build its own cross-region
+sync or manage bucket replication rules across providers.
+
+That's what makes the pairing work: Parseable handles compute, Tigris handles
+storage, and neither has to compensate for the other's limitations.
+
+## The whole stack, purpose-built
+
+Observability often gets lumped in with developer tooling, something you set up
+early alongside your CI pipeline and linter config. In practice, it becomes
+critical later, when real users hit real problems and you need to understand
+what happened across your entire stack.
+
+<BreakoutQuote
+  username="Nitish Tiwari"
+  title="Co-Founder & CEO, Parseable"
+  imageUrl={nitishTiwariImage}
+>
+  Observability gets bucketed in the dev tools space, but it's not really. It
+  comes much later when you start to get customers. That's when you care about
+  observability.
+</BreakoutQuote>
+
+Parseable ships ingestion, storage, querying, visualization, and alerting in one
+package. Purpose-built for observability, not an analytical database you have to
+assemble into one. If you're Uber or OpenAI, you can set up ClickHouse and
+customize an analytical database on top of it. Most companies can't, and
+ClickHouse wrappers fall apart if you care about data sovereignty or control.
+
+Agent behavior, LLM costs, and infrastructure telemetry all live in the same
+data lake, queryable from a single interface. As the data keeps growing, the
+observability stack should keep up without asking you to throw anything away.
+
+<InlineCta
+  title="Build your observability data lake on Tigris"
+  subtitle="Parseable proves what Tigris can do for observability at scale. Put Tigris behind your own stack and let storage scale with your data."
+  button="Get Started"
+  link="https://www.tigrisdata.com/docs/get-started/"
+/>
