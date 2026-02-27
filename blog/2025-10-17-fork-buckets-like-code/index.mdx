@@ -177,6 +177,50 @@ own copy of the data. Let's walk through the pattern using Tigris:
     ```
 
   </TabItem>
+  <TabItem value="boto3" label="Python (boto3)">
+    ```python
+    # In your terminal, install the boto3 extension
+    pip install tigris-boto3-ext
+    
+    # Now, the code
+    import boto3
+    from tigris_boto3_ext import (
+        TigrisSnapshotEnabled,
+        create_snapshot_bucket,
+        create_snapshot,
+        get_snapshot_version,
+        create_fork,
+    )
+
+    # Initialize boto3 S3 client for Tigris
+    s3_client = boto3.client(
+        's3',
+        endpoint_url='https://t3.storage.tigris.dev',
+        aws_access_key_id='your-access-key',
+        aws_secret_access_key='your-secret-key',
+    )
+
+    # Create a seed bucket
+    seed_bucket_name = 'agent-seed'
+    create_snapshot_bucket(s3, seed_bucket_name)
+
+    # Create snapshot
+    result = create_snapshot(s3_client, seed_bucket_name, snapshot_name='agent-seed-v1')
+    snapshot_version = get_snapshot_version(result)
+
+    # Fork the bucket from the snapshot for a new agent
+    agent_bucket_name = f"{seed_bucket_name}-agent-{agent_id}";
+    create_fork(s3_client, agent_bucket_name, seed_bucket_name, snapshot_version=snapshot_version)
+
+    # Start the agent using the forked bucket
+    start_agent(agent_bucket_name)
+
+    # Standard boto3 operations work normally:
+    s3_client.put_object(Bucket=seed_bucket_name, Key='config.json', Body=b'{}')
+    s3_client.put_object(Bucket=seed_bucket_name, Key='data.txt', Body=b'seed data')
+    ```
+
+  </TabItem>
   <TabItem value="javascript" label="JavaScript">
     ```javascript
     import { createBucket, createBucketSnapshot } from "@tigrisdata/storage";
