@@ -1,6 +1,5 @@
 import tigrisConfig from "@site/tigris.config.js";
 
-/* eslint-disable react/prop-types */
 import React from "react";
 import clsx from "clsx";
 import Link from "@docusaurus/Link";

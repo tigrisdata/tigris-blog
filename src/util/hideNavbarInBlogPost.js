@@ -19,13 +19,13 @@ const adjustBlogPostUI = (location) => {
     if (isMobileView()) return;
 
     const sidebar = document.querySelector(
-      "aside.col.col--3, .blog-left-sidebar"
+      "aside.col.col--3, .blog-left-sidebar",
     );
     if (!sidebar) return;
 
     const nav = sidebar.querySelector("nav");
     const main = document.querySelector(
-      "main[itemtype='http://schema.org/Blog']"
+      "main[itemtype='http://schema.org/Blog']",
     );
 
     if (blogPostRegEx.test(location.pathname) === true) {
@@ -35,7 +35,7 @@ const adjustBlogPostUI = (location) => {
       nav.style.display = "none";
 
       const rightSidebar = document.querySelector(
-        "div.col.col--2, .blog-right-sidebar"
+        "div.col.col--2, .blog-right-sidebar",
       );
 
       // If a blog post doesn't have any headings there will

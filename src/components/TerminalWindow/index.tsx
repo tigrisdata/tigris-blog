@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import React, { ReactNode } from "react";
 import clsx from "clsx";
 import styles from "./styles.module.css";
@@ -13,7 +12,7 @@ export default function TerminalWindow({
   children,
   minHeight,
   title = "Terminal",
-}: Props): JSX.Element {
+}: Props): React.ReactNode {
   return (
     <div className={styles.terminalWindow} style={{ minHeight }}>
       <div className={styles.terminalWindowHeader}>

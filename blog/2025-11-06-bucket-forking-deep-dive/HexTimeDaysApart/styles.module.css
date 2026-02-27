@@ -18,7 +18,9 @@
 .card {
   max-width: 48rem;
   border-radius: 1rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
   border: 1px solid rgba(39, 39, 42, 0.5);
   background-color: rgb(39, 39, 42);
   color: rgb(244, 244, 245);
@@ -141,8 +143,9 @@
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   padding-right: 1rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   background-color: rgb(39, 39, 42);
 }
 
@@ -158,8 +161,9 @@
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   padding-right: 1rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   word-break: break-all;
   background-color: rgb(39, 39, 42);
 }

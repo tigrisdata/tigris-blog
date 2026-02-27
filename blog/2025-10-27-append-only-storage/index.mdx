@@ -59,8 +59,7 @@ Kleppmann wrote:
 
 > "Databases are global, shared, mutable state … A more promising model … is to
 > think of a database as an always-growing collection of immutable facts."  
-> —
-> [Turning the Database Inside Out, 2015](https://martin.kleppmann.com/2015/03/04/turning-the-database-inside-out.html)
+> — [Turning the Database Inside Out, 2015](https://martin.kleppmann.com/2015/03/04/turning-the-database-inside-out.html)
 
 That's the design philosophy behind Tigris — taking the principles of
 log-structured storage and applying them at the scale of cloud object stores.
@@ -146,8 +145,7 @@ Kleppmann summarized it perfectly:
 
 > "What do we have to gain from turning the database inside out? Simpler code,
 > better scalability, better robustness, lower latency."  
-> —
-> [Martin Kleppmann, Øredev 2015](https://martin.kleppmann.com/2015/11/05/database-inside-out-at-oredev.html)
+> — [Martin Kleppmann, Øredev 2015](https://martin.kleppmann.com/2015/11/05/database-inside-out-at-oredev.html)
 
 With this design, object storage inherits the same architectural principles that
 once turned databases inside out.
@@ -187,8 +185,7 @@ metadata, not data size.
 As ZFS itself claims:
 
 > "Actually cheaper to take a snapshot than not! Constant-Time Snapshots."  
-> —
-> [ZFS: The Last Word in File Systems](https://pages.cs.wisc.edu/~dusseau/Classes/CS736/CS736-F13/Lectures/1_zfs_overview.pdf)
+> — [ZFS: The Last Word in File Systems](https://pages.cs.wisc.edu/~dusseau/Classes/CS736/CS736-F13/Lectures/1_zfs_overview.pdf)
 
 Even massive buckets can be snapshotted or forked almost instantly, since only
 metadata changes.

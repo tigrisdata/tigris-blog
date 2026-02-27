@@ -15,7 +15,7 @@ function useBlogPostStructuredData() {
       description: metadata.description,
       url: metadata.permalink,
     }),
-    [metadata]
+    [metadata],
   );
 }
 

@@ -41,7 +41,7 @@ const fnameToURL = (fname) => {
 (async () => {
   const markdownFiles = glob.sync("../../**/*.md");
   const files = [...markdownFiles].filter(
-    (fname) => !fname.endsWith("README.md")
+    (fname) => !fname.endsWith("README.md"),
   );
   files.sort();
 
@@ -102,6 +102,6 @@ const fnameToURL = (fname) => {
   console.log(
     actual.map(({ url, heading, text }) => {
       return { url, heading, text };
-    })
+    }),
   );
 })();

@@ -252,7 +252,7 @@ import { chunkify } from "./markdownChunk";
 const markdownFiles = await glob("./docs/**/*.md");
 
 const files = [...markdownFiles].filter(
-  (fname) => !fname.endsWith("README.md")
+  (fname) => !fname.endsWith("README.md"),
 );
 files.sort();
 
@@ -318,7 +318,7 @@ const actual = await tbl.search(query).limit(10).toArray();
 console.log(
   actual.map(({ url, heading, text }) => {
     return { url, heading, text };
-  })
+  }),
 );
 ```
 

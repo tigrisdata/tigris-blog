@@ -17,7 +17,7 @@ function ReadMoreLabel() {
 }
 
 export default function BlogPostItemFooterReadMoreLink(
-  props: Props
+  props: Props,
 ): ReactNode {
   const { blogPostTitle, ...linkProps } = props;
   return (
@@ -29,7 +29,7 @@ export default function BlogPostItemFooterReadMoreLink(
           description:
             "The ARIA label for the link to full blog posts from excerpts",
         },
-        { title: blogPostTitle }
+        { title: blogPostTitle },
       )}
       {...linkProps}
     >
