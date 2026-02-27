@@ -9,7 +9,7 @@ import styles from "./styles.module.css";
 export default function BlogPostItemHeaderTitle({
   className,
 }: Props): ReactNode {
-  const { metadata, isBlogPostPage, assets } = useBlogPost();
+  const { metadata, isBlogPostPage, assets, frontMatter } = useBlogPost();
   const tag = metadata.tags[0];
 
   const { permalink, title } = metadata;
@@ -48,6 +48,11 @@ export default function BlogPostItemHeaderTitle({
               width={400}
               height={225}
               sizes="(max-width: 768px) 100vw, (max-width: 996px) 50vw, 400px"
+              style={
+                frontMatter.image_position
+                  ? { objectPosition: frontMatter.image_position as string }
+                  : undefined
+              }
             />
           </Link>
         )}
