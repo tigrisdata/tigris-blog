@@ -1,0 +1,267 @@
+---
+slug: case-study-agentuity
+title: "How Agentuity Built a New Cloud for AI Agents"
+description: >
+  Agentuity built custom cloud infrastructure for agentic workloads. Tigris
+  powers five storage layers, from agent filesystems to sandbox snapshots.
+image: ./agentuity-hero.webp
+keywords:
+  - Agentuity
+  - agentic infrastructure
+  - AI agents
+  - agent platform
+  - cloud infrastructure
+  - object storage
+  - Tigris
+  - serverless
+  - sandboxes
+authors:
+  - ks
+tags:
+  - Customers
+  - AI
+  - Infrastructure
+  - Agents
+  - Cloud
+  - Object Storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import BreakoutQuote from "@site/src/components/BreakoutQuote";
+import HorizontalRule from "@site/src/components/HorizontalRule";
+import AgentuityPlatformDiagram from "@site/src/components/AgentuityPlatformDiagram";
+import AgentuityStorageDiagram from "@site/src/components/AgentuityStorageDiagram";
+import QuickSummary from "@site/src/components/QuickSummary";
+import heroImage from "./agentuity-hero.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Ty the tiger deploying AI agents with Agentuity"
+/>
+
+<center>
+  <small>
+    <em>Ty the tiger deploying AI agents with Agentuity.</em>
+  </small>
+</center>
+
+<QuickSummary
+  readTime="7 min read"
+  items={[
+    {
+      title: "Custom infrastructure for agents.",
+      description:
+        "Agentuity built their own cloud from the ground up for agentic workloads — no Kubernetes, custom orchestration, eBPF-level visibility.",
+    },
+    {
+      title: "Agents that snapshot, fork, and resume.",
+      description:
+        "Long-running agents and ephemeral sandboxes can run for hours, capture full state, and fork from prior sessions.",
+    },
+    {
+      title: "Tigris powers five storage layers.",
+      description:
+        "Agent persistent storage, deployment assets, CDN, customer buckets, and sandbox snapshots — all through one S3-compatible service.",
+    },
+    {
+      title: "Filesystem interface via TigrisFS.",
+      description:
+        "Agents get a mounted /data folder that looks like files on disk but scales globally as object storage.",
+    },
+  ]}
+/>
+
+Roads existed before cars. But once cars showed up, the roads had to change.
+That's the argument [Agentuity](https://agentuity.com/) is making about cloud
+infrastructure: the architecture that powered two decades of web applications
+wasn't built for a world where billions of AI agents spin up, do work, snapshot
+themselves, and disappear.
+
+{/* truncate */}
+
+Agentuity is a full-stack platform for building and deploying AI agents.
+Developers get SDKs for storage, key-value, and durable queues. Agents get
+sandboxed runtimes with fine-grained control over networking, storage, and
+compute. The whole thing runs on Agentuity's custom orchestration layer, not
+Kubernetes, and it can deploy across multiple clouds or bare metal.
+
+## Why agents need a different cloud
+
+Traditional cloud infrastructure assumes predictable workloads. You know roughly
+what a web server needs. You can size your instances, pre-provision your disks,
+and plan your traffic patterns. Agent workloads break all of those assumptions.
+
+<BreakoutQuote
+  username="Jeff Haynie"
+  title="CEO & Co-Founder, Agentuity"
+  imageUrl="https://avatars.githubusercontent.com/u/6027?s=400&v=4"
+>
+  Agent workloads are fundamentally different. Every request could be
+  dramatically different from the last. We're used to typical traffic patterns,
+  but agentic workloads are nothing like a regular API server. We needed to be
+  able to move things around and scale differently. That needed to be rethought.
+</BreakoutQuote>
+
+Agents are stateful. They write files constantly. Filesystem is a native
+primitive for them. They might pull down massive datasets or reuse data from
+previous sessions. A sandbox might run for four hours or four seconds. You can't
+pre-provision for workloads when you don't know what you're going to need until
+the agent starts working.
+
+Agentuity went low. They're not on Kubernetes. They built their own
+orchestration layer, what they call the
+[Gravity Network](https://github.com/agentuity/gravity), running containerd with
+a control plane called Pilot wrapping each container. They own the runtime down
+to the system call level using eBPF, giving them visibility into every network
+and system call an agent makes. That control means they can lock things down,
+cache aggressively, and move workloads around their fleet.
+
+## The architecture
+
+Agentuity runs two types of compute that share the same runtime but serve
+different patterns. Long-running agents behave more like traditional VMs,
+listening for requests, idling with fast cold starts and warm starts. Sandboxes
+are ephemeral: one agent can spawn ten (or thousands of) sub-agents, creating a
+graph of compute nodes that execute and disappear. Claude Code launching
+parallel sub-agents is a good mental model. Each one is a separate sandbox with
+its own isolated environment.
+
+Sandboxes come with aggressive lifecycle management. Agentuity suspends
+workloads after idle time and delivers fast cold starts. Agents opt into
+everything: network, storage, compute resources. Runtime images are defined by
+the developer, and the platform controls exactly how containers spin up and
+down.
+
+<BreakoutQuote
+  username="Rick Blalock"
+  title="Co-Founder, Agentuity"
+  imageUrl="https://avatars.githubusercontent.com/u/211819?s=400&v=4"
+>
+  We think the future is agentic software. There's going to be billions of these
+  agentic apps everywhere, and the world needs a different approach to
+  infrastructure. Web architecture has been great, but a lot of it isn't
+  relevant anymore. We're building the cloud of tomorrow.
+</BreakoutQuote>
+
+Agents get serverless without the time limits. An agent can run for hours, but
+the developer experience stays simple. The platform handles secrets management,
+billing, ephemeral keys, and notifications. Developers or agents can create new
+projects from scratch or add agent capabilities into existing applications, what
+Agentuity calls "full-stack agents" that work in both greenfield and brownfield
+scenarios.
+
+<AgentuityPlatformDiagram />
+
+## Five layers of Tigris
+
+Agentuity uses [Tigris](https://www.tigrisdata.com/), a globally distributed,
+multi-cloud object storage service with S3 compatibility, in five ways across
+their platform.
+
+<AgentuityStorageDiagram />
+
+### Agent persistent storage
+
+The S3-compatible interface lets Agentuity treat Tigris as permanent storage for
+agents. Storage gets attached to an agent on the fly, and as agents write files,
+data flows through to Tigris. Agents see files on disk. The platform stores them
+as globally distributed objects.
+
+<BreakoutQuote
+  username="Jeff Haynie"
+  title="CEO & Co-Founder, Agentuity"
+  imageUrl="https://avatars.githubusercontent.com/u/6027?s=400&v=4"
+>
+  Having an S3-compatible storage layer allowed us to treat it as agent
+  permanent storage. We attach storage to an agent on the fly. As they write, it
+  gets written to Tigris. To customers, it's just files on disk. From an agent
+  workloads standpoint, we wanted to assign virtually unlimited storage.
+  Depending on the task, the agent might need to pull down a lot of data or
+  reuse data from a previous session.
+</BreakoutQuote>
+
+Agents access this through
+[TigrisFS](https://www.tigrisdata.com/docs/training/tigrisfs/), a mounted
+`/data` folder backed by a Tigris bucket. It looks and acts like a regular high
+performance filesystem, but it's object storage underneath. By mounting TigrisFS
+to each node in their clusters, they can share all the data across all nodes
+without coordination — all the dependencies and state for each agent are
+available on every node. So an agent can pick up where it left off, on any
+machine. Customers use this to share large models across their compute
+infrastructure, and agents use it for the constant stream of small files they
+generate during work.
+
+### Deployment assets
+
+When a developer deploys an agent, the deployment artifacts are encrypted with
+their public key and stored in Tigris. For on-premises deployments, only the
+customer can decrypt the assets. One-time signed URLs handle the upload from the
+customer's machine directly into the infrastructure, with no intermediate
+storage needed.
+
+### Global CDN
+
+Agentuity uses Tigris as the origin behind their CDN, with Tigris acting as a
+pull-through cache for globally distributed deployment assets. Customers see
+Agentuity-branded URLs, but the backing storage is Tigris, globally replicated
+and ready at the edge.
+
+### On-demand customer buckets
+
+Developers can create storage buckets on demand. Push-button, unlimited storage.
+Agentuity manages secrets injection, ephemeral keys, billing, and notifications.
+Buckets can be partitioned or shared across projects. Agents can provision
+storage for themselves without human intervention.
+
+### Sandbox snapshots
+
+<BreakoutQuote
+  username="Jeff Haynie"
+  title="CEO & Co-Founder, Agentuity"
+  imageUrl="https://avatars.githubusercontent.com/u/6027?s=400&v=4"
+>
+  The problem with sandboxing is you don't know what you need. In a traditional
+  workload, you know generally what you need and can pre-provision. With agents,
+  you don't. Agents love writing files. Filesystem is a native primitive for
+  them. Storage needs to be highly dynamic and fast. You can't wait minutes to
+  restore things.
+</BreakoutQuote>
+
+When a sandbox goes idle, its full state, CPU registers, memory, and storage,
+gets captured and stored as a real artifact in a Tigris bucket. These snapshots
+are mounted across Agentuity's fleet of machines, so when spinning up a new
+machine, the data is already available locally. Changes are indexed with a
+timeline tied to the sandbox ID, making it possible to roll back to any point
+and fork from a prior session.
+
+## Built for what's next
+
+Agentuity evaluated dedicated database solutions and other storage providers. S3
+as a protocol interface opened up capabilities that more specialized tools
+couldn't match. Tigris works as a filesystem, a CDN origin, a snapshot store,
+and an agent's personal storage. All through one interface.
+
+<BreakoutQuote
+  username="Rick Blalock"
+  title="Co-Founder, Agentuity"
+  imageUrl="https://avatars.githubusercontent.com/u/211819?s=400&v=4"
+>
+  Tigris worked really well with agents. An agent can connect to storage, spin
+  it up, use it, tear it down. Agents don't want heavyweight infrastructure that
+  lives forever. They want primitives they can spin up, use, and discard as part
+  of their work. That's what we got.
+</BreakoutQuote>
+
+Agentuity already runs agents on its own infrastructure, watching logs and
+surfacing issues to other agents. The
+["get started" guide on their blog](https://agentuity.com/blog/welcome-agent-lets-get-you-deployed)
+is a prompt: an agent deploys your first agent. The storage layer has to be just
+as dynamic as the compute, and that's what Tigris provides.
+
+<InlineCta
+  title="Storage built for what agents need"
+  subtitle="Agentuity chose Tigris for five layers of their platform. See what globally distributed, S3-compatible object storage can do for yours."
+  button="Get Started"
+  link="https://www.tigrisdata.com/docs/get-started/"
+/>

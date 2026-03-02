@@ -1,0 +1,215 @@
+---
+slug: using-bun-and-benchmark
+title: "From npm to a Single Binary: Adopting Bun for the Tigris CLI"
+description:
+  "We shipped our CLI with Node.js and npm, then compiled it into a standalone
+  binary with Bun in a matter of hours. Here is what we learned and how it
+  performed."
+image: ./hero-image.webp
+keywords: [Bun, JavaScript, TypeScript, Node.js, CLI, single binary]
+authors:
+  - abdullah
+tags:
+  - Engineering
+  - Build with Tigris
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A terminal window showing a Bun build compiling the Tigris CLI into a single binary"
+/>
+
+Recently, we released our [CLI tool](https://www.tigrisdata.com/blog/tigris-cli)
+to manage your Tigris buckets and objects from your terminal. When I started the
+project, I had to pick a language. The main candidates were Golang and
+TypeScript.
+
+Golang was the strong, safe choice for a CLI, but I'm far more fluent in
+TypeScript. That fluency matters when your goal is to ship fast, get something
+in users' hands, and improve from there.
+
+Once I'd settled on TypeScript, the next question was which runtime: Node.js,
+Deno, or Bun.
+
+{/* truncate */}
+
+## Bun was always in the back of my mind
+
+I'd been watching [Bun](https://bun.sh) since its early days. A faster
+JavaScript runtime, built-in bundler, native TypeScript support, and the ability
+to compile to a standalone binary — it checked a lot of boxes. But I had two
+reasons not to bet on it from the start.
+
+First, even Bun's own team couldn't give a
+[compelling answer](https://bun.com/blog/bun-joins-anthropic#the-road-ahead) to
+"If I bet my work project or company's tech stack on Bun, will it still be
+around in five or ten years?" Node has been around for over a decade. Its
+ecosystem is massive. The package compatibility story is battle-tested. Bun was
+promising, but promises don't ship products.
+
+Second, I wanted to stay focused. Exploring a new runtime, debugging its edge
+cases, working around missing APIs — that's time I wasn't spending on the actual
+CLI. I'd rather ship on a boring, proven stack and revisit the tooling later.
+
+So we shipped with Node.js, distributed through npm. It worked. Users could
+`npm install -g @tigrisdata/cli` and start managing their Tigris resources right
+away.
+
+## What changed
+
+Two things happened at almost the same time.
+
+In December 2025,
+[Anthropic acquired Bun](https://bun.com/blog/bun-joins-anthropic). This wasn't
+just a press release — Claude Code already shipped as a Bun-compiled binary to
+millions of developers. The acquisition signaled that Bun had crossed from
+"interesting experiment" to "production infrastructure powering a billion-dollar
+product." Bun is now everywhere in the AI tooling space, and that kind of
+adoption answers the ecosystem question I had earlier.
+
+Just as we released the CLI, some users reached out asking for a version that
+didn't require a Node.js runtime. Some wanted to run it in minimal containers.
+Others just didn't want to install Node to manage their object storage. A
+standalone binary was the obvious answer, and Bun's `--compile` flag was the
+obvious way to get there.
+
+## Getting it to work was surprisingly easy
+
+Since we'd already shipped with npm, I didn't want to rewrite anything. I wanted
+to layer Bun's compilation on top of what we had. The
+[PR](https://github.com/tigrisdata/cli/pull/22) tells the full story, but here's
+the gist.
+
+The main challenge was that our npm-distributed CLI uses dynamic imports — it
+reads command specs from YAML files at runtime and lazy-loads command handlers.
+Bun's `--compile` flag bundles everything into a single executable, so dynamic
+filesystem reads don't work the same way.
+
+The solution was to create a parallel entry point for the binary build:
+
+- **`src/cli-core.ts`** — Extracted the shared CLI logic (argument parsing,
+  output formatting, error handling) into a module both entry points can use.
+- **`src/specs-embedded.ts`** — A generated file that inlines the YAML command
+  specs as TypeScript objects, eliminating runtime file reads.
+- **`src/command-registry.ts`** — Auto-generated static imports for every
+  command handler, replacing the dynamic `import()` calls.
+- **`src/cli-binary.ts`** — The new entry point for `bun build --compile`,
+  wiring the embedded specs and static registry together.
+
+A code generation script (`scripts/generate-registry.ts`) reads our
+`specs.yaml`, walks the command tree, and produces the registry and embedded
+specs. The npm entry point (`src/cli.ts`) stays untouched — dynamic imports,
+YAML file reads, all of it. Both distribution paths share the same core logic.
+
+With Claude Code helping me work through the static import generation and the
+build script, the whole thing came together in a few hours. The result: a 60 MB
+self-contained binary for macOS, Linux, and Windows — no Node.js required.
+
+## Benchmarking: does it actually perform?
+
+Performance and reliability are cornerstones of what we do at Tigris. We
+couldn't just ship a binary and hope for the best. Bun [claims](https://bun.sh/)
+significant performance improvements over Node.js, so I ran structured
+benchmarks to verify.
+
+**Test setup**
+
+- **Machine:** Apple M4 Max, 36 GB RAM, macOS 26.2
+- **Node.js:** v22.14.0
+- **Network:** ~350 Mbps down / ~218 Mbps up, 13 ms idle latency
+- **Iterations:** 3 per test (5 for startup, 2 for batch)
+- **File sizes:** 4 bytes to 2.9 GB
+
+Both runtimes talk to the same Tigris endpoint over the same network, so the
+network transfer time is constant. The differences you see come from how each
+runtime reads files from disk, buffers data, constructs HTTP requests, and
+writes responses back — the runtime overhead that wraps the actual transfer.
+
+### Startup time
+
+| Runtime    | Wall (s) | Peak RSS |
+| ---------- | -------- | -------- |
+| Node.js    | 0.064    | 60.7 MB  |
+| Bun Binary | 0.104    | 103.8 MB |
+
+Node.js starts faster and uses less memory. This makes sense — the Bun binary is
+a 60 MB self-contained executable that needs to unpack its bundled runtime. The
+difference is 40 milliseconds. Nobody will notice.
+
+### Uploads
+
+This is where Bun shines. The network path is identical for both runtimes — the
+performance gap comes from how each one reads files off disk and pushes bytes
+into the HTTP request. Across every file size, the Bun binary was faster:
+
+| File size | Node.js | Bun Binary | Improvement |
+| --------- | ------- | ---------- | ----------- |
+| 5.6 MB    | 1.84s   | 1.44s      | 22% faster  |
+| 21 MB     | 3.64s   | 2.53s      | 30% faster  |
+| 41 MB     | 4.44s   | 3.55s      | 20% faster  |
+| 65 MB     | 5.22s   | 4.87s      | 7% faster   |
+| 181 MB    | 22.39s  | 12.60s     | 44% faster  |
+
+The big file result is striking: uploading a 181 MB video took 22.4 seconds with
+Node.js and 12.6 seconds with Bun. That's not a marginal gain.
+
+At 2.9 GB scale, the gap held: Bun uploaded at 35.1 MB/s vs Node.js at 23.7 MB/s
+— **48% faster**, while using less than half the CPU time.
+
+### Downloads
+
+Downloads told a more nuanced story. Here the runtime overhead is in receiving
+the HTTP response and writing bytes to disk. For mid-size files (5–60 MB), Bun
+was dramatically faster — often 2–3x:
+
+| File size | Node.js | Bun Binary | Improvement |
+| --------- | ------- | ---------- | ----------- |
+| 5.6 MB    | 3.73s   | 1.24s      | 3x faster   |
+| 21 MB     | 7.58s   | 2.64s      | 2.9x faster |
+| 61 MB     | 18.58s  | 5.20s      | 3.6x faster |
+
+But at 181 MB, Node.js pulled ahead (45.9s vs 67.3s), and at 2.9 GB, Node.js was
+16% faster while using 12x less memory. Bun's peak RSS hit 1.6 GB for the large
+download vs Node's 139 MB, suggesting Bun buffers aggressively in memory rather
+than streaming to disk.
+
+### The verdict
+
+Bun is faster for uploads at every file size we tested, often by a wide margin.
+Downloads are faster for typical file sizes (under ~100 MB) but Node.js handles
+very large downloads more efficiently. For our users — most of whom are
+uploading and downloading objects in the 1–100 MB range — the Bun binary is a
+clear improvement.
+
+The tradeoff is memory: Bun consistently uses 20–40% more RSS. For a CLI tool
+that runs, does its job, and exits, this is acceptable.
+
+## What I'd tell you if you're considering the same move
+
+**Don't rewrite.** We kept our npm distribution exactly as-is and added a second
+entry point for the binary. The shared core means bug fixes apply to both.
+
+**Generate, don't maintain.** The command registry and embedded specs are
+auto-generated from the same `specs.yaml` that drives the npm version. One
+source of truth, two distribution formats.
+
+**Benchmark your actual workload.** Bun's general-purpose benchmarks are
+impressive, but your mileage depends on what your application actually does. We
+found uploads faster, downloads mixed, and startup slightly slower. Your profile
+will differ.
+
+If you've been shipping a Node.js CLI and wondering whether Bun's `--compile` is
+worth exploring — it took us a few hours, the binary is faster for our most
+common operations, and our users no longer need Node.js installed. That's a good
+trade.
+
+<InlineCta
+  title="Manage your Tigris buckets from the terminal"
+  subtitle="Install the Tigris CLI — with or without Node.js — and start managing your Tigris resources in seconds."
+  button="Get the Tigris CLI"
+  link="https://www.tigrisdata.com/docs/cli/"
+/>
