@@ -67,7 +67,7 @@ Here is how Tigris maps directly onto Mixpeek’s requirements:
 | **S3 compatibility** | No migration needed. Connect with existing AWS SDKs and credentials |
 | **Strong consistency** | Every read reflects the latest write, so processing never works on stale data |
 
-## Connecting to Tigris takes minutes
+## How Mixpeek connects to your Tigris bucket
 
 Connecting Mixpeek to Tigris follows the same S3-compatible authentication pattern. You grant Mixpeek read access to your bucket using standard IAM-style credentials, and Mixpeek uses those to discover and retrieve objects for processing.
 
@@ -110,7 +110,7 @@ At a high level, the control plane looks like this:
                     +--------------------------+
 ```
 
-## Your files, broken into searchable layers
+## How Mixpeek turns files into searchable layers
 
 When a file hits a Mixpeek-connected bucket, it gets broken into layers: transcripts, visual embeddings, scene descriptions, and detected entities. Each of those layers is independently queryable.
 
@@ -140,7 +140,7 @@ Conceptually, the data path is:
         +----------------------+
 ```
 
-## The problem with polling
+## Why polling-based ingestion does not scale
 
 Building this kind of ingestion pipeline yourself means solving a lot of boring, hard problems before you get to the interesting ones. How do you know when a new file arrives? How do you avoid processing the same file twice? What happens when a job fails mid-extraction?
 
@@ -157,7 +157,7 @@ This works for small, low-volume buckets. Once you have millions of objects and 
 
 At scale, a missed cycle can leave your index stale for minutes or longer. A noisy neighbor workload or a transient 500 from your cloud provider is all it takes.
 
-## Object Notifications fix this
+## How Tigris Object Notifications replace polling
 
 [Tigris Object Notifications](https://www.tigrisdata.com/docs/buckets/object-notifications/) flip the model from pull to push. When an object is created, updated, or deleted, Tigris fires an HTTP POST to your configured webhook endpoint immediately.
 
@@ -179,7 +179,7 @@ Here is a simplified example of the payload Mixpeek receives:
 
 You can also filter which events hit your webhook using Tigris's SQL-like metadata querying, so you only trigger processing for the object types your pipeline actually needs.
 
-## Built to survive bursty uploads
+## How Mixpeek handles bursty uploads safely
 
 Event-driven pipelines need failure handling built in. Mixpeek covers the operational pieces that most teams have to build themselves.
 
@@ -195,7 +195,7 @@ The table below summarizes the key reliability features in the ingestion layer:
 
 A burst of uploads shouldn't cause your pipeline to process the same file four times or deadlock on concurrent runs. These safeguards make sure it doesn't.
 
-## What you can build once your media is indexed
+## Access patterns once your media is indexed
 
 Search is one access pattern, but it's not the only one. A few of the common access patterns look like this:
 
@@ -208,7 +208,7 @@ Search is one access pattern, but it's not the only one. A few of the common acc
 
 All of this runs against the same indexed representation Mixpeek builds from your Tigris bucket. You don't maintain separate pipelines for each access pattern.
 
-## Your bucket is the record, not just the storage
+## Using your Tigris bucket as the system of record
 
 Treat your Tigris bucket as the authoritative record of your dataset, not just a place to dump files. Mixpeek writes structured outputs (JSON metadata, derived segments, embeddings) that map back to a stable object identity in Tigris: bucket + key + ETag. If you need to reproduce a result, the lineage is there.
 
@@ -229,7 +229,7 @@ Treat your Tigris bucket as the authoritative record of your dataset, not just a
 
 Pair this with [Tigris snapshots](https://www.tigrisdata.com/blog/fork-buckets-like-code/) and you get point-in-time reproducibility without managing a separate versioning system. If an experiment goes sideways, fork from a known-good snapshot and replay processing against that state. To start using snapshots in your own buckets, follow the [snapshot how-to guide](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/).
 
-## From upload to queryable: the full picture
+## End-to-end flow from upload to query
 
 ```
 Write object to Tigris (S3-compatible upload)
@@ -242,7 +242,7 @@ Write object to Tigris (S3-compatible upload)
 
 Each step is independently observable. You can monitor DLQ depth and batch metrics, and replay any event that was missed during an outage using Mixpeek's reconciliation scan.
 
-## Set it up in three steps
+## How to set this up in three steps
 
 Connect your Tigris bucket to Mixpeek using the [Mixpeek integrations guide](https://docs.mixpeek.com/docs/integrations/object-storage/tigris). Configure Object Notifications in your [Tigris Dashboard](https://console.tigris.dev/signin), point the webhook at Mixpeek's ingestion endpoint, and your pipeline is live.
 
