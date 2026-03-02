@@ -22,7 +22,7 @@ tags:
   - release notes
 ---
 
-[**Multi-region buckets are now available in Tigris.**](/docs/buckets/locations/)
+[**Multi-region buckets are now available in Tigris.**](https://www.tigrisdata.com/docs/buckets/locations/)
 You can now choose exactly how your data is replicated across regions using four
 bucket location types—multi-region, dual-region, single-region, and global—each
 with built‑in availability and consistency guarantees. Instead of tuning
@@ -152,7 +152,7 @@ that you now specify a location type instead of a low‑level consistency flag.
 If you are already using Tigris, you don’t need to change anything
 immediately—your existing buckets continue to function as before. For new
 workloads, the recommended path is to read the
-[Bucket locations guide](/docs/buckets/locations/), pick the location type that
+[Bucket locations guide](https://www.tigrisdata.com/docs/buckets/locations/), pick the location type that
 fits your needs, and create buckets using that model going forward. The goal of
 this release is not just to add another feature, but to make the way Tigris
 handles geography and consistency feel intuitive and industry‑standard.
