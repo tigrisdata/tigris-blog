@@ -1,174 +1,260 @@
 ---
-slug: multi-region-buckets
-title: "Multi-region buckets – simpler locations, clearer consistency"
-description: |
-  Tigris now offers a unified bucket location model—multi-region, dual-region, single-region, and global—so you choose where data lives and get predictable consistency from each location type.
-image: ./preview-image.webp
+slug: multi-region-dual-region-buckets
+title: Multi-Region and Dual-Region Buckets
+description: >
+  Tigris now lets you choose exactly how your data is replicated across regions.
+  Pick from four bucket location types (global, multi-region, dual-region, and
+  single-region), each with built-in consistency and availability guarantees.
+image: ./hero-img.png
 keywords:
-  - object storage
+  - Tigris
   - multi-region
-  - consistency
-  - S3-compatible
-  - distributed systems
+  - dual-region
+  - single-region
+  - data residency
+  - object storage
+  - S3
 authors:
   - davidmyriel
 tags:
-  - Updates
-  - Object storage
-  - Multi-region
-  - Distributed systems
+  - Product Update
+  - Multi-Region
+  - Data Residency
+  - Object Storage
 ---
 
-import heroImage from "./preview-image.webp";
+import InlineCta from "@site/src/components/InlineCta";
+import QuickSummary from "@site/src/components/QuickSummary";
+import BucketLocationDiagram from "@site/src/components/BucketLocationDiagram";
+import heroImage from "./hero-img.png";
+import complianceImage from "./compliance.png";
 
 <img
   src={heroImage}
   className="hero-image"
-  alt="Illustration of Tigris introducing multi-region buckets with a blue tiger scout overlooking a distributed kingdom."
+  alt="Multi-Region and Dual-Region Buckets in Tigris"
 />
 
-[**Multi-region buckets are now available in Tigris.**](/docs/buckets/locations/) You can now choose exactly how your data is replicated across regions using four bucket location types—multi-region, dual-region, single-region, and global—each with built‑in availability and consistency guarantees. Instead of tuning low-level flags, you decide where your data should live and how resilient it needs to be, and Tigris does the rest.
+<QuickSummary
+  readTime="6 min read"
+  items={[
+    {
+      title: "Four location types.",
+      description:
+        "Global, multi-region, dual-region, and single-region buckets cover the main combinations of data residency and availability.",
+    },
+    {
+      title: "Clear consistency model.",
+      description:
+        "Consistency is tied directly to bucket location type, so you always know how reads behave in and across regions.",
+    },
+    {
+      title: "CLI and dashboard updates.",
+      description:
+        "Use the new tigris mk commands and updated dashboard flows to create and manage location-aware buckets.",
+    },
+  ]}
+/>
 
-Teams already think this way. When you design an object storage strategy, you start from geography and failure domains, not consistency headers. The real questions sound like:
+Tigris has always distributed data globally. You write once, then read fast from anywhere. That model works well for most workloads, but it left no room for teams with constraints the automatic model could not accommodate. 
 
-- “What happens if an entire region is down?”
-- “How do I keep data close to users in two specific regions?”
-- “Where exactly is this data allowed to live?”
+- The first constraint is compliance. [GDPR](https://gdpr-info.eu/art-44-gdpr/), data sovereignty laws, and enterprise contracts can require that data never leaves a specific country or region. "Close to your users" doesn't satisfy a regulation that says Frankfurt or nothing.
 
-The new location types are built around those questions and give you a straightforward way to match buckets to the kind of application you’re running.
+- The second is architecture. Multi-tenant platforms, active/active deployments, and compute-co-located pipelines all need storage in a known location. When your system depends on a topology guarantee, automatic distribution works against you.
+
+[**Multi-region and dual-region buckets are our answer to that gap.**](/docs/buckets/locations/) You can choose exactly where your data lives and how resilient it needs to be across four location types:
+
+<BucketLocationDiagram />
+
+## Global buckets
+
+Global buckets are what Tigris has always done: data distributed worldwide, reads served from the region closest to the request. They're now a first-class location type you can select intentionally.
+
+They're the right choice for read-heavy workloads with users spread across the world: model weights, media libraries, static assets, documentation. You write infrequently, you read everywhere, and Tigris handles the rest.
+
+Visually, a global bucket fans out to many regions:
 
 ```text
-Architecture at a glance
-
-Single-region bucket
---------------------
-  [ bucket ]
-      |
-   [ region A ]
-
-Dual-region bucket
-------------------
-        [ bucket ]
-        /       \
- [ region A ]  [ region B ]
-
-Multi-region bucket (region group)
-----------------------------------
-          [ bucket ]
-        /     |     \
- [ region A ][ region B ][ region C ]
-   (same geo / group, e.g. "us")
-
-Global bucket
--------------
-      [ bucket ]
-          |
-   [ globally distributed copies ]
-    (reads served close to users)
+Global bucket (global)
+   |
+   +-- sjc (USA)
+   +-- fra (Europe)
+   +-- sin (Asia-Pacific)
+   +-- gru (South America)
+   +-- jnb (Africa)
 ```
 
-## Always-on applications in a region group
+## How to configure 
 
-Multi-region buckets are for applications that must keep serving traffic even when a region has a bad day.
+You can configure bucket location in the [Tigris Dashboard](https://console.tigris.dev/signin), under **Advanced Settings**. When creating a bucket, the **Location** field lets you choose between Global, Multi-region, Dual-region, and Single-region. 
 
-When you create a multi-region bucket, Tigris keeps regional copies of your data inside a chosen geography, such as `us` or `europe`. Reads and writes see strong, predictable behavior across that geography, so you can:
+- For Multi-region, pick a geo group like `USA` or `EUR` from the dropdown. 
+- For Dual-region, select two specific region IDs. 
 
-- run stateless services in multiple regions,
-- point them all at the same bucket, and
-- know that users see the same objects regardless of which regional deployment they hit.
+<div style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <img
+    src={require("./multi-region-bucket-creation.gif").default}
+    alt="Creating a multi-region bucket in the Tigris Dashboard"
+    style={{ width: "100%", height: "auto", display: "block" }}
+  />
+</div>
 
-Good fits include:
+:::tip
+For existing buckets, go to the [Tigris Dashboard](https://console.tigris.dev/signin), open the bucket, click **Settings**, and update the region restriction from there.
+:::
 
-- front-end assets (SPA bundles, static assets),
-- critical configuration and feature flags, and
-- user data that needs both low latency and resilience to regional failures.
+## Multi-region buckets
 
-Instead of hand‑wiring replication jobs between single-region buckets, you create one multi-region bucket and let the platform handle replication and consistency.
+Multi-region buckets keep copies of your data across a group of regions within a chosen geography (for example `us` or `europe`). Every read and write inside that geography behaves consistently. If one region has a bad day, the others keep serving traffic.
 
-## Regional control and residency with dual-region
+This is the right default for new user-facing production workloads. Front-end assets, feature flags, user data that needs both low latency and resilience to regional failures all fit this model. You get strong, predictable behavior without hand-wiring replication between single-region buckets. See [pricing for multi-region buckets](https://www.tigrisdata.com/pricing/#multi-region-buckets) for cost details.
 
-Some workloads need finer control.
+A multi-region bucket in Europe might look like this:
 
-Maybe compliance requires you to keep data in two specific regions, or your latency model is built around two data centers on opposite coasts. Dual-region buckets are designed for that. You choose the pair of regions, and Tigris stores copies of your objects in both.
+```text
+Multi-region bucket (eur)
+   |
+   +-- ams (Amsterdam)
+   +-- fra (Frankfurt)
+   +-- lhr (London)
+```
 
-Within a given region, reads and writes behave strongly consistently, which makes it easy to reason about local operations. When you read from the other region, the system trades a bit of global immediacy for the ability to keep data in the exact pair of locations you’ve chosen.
+Here is how to create multi-region buckets with the CLI:
 
-This fits:
+```bash
+# Create a multi-region bucket scoped to Europe
+tigris mk my-eu-bucket --region eur
 
-- regulated data that must stay within a specific jurisdiction pair,
-- active/active deployments across two regions, and
-- DR strategies where you want a warm failover region without running extra replication services.
+# Create a multi-region bucket scoped to the US
+tigris mk my-us-bucket --region usa
+```
+:::tip
+`tigris mk` is an alias for `tigris create`, so any existing commands that use `create` will keep working.
+:::
 
-The result is a storage layer that matches the topology of your compute layer without additional glue code.
+## Dual-region buckets
 
-## Cost-optimized, regional workloads with single-region
+Dual-region stores copies in exactly two regions you name. Reads route to whichever copy is closest. Writes go to both.
 
-Not everything needs to span multiple regions.
+This fits when your compute layer is split across two named regions and storage needs to match. It also works as a warm DR setup: a second copy in a known location without running your own replication service.
 
-Single-region buckets keep data in one region of your choice and are the most cost‑effective option. They’re ideal when you deploy compute and storage side by side:
+For example, an EU dual-region bucket might be:
 
-- staging and test environments,
-- regional APIs and internal tools, and
-- batch jobs, pipelines, and analytics workloads that live in one place.
+```text
+Dual-region bucket (fra,lhr)
+   |
+   +-- fra (Frankfurt)
+   +-- lhr (London)
+```
 
-You still get clear consistency semantics—reads don’t lag writes inside that region—but you don’t pay for replication you don’t need.
+Example CLI commands for common dual-region setups:
 
-If you later decide that a bucket should be more resilient, the location model gives you a way to move to dual-region or multi-region without rewriting how your application talks to storage.
+```bash
+# EU dual-region: Frankfurt + London
+tigris mk my-bucket --region fra,lhr
 
-## Simple global distribution for read-heavy workloads
+# US dual-region: East + West
+tigris mk my-bucket --region iad,sjc
+```
 
-Global buckets are for read‑heavy workloads with users all over the world.
+## Single-region buckets
 
-Instead of thinking about individual regions, you think about your dataset as a whole: one logical bucket, accessed from many places. Tigris, as a globally distributed, multi-cloud object storage service, handles getting data close to users and keeping copies in sync.
+Single-region buckets keep data in one region. They're the most cost-effective option and the right fit for staging environments, regional internal tools, and batch pipelines that live alongside a single compute region. You still get strong consistency within that region. You just don't pay for replication you don't need.
 
-Typical use cases:
+In the simplest case, everything lives in one place:
 
-- models and embeddings served to AI/ML workloads,
-- media libraries (images, video, audio), and
-- documentation, artifacts, and static sites that are written infrequently but read everywhere.
+```text
+Single-region bucket (sin)
+   |
+   +-- sin (Singapore)
+```
 
-You keep a simple configuration and a single bucket name. Tigris serves reads from locations close to users for low-latency access, while still giving you clear expectations around how quickly updates propagate globally.
+You can create single-region buckets with a simple CLI flag:
 
-## How it looks from your application
+```bash
+# Create a single-region bucket in Singapore
+tigris mk my-bucket --region sin
 
-Although the conceptual model has changed, the way you work with buckets from code stays familiar.
+# Create a single-region bucket in Ashburn, Virginia
+tigris mk my-bucket --region iad
+```
 
-You still:
+## Compliance and data residency
 
-1. create a bucket,
-2. point your S3-compatible client or SDK at Tigris, and
-3. start reading and writing objects.
+<div style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <img
+    src={complianceImage}
+    alt="Examples of how bucket locations map to compliance and data residency requirements"
+    style={{ width: "100%", height: "auto", display: "block" }}
+  />
+</div>
 
-The main difference is that you now choose a location type and, where needed, the specific regions or region group. Your application code keeps using the same bucket name and S3 API surface.
+Many teams pick bucket locations to satisfy legal or policy requirements, not just latency.
 
-That means you can:
+| Requirement or rule | How bucket locations help |
+|---|---|
+| **European Union rules** | [GDPR Article 44](https://gdpr-info.eu/art-44-gdpr/) restricts personal data transfers outside the EU. A global bucket that might cache user records in Singapore or Virginia creates legal exposure. A dual-region bucket with `fra,lhr` keeps that data inside the EU. |
+| **Other regions and sectors** | Brazil's LGPD covers data residency for Brazilian users (`gru`), and sector-specific regulations like HIPAA for US healthcare or financial data rules in some jurisdictions often require data to stay within defined borders. |
 
-- start new workloads directly on multi-region, dual-region, or global buckets, and
-- migrate existing workloads gradually by creating new buckets with the right location type and updating configuration, without rewriting storage logic.
+> Dual-region lets you say “only these regions” at the storage layer without building your own replication logic.
 
-For exact CLI, Terraform, and console steps, see the [Bucket locations guide](/docs/buckets/locations/).
+When you need even tighter control, you can apply region pinning at the object level without changing the bucket-wide setting. Add [`X-Tigris-Regions`](/docs/objects/object_regions/) to any PUT request and only that object lands in those regions. This is useful when most of your bucket is global but specific objects have residency requirements.
 
-## Choosing the right location type
+## Consistency options
 
-A quick rule of thumb:
+Consistency in Tigris is about how quickly every reader sees the latest write, and your bucket’s location type decides that behavior. 
+- Same‑region reads are always strongly consistent: as soon as you write, overwrite, delete, or list an object in that region, you see the latest state. 
+- Cross‑region reads either stay strongly consistent (Multi‑region and Single‑region) or may briefly return an older copy while replicas catch up (Global and Dual‑region). 
 
-- **Start with multi-region** if you’re building a new, user-facing application that needs to survive a single-region outage within a geography.
-- **Use dual-region** when you have strict residency or topology requirements (for example, two named regions for compliance or latency).
-- **Pick single-region** for cost-sensitive, regional, or non-critical workloads that live alongside a single compute region.
-- **Reach for global** when reads dominate writes and your users are spread across the world.
+If you want every read, from anywhere, to see the latest data, pick **Multi‑region** or **Single‑region**; if you can tolerate occasional sub‑second staleness in exchange for lower latency or automatic global placement, Global or Dual‑region are a better fit. 
 
-If you’re unsure, multi-region in your primary geography is usually a safe default for production workloads. You get strong, predictable behavior inside that geography and resilience to most common failure modes.
+:::info
+For the exact guarantees for each location type, see the [consistency docs](https://www.tigrisdata.com/docs/concepts/consistency/).
+:::
 
-## What’s next
+## Choosing a location type
 
-If you’re already using Tigris, you don’t need to change anything immediately—your existing buckets continue to function as before.
+Use this table as a quick decision guide:
 
-For new workloads, the recommended path is:
+| Scenario | Location type |
+|---|---|
+| Global app, read-heavy, users everywhere | Global |
+| User-facing app that must survive a regional outage | Multi-region (`us` or `europe`) |
+| GDPR / data residency in two named regions | Dual-region (`fra,lhr` or similar) |
+| Active/active across two data centers | Dual-region |
+| Staging, internal tools, single-region compute | Single-region |
+| Per-object residency in a global bucket | Global bucket + `X-Tigris-Regions` header per object |
 
-1. Read the [Bucket locations guide](/docs/buckets/locations/).
-2. Pick the location type that fits your application’s geography, latency, and resilience needs.
-3. Create new buckets using that model going forward.
+If you're unsure, multi-region in your primary geography is the safe default for production. You get resilience inside that geography without touching your application code. 
 
-The goal of this release is not just to add another feature, but to make the way Tigris handles geography and consistency feel intuitive and industry‑standard. You get a clear mental model for where data lives, the guarantees it comes with, and how to fit that into your architecture.
+:::info
+For a deeper comparison across performance, compliance, and cost, see the [Bucket Locations docs](https://www.tigrisdata.com/docs/buckets/locations/).
+:::
 
-We’d love to hear how the new model works for your workloads. If you have a pattern that doesn’t fit neatly into the four location types, or if you’re migrating from a more bespoke setup, your feedback will help shape the next round of improvements.
+## Regions
+
+Tigris is deployed globally across multiple regions. All regions are accessible through a single endpoint, `https://t3.storage.dev`, which handles routing automatically. In your SDKs or the AWS CLI, set the region to `auto` and Tigris takes care of the rest.
+
+Tigris is currently deployed in 11 regions across the world:
+
+| Region ID | Location                 | Region ID | Location                  |
+|---|--------------------------|---|---------------------------|
+| `ams` | Amsterdam, Netherlands   | `lhr` | London, United Kingdom    |
+| `fra` | Frankfurt, Germany       | `nrt` | Tokyo, Japan             |
+| `gru` | São Paulo, Brazil        | `ord` | Chicago, Illinois (US)   |
+| `iad` | Ashburn, Virginia (US)   | `sin` | Singapore                |
+| `jnb` | Johannesburg, South Africa | `sjc` | San Jose, California (US) |
+| `syd` | Sydney, Australia        |       |                           |
+
+:::info
+Your existing buckets keep working exactly as before. For new workloads, read the [bucket locations guide](/docs/buckets/locations/) and the [regions docs](https://www.tigrisdata.com/docs/concepts/regions/) and pick the type that matches your geography, latency, and resilience requirements.
+:::
+
+<InlineCta
+  title="Store data exactly where you need it"
+  subtitle={
+    "Choose global, multi-region, dual-region, or single-region, and get the first 5 gigabytes free."
+  }
+  button="Get started"
+  link="https://www.tigrisdata.com/docs/buckets/locations/"
+/>
