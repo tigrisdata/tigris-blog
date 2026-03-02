@@ -1,0 +1,269 @@
+---
+slug: mixpeek-tigris-object-notifications
+title: Event-Driven Multimodal Ingestion with Tigris and Mixpeek
+description: >
+  Learn how Mixpeek uses Tigris Object Notifications and globally distributed, low-latency object storage to build an event-driven ingestion pipeline for multimodal data.
+image: ./hero-img.png
+keywords:
+  - Tigris
+  - Mixpeek
+  - object notifications
+  - multimodal indexing
+  - S3
+  - webhooks
+  - event-driven
+  - RAG
+authors:
+  - davidmyriel
+tags:
+  - Build with Tigris
+  - AI Infrastructure
+  - Object Notifications
+  - Multimodal
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import creationGif from "./creation.gif";
+import heroImage from "./hero-img.png";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Event-Driven Multimodal Ingestion with Tigris and Mixpeek"
+/>
+
+Most AI search tools handle text well until you throw a video, an audio recording, or a scanned PDF at them. You have a bucket full of that kind of content. How do you make it searchable without building and maintaining your own polling pipeline?
+
+That's the problem [Mixpeek](https://mixpeek.com/) solves. It's a multimodal intelligence layer that sits on top of your object storage, turning raw unstructured media into searchable, classifiable, and retrievable features without you having to build the pipeline yourself. When you connect it to [Tigris](https://www.tigrisdata.com/), the whole thing becomes event-driven from the moment an object lands in your bucket.
+
+<div style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/2GLkl8NnqcY?si=XY8AApiHEFXP4clA"
+    title="YouTube video player"
+    frameBorder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerPolicy="strict-origin-when-cross-origin"
+    allowFullScreen
+    style={{ width: "100%", height: "315px", display: "block" }}
+  />
+</div>
+
+## Why Mixpeek chose Tigris as the storage layer
+
+[Tigris](https://www.tigrisdata.com/) is a globally distributed, S3-compatible object storage service. Because it speaks the S3 API natively, connecting Mixpeek is straightforward. It uses standard IAM-style credentials, the same SDKs you're already using, just a different endpoint. You can read more in the [Tigris overview](https://www.tigrisdata.com/docs/overview/).
+
+S3 compatibility is just the baseline. When Mixpeek processes your files, it doesn't just read each object once. It makes repeated requests during extraction: reading video in segments, pulling document pages, fetching image data at different resolutions. With S3, each of those reads adds up in both latency and cost.
+
+Because Mixpeek uses Tigris as the storage layer, your files are read from the region closest to the processing node running the extraction job. Latency stays low regardless of where your users are uploading from. And with no egress fees, Mixpeek can read your objects as many times as the pipeline needs without the cost model working against you.
+
+Here is how Tigris maps directly onto Mixpeek’s requirements:
+
+| What Tigris provides | Why it matters for Mixpeek users |
+|---|---|
+| **Global distribution** | Extraction jobs read files from the nearest region, keeping latency low |
+| **Zero egress fees** | Repeated reads during processing don't accumulate transfer costs |
+| **S3 compatibility** | No migration needed. Connect with existing AWS SDKs and credentials |
+| **Strong consistency** | Every read reflects the latest write, so processing never works on stale data |
+
+## Connecting takes minutes, not weeks
+
+Connecting Mixpeek to Tigris follows the same S3-compatible authentication pattern. You grant Mixpeek read access to your bucket using standard IAM-style credentials, and Mixpeek uses those to discover and retrieve objects for processing.
+
+The GIF below shows the end-to-end flow in the Mixpeek dashboard:
+<div style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <img
+    src={creationGif}
+    alt="Creating a Tigris bucket and connecting Mixpeek"
+    style={{ width: "100%", height: "auto", display: "block" }}
+  />
+</div>
+
+Once connected, Mixpeek runs an initial sync to backfill existing objects in the bucket. From that point on, it processes new objects incrementally rather than re-scanning the entire bucket on each run. You can also scope ingestion to a specific prefix if you only want Mixpeek watching part of your bucket. For details on working with buckets, see the [Tigris bucket docs](https://www.tigrisdata.com/docs/buckets/create-bucket/).
+
+At a high level, the control plane looks like this:
+
+```text
+                    +-------------------------+
+                    |     Tigris Bucket       |
+                    |  (videos, images, PDFs) |
+                    +------------+------------+
+                                 |
+                                 | OBJECT_CREATED_* / OBJECT_DELETED_*
+                                 v
+                       +---------+----------+
+                       | Object Notification|
+                       |      Webhook       |
+                       +---------+----------+
+                                 |
+                                 v
+                    +------------+-------------+
+                    |     Mixpeek Ingestion    |
+                    |  (idempotent, DLQ-aware) |
+                    +------------+-------------+
+                                 |
+                                 v
+                    +------------+-------------+
+                    |  Extraction + Indexing   |
+                    |  (embeddings, manifests) |
+                    +--------------------------+
+```
+
+## Your files, broken into searchable layers
+
+When a file hits a Mixpeek-connected bucket, it gets broken into layers: transcripts, visual embeddings, scene descriptions, and detected entities. Each of those layers is independently queryable.
+
+For video, that means frame-accurate retrieval. Search for "person writing on whiteboard" and you get back the exact timestamp, not just the file name. The pipeline handles video, images, audio, and PDFs through the same unified API.
+
+Conceptually, the data path is:
+
+```text
+     +------------------------+
+     |   Tigris Object        |
+     |  (video / image / PDF) |
+     +-----------+------------+
+                 |
+                 v
+        +----------------------+
+        |  Mixpeek Extractors  |
+        +----+---------+-------+
+             |         |
+   transcripts        visual embeddings
+             \         |
+              \        |
+               v       v
+        +----------------------+
+        |  Search Index + API  |
+        |  (frames, pages,     |
+        |   segments, entities)|
+        +----------------------+
+```
+
+## The problem with polling
+
+Building this kind of ingestion pipeline yourself means solving a lot of boring, hard problems before you get to the interesting ones. How do you know when a new file arrives? How do you avoid processing the same file twice? What happens when a job fails mid-extraction?
+
+Without event notifications, most integrations fall back to periodic list-and-diff polling. You scan the bucket on a schedule, compare against what you've already processed, and queue up the new objects.
+
+This works for small, low-volume buckets. Once you have millions of objects and steady traffic, the tradeoffs get sharp:
+
+| Problem | What happens in a polling pipeline |
+|---|---|
+| **Indexing lag** | A 5-minute poll interval means the index is always 0–5 minutes behind writes. Tighter schedules increase list calls and hit rate limits. |
+| **Wasted reads** | Most polls re-scan keys that have not changed, burning API calls, bandwidth, and CPU just to learn that nothing happened. |
+| **Failure recovery** | If a polling run crashes halfway through, you need durable checkpoints to avoid either missing objects or reprocessing large parts of the bucket. |
+| **Thundering herds** | During an upload spike, every poll returns huge diffs at once. Downstream workers see sawtooth loads instead of a smooth stream of events. |
+
+At scale, a missed cycle can leave your index stale for minutes or longer. A noisy neighbor workload or a transient 500 from your cloud provider is all it takes.
+
+## Object Notifications fix this
+
+[Tigris Object Notifications](https://www.tigrisdata.com/docs/buckets/object-notifications/) flip the model from pull to push. When an object is created, updated, or deleted, Tigris fires an HTTP POST to your configured webhook endpoint immediately.
+
+You set this up once in the [Tigris Dashboard](https://console.tigris.dev/signin) under bucket settings. No polling loop. No scheduled scans. Mixpeek's ingestion endpoint receives the event and kicks off processing as soon as the object exists.
+
+Here is a simplified example of the payload Mixpeek receives:
+
+```json
+// Example Tigris notification payload (OBJECT_CREATED_PUT)
+{
+  "eventType": "OBJECT_CREATED_PUT",
+  "bucket": "my-media-bucket",
+  "key": "videos/interview-2025.mp4",
+  "size": 104857600,
+  "lastModified": "2025-03-02T10:45:00Z",
+  "etag": "abc123def456"
+}
+```
+
+You can also filter which events hit your webhook using Tigris's SQL-like metadata querying, so you only trigger processing for the object types your pipeline actually needs.
+
+## Built to survive bursty uploads
+
+Event-driven pipelines need failure handling built in. Mixpeek covers the operational pieces that most teams have to build themselves.
+
+The table below summarizes the key reliability features in the ingestion layer:
+
+| Reliability feature | What it does |
+|---|---|
+| **Dead Letter Queue** | Retries failed objects up to 3 times, then quarantines them instead of blocking the pipeline |
+| **Idempotent ingestion** | Deduplicates by bucket + source + object identity, so retries never double-process |
+| **Distributed locking** | Prevents concurrent sync runs from colliding during bursty event storms |
+| **Rate-limit backoff** | Automatic 429 handling to smooth spikes without dropping events |
+| **Metrics** | Duration, batch counts, failure rates, and DLQ depth all exposed for ops visibility |
+
+A burst of uploads shouldn't cause your pipeline to process the same file four times or deadlock on concurrent runs. These safeguards make sure it doesn't.
+
+## What you can build once your media is indexed
+
+Search is one access pattern, but it's not the only one. A few of the common access patterns look like this:
+
+| Access pattern | What it means |
+|---|---|
+| **Retrieval** | Semantic search across video frames, audio segments, PDF pages |
+| **Classification** | Auto-tag objects by content, entity, or visual category |
+| **Clustering** | Group similar assets, surface duplicates, find dataset gaps |
+| **Anomaly detection** | Flag out-of-distribution objects as they arrive |
+
+All of this runs against the same indexed representation Mixpeek builds from your Tigris bucket. You don't maintain separate pipelines for each access pattern.
+
+## Your bucket is the record, not just the storage
+
+Treat your Tigris bucket as the authoritative record of your dataset, not just a place to dump files. Mixpeek writes structured outputs (JSON metadata, derived segments, embeddings) that map back to a stable object identity in Tigris: bucket + key + ETag. If you need to reproduce a result, the lineage is there.
+
+```json
+// Example Mixpeek output manifest: every result ties back to a Tigris object
+{
+  "source": {
+    "bucket": "my-media-bucket",
+    "key": "videos/interview-2025.mp4",
+    "etag": "abc123def456"
+  },
+  "segments": [
+    { "timestamp": "00:02:14", "text": "person writing on whiteboard", "score": 0.94 },
+    { "timestamp": "00:05:41", "text": "diagram of system architecture", "score": 0.87 }
+  ]
+}
+```
+
+Pair this with [Tigris snapshots](https://www.tigrisdata.com/blog/fork-buckets-like-code/) and you get point-in-time reproducibility without managing a separate versioning system. If an experiment goes sideways, fork from a known-good snapshot and replay processing against that state. To start using snapshots in your own buckets, follow the [snapshot how-to guide](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/).
+
+## From upload to queryable: the full picture
+
+```
+Write object to Tigris (S3-compatible upload)
+  → Tigris fires Object Notification webhook
+    → Mixpeek receives event, checks idempotency key
+      → Schedules extraction job (transcript, embeddings, entities)
+        → Results queryable in Mixpeek
+          → Derived artifacts written back to Tigris for lineage
+```
+
+Each step is independently observable. You can monitor DLQ depth and batch metrics, and replay any event that was missed during an outage using Mixpeek's reconciliation scan.
+
+## Set it up in three steps
+
+Connect your Tigris bucket to Mixpeek using the [Mixpeek integrations guide](https://docs.mixpeek.com/docs/integrations/object-storage/tigris). Configure Object Notifications in your [Tigris Dashboard](https://console.tigris.dev/signin), point the webhook at Mixpeek's ingestion endpoint, and your pipeline is live.
+
+The rough setup script looks like this:
+
+```bash
+# 1. Create a bucket in the Tigris Dashboard
+# 2. Generate IAM-style credentials for Mixpeek (read + list)
+# 3. Add an Object Notification webhook pointing to Mixpeek's endpoint
+
+TIGRIS_ENDPOINT=https://fly.storage.tigris.dev
+MIXPEEK_WEBHOOK=https://api.mixpeek.com/ingest/tigris
+```
+
+No polling. No stale indexes. Just push-based processing from the moment your media hits storage.
+
+<InlineCta
+  title="Unlimited storage; no egress fees"
+  subtitle={
+    "Need to store terabytes of multimodal data everywhere? Tigris has you covered without any pesky egress fees. Try it today and get the first 5 gigabytes on us."
+  }
+  button="Get started"
+  link="https://www.tigrisdata.com/docs/buckets/object-notifications/"
+/>
