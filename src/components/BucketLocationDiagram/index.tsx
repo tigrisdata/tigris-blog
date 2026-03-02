@@ -19,18 +19,22 @@ const rows = [
   },
   {
     name: "Multi‑region",
-    summary: "Multi-region buckets provide the highest availability in one geography.",
+    summary:
+      "Multi-region buckets provide the highest availability in one geography.",
     detail: "Data is copied across regions in a group like us or europe.",
   },
   {
     name: "Dual‑region",
-    summary: "Dual-region buckets keep data in two specific regions you choose.",
+    summary:
+      "Dual-region buckets keep data in two specific regions you choose.",
     detail: "They are a good fit for compliance and active/active topologies.",
   },
   {
     name: "Single‑region",
-    summary: "Single-region buckets keep data in one region co-located with compute.",
-    detail: "Data is stored redundantly within that region’s availability zones.",
+    summary:
+      "Single-region buckets keep data in one region co-located with compute.",
+    detail:
+      "Data is stored redundantly within that region’s availability zones.",
   },
 ];
 
@@ -118,4 +122,3 @@ export default function BucketLocationDiagram(): JSX.Element {
     </div>
   );
 }
-

@@ -72,7 +72,8 @@ const config = {
   ],
 
   plugins:
-    process.env.NEXT_PUBLIC_POSTHOG_APIKEY && process.env.NEXT_PUBLIC_POSTHOG_HOST
+    process.env.NEXT_PUBLIC_POSTHOG_APIKEY &&
+    process.env.NEXT_PUBLIC_POSTHOG_HOST
       ? [
           [
             "posthog-docusaurus",
