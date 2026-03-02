@@ -116,9 +116,11 @@ between Global, Multi-region, Dual-region, and Single-region.
   />
 </div>
 
-:::tip For existing buckets, go to the
+:::tip 
+For existing buckets, go to the
 [Tigris Dashboard](https://console.tigris.dev/signin), open the bucket, click
-**Settings**, and update the region restriction from there. :::
+**Settings**, and update the region restriction from there. 
+:::
 
 ## Multi-region buckets
 
@@ -154,8 +156,10 @@ tigris mk my-eu-bucket --region eur
 tigris mk my-us-bucket --region usa
 ```
 
-:::tip `tigris mk` is an alias for `tigris create`, so any existing commands
-that use `create` will keep working. :::
+:::tip 
+`tigris mk` is an alias for `tigris create`, so any existing commands
+that use `create` will keep working. 
+:::
 
 ## Dual-region buckets
 
@@ -254,8 +258,10 @@ If you want every read, from anywhere, to see the latest data, pick
 staleness in exchange for lower latency or automatic global placement, Global or
 Dual‑region are a better fit.
 
-:::info For the exact guarantees for each location type, see the
-[consistency docs](https://www.tigrisdata.com/docs/concepts/consistency/). :::
+:::info 
+For the exact guarantees for each location type, see the
+[consistency docs](https://www.tigrisdata.com/docs/concepts/consistency/). 
+:::
 
 ## Choosing a location type
 
@@ -274,7 +280,8 @@ If you're unsure, multi-region in your primary geography is the safe default for
 production. You get resilience inside that geography without touching your
 application code.
 
-:::info For a deeper comparison across performance, compliance, and cost, see
+:::info 
+For a deeper comparison across performance, compliance, and cost, see
 the [Bucket Locations docs](https://www.tigrisdata.com/docs/buckets/locations/).
 :::
 
@@ -296,10 +303,12 @@ Tigris is currently deployed in 11 regions across the world:
 | `jnb`     | Johannesburg, South Africa | `sjc`     | San Jose, California (US) |
 | `syd`     | Sydney, Australia          |           |                           |
 
-:::info Your existing buckets keep working exactly as before. For new workloads,
+:::info 
+Your existing buckets keep working exactly as before. For new workloads,
 read the [bucket locations guide](https://www.tigrisdata.com/docs/buckets/locations/) and the
 [regions docs](https://www.tigrisdata.com/docs/concepts/regions/) and pick the
-type that matches your geography, latency, and resilience requirements. :::
+type that matches your geography, latency, and resilience requirements. 
+:::
 
 <InlineCta
   title="Store data exactly where you need it"
