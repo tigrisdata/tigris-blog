@@ -12,9 +12,30 @@ authors: [xe, ks]
 tags: [Customers, docker, registry]
 ---
 
+import QuickSummary from "@site/src/components/QuickSummary";
 import heroImage from "./depot-heart-tigris.webp";
 
 <img src={heroImage} className="hero-image" alt="Depot loves Tigris" />
+
+<QuickSummary
+  items={[
+    {
+      title: "Simpler architecture with Tigris.",
+      description:
+        "No pull-through caches, no rate limits, no multi-region replication to manage — just push images and they're available globally.",
+    },
+    {
+      title: "Depot registry built on Tigris.",
+      description:
+        "Push images in one region and pull them globally with fast, reliable delivery and no rate limits.",
+    },
+    {
+      title: "Faster builds in CI.",
+      description:
+        "Depot pairs their Tigris-backed registry with super-fast container builds and GitHub Actions runners.",
+    },
+  ]}
+/>
 
 As the saying goes, the only constants in life are death and taxes. When you
 work with the Internet, you get to add another fun thing to that list: service

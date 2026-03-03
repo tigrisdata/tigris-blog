@@ -21,7 +21,7 @@ const InlineCta = ({ title, subtitle, button, link }: Props) => {
             className={`${styles.InlineCta} sl_card_m-2 card_static cta-flex`}
           >
             <div className="cta-margin-left">
-              <h1 className="sl_title_m fix-1px">{title}</h1>
+              <span className="sl_title_m fix-1px">{title}</span>
               <p>{subtitle}</p>
             </div>
             <div className="cta-flex-item cta-margin-right">
