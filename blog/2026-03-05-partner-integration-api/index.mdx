@@ -164,6 +164,10 @@ your platform. Credentials are scoped to their organization. From your user's
 perspective, this is _your_ storage product.
 
 It's S3-compatible, so your users can use whatever S3 SDK they already know.
+Authentication uses HMAC-based request signing, aligned with S3 SigV4. This
+wasn't arbitrary: it keeps the entire ecosystem consistent. Partners and their
+users authenticate with the same signing model that every S3 tool already
+supports.
 
 ### Usage and billing per tenant
 
@@ -272,10 +276,13 @@ Three steps:
 2. **Get your credentials** — email help@tigrisdata.com for a Provider ID and
    signing key.
 3. **Start provisioning** — create organizations for your tenants, generate
-   access keys, and integrate billing.
+   access keys, and integrate billing. Your users authenticate with standard S3
+   SigV4 signing, so existing tools and SDKs work without modification.
 
-Railway went from concept to production in two weeks. Your integration can be
-storing objects in an afternoon.
+The Partner Integration API started with Fly.io and was incrementally shaped by
+real production use cases as more partners came on. It wasn't designed in a
+vacuum. That's why Railway went from concept to production in two weeks: the API
+had already matured through years of real usage.
 
 <InlineCta
   title="Add storage to your platform"
