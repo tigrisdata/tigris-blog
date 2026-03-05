@@ -26,6 +26,7 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import MermaidFrame from "@site/src/components/MermaidFrame";
+import PullQuote from "@site/src/components/PullQuote";
 import creationGif from "./creation.gif";
 import heroImage from "./hero-img.webp";
 
@@ -398,6 +399,14 @@ If you're still polling buckets on a schedule, this is your path off the cron
 wheel: wire up notifications once, point them at Mixpeek, and let the pipeline
 keep your index fresh while you focus on what to build with it.
 
+<PullQuote>
+  Mixpeek's free tier lets you start indexing your media in minutes. Connect your
+  Tigris bucket and try Mixpeek today:{" "}
+  <a href="https://mixpeek.com/docs/integrations/object-storage/tigris">
+    Mixpeek Tigris integration guide
+  </a>
+</PullQuote>
+
 <InlineCta
   title="Unlimited storage; no egress fees"
   subtitle={
@@ -406,3 +415,5 @@ keep your index fresh while you focus on what to build with it.
   button="Get started with Tigris"
   link="https://www.tigrisdata.com/docs/buckets/object-notifications/"
 />
+
+

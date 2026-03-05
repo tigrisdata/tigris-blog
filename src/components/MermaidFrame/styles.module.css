@@ -3,15 +3,17 @@
   border-radius: 10px;
   padding: 1.25rem 1.5rem;
   margin: 1.75rem 0;
-  background:
-    radial-gradient(circle at 0% 0%, rgba(98, 254, 181, 0.07), transparent 55%),
+  background: radial-gradient(
+      circle at 0% 0%,
+      rgba(98, 254, 181, 0.07),
+      transparent 55%
+    ),
     radial-gradient(
       circle at 100% 100%,
       rgba(98, 254, 181, 0.04),
       transparent 60%
     );
-  box-shadow:
-    0 0 0 1px rgba(98, 254, 181, 0.25),
+  box-shadow: 0 0 0 1px rgba(98, 254, 181, 0.25),
     0 0 10px rgba(98, 254, 181, 0.12);
 }
 
@@ -45,4 +47,3 @@
   font-style: italic;
   text-shadow: 0 0 6px rgba(98, 254, 181, 0.25);
 }
-
