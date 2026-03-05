@@ -25,6 +25,7 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import MermaidFrame from "@site/src/components/MermaidFrame";
 import creationGif from "./creation.gif";
 import heroImage from "./hero-img.webp";
 
@@ -116,31 +117,26 @@ details on working with buckets, see the
 
 At a high level, the control plane looks like this:
 
-```text
-                    +-------------------------+
-                    |     Tigris Bucket       |
-                    |  (videos, images, PDFs) |
-                    +------------+------------+
-                                 |
-                                 | OBJECT_CREATED_* / OBJECT_DELETED_*
-                                 v
-                       +---------+----------+
-                       | Object Notification|
-                       |      Webhook       |
-                       +---------+----------+
-                                 |
-                                 v
-                    +------------+-------------+
-                    |     Mixpeek Ingestion    |
-                    |  (idempotent, DLQ-aware) |
-                    +------------+-------------+
-                                 |
-                                 v
-                    +------------+-------------+
-                    |  Extraction + Indexing   |
-                    |  (embeddings, manifests) |
-                    +--------------------------+
+<MermaidFrame title="Tigris object events flow into Mixpeek, which ingests and indexes each change.">
+
+```mermaid
+graph LR
+  A["Tigris Bucket (videos, images, PDFs)"] -->|"OBJECT_CREATED_* / OBJECT_DELETED_*"| B["Object Notification webhook"]
+  B --> C["Mixpeek Ingestion (idempotent, DLQ-aware)"]
+  C --> D["Extraction + Indexing (embeddings, manifests)"]
+
+  classDef bucket fill:#0f766e,stroke:#0b4f4a,color:#ffffff;
+  classDef notification fill:#2563eb,stroke:#1d4ed8,color:#ffffff;
+  classDef ingestion fill:#f97316,stroke:#ea580c,color:#111827;
+  classDef extraction fill:#0ea5e9,stroke:#0369a1,color:#0f172a;
+
+  class A bucket;
+  class B notification;
+  class C ingestion;
+  class D extraction;
 ```
+
+</MermaidFrame>
 
 ## How Mixpeek turns files into searchable layers
 
@@ -152,28 +148,50 @@ For video, that means frame-accurate retrieval. Search for "person writing on
 whiteboard" and you get back the exact timestamp, not just the file name. The
 pipeline handles video, images, audio, and PDFs through the same unified API.
 
+Here's what that looks like in practice. Say a property management company
+uploads walkthrough videos of new listings every day. With Mixpeek and Tigris,
+each walkthrough is automatically broken into room-level segments the moment it
+lands in the bucket. An agent can search "kitchen with granite countertops" and
+get back the exact timestamp in the exact video — across thousands of hours of
+footage. No polling delay, no manual tagging.
+
+The same pattern works for media companies indexing footage libraries, edtech
+platforms making lecture recordings searchable, or compliance teams flagging
+documents on arrival.
+
 Conceptually, the data path is:
 
-```text
-     +------------------------+
-     |   Tigris Object        |
-     |  (video / image / PDF) |
-     +-----------+------------+
-                 |
-                 v
-        +----------------------+
-        |  Mixpeek Extractors  |
-        +----+---------+-------+
-             |         |
-   transcripts        visual embeddings
-             \         |
-              \        |
-               v       v
-        +----------------------+
-        |  Search Index + API  |
-        |  (frames, pages,     |
-        |   segments, entities)|
-        +----------------------+
+<MermaidFrame title="Mixpeek breaks each Tigris object into transcripts, visual features, and an index you can query.">
+
+```mermaid
+graph LR
+  A["Tigris Object (video / image / PDF)"] --> B["Mixpeek Extractors"]
+  B --> C["Transcripts"]
+  B --> D["Visual embeddings"]
+  C --> E["Search Index + API (frames, pages, segments, entities)"]
+  D --> E
+
+  classDef object fill:#0f766e,stroke:#0b4f4a,color:#ffffff;
+  classDef extractor fill:#f59e0b,stroke:#d97706,color:#111827;
+  classDef index fill:#0ea5e9,stroke:#0369a1,color:#0f172a;
+
+  class A object;
+  class B extractor;
+  class C,D,E index;
+```
+
+</MermaidFrame>
+
+And here's what the query looks like once your media is indexed:
+
+```python
+results = mixpeek.search(
+    query="person writing on whiteboard",
+    modalities=["video", "image"],
+    filters={"bucket": "my-media-bucket"}
+)
+
+# => [{"file_key": "videos/interview-2025.mp4", "timestamp": "00:02:14", "score": 0.94}, ...]
 ```
 
 ## Why polling-based ingestion does not scale
@@ -216,7 +234,6 @@ event and kicks off processing as soon as the object exists.
 Here is a simplified example of the payload Mixpeek receives:
 
 ```json
-// Example Tigris notification payload (OBJECT_CREATED_PUT)
 {
   "eventType": "OBJECT_CREATED_PUT",
   "bucket": "my-media-bucket",
@@ -273,7 +290,6 @@ segments, embeddings) that map back to a stable object identity in Tigris:
 bucket + key + ETag. If you need to reproduce a result, the lineage is there.
 
 ```json
-// Example Mixpeek output manifest: every result ties back to a Tigris object
 {
   "source": {
     "bucket": "my-media-bucket",
@@ -305,36 +321,66 @@ buckets, follow the
 
 ## End-to-end flow from upload to query
 
+<MermaidFrame title="An object upload triggers a notification, Mixpeek processes it, and the results become queryable.">
+
+```mermaid
+graph LR
+  A["Write object to Tigris (S3-compatible upload)"]
+    --> B["Tigris Object Notification webhook"]
+  B --> C["Mixpeek receives event and checks idempotency key"]
+  C --> D["Extraction job (transcript, embeddings, entities)"]
+  D --> E["Results queryable in Mixpeek"]
+  E --> F["Derived artifacts written back to Tigris"]
+
+  classDef stepUpload fill:#0f766e,stroke:#0b4f4a,color:#ffffff;
+  classDef stepNotify fill:#2563eb,stroke:#1d4ed8,color:#ffffff;
+  classDef stepProcess fill:#f97316,stroke:#ea580c,color:#111827;
+  classDef stepResult fill:#0ea5e9,stroke:#0369a1,color:#0f172a;
+
+  class A stepUpload;
+  class B stepNotify;
+  class C,D stepProcess;
+  class E,F stepResult;
 ```
-Write object to Tigris (S3-compatible upload)
-  → Tigris fires Object Notification webhook
-    → Mixpeek receives event, checks idempotency key
-      → Schedules extraction job (transcript, embeddings, entities)
-        → Results queryable in Mixpeek
-          → Derived artifacts written back to Tigris for lineage
-```
+
+</MermaidFrame>
 
 Each step is independently observable. You can monitor DLQ depth and batch
 metrics, and replay any event that was missed during an outage using Mixpeek's
 reconciliation scan.
 
-## How to set this up in three steps
+## Try it yourself
 
 Connect your Tigris bucket to Mixpeek using the
-[Mixpeek integrations guide](https://docs.mixpeek.com/docs/integrations/object-storage/tigris).
+[Mixpeek integrations guide](https://mixpeek.com/docs/integrations/object-storage/tigris).
 Configure Object Notifications in your
 [Tigris Dashboard](https://console.tigris.dev/signin), point the webhook at
-Mixpeek's ingestion endpoint, and your pipeline is live.
+Mixpeek's ingestion endpoint, and your pipeline is live. Mixpeek's free tier
+lets you index your first objects at no cost — enough to test the full pipeline
+end to end before committing to production volume.
 
-The rough setup script looks like this:
+Here's the quick version:
 
-```bash
-# 1. Create a bucket in the Tigris Dashboard
-# 2. Generate IAM-style credentials for Mixpeek (read + list)
-# 3. Add an Object Notification webhook pointing to Mixpeek's endpoint
+```python
+import boto3
 
-TIGRIS_ENDPOINT=https://fly.storage.tigris.dev
-MIXPEEK_WEBHOOK=https://api.mixpeek.com/ingest/tigris
+# 1. Upload to your Tigris bucket
+s3 = boto3.client(
+    "s3",
+    endpoint_url="https://fly.storage.tigris.dev",
+    aws_access_key_id="YOUR_TIGRIS_KEY",
+    aws_secret_access_key="YOUR_TIGRIS_SECRET",
+    region_name="auto",
+)
+s3.upload_file("demo-video.mp4", "my-media-bucket", "videos/demo.mp4")
+
+# 2. Tigris fires the notification to Mixpeek automatically
+
+# 3. Query the result
+import mixpeek
+results = mixpeek.search(query="diagram of system architecture")
+print(results[0]["timestamp"], results[0]["score"])
+# "00:05:41" 0.87
 ```
 
 No polling. No stale indexes. Just push-based processing from the moment your
@@ -357,6 +403,6 @@ keep your index fresh while you focus on what to build with it.
   subtitle={
     "Need to store terabytes of multimodal data everywhere? Tigris has you covered without any pesky egress fees. Try it today and get the first 5 gigabytes on us."
   }
-  button="Get started"
+  button="Get started with Tigris"
   link="https://www.tigrisdata.com/docs/buckets/object-notifications/"
 />
