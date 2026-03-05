@@ -90,8 +90,7 @@ exists so you don't have to do any of that.
 
 ## The AWS multi-tenancy tax
 
-Let's talk about what "just use S3" actually means when you're building for
-multiple tenants.
+"Just use S3" sounds simple until you're building for multiple tenants.
 
 AWS gives you a few options for multi-tenant storage. You can use a
 bucket-per-tenant model, which provides strong isolation but hits practical
@@ -120,19 +119,19 @@ recommends separate accounts per tenant, which means you're now managing an AWS
 Organization with hundreds or thousands of member accounts, each with their own
 billing, their own quotas, their own IAM boundaries.
 
-You wanted a "store files" button in your product. You got a distributed systems
-problem.
+All you wanted was a "store files" button. Now you're debugging IAM role trust
+policies at 2am.
 
 ## One API, no assembly required
 
 Instead of giving you storage primitives to assemble, the Partner Integration
 API treats tenant management as a first-class concept.
 
-Here's the model: Tigris assigns you a **Provider** identity. Under that
-provider, you create **Organizations** — one per tenant. Each organization is a
-complete isolation boundary with its own buckets, users, access keys, and usage
-tracking. Organizations can't see each other's data, can't access each other's
-buckets, and are billed independently.
+Tigris assigns you a **Provider** identity. Under that provider, you create
+**Organizations** — one per tenant. Each organization is a complete isolation
+boundary with its own buckets, users, access keys, and usage tracking.
+Organizations can't see each other's data, can't access each other's buckets,
+and are billed independently.
 
 Provisioning a new tenant is one API call. That call creates the organization,
 sets up an initial bucket, and returns credentials — all atomically. You can
@@ -144,8 +143,7 @@ preserving data for compliance.
 POST /v1/providers/{provider_id}/orgs
 ```
 
-That's it. No CloudFormation templates. No IAM role chaining. No account vending
-machines.
+No CloudFormation templates, no IAM role chaining, no account vending machines.
 
 ### No region selection, no bucket limits
 
@@ -154,9 +152,8 @@ written and cached near where they're read. There's no region picker because
 there doesn't need to be one. Your user in Frankfurt and your user in Virginia
 both get low-latency access without you configuring anything.
 
-There are no per-account bucket limits to worry about. No quotas to request
-increases for. No "you've hit 10,000 buckets, time to create another account"
-conversations.
+There are no per-account bucket limits. You'll never file a support ticket to
+increase your quota or create a second account because you ran out of buckets.
 
 ### Your brand, not ours
 
@@ -197,7 +194,8 @@ configuration gets injected into their apps automatically.
 A Fly.io user doesn't think about Tigris as a separate service. They run
 `fly storage create`, get a bucket, and start using it. The storage is globally
 distributed across Fly's regions, so objects are fast everywhere their app runs.
-No region selection, no replication configuration, no egress fees.
+They don't pick a region. They don't configure replication. They don't pay
+egress.
 
 ### Railway
 
@@ -232,9 +230,9 @@ TigrisFS-mounted filesystems), deployment artifact storage, a global CDN,
 on-demand customer buckets, and sandbox snapshots. Agents can provision storage
 for themselves without human intervention.
 
-The S3 compatibility means Agentuity treats the same service as a filesystem, a
-CDN origin, a snapshot store, and a per-agent scratchpad. One integration, five
-use cases.
+Because it's S3-compatible, Agentuity treats the same service as a filesystem, a
+CDN origin, a snapshot store, and a per-agent scratchpad — five uses through one
+integration.
 
 ### Basic Memory
 
@@ -251,7 +249,7 @@ managing infrastructure.
 
 ## Getting started
 
-Here's how you start:
+Three steps:
 
 1. **Read the
    [architecture guide](https://www.tigrisdata.com/docs/partner-integrations/)**
@@ -263,8 +261,7 @@ Here's how you start:
    access keys, and integrate billing.
 
 Railway went from concept to production in two weeks. Your integration can be
-storing objects in an afternoon. Stop building storage infrastructure. Start
-shipping storage features.
+storing objects in an afternoon.
 
 <InlineCta
   title="Add storage to your platform"
