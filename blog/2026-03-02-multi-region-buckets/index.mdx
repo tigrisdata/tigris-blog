@@ -117,18 +117,18 @@ Tigris takes care of the rest.
 
 :::
 
-## Multi-region buckets
+## Multi-region buckets (recommended default)
 
-Multi-region buckets keep copies of your data across a group of regions within a
-chosen geography (for example `usa` or `eur`). You select the geography (USA or
-EUR), Tigris automatically selects the regions inside that geography, and
-maintains two or more copies. Every read and write inside that geography behaves
+**This is the place to start for most new production workloads.** Multi-region
+buckets keep copies of your data across a group of regions within a chosen
+geography (for example `usa` or `eur`). You select the geography (USA or EUR),
+Tigris automatically selects the regions inside that geography, and maintains
+two or more copies. Every read and write inside that geography behaves
 consistently. If one region has a bad day, the others keep serving traffic.
 
-This is the right default for new user-facing production workloads. Front-end
-assets, feature flags, user data that needs both low latency and resilience to
-regional failures all fit this model. You get strong, predictable behavior
-without hand-wiring replication between single-region buckets.
+Front-end assets, feature flags, and user data that needs both low latency and
+resilience to regional failures all fit this model. You get strong, predictable
+behavior without hand-wiring replication between single-region buckets.
 
 Multi-region buckets are priced at **$0.025/GB/month**, regardless of how many
 regions Tigris uses inside the geography, and egress is still free. See the
@@ -297,16 +297,17 @@ For existing buckets, go to the
 Tigris keeps pricing intentionally simple: one storage line item per bucket, the
 same rates across geographies, and zero egress fees.
 
-| Bucket type   | Storage price                    | Egress fees | Geo pricing                    | Replication charges              |
-| ------------- | -------------------------------- | ----------- | ------------------------------ | -------------------------------- |
-| Multi-region  | **$0.025/GB/month**              | Free        | Same price in USA and EUR geos | Included (no per-replica fees)   |
-| Dual-region   | Per pricing page (standard tier) | Free        | Same per-GB rates across geos  | Included (no per-region add-ons) |
-| Single-region | Per pricing page (standard tier) | Free        | Same per-GB rates across geos  | Included (no per-region add-ons) |
-| Free tier     | 5 GB standard storage + requests | Free        | Global                         | Included                         |
+| Bucket type   | Storage price       | Egress fees | Geo pricing                    | Replication charges              |
+| ------------- | ------------------- | ----------- | ------------------------------ | -------------------------------- |
+| Multi-region  | **$0.025/GB/month** | Free        | Same price in USA and EUR geos | Included (no per-replica fees)   |
+| Dual-region   | **$0.02/GB/month**  | Free        | Same per-GB rates across geos  | Included (no per-region add-ons) |
+| Single-region | **$0.02/GB/month**  | Free        | Same per-GB rates across geos  | Included (no per-region add-ons) |
+| Global        | **$0.02/GB/month**  | Free        | Global                         | Included                         |
 
 :::tip Pricing at a glance
 
-For the full breakdown, including storage tiers and request pricing, see the
+Don't forget, your first 5GB are free! For the full breakdown, including storage
+tiers and request pricing, see the
 [Tigris pricing page](https://www.tigrisdata.com/pricing/).
 
 :::
