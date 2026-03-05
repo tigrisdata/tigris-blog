@@ -24,6 +24,7 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import BreakoutQuote from "@site/src/components/BreakoutQuote";
 import QuickSummary from "@site/src/components/QuickSummary";
 import heroImage from "./partner-api-hero.webp";
 
@@ -48,7 +49,7 @@ import heroImage from "./partner-api-hero.webp";
     {
       title: "One API call to provision a tenant.",
       description:
-        "Create an isolated organization with its own buckets, users, access keys, and billing — in a single request.",
+        "Create an isolated organization with its own buckets, users, access keys, and billing. One request.",
     },
     {
       title: "No per-account or per-region limits.",
@@ -68,25 +69,22 @@ import heroImage from "./partner-api-hero.webp";
   ]}
 />
 
-If you run a platform, your users probably need storage. File uploads,
-deployment artifacts, model weights, backups — it comes up fast. And the moment
-it does, you're faced with a choice: build storage into your product, or tell
-your users to go set it up somewhere else.
+Every platform eventually needs to offer storage. You either build storage into
+your product, or tell your users to go set it up somewhere else. But the hard
+part isn't the storage — it's the multi-tenancy.
 
 {/* truncate */}
 
-Most platforms choose the second option because the first one sounds like a
-nightmare. If you go the AWS route, you're looking at creating separate AWS
-accounts per tenant (or managing IAM policies that would make a bureaucrat
-weep), dealing with per-account bucket limits, choosing regions for each
-customer, configuring cross-region replication, and managing the billing for all
-of it.
+Building multi-tenant storage on top of S3 means creating separate AWS accounts
+per tenant (or managing IAM policies that would make a bureaucrat weep), dealing
+with per-account bucket limits, choosing regions for each customer, configuring
+cross-region replication, and managing the billing for all of it.
 
 You wanted to add a storage feature. Now you're operating a storage company.
 
 The
 [Tigris Partner Integration API](https://www.tigrisdata.com/docs/partner-integrations/)
-exists so you don't have to do any of that.
+is how four platforms solved this without building their own storage layer.
 
 ## The AWS multi-tenancy tax
 
@@ -107,43 +105,45 @@ store objects for a single account. Everything multi-tenant is bolted on through
 IAM, bucket policies, and organizational units. Each layer adds configuration,
 each configuration adds failure modes.
 
-Then there's the region question. S3 buckets live in a single region. If your
-users are global, you need Cross-Region Replication. That means configuring
-replication rules, paying for transfer between regions, monitoring replication
-lag, and handling the inevitable edge cases where an object hasn't replicated
-yet. Want multi-region access? That's another feature with its own limits (100
-Multi-Region Access Points per account, 17 regions max per access point).
+Then there's the region question. S3 buckets live in a single region. If you
+want high availability or have users in more than one region, you need
+Cross-Region Replication. That means configuring replication rules, paying for
+transfer between regions, monitoring replication lag, and handling the
+inevitable edge cases where an object hasn't replicated yet. Want multi-region
+access? That's another feature with its own limits (100 Multi-Region Access
+Points per account, 17 regions max per access point).
 
 And all of this is _per AWS account_. If you want strong tenant isolation, AWS
 recommends separate accounts per tenant, which means you're now managing an AWS
 Organization with hundreds or thousands of member accounts, each with their own
 billing, their own quotas, their own IAM boundaries.
 
-All you wanted was a "store files" button. Now you're debugging IAM role trust
-policies at 2am.
+That's CloudFormation templates (or, let's be honest, Terraform), IAM role trust
+policies, billing aggregation scripts, and quota increase tickets — all before a
+single user uploads a file.
 
-## One API, no assembly required
+## How the Partner Integration API works
 
 Instead of giving you storage primitives to assemble, the Partner Integration
 API treats tenant management as a first-class concept.
 
 Tigris assigns you a **Provider** identity. Under that provider, you create
-**Organizations** — one per tenant. Each organization is a complete isolation
+**Organizations**, one per tenant. Each organization is a complete isolation
 boundary with its own buckets, users, access keys, and usage tracking.
 Organizations can't see each other's data, can't access each other's buckets,
 and are billed independently.
 
 Provisioning a new tenant is one API call. That call creates the organization,
-sets up an initial bucket, and returns credentials — all atomically. You can
+sets up an initial bucket, and returns credentials, all atomically. You can
 specify storage class and quota limits, or just let it run with defaults. When a
 tenant leaves, one deactivation call revokes all access immediately while
 preserving data for compliance.
 
 ```
-POST /v1/providers/{provider_id}/orgs
+POST /v1/providers/{provider_id}/orgs/{org_id}
 ```
 
-No CloudFormation templates, no IAM role chaining, no account vending machines.
+No IAM role chaining, no account vending machines.
 
 ### No region selection, no bucket limits
 
@@ -163,14 +163,13 @@ own domains. Your users interact with endpoints that look like they're part of
 your platform. Credentials are scoped to their organization. From your user's
 perspective, this is _your_ storage product.
 
-It's S3-compatible, so your users can use whatever S3 SDK they already know. No
-new libraries, no proprietary APIs, no migration guides.
+It's S3-compatible, so your users can use whatever S3 SDK they already know.
 
-### Billing you can actually use
+### Usage and billing per tenant
 
 Tigris provides usage data per organization with daily granularity. You pull the
 numbers, apply your own pricing, and bill your customers however you want. No
-need to reverse-engineer a consolidated AWS bill to figure out which tenant used
+need to reverse-engineer a consolidated bill to figure out which tenant used
 what.
 
 ```
@@ -179,29 +178,15 @@ GET /v1/providers/{provider_id}/orgs/{org_id}/usage?starting_on=2026-03-01&endin
 
 ## How platforms are using it
 
-Four companies have built storage into their products using the Partner
-Integration API. Each one had a different need. None of them wanted to become a
-storage company.
-
-### Fly.io
-
-[Fly.io](https://fly.io) was the first Tigris partner. Their users deploy
-applications to a global edge network, and those applications need somewhere to
-put files. Tigris runs on Fly's infrastructure, so the integration is tight —
-users create and manage Tigris buckets through `flyctl`, and all the S3
-configuration gets injected into their apps automatically.
-
-A Fly.io user doesn't think about Tigris as a separate service. They run
-`fly storage create`, get a bucket, and start using it. The storage is globally
-distributed across Fly's regions, so objects are fast everywhere their app runs.
-They don't pick a region. They don't configure replication. They don't pay
-egress.
+Here's how four partners built storage into their products using the Partner
+Integration API. Each had a different need, and none of them wanted to build and
+maintain their own storage infrastructure to do it.
 
 ### Railway
 
 [Railway](https://railway.com) is an all-in-one cloud platform for deploying
 apps, databases, and services. When their users asked for object storage,
-Railway didn't build their own — they used the Partner Integration API to ship
+Railway didn't build their own. They used the Partner Integration API to ship
 [Storage Buckets](https://docs.railway.com/storage-buckets) as a native platform
 feature.
 
@@ -210,18 +195,24 @@ duplicate an environment or spin up a PR preview, you get a separate bucket with
 isolated credentials. You won't accidentally overwrite production data from a
 staging deployment.
 
+Railway ran head-to-head benchmarks against other object storage providers and
+found Tigris was **twice as fast** in their architecture. They didn't sacrifice
+performance for the flexibility of automatic global distribution and easy tenant
+isolation.
+
 The whole feature went from concept to production in two weeks. Users see
 Railway branding, Railway pricing ($0.015/GB-month, free egress, free API
 operations), and Railway credentials. Under the hood, it's Tigris running on
-bare metal. The user doesn't know, and they don't need to.
+bare metal. The user doesn't know, and they don't need to. (Until they read this
+blog post.)
 
 ### Agentuity
 
 [Agentuity](https://agentuity.com) is a platform for building and deploying AI
-agents. Agent workloads are wildly unpredictable — an agent might write
-thousands of files in a session, pull down massive datasets, snapshot its entire
-state, and then spin down. Traditional storage provisioning doesn't work when
-you can't predict what an agent will need until it starts working.
+agents. Agent workloads are unpredictable — an agent might write thousands of
+files in a session, pull down massive datasets, snapshot its entire state, and
+then spin down. You can't pre-provision storage for workloads when you don't
+know what you'll need until the agent starts working.
 
 Agentuity uses the Partner Integration API to give each customer their own
 isolated storage environment. Through that integration, they run
@@ -231,8 +222,17 @@ on-demand customer buckets, and sandbox snapshots. Agents can provision storage
 for themselves without human intervention.
 
 Because it's S3-compatible, Agentuity treats the same service as a filesystem, a
-CDN origin, a snapshot store, and a per-agent scratchpad — five uses through one
+CDN origin, a snapshot store, and a per-agent scratchpad. Five uses, one
 integration.
+
+<BreakoutQuote
+  username="Rick Blalock"
+  title="Co-Founder, Agentuity"
+  imageUrl="https://avatars.githubusercontent.com/u/211819?s=400&v=4"
+>
+  Why did we choose Tigris as partners? We think it's the agentic future. More
+  so than the legacy cloud.
+</BreakoutQuote>
 
 ### Basic Memory
 
@@ -242,10 +242,24 @@ It turns conversations into local Markdown files and builds knowledge graphs
 from the relationships between them.
 
 Basic Memory uses the Partner Integration API to provide storage for users'
-knowledge bases — the files, embeddings, and artifacts that accumulate as users
+knowledge bases: the files, embeddings, and artifacts that accumulate as users
 work. The partner integration means each user's data is completely isolated, and
 Basic Memory can offer storage as a native part of their product without
 managing infrastructure.
+
+### Fly.io
+
+[Fly.io](https://fly.io) was the first Tigris partner. Their users deploy
+applications to a global edge network, and those applications need somewhere to
+put files. Tigris runs on Fly's infrastructure, so the integration is tight:
+users create and manage Tigris buckets through `flyctl`, and all the S3
+configuration gets injected into their apps automatically.
+
+A Fly.io user doesn't think about Tigris as a separate service. They run
+`fly storage create`, get a bucket, and start using it. The storage is globally
+distributed across Fly's regions, so objects are fast everywhere their app runs.
+They don't pick a region. They don't configure replication. They don't pay
+egress.
 
 ## Getting started
 
