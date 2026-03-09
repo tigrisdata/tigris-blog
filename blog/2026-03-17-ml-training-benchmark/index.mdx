@@ -1,0 +1,351 @@
+---
+slug: ml-training-benchmark
+title: "Benchmarking PyTorch DataLoader with Tigris and TAG"
+description: |
+  We benchmarked PyTorch DataLoader throughput training ViT from Tigris with the Tigris Acceleration Gateway. No code changes required.
+image: ./hero-image.webp
+keywords:
+  - PyTorch
+  - ML Training
+  - Object Storage
+  - S3 Connector for PyTorch
+  - Machine Learning
+  - GPU Utilization
+  - Data Loading
+  - Tigris Acceleration Gateway
+  - TAG
+  - AI Infrastructure
+authors:
+  - ot
+tags:
+  - Engineering
+  - AI Infrastructure
+  - Machine Learning
+  - Benchmarks
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Benchmarking PyTorch DataLoader throughput with Tigris and TAG"
+/>
+
+## Introduction
+
+Most ML training pipelines follow the same pattern: download the dataset to
+local disk, then train. This works, but it introduces operational overhead that
+scales poorly. Provisioning local storage for growing datasets takes time.
+Multi-node setups require synchronizing copies across machines. Dataset updates
+mean re-downloading. The underlying assumption is that object storage is too
+slow to stream from during training, so a local copy is necessary.
+
+We set out to test whether that assumption still holds. Specifically, we
+wanted to measure whether an ML training pipeline can stream data directly from
+object storage at throughput levels sufficient to saturate GPU compute — and
+whether a transparent caching layer can close the remaining gap for multi-epoch
+workloads, all without modifying the training code.
+
+In December 2025, AWS published a
+[benchmark](https://aws.amazon.com/blogs/machine-learning/applying-data-loading-best-practices-for-ml-training-with-amazon-s3-clients/)
+comparing data loading approaches for ML training with Amazon S3. They
+evaluated fsspec, Mountpoint for Amazon S3, and the S3 Connector for PyTorch
+across a ViT image classification workload. Their results showed that
+fsspec-based dataloaders exhibit CPU bottlenecks at higher worker counts, while
+the S3 Connector for PyTorch maintained efficient scaling to GPU saturation.
+
+We replicated that benchmark using
+[Tigris](https://www.tigrisdata.com) as the object storage backend and
+introduced the
+[Tigris Acceleration Gateway (TAG)](https://github.com/tigrisdata/tag-deploy),
+a transparent S3-compatible caching proxy that runs on the training instance.
+The training code is identical across all configurations — the only parameter
+that changes is the endpoint URL.
+
+## Tigris Acceleration Gateway (TAG)
+
+The key to training directly from object storage without sacrificing
+multi-epoch performance is a caching layer that is invisible to the training
+code. TAG is designed to fill this role.
+
+TAG is an S3-compatible caching proxy that runs on the same instance as the
+training workload. It accepts standard S3 API requests, forwarding them to
+Tigris on cache misses and serving subsequent requests from local NVMe storage.
+From the perspective of the PyTorch dataloader, TAG is indistinguishable from
+any other S3 endpoint.
+
+Three properties make this work for ML training:
+
+1. **Transparent caching**: On the first access (cache miss), TAG fetches the
+   object from Tigris and writes it to local NVMe. Subsequent accesses (cache
+   hits) are served from disk, eliminating network latency. For multi-epoch
+   training, this means the first epoch pays the network cost and every
+   subsequent epoch reads at NVMe speed.
+2. **Request coalescing**: When multiple dataloader workers request the same
+   object concurrently, TAG issues a single upstream request and broadcasts the
+   response to all waiting clients.
+3. **S3 API compatibility**: TAG validates AWS SigV4 signatures and proxies
+   all requests transparently. The training code requires no modification — only
+   the endpoint URL changes from `t3.storage.dev` to `localhost:8080`.
+
+## Experimental setup
+
+### Hardware and software
+
+All experiments ran on a single **g5.8xlarge** EC2 instance in us-east-1:
+
+- **GPU**: NVIDIA A10G (24 GB)
+- **CPU**: 32 vCPUs
+- **Memory**: 128 GB RAM
+- **Storage**: NVMe instance storage (used by TAG for caching)
+- **AMI**: AWS NVIDIA OSS Deep Learning AMI GPU PyTorch 2.9 (Ubuntu 22.04)
+
+### Benchmark framework
+
+We used the
+[S3 Connector for PyTorch](https://github.com/awslabs/s3-connector-for-pytorch)
+benchmarking suite (`s3torchbenchmarking`), the same framework used in the AWS
+benchmark. All experiments used `S3IterableDataset` with the sequential
+S3 reader and a buffer size of 8 MiB.
+
+### Dataset
+
+We generated 100,000 synthetic JPEG images at 496x387 resolution (~115 KB
+each, ~10 GB total) and uploaded them to a Tigris bucket
+(`s3torch-benchmark-1`). For sharded experiments, the same images were packed
+into tar archives at shard sizes of 4, 8, 16, 32, 64, 128, and 256 MiB.
+
+### Configurations
+
+We evaluated two storage configurations:
+
+- **Tigris Direct**: `S3IterableDataset` configured with
+  `endpoint=https://t3.storage.dev`, streaming objects over the network from
+  Tigris.
+- **TAG**: `S3IterableDataset` configured with `endpoint=http://localhost:8080`,
+  streaming through the Tigris Acceleration Gateway running on the same
+  instance.
+
+The only parameter that differed between configurations was the endpoint URL.
+All other benchmark parameters — model, dataset, dataloader settings, and
+hardware — remained identical.
+
+## Results
+
+### Experiment 1: Random access, unsharded (single epoch)
+
+In this experiment, we trained a ViT model for 1 epoch on 100,000 unsharded
+JPEG images using Tigris Direct, sweeping `num_workers` from 1 to 64.
+
+| Workers | Throughput (MiB/s) | Duration (s) | Samples/s | GPU Util (%) |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 11.7 | 8,557 | ~12 | 8.7 |
+| 2 | 23.1 | 4,321 | ~23 | 17.0 |
+| 4 | 46.1 | 2,171 | ~46 | 33.7 |
+| 8 | 93.2 | 1,072 | ~93 | 68.0 |
+| 16 | 134.1 | 746 | ~134 | 98.0 |
+| 32 | 134.1 | 746 | ~134 | 98.1 |
+| 64 | 133.8 | 747 | ~134 | 98.1 |
+
+We observe near-linear throughput scaling from 1 to 8 workers. At 16 workers,
+the GPU reaches ~98% utilization and throughput plateaus at ~134 samples/sec.
+Increasing to 32 or 64 workers produces no additional throughput, confirming
+that the GPU is the bottleneck at this point, not data loading.
+
+Mean CPU utilization remained below 6% across all configurations, peaking at
+15.5% memory usage at 64 workers due to worker process overhead.
+
+For comparison, the AWS benchmark reported ~138 samples/sec GPU saturation on
+the same instance type with Amazon S3. The S3 Connector for PyTorch operates
+with Tigris without modification, and the measured throughput is within 3% of
+the AWS baseline.
+
+### Experiment 2: Multi-epoch training with TAG (random access)
+
+To measure the effect of TAG's caching, we trained ViT for 3 epochs on the
+same unsharded dataset, streaming through TAG at 2, 4, and 16 workers.
+
+| Workers | Throughput (MiB/s) | Total (s) | Epoch 1 (s) | Epoch 2 (s) | Epoch 3 (s) | GPU Util (%) |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2 | 53.0 | 5,666 | 4,197 | 734 | 735 | 38.6 |
+| 4 | 135.9 | 2,207 | 2,065 | 736 | 736 | 99.4 |
+| 16 | 136.0 | 2,206 | 736 | 735 | 735 | 99.3 |
+
+The caching effect is most visible at 2 workers. Epoch 1 (cold cache) requires
+4,197 seconds as each object is fetched from Tigris over the network. Epochs 2
+and 3 (warm cache) complete in ~734 seconds each — a **5.7x reduction** in
+epoch duration from caching alone.
+
+At 4 workers, epoch 1 still shows the cold-cache penalty (2,065s vs. 736s for
+subsequent epochs), but epochs 2 and 3 achieve full GPU saturation at 99.4%
+utilization. This is notable because Tigris Direct required 16 workers to reach
+the same GPU saturation level. TAG's local cache eliminates network round-trip
+latency, allowing 4x fewer workers to achieve the same throughput.
+
+At 16 workers, all three epochs complete in ~735 seconds. The increased
+parallelism is sufficient to saturate the GPU even during the cold-cache first
+epoch.
+
+These results indicate that for multi-epoch training workloads, TAG
+delivers NVMe-class throughput from the second epoch onward while preserving
+the operational simplicity of object storage.
+
+### Experiment 3: Sequential access, sharded (single epoch)
+
+We evaluated the effect of tar sharding on throughput by training ViT for 1
+epoch with 8 workers across shard sizes from 4 to 256 MiB, comparing Tigris
+Direct and TAG.
+
+| Shard Size | Tigris (MiB/s) | Tigris (s) | TAG (MiB/s) | TAG (s) |
+| ---: | ---: | ---: | ---: | ---: |
+| 4 MB | 135.8 | 736.6 | 136.0 | 735.5 |
+| 8 MB | 135.9 | 736.1 | 135.3 | 739.0 |
+| 16 MB | 135.8 | 736.3 | 135.9 | 736.1 |
+| 32 MB | 136.0 | 735.0 | 135.9 | 736.0 |
+| 64 MB | 135.8 | 736.6 | 135.9 | 735.8 |
+| 128 MB | 135.7 | 737.1 | 135.8 | 736.5 |
+| 256 MB | 135.3 | 739.1 | 135.5 | 738.1 |
+
+Two observations stand out. First, shard size has no measurable effect on
+throughput — all configurations saturate the GPU at ~136 MiB/s with ~99.3%
+GPU utilization. The data loading pipeline has sufficient throughput at all
+shard sizes to keep the GPU fully utilized.
+
+Second, Tigris Direct and TAG produce equivalent results for single-epoch
+sharded workloads. This is expected: TAG's caching provides no benefit when
+every object is accessed exactly once (cold cache throughout). TAG's advantage
+emerges in multi-epoch scenarios, as demonstrated in Experiment 2.
+
+A third observation concerns worker efficiency: sharded access saturates the
+GPU with 8 workers, compared to 16 workers required for unsharded access
+(Experiment 1). Tar sharding amortizes per-object S3 request overhead,
+reducing the parallelism needed to saturate the data pipeline.
+
+### Experiment 4: Entitlement benchmark (no GPU training)
+
+The ViT experiments consistently show GPU saturation at ~136 samples/sec. To
+quantify the headroom in the data loading pipeline, we ran an entitlement
+benchmark that eliminates GPU training entirely. This benchmark runs the
+identical data loading and preprocessing pipeline (S3 Connector, 8 workers,
+sharded tar datasets), but replaces ViT with a no-op model. The measured
+throughput represents the maximum rate at which the data pipeline can deliver
+preprocessed samples to the training loop.
+
+**Tigris Direct:**
+
+| Shard Size | Samples/s | Duration (s) | CPU Util mean (%) | CPU Util p90 (%) |
+| ---: | ---: | ---: | ---: | ---: |
+| 4 MB | 2,323 | 43.1 | 2.3 | 3.7 |
+| 8 MB | 2,198 | 45.5 | 2.3 | 3.8 |
+| 17 MB | 3,256 | 30.7 | 3.3 | 5.1 |
+| 34 MB | 4,897 | 20.4 | 6.6 | 11.3 |
+| 67 MB | 6,228 | 16.1 | 9.0 | 16.9 |
+| 134 MB | 8,206 | 12.2 | 14.4 | 26.1 |
+| 268 MB | 10,071 | 9.9 | 21.9 | 37.8 |
+
+With Tigris Direct, throughput scales with shard size from 2,323 samples/sec
+(4 MB shards) to 10,071 samples/sec (268 MB shards) — a 4.3x improvement.
+Larger shards reduce the number of S3 GET requests, amortizing per-request
+network overhead. Even at the smallest shard size, the data pipeline delivers
+**17x the throughput** that the ViT model can consume (~136 samples/sec).
+
+CPU utilization remains low across all shard sizes (mean 2–22%, p90 below
+38%), indicating that the network is the limiting factor, not compute.
+
+**TAG (warm cache):**
+
+| Shard Size | Samples/s | Duration (s) | CPU Util mean (%) | CPU Util p90 (%) |
+| ---: | ---: | ---: | ---: | ---: |
+| 4 MB | 26,078 | 3.83 | 30.0 | 33.4 |
+| 8 MB | 23,323 | 4.29 | 31.8 | 36.5 |
+| 17 MB | 26,820 | 3.73 | 39.5 | 46.5 |
+| 34 MB | 19,965 | 5.01 | 41.2 | 66.6 |
+| 67 MB | 19,483 | 5.13 | 49.3 | 91.3 |
+| 134 MB | 16,939 | 5.90 | 58.9 | 100.0 |
+| 268 MB | 12,647 | 7.91 | 69.5 | 100.0 |
+
+With TAG serving from its warm NVMe cache, the data pipeline reaches a peak
+of **26,820 samples/sec** at 17 MB shards — approximately 200x the ViT
+model's consumption rate and 2.7x faster than Tigris Direct at the equivalent
+shard size.
+
+The relationship between shard size and throughput is inverted compared to
+Tigris Direct: smaller shards (4–17 MB) achieve higher throughput than larger
+shards (134–268 MB). This is because TAG and the PyTorch dataloader workers
+share CPU resources on the same instance. At larger shard sizes, TAG's cache
+reads and the dataloader's tar extraction drive CPU p90 utilization to 100%,
+making CPU the bottleneck rather than I/O.
+
+These entitlement results confirm that the data pipeline has substantial
+headroom beyond what current GPU-bound training workloads require. Neither
+Tigris Direct nor TAG is a throughput bottleneck for the workloads tested.
+
+## Discussion
+
+The central question we set out to answer was whether ML training can run
+directly from object storage at full GPU throughput, without changing the
+training code. These experiments provide evidence that it can.
+
+**Streaming from object storage saturates the GPU.** With Tigris Direct and
+16 dataloader workers, the S3 Connector for PyTorch achieves ~134 samples/sec
+— within 3% of the ~138 samples/sec AWS reported for S3 Standard on the same
+instance type. The S3 Connector requires no modifications to work with Tigris.
+The data pipeline is not the bottleneck; the GPU is.
+
+**A transparent cache eliminates the multi-epoch penalty.** The conventional
+argument for downloading datasets to local disk is that network latency makes
+multi-epoch training impractical. TAG addresses this without changing the
+training code: the first epoch populates the cache at network speed, and
+subsequent epochs run at local NVMe speed. In our measurements, this produced
+a 5.7x reduction in epoch duration at 2 workers. At 4 workers, TAG saturated
+the GPU from epoch 2 onward — the same saturation level that Tigris Direct
+required 16 workers to achieve.
+
+**The data pipeline has substantial headroom.** The entitlement benchmark
+(no GPU training) shows that Tigris Direct delivers 17x the throughput the ViT
+model can consume, and TAG with a warm cache delivers 200x. Neither is close to
+being a bottleneck for current GPU-bound workloads.
+
+**Shard size does not affect GPU-bound throughput.** When the GPU is the
+bottleneck, shard sizes from 4 to 256 MiB produce no measurable difference in
+training duration. Shard size becomes relevant only in data-pipeline-limited
+scenarios, as the entitlement results show.
+
+Taken together, these results suggest that the download-then-train workflow is
+no longer necessary for the class of workloads tested. Object storage can serve
+as the primary data source for training, and a transparent caching proxy
+handles the multi-epoch case at NVMe throughput levels.
+
+## How to use this in practice
+
+The workflow to train directly from Tigris with TAG requires no changes to the
+training code itself:
+
+1. Upload the dataset to a Tigris bucket.
+2. Deploy TAG on the training instance (a single container or binary).
+3. Set the dataloader endpoint to `http://localhost:8080` instead of
+   `https://t3.storage.dev`.
+4. Run training as usual. The first epoch populates the TAG cache; subsequent
+   epochs read from local NVMe.
+
+This eliminates the dataset download step entirely. TAG's cache is bounded and
+performs LRU eviction, so datasets larger than local disk capacity are handled
+automatically — TAG evicts cold objects as needed. For multi-node training,
+each node runs its own TAG instance and builds an independent local cache,
+avoiding shared filesystem coordination.
+
+## Reproducing these results
+
+The benchmark code is available in our fork of the
+[S3 Connector for PyTorch](https://github.com/awslabs/s3-connector-for-pytorch)
+(`ovaistariq/bench-s3-endpoint` branch). TAG deployment instructions are at
+[tigrisdata/tag-deploy](https://github.com/tigrisdata/tag-deploy).
+
+<InlineCta
+  title="Object storage for ML training"
+  subtitle="Stream training data directly from Tigris with NVMe-speed caching via TAG. S3-compatible, no code changes required."
+  button="Get started"
+  link="https://www.tigrisdata.com/docs/quickstarts/aws-pytorch/"
+/>
