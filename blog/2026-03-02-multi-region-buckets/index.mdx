@@ -151,20 +151,18 @@ flowchart TD;
   autoNode["Tigris-selected regions within EUR"]
   ams["ams"]
   fra["fra"]
-  lhr["lhr"]
 
   M --> eurNode
   eurNode --> autoNode
   autoNode --> ams
   autoNode --> fra
-  autoNode --> lhr
 
   classDef bucket fill:#1d4ed8,stroke:#1e3a8a,stroke-width:2px,color:#ffffff;
   classDef eur fill:#22c55e,stroke:#16a34a,color:#111827;
   classDef auto fill:#e5e7eb,stroke:#6b7280,stroke-width:2px,color:#111827;
 
   class M bucket;
-  class eurNode,ams,fra,lhr eur;
+  class eurNode,ams,fra eur;
   class autoNode auto;
 ```
 
@@ -204,24 +202,24 @@ too: storage and Class A operations are billed per underlying region at the
 standard single-region rate, so if you pick three regions you pay **3 × $0.02 =
 $0.06/GB/month** in total, with zero egress fees.
 
-For example, an EU dual-region bucket might be:
+For example, a dual-region bucket might be:
 
-<DiagramFrame title="Dual-region bucket (fra,lhr)">
+<DiagramFrame title="Dual-region bucket (iad,sjc)">
 
 ```mermaid
 flowchart TD;
-  D["Dual-region bucket (fra,lhr)"]
-  fraNode["fra (Frankfurt)"]
-  lhrNode["lhr (London)"]
+  D["Dual-region bucket (iad,sjc)"]
+  iadNode["iad (Ashburn)"]
+  sjcNode["sjc (San Jose)"]
 
-  D --> fraNode
-  D --> lhrNode
+  D --> iadNode
+  D --> sjcNode
 
   classDef bucket fill:#1d4ed8,stroke:#1e3a8a,stroke-width:2px,color:#ffffff;
-  classDef eur fill:#22c55e,stroke:#16a34a,color:#111827;
+  classDef usa fill:#22c55e,stroke:#16a34a,color:#111827;
 
   class D bucket;
-  class fraNode,lhrNode eur;
+  class iadNode,sjcNode usa;
 ```
 
 </DiagramFrame>
@@ -229,9 +227,6 @@ flowchart TD;
 Example CLI commands for common dual-region setups:
 
 ```bash
-# EU dual-region: Frankfurt + London
-tigris mk my-bucket --locations fra,lhr
-
 # US dual-region: East + West
 tigris mk my-bucket --locations iad,sjc
 ```
