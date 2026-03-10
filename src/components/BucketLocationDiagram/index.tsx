@@ -25,8 +25,7 @@ const rows = [
   },
   {
     name: "Dual‑region",
-    summary:
-      "Dual-region buckets keep data in specific regions you choose.",
+    summary: "Dual-region buckets keep data in specific regions you choose.",
     detail: "They are a good fit for compliance and active/active topologies.",
   },
   {
