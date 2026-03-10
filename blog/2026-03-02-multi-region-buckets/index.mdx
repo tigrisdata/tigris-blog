@@ -108,7 +108,7 @@ They're the right choice for read-heavy workloads with users spread across the
 world: model weights, media libraries, static assets, documentation. You write
 infrequently, you read everywhere, and Tigris handles the rest.
 
-:::tip Global endpoints
+:::info Global endpoints
 
 Tigris is deployed globally across multiple regions. All regions are accessible
 via `https://t3.storage.dev` and `https://fly.storage.tigris.dev`, which handle
@@ -130,10 +130,15 @@ Front-end assets, feature flags, and user data that needs both low latency and
 resilience to regional failures all fit this model. You get strong, predictable
 behavior without hand-wiring replication between single-region buckets.
 
+:::tip Pricing
+
 Multi-region buckets are priced at **$0.025/GB/month**, regardless of how many
-regions Tigris uses inside the geography, and egress is still free. See the
+regions Tigris uses inside the geography, and egress is still free. That's often
+less than dual-region, where storage scales with each region you add. See the
 [pricing page](https://www.tigrisdata.com/pricing/#multi-region-buckets) for
 details.
+
+:::
 
 A multi-region bucket in the EUR geography might look like this:
 
@@ -175,7 +180,7 @@ tigris mk my-eu-bucket --locations eur
 tigris mk my-us-bucket --locations usa
 ```
 
-:::tip Tigris CLI shortcut
+:::info Tigris CLI shortcut
 
 `tigris mk` is an alias for `tigris create`, so any existing commands that use
 `create` will keep working.
@@ -189,12 +194,15 @@ matches GCS terminology, but the feature itself does not limit you to exactly
 two regions—we simply recommend choosing two for most workloads. Reads route to
 whichever copy is closest. Writes go to all selected regions.
 
-This fits when your compute layer is split across two named regions and storage
-needs to match, or when you want a small, explicitly pinned set of regions. It
-also works as a warm DR setup: a second copy in a known location without running
-your own replication service. Pricing stays simple here too: you pay a single
-per-GB storage rate with zero egress fees, not separate line items for each
-region or replica.
+Most teams should start with **multi-region** buckets; dual-region is for the
+cases where you must pin data to specific regions instead of a geography like
+`eur` or `usa`. This fits when your compute layer is split across two named
+regions and storage needs to match, or when you want a small, explicitly pinned
+set of regions. It also works as a warm DR setup: a second copy in a known
+location without running your own replication service. Pricing stays simple here
+too: storage and Class A operations are billed per underlying region at the
+standard single-region rate, so if you pick three regions you pay **3 × $0.02 =
+$0.06/GB/month** in total, with zero egress fees.
 
 For example, an EU dual-region bucket might be:
 
@@ -266,7 +274,7 @@ tigris mk my-bucket --locations sin
 tigris mk my-bucket --locations iad
 ```
 
-## How to configure
+## Configuring bucket locations
 
 You can configure bucket location in the
 [Tigris Dashboard](https://console.tigris.dev/signin), under **Advanced
@@ -284,11 +292,11 @@ between Global, Multi-region, Dual-region, and Single-region.
   />
 </div>
 
-:::tip Updating existing buckets
+:::info Updating existing buckets
 
 For existing buckets, go to the
 [Tigris Dashboard](https://console.tigris.dev/signin), open the bucket, click
-**Settings**, and update the region restriction from there.
+**Settings**, and update the bucket location from there.
 
 :::
 
@@ -297,12 +305,17 @@ For existing buckets, go to the
 Tigris keeps pricing intentionally simple: one storage line item per bucket, the
 same rates across geographies, and zero egress fees.
 
-| Bucket type   | Storage price       | Egress fees | Geo pricing                    | Replication charges              |
-| ------------- | ------------------- | ----------- | ------------------------------ | -------------------------------- |
-| Multi-region  | **$0.025/GB/month** | Free        | Same price in USA and EUR geos | Included (no per-replica fees)   |
-| Dual-region   | **$0.02/GB/month**  | Free        | Same per-GB rates across geos  | Included (no per-region add-ons) |
-| Single-region | **$0.02/GB/month**  | Free        | Same per-GB rates across geos  | Included (no per-region add-ons) |
-| Global        | **$0.02/GB/month**  | Free        | Global                         | Included                         |
+| Bucket type   | Storage price                 | Egress fees | Geo pricing                    | Replication charges              |
+| ------------- | ----------------------------- | ----------- | ------------------------------ | -------------------------------- |
+| Multi-region  | **$0.025/GB/month**           | Free        | Same price in USA and EUR geos | Included (no per-replica fees)   |
+| Dual-region   | **$0.02/GB/month per region** | Free        | Same per-GB rates across geos  | Included (no per-region add-ons) |
+| Single-region | **$0.02/GB/month**            | Free        | Same per-GB rates across geos  | Included (no per-region add-ons) |
+| Global        | **$0.02/GB/month**            | Free        | Global                         | Included                         |
+
+For dual-region buckets, **total storage and Class A costs scale linearly with
+the number of regions you select**. That’s why we recommend multi-region as the
+default: at **$0.025/GB/month flat**, it becomes cheaper than dual-region once
+you need two or more regions in a geography.
 
 :::tip Pricing at a glance
 
@@ -325,13 +338,14 @@ tiers and request pricing, see the
 Many teams pick bucket locations to satisfy legal or policy requirements, not
 just latency.
 
-| Requirement or rule           | How bucket locations help                                                                                                                                                                                                                                                |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **European Union rules**      | [GDPR Article 44](https://gdpr-info.eu/art-44-gdpr/) restricts personal data transfers outside the EU. A global bucket that might cache user records in Singapore or Virginia creates legal exposure. A dual-region bucket with `fra,lhr` keeps that data inside the EU. |
-| **Other regions and sectors** | Brazil's LGPD covers data residency for Brazilian users (`gru`), and sector-specific regulations like HIPAA for US healthcare or financial data rules in some jurisdictions often require data to stay within defined borders.                                           |
+| Requirement or rule           | How bucket locations help                                                                                                                                                                                                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **European Union rules**      | [GDPR Article 44](https://gdpr-info.eu/art-44-gdpr/) restricts personal data transfers outside the EU. A global bucket that might cache user records in Singapore or Virginia creates legal exposure. A multi-region bucket with `eur` location keeps that data inside the EU. |
+| **Other regions and sectors** | Brazil's LGPD covers data residency for Brazilian users (`gru`), and sector-specific regulations like HIPAA for US healthcare or financial data rules in some jurisdictions often require data to stay within defined borders.                                                 |
 
-> Dual-region lets you say “only these regions” at the storage layer without
-> building your own replication logic.
+> When you need to go beyond geography-level controls like `eur` and pin data to
+> specific regions, Dual-region lets you say “only these regions” at the storage
+> layer without building your own replication logic.
 
 ## Consistency options
 
@@ -346,8 +360,9 @@ and your bucket’s location type decides that behavior.
 
 If you want every read, from anywhere, to see the latest data, pick
 **Multi‑region** or **Single‑region**; if you can tolerate occasional sub‑second
-staleness in exchange for lower latency or automatic global placement, Global or
-Dual‑region are a better fit.
+staleness in exchange for lower latency or automatic global placement, Global is
+often a better fit, and Dual‑region makes sense when you also need reads pinned
+to specific regions.
 
 :::info Consistency guarantees
 
@@ -360,19 +375,19 @@ For the exact guarantees for each location type, see the
 
 Use this table as a quick decision guide:
 
-| Scenario                                            | Location type                      |
-| --------------------------------------------------- | ---------------------------------- |
-| Global app, read-heavy, users everywhere            | Global                             |
-| User-facing app that must survive a regional outage | Multi-region (`usa` or `eur`)      |
-| GDPR / data residency in two named regions          | Dual-region (`fra,lhr` or similar) |
-| Active/active across two data centers               | Dual-region                        |
-| Staging, internal tools, single-region compute      | Single-region                      |
+| Scenario                                            | Location type                 |
+| --------------------------------------------------- | ----------------------------- |
+| Global app, read-heavy, users everywhere            | Global                        |
+| User-facing app that must survive a regional outage | Multi-region (`usa` or `eur`) |
+| GDPR / EU data residency                            | Multi-region (`eur`)          |
+| Active/active across two data centers               | Dual-region                   |
+| Staging, internal tools, single-region compute      | Single-region                 |
 
 If you're unsure, multi-region in your primary geography is the safe default for
 production. You get resilience inside that geography without touching your
 application code.
 
-:::info
+:::info What about existing buckets?
 
 Your existing buckets keep working exactly as before. For new workloads, read
 the [bucket locations guide](https://www.tigrisdata.com/docs/buckets/locations/)
