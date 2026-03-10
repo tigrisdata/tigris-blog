@@ -60,6 +60,21 @@ the system handles the rest. Inserts trigger computations. Queries understand
 similarity natively. Think computed columns and materialized views, but with
 full Python and actual ML models instead of SQL stored procedures from 2003.
 
+Here's what the logical Pixeltable table looks like once a few rows have been
+inserted, with a primary key, metadata, and a computed embedding column:
+
+```text
++----------------+---------------------------+-------------------------------+----------------------+
+| id             | image                     | caption                       | image_embedding      |
++----------------+---------------------------+-------------------------------+----------------------+
+| "0c92a7f2-..." | s3://.../zelda-forest.png | "misty forest in twilight"    | [0.021, -0.134, …]   |
+| "7b01f94c-..." | s3://.../city-night.png   | "neon city skyline at night"  | [0.003, 0.211, …]    |
+| "f43d1c8a-..." | s3://.../beach-sunset.png | "warm sunset over the ocean"  | [0.098, -0.019, …]   |
++----------------+---------------------------+-------------------------------+----------------------+
+
+-- `image_embedding` is maintained automatically by Pixeltable whenever you INSERT or UPDATE rows.
+```
+
 If you've worked with computed columns or materialized views, you'll recognize
 this immediately. When you insert an image, the CLIP embedding gets computed
 automatically. When you query by text similarity, the vector math happens behind
