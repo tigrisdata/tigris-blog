@@ -9,11 +9,11 @@ image: ./hero-image.webp
 keywords:
   - S2
   - streaming
-  - message queue
+  - durable streams
   - object storage
   - Tigris
   - S2 Lite
-  - durable streams
+  - stream storage
   - SlateDB
   - Kafka alternative
 authors:
@@ -34,37 +34,37 @@ import heroImage from "./hero-image.webp";
   alt="An oil painting of a bengal tiger surfing down a river of data streams"
 />
 
-Message queues are essential parts of production workloads, however most of them
-either do too little or too much. The simple ones will gladly discard your data
-if a consumer disconnects, but the more complicated ones require a dedicated
-team of arcane experts that speak in strange tongues.
+Streaming infrastructure is an essential part of production workloads, however
+most options either do too little or too much. The simple ones will gladly
+discard your data if a consumer disconnects, but the more complicated ones
+require a dedicated team of arcane experts that speak in strange tongues.
 
 There's room in the middle for something between over-engineered and
-under-engineered, and [S2](https://s2.dev/), a compelling alternative to bloated
-message queues like Kafka, fits right into that gap. With
+under-engineered, and [S2](https://s2.dev/) fits right into that gap. S2 is
+serverless storage for streams — like Kafka and S3 had a baby. It's not a
+message queue; it's a durable, ordered, append-only stream store. With
 [S2 Lite](https://github.com/s2-streamstore/s2), you can run it yourself on
 hardware you can look at on top of Tigris. I have it running in my homelab
 Kubernetes cluster to ingest the Bluesky public feed.
 
-## The message queue spectrum
+## The streaming spectrum
 
-Message queues can get surprisingly complicated based on the levels of
-abstraction and complexity at play. S2 is a message queue with server-side
-scrollback so worker groups can resume where they left off. To understand why
-this is significant, let's cover the different kinds of message queues you will
-see in the wild. None of these are perfect (sometimes you _do_ want to just drop
-data), but each has their own tradeoffs that make things easier or harder.
+Streaming and messaging systems can get surprisingly complicated based on the
+levels of abstraction and complexity at play. To understand where S2 fits,
+let's cover the different kinds of systems you'll see in the wild. None of
+these are perfect (sometimes you _do_ want to just drop data), but each has
+their own tradeoffs that make things easier or harder.
 
 ### Shout to the void
 
-If you've ever used an IRC channel, this is the kind of message queue I'm
-talking about. If nobody is around to hear your message, it is as good as gone.
-If a consumer is disconnected when the message is sent, they won't receive it.
-This is great for things like cache invalidation, typing indicators in chat
-applications, or other fundamentally ephemeral data along that line.
+If you've ever used an IRC channel, this is what I'm talking about. If nobody
+is around to hear your message, it is as good as gone. If a consumer is
+disconnected when the message is sent, they won't receive it. This is great for
+things like cache invalidation, typing indicators in chat applications, or
+other fundamentally ephemeral data along that line.
 
-These kinds of queues are usually very cheap to run and have little to no
-resource requirements. Consider these options:
+These systems are usually very cheap to run and have little to no resource
+requirements. Consider these options:
 
 - IRC servers (channels work as a simple publish-subscribe mechanism).
 - Redis/Valkey PUBLISH/SUBSCRIBE.
@@ -72,9 +72,9 @@ resource requirements. Consider these options:
 
 ### Worker queues
 
-One of the main drawbacks with shout to the void message queues is that they
-work great for broadcast-style messages or unicast-style messages, but they
-don't really have a good way to handle a case where you need one worker out of a
+One of the main drawbacks with shout-to-the-void systems is that they work
+great for broadcast-style messages or unicast-style messages, but they don't
+really have a good way to handle a case where you need one worker out of a
 group to handle a given message. This is where worker queues like Amazon's SQS,
 RabbitMQ, or Redis/Valkey RPUSH/LPOP come into play.
 
@@ -86,7 +86,7 @@ Sidekiq implements this pattern).
 Usually if the worker crashes, the message gets redelivered, however once you
 consume the message, it's _gone_. No replay, no going back.
 
-### Server-side scrollback with resume
+### Durable streams with replay
 
 One of the other big problems with a "simple" worker queue is that you can only
 have _one_ consumer group handling a queue at once. If you want to have multiple
@@ -96,17 +96,16 @@ replication after consumption.
 
 This does work (for what it's worth I've seen this pan out at fairly large
 scales with the right kind of discipline), but there's a better option:
-maintaining the scrollback of events on the server side.
+durable, replayable streams.
 
-This is where NATS JetStream, Redis Streams, and S2 come in. Groups keep track
-of the biggest message ID they've seen and the queue server helps dole out work
-between the consumers. For efficiency the server usually maintains at least a
-day of scrollback, but most of the time you only need a few hours. Your mileage
-may vary.
+This is where systems like NATS JetStream and Redis Streams come in. They
+maintain an ordered log of events on the server side with consumer groups
+tracking positions. For efficiency the server usually maintains at least a
+day of scrollback, but most of the time you only need a few hours.
 
 ### Apache Kafka
 
-And finally we have the final boss of message queues: Apache Kafka. Don't set it
+And finally we have the final boss of streaming infrastructure: Apache Kafka. Don't set it
 up from scratch, save that for your enemies to do for you. It is a byzantine
 abomination that really earns its name from the
 [kafkaesque](https://en.wikipedia.org/wiki/Franz_Kafka) process you need to go
@@ -119,10 +118,16 @@ having to maintain the sanity of a slowly dwindling group of experts that end up
 being able to type out JVM flags from memory. I don't think we should encourage
 that if we can avoid it.
 
-### S2 is a level 3 message queue
+### S2 is a durable stream store
 
-S2 sits at level 3, but it pushes durability further than its peers. NATS
-JetStream flushes to disk every two minutes before acknowledging (Jepsen
+S2 takes a different approach from the systems above. It's not a message queue
+with consumer groups — it's a stream storage API. Clients maintain their own
+read position by tracking sequence numbers, timestamps, or tail offsets. Any
+number of consumers can independently read the same stream at their own pace
+without any server-side coordination.
+
+Where S2 really stands apart is durability. NATS JetStream flushes to disk
+every two minutes before acknowledging (Jepsen
 [found problems](https://jepsen.io/analyses/nats-jetstream-2.9.0) with this).
 Redis Streams is in-memory first. S2 writes to object storage _before_
 acknowledging. Your data is durable on S3-compatible storage before S2 tells you
@@ -131,8 +136,8 @@ the write succeeded. This helps avoid the
 
 ## What S2 actually is
 
-S2 is a REST API for durable, ordered, append-only streams. S2 has these
-concepts:
+S2 is serverless storage for streams, accessible over HTTP (with SDKs and a CLI
+too). Every stream gets its own URL. S2 has these concepts:
 
 - **Basins** are namespaces (akin to object storage buckets or other generic
   namespacing concepts)
@@ -226,8 +231,8 @@ crashes, you want to resume from where you left off without missing events.
 
 The raw firehose is also a terrifying amount of data, enough that you'd want to
 avoid wasting Bluesky's bandwidth with making multiple redundant consumers.
-Using a durable message queue like S2 means that you'd be able to have multiple
-apps ingest the data from Bluesky without having to have multiple raw firehose
+Using a durable stream store like S2 means that you'd be able to have multiple
+apps consume the data from Bluesky without having to have multiple raw firehose
 feeds active at once.
 
 With S2 on Tigris, you'd write a small service that reads from the firehose
@@ -241,7 +246,7 @@ This pattern works for any high-volume event source: webhook ingestion, IoT
 telemetry, CDC streams from your database, logs from code execution sandboxes.
 S2 calls this "high-cardinality streams" because you can create a separate
 stream per user, per session, or per device without worrying about partition
-limits. These partition limits are where queues like Kafka can cause a lot of
+limits. These partition limits are where systems like Kafka can cause a lot of
 grief, being able to spin up arbitrary amounts of streams with a moment's notice
 is a blessing that you won't really understand until you need to and can't.
 
@@ -284,7 +289,7 @@ racking up transfer costs.
 I set this up in my homelab to monitor the Bluesky firehose for my own private
 needs and not having to worry about egress fees or paying The Big Cloud for the
 privilege to read my own data is refreshing. Let's be real though, not having to
-know what Zookeeper is or how to fight it is its own reward.
+wrangle JVMs is its own reward.
 
 Next on my list is building something to monitor Hacker News and maybe ingest
 the contents into a vector database for advanced semantic search against Silicon
