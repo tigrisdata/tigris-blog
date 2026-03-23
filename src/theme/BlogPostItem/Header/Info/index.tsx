@@ -49,10 +49,16 @@ export default function BlogPostItemHeaderInfo({
   className,
 }: Props): ReactNode {
   const { metadata } = useBlogPost();
-  const { date, readingTime } = metadata;
+  const { date, readingTime, authors } = metadata;
+  const authorNames = authors
+    .map((author) => author.name?.trim())
+    .filter((name): name is string => Boolean(name));
+  const hasAuthors = authorNames.length > 0;
 
   return (
-    <div className={clsx(styles.container, className)}>
+    <div className={clsx(styles.container, className, "blog-card-meta")}>
+      {hasAuthors && <>{authorNames.join(", ")}</>}
+      {hasAuthors && " · "}
       <DateTime date={date} />
       {typeof readingTime !== "undefined" && (
         <>

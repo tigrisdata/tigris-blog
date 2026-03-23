@@ -18,7 +18,14 @@ export default function BlogPostItemContent({
         ? metadata.description.slice(0, 160).trimEnd() + "…"
         : metadata.description;
     return (
-      <div className={clsx("markdown", styles.listDescription, className)}>
+      <div
+        className={clsx(
+          "markdown",
+          styles.listDescription,
+          className,
+          "blog-card-description"
+        )}
+      >
         {desc}
       </div>
     );
