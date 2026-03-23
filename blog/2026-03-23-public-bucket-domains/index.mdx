@@ -1,0 +1,145 @@
+---
+slug: public-bucket-domains
+title: "New dedicated domains for public buckets"
+description: |
+  Tigris public buckets are moving to dedicated domains — tigrisbucket.io, tigrisfiles.io, and tigrisblob.io — to protect against domain reputation issues.
+image: ./hero-image.webp
+keywords:
+  - public buckets
+  - object storage
+  - domain security
+  - S3-compatible
+  - CDN
+  - static hosting
+authors:
+  - ks
+tags:
+  - Updates
+  - object storage
+  - security
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+import chromeWarning from "./chrome-warning.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="New dedicated domains for Tigris public buckets"
+/>
+
+When you run a public bucket service, you're sharing domain reputation with
+every other public bucket on the platform. One bad actor serving phishing
+content from their bucket can trigger browser warnings across the entire domain
+— and suddenly your perfectly legitimate assets are getting flagged as
+dangerous.
+
+That's exactly what happened. Google Chrome started flagging `*.t3.storage.dev`
+as a dangerous site because malicious content served through public buckets
+caused security vendors to blacklist the shared domain. The damage cascaded to
+critical infrastructure subdomains, which is unacceptable.
+
+<figure>
+  <img
+    src={chromeWarning}
+    alt="Google Chrome displaying a 'Dangerous site' warning for a Tigris public bucket on the storage.dev domain"
+  />
+  <figcaption>
+    Chrome's "Dangerous site" warning on a public bucket served from storage.dev
+  </figcaption>
+</figure>
+
+{/* truncate */}
+
+## The problem with shared domains
+
+Public buckets on Tigris were served from `*.t3.storage.dev` — the same base
+domain used for the S3 API and management infrastructure. This meant a single
+abusive public bucket could poison the domain reputation for everything: API
+endpoints, the console, IAM, all of it.
+
+Separating content-serving domains from API infrastructure is the industry
+standard for good reason. Major cloud providers do it too.
+
+## What's changing
+
+Public bucket content is moving to three new dedicated domains:
+
+| Domain                      | Example URL                                     |
+| --------------------------- | ----------------------------------------------- |
+| `BUCKET.t3.tigrisbucket.io` | `https://my-assets.t3.tigrisbucket.io/logo.png` |
+| `BUCKET.t3.tigrisfiles.io`  | `https://my-assets.t3.tigrisfiles.io/logo.png`  |
+| `BUCKET.t3.tigrisblob.io`   | `https://my-assets.t3.tigrisblob.io/logo.png`   |
+
+All three domains serve the same content and are interchangeable — pick
+whichever you prefer. They use virtual-hosted style URLs, where your bucket name
+is part of the subdomain.
+
+The S3 API endpoint stays at `t3.storage.dev`. Nothing changes for API calls,
+SDKs, or tools like the AWS CLI. This separation is the whole point: your API
+infrastructure is no longer sharing reputation with publicly hosted content.
+
+## What you need to do
+
+If you're serving public content from `*.t3.storage.dev` URLs, you'll need to
+update those references to use one of the new domains. The change is
+straightforward — swap the domain, keep everything else the same:
+
+```diff
+- https://my-bucket.t3.storage.dev/images/photo.jpg
++ https://my-bucket.t3.tigrisbucket.io/images/photo.jpg
+```
+
+If you're using a
+[custom domain](https://www.tigrisdata.com/docs/buckets/custom-domain/) for your
+public bucket, no changes are needed. Custom domains are unaffected.
+
+**We'll be blocking public bucket access on `storage.dev` after a migration
+window.** We'll provide advance notice before the cutoff so you have time to
+update your URLs. Watch your email and our
+[Discord](https://www.tigrisdata.com/discord/) for the specific date.
+
+## A note on path-style URLs
+
+For buckets created on or after February 19, 2025, only virtual-hosted style
+URLs are supported (where the bucket name is part of the subdomain). Older
+buckets can still use path-style URLs on the new domains.
+
+Virtual-hosted style URLs don't work with dots in bucket names due to SSL
+certificate constraints. If your bucket name contains dots, set up a
+[custom domain](https://www.tigrisdata.com/docs/buckets/custom-domain/) instead.
+
+## Why three domains?
+
+Having three gives us room to maneuver. If one domain ever faces reputation
+issues, you can switch to another without any infrastructure changes on our
+side. It also gives us the ability to rotate domains if needed, without
+disrupting every user at once.
+
+## Getting started
+
+If you're new to Tigris public buckets, creating one is a single command:
+
+```bash
+aws s3api create-bucket \
+  --endpoint-url https://t3.storage.dev \
+  --bucket my-public-site \
+  --acl public-read
+```
+
+Your content is immediately available at:
+
+- `https://my-public-site.t3.tigrisbucket.io/`
+- `https://my-public-site.t3.tigrisfiles.io/`
+- `https://my-public-site.t3.tigrisblob.io/`
+
+Check the
+[public bucket docs](https://www.tigrisdata.com/docs/buckets/public-bucket/) for
+the full setup guide.
+
+<InlineCta
+  title={"Try Tigris public buckets"}
+  subtitle={"Globally distributed object storage with no egress fees"}
+  button={"Get Started"}
+/>
