@@ -11,6 +11,10 @@
 }
 
 .importantSideCardLayout {
+  padding-bottom: 0;
+}
+
+.importantSideCardLayout {
   display: flex;
   flex-direction: row;
   gap: 0.85rem;

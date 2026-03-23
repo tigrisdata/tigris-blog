@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React from "react";
 import { BlogPostProvider } from "@docusaurus/plugin-content-blog/client";
 import BlogPostItem from "@theme/BlogPostItem";
 import type { Props } from "@theme/BlogPostItems";
@@ -72,64 +72,6 @@ export default function BlogPostItems({
         )
         .slice(0, 3)
     : [];
-  const sideTopImportantNewsPosts = sideImportantNewsPosts.slice(0, 2);
-  const sideBottomImportantNewsPost = sideImportantNewsPosts[2];
-  const mainImportantNewsRef = useRef<HTMLDivElement>(null);
-  const [importantAlignment, setImportantAlignment] = useState({
-    imageTop: 0,
-    titleTop: 0,
-  });
-  const hasImportantAlignment =
-    importantAlignment.titleTop > importantAlignment.imageTop;
-
-  useLayoutEffect(() => {
-    if (!isHomePage || !mainImportantNewsPost || sideImportantNewsPosts.length === 0) {
-      return;
-    }
-
-    const updateAlignment = () => {
-      const mainCardElement = mainImportantNewsRef.current;
-
-      if (!mainCardElement) {
-        return;
-      }
-
-      const imageElement = mainCardElement.querySelector(
-        ".blog-card-image-link"
-      ) as HTMLElement | null;
-      const titleElement = mainCardElement.querySelector(
-        ".blog-card-title-link"
-      ) as HTMLElement | null;
-
-      if (!imageElement || !titleElement) {
-        return;
-      }
-
-      const mainCardRect = mainCardElement.getBoundingClientRect();
-      const imageTop = imageElement.getBoundingClientRect().top - mainCardRect.top;
-      const titleTop = titleElement.getBoundingClientRect().top - mainCardRect.top;
-
-      if (titleTop > imageTop) {
-        setImportantAlignment((previousAlignment) => {
-          if (
-            Math.abs(previousAlignment.imageTop - imageTop) < 1 &&
-            Math.abs(previousAlignment.titleTop - titleTop) < 1
-          ) {
-            return previousAlignment;
-          }
-
-          return { imageTop, titleTop };
-        });
-      }
-    };
-
-    updateAlignment();
-    window.addEventListener("resize", updateAlignment);
-
-    return () => {
-      window.removeEventListener("resize", updateAlignment);
-    };
-  }, [isHomePage, mainImportantNewsPost, sideImportantNewsPosts.length]);
 
   const renderPost = (
     { content: BlogPostContent }: BlogListItem,
@@ -151,48 +93,22 @@ export default function BlogPostItems({
         <section className={clsx("col col--12", styles.importantNewsSection)}>
           <h2 className={styles.importantNewsHeading}>Important News</h2>
           <div className={clsx("row", styles.importantNewsRow)}>
-            <div className={clsx("col col--6", styles.col)} ref={mainImportantNewsRef}>
+            <div className={clsx("col col--6", styles.col, styles.importantMainColumn)}>
               {renderPost(mainImportantNewsPost, styles.importantMainCard)}
             </div>
             {sideImportantNewsPosts.length > 0 && (
-              <div
-                className={clsx("col col--6", styles.importantNewsSideColumn, {
-                  [styles.importantNewsSideColumnAligned]: hasImportantAlignment,
-                })}
-                style={
-                  hasImportantAlignment
-                    ? ({
-                        "--important-image-top": `${importantAlignment.imageTop}px`,
-                        "--important-title-top": `${importantAlignment.titleTop}px`,
-                      } as React.CSSProperties)
-                    : undefined
-                }
-              >
-                <div
-                  className={clsx(styles.importantSideTopGroup, {
-                    [styles.importantSideTopGroupAligned]: hasImportantAlignment,
-                  })}
-                >
-                  {sideTopImportantNewsPosts.map((importantNewsPost) => (
-                    <div
-                      key={importantNewsPost.content.metadata.permalink}
-                      className={clsx(styles.col, styles.importantSideTopItem)}
-                    >
-                      {renderPost(
-                        importantNewsPost,
-                        `${styles.importantSideCard} important-side-card`
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {sideBottomImportantNewsPost && (
-                  <div className={clsx(styles.col, styles.importantSideBottomItem)}>
+              <div className={clsx("col col--6", styles.col, styles.importantNewsSideColumn)}>
+                {sideImportantNewsPosts.map((importantNewsPost) => (
+                  <div
+                    key={importantNewsPost.content.metadata.permalink}
+                    className={clsx(styles.col, styles.importantSideItem)}
+                  >
                     {renderPost(
-                      sideBottomImportantNewsPost,
+                      importantNewsPost,
                       `${styles.importantSideCard} important-side-card`
                     )}
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>
