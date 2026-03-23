@@ -10,6 +10,7 @@
   /* background-color: var(--ifm-code-background); */
 }
 
+.importantMainCardLayout,
 .importantSideCardLayout {
   padding-bottom: 0;
 }
@@ -52,4 +53,16 @@
 
 .importantSideCardLayout:hover .sideCardThumbnail {
   transform: scale(1.03);
+}
+
+@media (max-width: 996px) {
+  .importantSideCardLayout {
+    gap: 0.65rem;
+  }
+
+  .sideCardThumbnailLink {
+    width: 34%;
+    min-width: 5.2rem;
+    border-radius: 0.45rem;
+  }
 }

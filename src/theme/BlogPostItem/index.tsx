@@ -14,16 +14,20 @@ export default function BlogPostItem({
   className,
 }: Props): ReactNode {
   const { isBlogPostPage, assets, metadata } = useBlogPost();
+  const isImportantMainCard =
+    typeof className === "string" && className.includes("important-main-card");
   const isImportantSideCard =
     typeof className === "string" && className.includes("important-side-card");
+  const isFeaturedListCard = isImportantMainCard || isImportantSideCard;
 
   return (
     <BlogPostItemContainer
       className={clsx(
         className,
         { [styles.item]: !isBlogPostPage },
+        { [styles.importantMainCardLayout]: isImportantMainCard && !isBlogPostPage },
         { [styles.importantSideCardLayout]: isImportantSideCard && !isBlogPostPage },
-        isBlogPostPage ? "col--12" : "margin-bottom--lg"
+        isBlogPostPage ? "col--12" : !isFeaturedListCard && "margin-bottom--lg"
       )}
     >
       {isImportantSideCard && !isBlogPostPage && assets.image && (

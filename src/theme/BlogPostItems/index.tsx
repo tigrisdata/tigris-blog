@@ -53,6 +53,8 @@ export default function BlogPostItems({
   const location = useLocation();
   const normalizedPathname = location.pathname.replace(/\/+$/, "");
   const isHomePage = normalizedPathname === "/blog";
+  const isTagPage = normalizedPathname.startsWith("/blog/tags");
+  const showCategoryNavigation = isHomePage || isTagPage;
   const importantNewsPosts = isHomePage
     ? [...items]
         .filter(isImportantNews)
@@ -94,7 +96,10 @@ export default function BlogPostItems({
           <h2 className={styles.importantNewsHeading}>Important News</h2>
           <div className={clsx("row", styles.importantNewsRow)}>
             <div className={clsx("col col--6", styles.col, styles.importantMainColumn)}>
-              {renderPost(mainImportantNewsPost, styles.importantMainCard)}
+              {renderPost(
+                mainImportantNewsPost,
+                `${styles.importantMainCard} important-main-card`
+              )}
             </div>
             {sideImportantNewsPosts.length > 0 && (
               <div className={clsx("col col--6", styles.col, styles.importantNewsSideColumn)}>
@@ -114,7 +119,7 @@ export default function BlogPostItems({
           </div>
         </section>
       )}
-      {isHomePage && (
+      {showCategoryNavigation && (
         <section className={clsx("col col--12", styles.tagsBelowTopSection)}>
           <Navigation location={location} showHeader={false} />
         </section>
