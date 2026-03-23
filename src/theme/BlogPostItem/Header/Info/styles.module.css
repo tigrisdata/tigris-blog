@@ -4,3 +4,8 @@
   padding-top: 0.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+.authorNames {
+  color: var(--ifm-color-primary-light);
+  font-weight: 600;
+}

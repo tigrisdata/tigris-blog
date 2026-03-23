@@ -57,7 +57,9 @@ export default function BlogPostItemHeaderInfo({
 
   return (
     <div className={clsx(styles.container, className, "blog-card-meta")}>
-      {hasAuthors && <>{authorNames.join(", ")}</>}
+      {hasAuthors && (
+        <span className={styles.authorNames}>{authorNames.join(", ")}</span>
+      )}
       {hasAuthors && " · "}
       <DateTime date={date} />
       {typeof readingTime !== "undefined" && (
