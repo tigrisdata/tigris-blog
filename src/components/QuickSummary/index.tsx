@@ -1,8 +1,8 @@
 import React from "react";
 
 interface SummaryItem {
-  title: string;
-  description: string;
+  title: React.ReactNode;
+  description: React.ReactNode;
 }
 
 interface QuickSummaryProps {
