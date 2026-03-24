@@ -25,8 +25,14 @@ export default function BlogPostItem({
       className={clsx(
         className,
         { [styles.item]: !isBlogPostPage },
-        { [styles.importantMainCardLayout]: isImportantMainCard && !isBlogPostPage },
-        { [styles.importantSideCardLayout]: isImportantSideCard && !isBlogPostPage },
+        {
+          [styles.importantMainCardLayout]:
+            isImportantMainCard && !isBlogPostPage,
+        },
+        {
+          [styles.importantSideCardLayout]:
+            isImportantSideCard && !isBlogPostPage,
+        },
         isBlogPostPage ? "col--12" : !isFeaturedListCard && "margin-bottom--lg"
       )}
     >
@@ -44,7 +50,8 @@ export default function BlogPostItem({
       )}
       <div
         className={clsx({
-          [styles.importantSideCardContent]: isImportantSideCard && !isBlogPostPage,
+          [styles.importantSideCardContent]:
+            isImportantSideCard && !isBlogPostPage,
         })}
       >
         <BlogPostItemHeader />

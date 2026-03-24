@@ -16,10 +16,12 @@ function getImportantOrder(item: BlogListItem): number {
     typeof order === "number"
       ? order
       : typeof order === "string"
-        ? Number.parseInt(order, 10)
-        : Number.NaN;
+      ? Number.parseInt(order, 10)
+      : Number.NaN;
 
-  return Number.isNaN(normalizedOrder) ? Number.MAX_SAFE_INTEGER : normalizedOrder;
+  return Number.isNaN(normalizedOrder)
+    ? Number.MAX_SAFE_INTEGER
+    : normalizedOrder;
 }
 
 function isImportantNews(item: BlogListItem): boolean {
@@ -43,7 +45,9 @@ function isImportantNews(item: BlogListItem): boolean {
 
 function isMainImportantNews(item: BlogListItem): boolean {
   const frontMatter = item.content.frontMatter as Record<string, unknown>;
-  return frontMatter?.important_main === true || frontMatter?.pinned_main === true;
+  return (
+    frontMatter?.important_main === true || frontMatter?.pinned_main === true
+  );
 }
 
 export default function BlogPostItems({
@@ -116,14 +120,26 @@ export default function BlogPostItems({
         <section className={clsx("col col--12", styles.importantNewsSection)}>
           <h2 className={styles.importantNewsHeading}>Important News</h2>
           <div className={clsx("row", styles.importantNewsRow)}>
-            <div className={clsx("col col--6", styles.col, styles.importantMainColumn)}>
+            <div
+              className={clsx(
+                "col col--6",
+                styles.col,
+                styles.importantMainColumn
+              )}
+            >
               {renderPost(
                 mainImportantNewsPost,
                 `${styles.importantMainCard} important-main-card`
               )}
             </div>
             {sideImportantNewsPosts.length > 0 && (
-              <div className={clsx("col col--6", styles.col, styles.importantNewsSideColumn)}>
+              <div
+                className={clsx(
+                  "col col--6",
+                  styles.col,
+                  styles.importantNewsSideColumn
+                )}
+              >
                 {sideImportantNewsPosts.map((importantNewsPost) => (
                   <div
                     key={importantNewsPost.content.metadata.permalink}
@@ -147,7 +163,9 @@ export default function BlogPostItems({
       )}
       {regularGridItems.map(({ content: BlogPostContent }) => (
         <div key={BlogPostContent.metadata.permalink} className="col col--4">
-          <div className={styles.col}>{renderPost({ content: BlogPostContent })}</div>
+          <div className={styles.col}>
+            {renderPost({ content: BlogPostContent })}
+          </div>
         </div>
       ))}
     </>

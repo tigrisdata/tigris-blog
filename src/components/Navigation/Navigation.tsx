@@ -69,7 +69,8 @@ export default function Navigation({
                 to="/blog/tags/build-with-tigris"
                 className={clsx(
                   styles.link,
-                  isCategoryActive("build-with-tigris", location) && styles.active
+                  isCategoryActive("build-with-tigris", location) &&
+                    styles.active
                 )}
               >
                 Build with Tigris

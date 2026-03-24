@@ -46,7 +46,11 @@ export default function BlogPostItemHeaderTitle({
             <img
               src={assets.image}
               alt={metadata.title}
-              className={clsx(styles.titleImage, styles.zoomImage, "blog-card-image")}
+              className={clsx(
+                styles.titleImage,
+                styles.zoomImage,
+                "blog-card-image"
+              )}
               loading="lazy"
               width={400}
               height={225}
@@ -62,7 +66,10 @@ export default function BlogPostItemHeaderTitle({
         {isBlogPostPage ? (
           title
         ) : (
-          <Link to={permalink} className={clsx(styles.titleLink, "blog-card-title-link")}>
+          <Link
+            to={permalink}
+            className={clsx(styles.titleLink, "blog-card-title-link")}
+          >
             {title}
           </Link>
         )}
