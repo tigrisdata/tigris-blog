@@ -52,9 +52,17 @@ export default function BlogPostItems({
 }: Props): JSX.Element {
   const location = useLocation();
   const normalizedPathname = location.pathname.replace(/\/+$/, "");
-  const isHomePage = normalizedPathname === "/blog";
-  const isTagPage = normalizedPathname.startsWith("/blog/tags");
-  const showCategoryNavigation = isHomePage || isTagPage;
+  const isHomePage =
+    normalizedPathname === "/blog" ||
+    normalizedPathname === "/" ||
+    normalizedPathname === "";
+  const isTagPage =
+    normalizedPathname.startsWith("/blog/tags") ||
+    normalizedPathname.startsWith("/tags");
+  const isPaginatedBlogPage =
+    normalizedPathname.startsWith("/blog/page") ||
+    normalizedPathname.startsWith("/page/");
+  const showCategoryNavigation = isHomePage || isTagPage || isPaginatedBlogPage;
   const importantNewsPosts = isHomePage
     ? [...items]
         .filter(isImportantNews)
@@ -74,6 +82,19 @@ export default function BlogPostItems({
         )
         .slice(0, 3)
     : [];
+
+  const importantNewsPermalinks = new Set(
+    importantNewsPosts.map(
+      ({ content: BlogPostContent }) => BlogPostContent.metadata.permalink
+    )
+  );
+  const regularGridItems =
+    isHomePage && importantNewsPermalinks.size > 0
+      ? items.filter(
+          ({ content: BlogPostContent }) =>
+            !importantNewsPermalinks.has(BlogPostContent.metadata.permalink)
+        )
+      : items;
 
   const renderPost = (
     { content: BlogPostContent }: BlogListItem,
@@ -124,7 +145,7 @@ export default function BlogPostItems({
           <Navigation location={location} showHeader={false} />
         </section>
       )}
-      {items.map(({ content: BlogPostContent }) => (
+      {regularGridItems.map(({ content: BlogPostContent }) => (
         <div key={BlogPostContent.metadata.permalink} className="col col--4">
           <div className={styles.col}>{renderPost({ content: BlogPostContent })}</div>
         </div>
