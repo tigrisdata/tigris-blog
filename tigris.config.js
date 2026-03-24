@@ -1,9 +1,9 @@
 module.exports = {
-  dashboardUrl: "https://console.tigris.dev/",
-  loginUrl: "https://console.tigris.dev/signin",
-  signUpUrl: "https://console.tigris.dev/signup",
+  dashboardUrl: "https://console.storage.dev/",
+  loginUrl: "https://console.storage.dev/signin",
+  signUpUrl: "https://console.storage.dev/signup",
   earlyAccessUrl: "https://hello.tigrisdata.com/forms/early-access/",
-  consoleUrl: "https://console.tigris.dev/",
+  consoleUrl: "https://console.storage.dev/",
   blogUrl: "https://www.tigrisdata.com/blog/",
   websiteUrl: "https://www.tigrisdata.com",
   discordUrl: "https://community.tigrisdata.com/",
