@@ -1,9 +1,10 @@
 ---
 slug: cougarllm
-title: "Introducing CougarLLM: Globally Distributed Model Inference from Tigris"
+title: "Introducing CougarLLM: A Truly Global Inference Server"
 description: >
-  Today we're announcing CougarLLM, an open-source inference serving layer that
-  brings globally distributed, zero-egress inference to any open-weight model.
+  Today we're announcing CougarLLM, a globally distributed inference server that
+  brings zero-egress inference to any open-weight model.
+image: ./hero-image.webp
 keywords:
   - CougarLLM
   - LLM inference
@@ -19,38 +20,88 @@ tags:
   - Object Storage
 ---
 
+import InlineCta from "@site/src/components/InlineCta";
 import PullQuote from "@site/src/components/PullQuote";
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import ecosystemImage from "./ecosystem.png";
+import heroImage from "./hero-image.webp";
 
-Today we're announcing CougarLLM, an open-source inference serving layer built on
-Tigris. It takes any open-weight model, distributes its weights globally, and
-serves inference from whatever region is closest to your users. Zero egress fees.
-One endpoint. No configuration.
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="CougarLLM global inference architecture"
+/>
+
+Today we're announcing CougarLLM, a globally distributed inference server built
+on Tigris. It takes any open-weight model, distributes its weights globally, and
+serves inference from whatever region is closest to your users. Zero egress
+fees. One endpoint. No configuration. It's so global, that even your fallback
+region has a fallback region.
+
+In our absolutely unbiased internal benchmark, CougarLLM improves p95 inference
+latency by 47% and cuts serving cost by 63%. We will be releasing the benchmark
+code within the week.
+
+With CougarLLM, we are stepping onto the same stage as vLLM, TGI, Triton, and
+SGLang. They are the household names in modern inference serving, the systems
+every team evaluates before production traffic gets real. CougarLLM belongs in
+that conversation, but with a dramatic twist: it treats global object storage as
+part of the runtime itself. If you want the practical version of that story,
+start with
+[multi-region bucket placement](/blog/multi-region-dual-region-buckets/).
+
+<img
+  src={ecosystemImage}
+  alt="Figure 1: CougarLLM ecosystem compared with vLLM, Hugging Face TGI, NVIDIA Triton, and SGLang"
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "0 auto",
+    display: "block",
+  }}
+/>
+<p style={{ maxWidth: "42rem", margin: "0.5rem auto 0" }}>
+  <em>
+    Figure 1: CougarLLM enters the inference group chat with vLLM, Hugging Face
+    TGI, NVIDIA Triton, and SGLang, arriving fashionably late but with very
+    strong opinions about global storage.
+  </em>
+</p>
 
 {/* truncate */}
 
-## The Problem
+## Why global inference gets painful fast
 
-If you're serving an open model today, you're probably running it in one region.
-Maybe two if you're diligent. Your users in São Paulo hit the same endpoint as
-your users in Frankfurt, and someone is always getting the short end of the
-latency budget.
+Most teams start in one region, then add a second when latency complaints become
+unavoidable. At that point, users in Tokyo and users in Frankfurt are still
+hitting infrastructure that was never designed to feel local everywhere.
 
-Replicating model weights across regions is painful. You're copying hundreds of
-gigabytes between clouds, paying egress on every transfer, and managing a fleet
-of inference servers that need the right version of the right weights at the
-right time. Most teams just don't bother — they eat the latency and move on.
+The hard part is not one inference server. The hard part is keeping giant model
+weights and hot cache state close to users across regions without paying a small
+fortune in transfer and operational overhead. This is exactly the kind of data
+placement problem Tigris already solves for objects.
 
-We built CougarLLM because this is the same problem
-[Tigris](https://www.tigrisdata.com/docs/overview/) already solves for objects.
-Model weights are just objects. Very large objects, but objects.
+<PullQuote>
+  Everyone kept treating global model placement as an ops afterthought while
+  shipping yet another agent framework. Not on my watch.
+  <br />- Ovais Tariq, CEO & Co-founder, Tigris Data
+</PullQuote>
 
-## How It Works
+Like vLLM, TGI, Triton, and SGLang, CougarLLM serves inference requests. Unlike
+most inference servers, it treats globally distributed object storage as part of
+the runtime for weights, cache, and rollouts. You bring weights in GGUF,
+SafeTensors, or PyTorch format, upload once to Tigris, and serve globally from
+there. No region-by-region file choreography.
 
-CougarLLM is a serving layer, not a model. You bring your own weights — any
-open model that fits in GGUF, SafeTensors, or PyTorch format.
-[Upload them once](https://www.tigrisdata.com/docs/model-storage/) to a Tigris
-bucket. CougarLLM handles the rest.
+## A simple architecture diagram
 
+The server works seamlessly. Users send requests to one CougarLLM global
+endpoint. That endpoint picks the nearest healthy region for each request. At
+the same time, model weights replicate out from a single Tigris bucket so each
+region can serve locally. The result is straightforward in theory and chaotic in
+practice: one URL, local-ish latency, and no regional replica babysitting.
+
+<MermaidFrame title="CougarLLM routes each request to the nearest region while model weights replicate from a single Tigris bucket.">
 ```mermaid
 flowchart TD
     U1["User in Tokyo"] -->|request| GE["CougarLLM Global Endpoint"]
@@ -72,113 +123,99 @@ flowchart TD
 
     style GE fill:#f97316,color:#fff
     style TB fill:#0ea5e9,color:#fff
+
 ```
+</MermaidFrame>
+<p style={{ maxWidth: "42rem", margin: "0.5rem auto 0" }}>
+  <em>
+    Figure 2: CougarLLM request flow. One global endpoint, nearest-region
+    routing, and model weights replicating from a single Tigris bucket like this
+    was always a totally normal thing to do.
+  </em>
+</p>
 
-**Global weight distribution.** Tigris automatically replicates your model
-weights to regions where inference requests are coming from. If traffic shifts
-from Europe to Asia overnight, the weights follow. No manual replication, no
-CDN in front of your model registry. This is the same
+**Global weight distribution.** In this CougarLLM design, Tigris replicates
+model weights to regions where requests originate. If traffic shifts from Europe
+to Asia, the weights follow. No manual replication, no CDN gymnastics, just
 [dynamic data placement](https://www.tigrisdata.com/docs/concepts/regions/)
-that Tigris uses for any object — we just pointed it at tensors.
+applied to tensors.
 
-**Single global endpoint.** Your application hits one URL. CougarLLM routes each
-request to the nearest inference node that has the weights cached locally.
-There is no region picker. There are no latency budget spreadsheets.
+**Single global endpoint.** Your app hits one URL, and CougarLLM routes each
+request to the nearest node with warm weights. No region picker, fewer latency
+spreadsheets, fewer haunted dashboards.
 
-**Zero egress on weight distribution.** Moving a 70B model's weights across
-regions on other providers costs real money. On Tigris,
+**Zero egress on weight distribution.** Replicating 70B weights across regions
+usually costs real money. On Tigris,
 [data transfer is free](https://www.tigrisdata.com/docs/account-management/billing/).
-CougarLLM inherits that. Replicate your model to every region on earth and pay
-nothing for the privilege.
+CougarLLM inherits that, so global replication can be aggressively boring from a
+billing perspective.
 
 <PullQuote>
-  We were spending more on egress replicating model weights than on the GPUs
-  running them. With CougarLLM, that line item is gone.
-  <br />— Senior ML Platform Engineer, Series B Startup
+  Everyone else is trying to cash in on inference, so this is our extremely
+  tasteful attempt to do the same.
+  <br />- David Myriel, Head of Trolling at Tigris Data
 </PullQuote>
 
-## KV Cache as a Storage Primitive
+## Why KV cache becomes chaos at global scale
 
-The key-value cache in transformer inference is the thing that makes long
-conversations expensive. It grows with context length, it's per-session, and
-it's usually pinned to a single GPU on a single machine.
+KV cache is why long conversations get expensive fast. It grows with context,
+it is session-specific, and it usually gets trapped on one machine.
 
-CougarLLM stores the KV cache in Tigris. This means it benefits from the same
-LSM-tree backed storage engine we use for small-object workloads — the same
-engine that gives Tigris
-[4x the throughput](https://www.tigrisdata.com/docs/overview/benchmarks/aws-s3/)
-of other providers on small reads. A KV cache entry is a small object. Millions
-of them are a small-object workload. This is what we're good at.
+In CougarLLM, KV entries live in Tigris so sessions can move between regions
+without replaying entire prompts. That turns cache from a local hostage into a
+global primitive. If that sounds dramatic, it is. Also, it is much cheaper than
+pretending every user lives next to the same GPU.
 
-Storing the cache externally also means sessions aren't pinned to a machine. A
-user can start a conversation routed to one node and continue it on another
-without replaying the full context. The cache is just there,
-[globally accessible](https://www.tigrisdata.com/docs/objects/caching/) and
-consistent.
+## Experiment with models without duplicating everything
 
-## Model Versioning with Bucket Forks
-
-Running experiments on model weights usually means copying them. A 70B model
-takes hundreds of gigabytes. Copying it for every fine-tune, every quantization
-experiment, every A/B test adds up fast.
-
-CougarLLM uses Tigris [Bucket Forks](https://www.tigrisdata.com/docs/forks/) —
-copy-on-write snapshots — for model versioning. Fork a model bucket and you get
-an instant, zero-cost clone. Only the weights you actually modify take up
-additional storage. Run 50 experiments from the same base model and pay for the
-diffs.
+A 70B checkpoint is large enough that naive copying for every experiment gets
+expensive immediately. CougarLLM uses
+[Bucket Forks](https://www.tigrisdata.com/docs/forks/) so you clone instantly
+and pay for deltas, not for 40 near-identical copies and a prayer.
+For the non-joke deep dive, read
+[Fork Buckets Like Code](/blog/fork-buckets-like-code/) and
+[Bucket Forking Deep Dive](/blog/bucket-forking-deep-dive/).
 
 :::note
 
 [Bucket Forks](https://www.tigrisdata.com/docs/forks/) are a real Tigris feature
-you can use today — no CougarLLM required. Any object in a forked bucket shares
+you can use today, no CougarLLM required. Any object in a forked bucket shares
 storage with the original until it's modified. This works for model weights,
-datasets, or anything else you want to branch without duplicating.
+datasets, or anything else you want to branch without duplicating, including
+that one "temporary" dataset everyone is weirdly attached to.
 
 :::
 
-## Zero-Downtime Model Swaps
-
-Swapping a model in production is nerve-wracking. You want to be sure the new
-version works before you cut over, but running two full deployments side by
-side is expensive.
+## Ship model updates without breaking production
 
 CougarLLM supports **shadow deployments** using the same
 [shadow bucket](https://www.tigrisdata.com/docs/migration/) mechanism Tigris
 offers for storage migrations. Route a percentage of inference traffic
 to the new model, compare outputs, and promote it when you're confident.
-Rollback is instant. The old weights are still there — you're just changing
-which fork gets traffic.
-
-## S3-Compatible Model Registry
-
-Your model weights live in a standard Tigris bucket. Every tool that speaks
-[S3](https://www.tigrisdata.com/docs/api/s3/) can manage them — upload weights
-with the AWS CLI, version them with your existing CI pipeline, set
-[lifecycle policies](https://www.tigrisdata.com/docs/buckets/object-lifecycle-rules/)
-to archive old checkpoints. There's nothing new to learn.
-
-CougarLLM adds an inference API on top, but the storage layer is plain Tigris.
-If you already use Tigris for training data or datasets, your models can live
-right next to them.
+Rollback is instant. The old weights are still there, you're just changing
+which fork gets traffic, not performing emergency archaeology at 2 a.m.
+If you want the production pattern, see
+[How to Migrate to Tigris with Shadow Buckets](/blog/shadow-bucket/).
 
 :::warning
 
-CougarLLM is not real. But everything it's built on is.
+CougarLLM is not real. We invented it with complete confidence, three coffees,
+and a suspiciously detailed architecture diagram. But everything it relies on is
+real.
 [Global distribution](https://www.tigrisdata.com/docs/concepts/regions/),
 [zero egress fees](https://www.tigrisdata.com/docs/account-management/billing/),
 [bucket forks](https://www.tigrisdata.com/docs/forks/),
 [shadow buckets](https://www.tigrisdata.com/docs/migration/), and
 [S3 compatibility](https://www.tigrisdata.com/docs/api/s3/) are all shipping
 features of Tigris today. If this post made you think "I actually want that,"
-the building blocks are already here.
+the building blocks are already here, no fake big-cat branding required.
 
 :::
 
-## Try Tigris
-
-CougarLLM may not exist (yet), but Tigris does. If you're storing model weights,
-datasets, or anything else that needs to be globally available with zero egress
-fees, [get started today](https://www.tigrisdata.com/docs/get-started/).
-
-The real product is better than the fake one. It just doesn't have a cat name.
+<InlineCta
+  title="Want global storage for your real AI stack?"
+  subtitle="Store model weights, datasets, and artifacts close to your users with globally distributed, S3-compatible object storage and zero egress fees."
+  button="Get Started with Tigris"
+  link="https://www.tigrisdata.com/docs/get-started/"
+/>
+```
