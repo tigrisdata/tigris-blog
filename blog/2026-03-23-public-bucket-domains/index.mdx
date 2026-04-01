@@ -2,7 +2,7 @@
 slug: public-bucket-domains
 title: "New dedicated domains for public buckets"
 description: |
-  New Tigris accounts will serve public buckets from dedicated domains — tigrisbucket.io, tigrisfiles.io, and tigrisblob.io — to protect against domain reputation issues.
+  New Tigris accounts will serve public content from dedicated domains — tigrisbucket.io, tigrisfiles.io, and tigrisblob.io — to protect against domain reputation issues.
 image: ./hero-image.webp
 keywords:
   - public buckets
@@ -29,22 +29,26 @@ import chromeWarning from "./chrome-warning.webp";
   alt="New dedicated domains for Tigris public buckets"
 />
 
-When you run a public bucket service, you share domain reputation with every
-other bucket on the platform. One bad actor serving phishing content can trigger
-browser warnings across the entire domain — and your legitimate assets get
-flagged too.
+When you serve public content on a shared domain, you share domain reputation
+with every other bucket on the platform. One bad actor serving phishing content
+can trigger browser warnings across the entire domain — and your legitimate
+assets get flagged too.
 
-Google Chrome recently flagged `*.t3.storage.dev` as dangerous. Malicious
-content in public buckets led security vendors to blacklist the shared domain,
-and the damage cascaded to critical infrastructure subdomains like IAM.
+The `tigris.dev` domain was recently
+[flagged as dangerous](https://status.tigrisdata.com/incidents/4v45ay32).
+Malicious content in public buckets led security vendors to blacklist the shared
+domain. The warning appeared across browsers — not just Chrome — and the damage
+cascaded to `auth.tigris.dev` and `console.tigris.dev`, making the Tigris
+Dashboard appear dangerous to users.
 
 <figure>
   <img
     src={chromeWarning}
-    alt="Google Chrome displaying a 'Dangerous site' warning for a Tigris public bucket on the storage.dev domain"
+    alt="Browser displaying a 'Dangerous site' warning for a Tigris domain due to malicious public bucket content"
   />
   <figcaption>
-    Chrome's "Dangerous site" warning on a public bucket served from storage.dev
+    A browser "Dangerous site" warning triggered by malicious content on a
+    shared domain
   </figcaption>
 </figure>
 
@@ -52,19 +56,19 @@ and the damage cascaded to critical infrastructure subdomains like IAM.
 
 ## Why new domains?
 
-Tigris previously served public buckets from `*.t3.storage.dev` — the same base
+Tigris previously served public content from `*.t3.storage.dev` — the same base
 domain used for the S3 API and management infrastructure. A single abusive
-bucket could poison the reputation of every endpoint: API, console, and IAM
-alike.
+bucket could poison the reputation of every endpoint, including
+`auth.tigris.dev` and `console.tigris.dev`.
 
-Major cloud providers already separate content-serving domains from API
-infrastructure. Now Tigris does too. New accounts will serve public bucket
-content exclusively from the dedicated domains, keeping content delivery
-isolated from API infrastructure.
+New accounts will serve public content (public buckets and public objects)
+exclusively from dedicated domains. We also actively monitor for and remove
+malicious content to prevent domain reputation issues from recurring.
 
 ## What are the new Tigris public bucket domains?
 
-New accounts will serve public bucket content from three dedicated domains:
+New accounts will serve public content (public buckets and public objects) from
+three dedicated domains:
 
 | Domain                      | Example URL                                     |
 | --------------------------- | ----------------------------------------------- |
@@ -81,11 +85,11 @@ These domains also apply to
 Any object served publicly from a new account will use the dedicated domains,
 whether the bucket itself is public or private.
 
-The new domains are equivalent to `t3.storage.dev` in every way. Nothing changes
-for API calls, the AWS CLI, or SDKs — we don't differentiate by the source of
-the request. The restrictions are based on your signup date and whether the
-bucket is public. You can use any of the new domains as your endpoint for
-everything:
+The new domains are equivalent to `t3.storage.dev` in every way — the only
+difference is that the public access restrictions on `t3.storage.dev` apply to
+new accounts. The same restrictions apply regardless of how you access your
+content: browser, API, AWS CLI, or SDK. You can use any of the new domains as
+your endpoint for everything:
 
 ```bash
 aws s3api list-buckets --endpoint-url https://t3.tigrisbucket.io
@@ -102,6 +106,10 @@ continue to work. Existing accounts are not affected by this change.
 
 Organizations, namespaces, and buckets belonging to known partners are also
 excluded from these restrictions regardless of account age.
+
+Note that `fly.storage.tigris.dev`, used by many Fly.io users, will also be
+restricted from serving public content for new accounts. Use one of the new
+dedicated domains instead.
 
 You don't need to migrate your buckets. This change only impacts new users who
 are just signing up. If you do want to switch to the new domains, it's a
