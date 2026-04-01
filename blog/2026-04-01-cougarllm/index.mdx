@@ -23,7 +23,7 @@ tags:
 import InlineCta from "@site/src/components/InlineCta";
 import PullQuote from "@site/src/components/PullQuote";
 import MermaidFrame from "@site/src/components/MermaidFrame";
-import ecosystemImage from "./ecosystem.png";
+import ecosystemImage from "./ecosystem.webp";
 import heroImage from "./hero-image.webp";
 
 <img
@@ -38,8 +38,8 @@ serves inference from whatever region is closest to your users. Zero egress
 fees. One endpoint. No configuration. It's so global, that even your fallback
 region has a fallback region.
 
-In our absolutely unbiased internal benchmark, CougarLLM improves p95 inference
-latency by 47% and cuts serving cost by 63%. We will be releasing the benchmark
+In our absolutely unbiased internal benchmark, CougarLLM significantly improves
+inference latency and reduces serving cost. We will be releasing the benchmark
 code within the week.
 
 With CougarLLM, we are stepping onto the same stage as vLLM, TGI, Triton, and
@@ -82,8 +82,9 @@ fortune in transfer and operational overhead. This is exactly the kind of data
 placement problem Tigris already solves for objects.
 
 <PullQuote>
-  Everyone kept treating global model placement as an ops afterthought while
-  shipping yet another agent framework. Not on my watch.
+  We almost shipped yet another agent framework, mostly out of peer pressure.
+  Then we noticed teams were burning money shuffling model weights worldwide, so
+  we figured an inference server is a safer bet.
   <br />- Ovais Tariq, CEO & Co-founder, Tigris Data
 </PullQuote>
 
@@ -161,10 +162,10 @@ billing perspective.
 KV cache is why long conversations get expensive fast. It grows with context,
 it is session-specific, and it usually gets trapped on one machine.
 
-In CougarLLM, KV entries live in Tigris so sessions can move between regions
-without replaying entire prompts. That turns cache from a local hostage into a
-global primitive. If that sounds dramatic, it is. Also, it is much cheaper than
-pretending every user lives next to the same GPU.
+In CougarLLM, Tigris holds durable KV state while inference nodes keep the hot
+working set local for low-latency decoding. That means cross-region recovery can
+reuse more context instead of replaying everything from scratch. No, we are not
+streaming token-by-token KV reads from object storage.
 
 ## Experiment with models without duplicating everything
 
