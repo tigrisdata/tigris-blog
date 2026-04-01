@@ -81,10 +81,11 @@ These domains also apply to
 Any object served publicly from a new account will use the dedicated domains,
 whether the bucket itself is public or private.
 
-The new domains are equivalent to `t3.storage.dev` in every way. The only
-difference is that public access restrictions are applied to `t3.storage.dev`
-for new accounts. If you'd rather not juggle one domain for public content and
-another for API calls, you can use a single dedicated domain for everything:
+The new domains are equivalent to `t3.storage.dev` in every way. Nothing changes
+for API calls, the AWS CLI, or SDKs — we don't differentiate by the source of
+the request. The restrictions are based on your signup date and whether the
+bucket is public. You can use any of the new domains as your endpoint for
+everything:
 
 ```bash
 aws s3api list-buckets --endpoint-url https://t3.tigrisbucket.io
