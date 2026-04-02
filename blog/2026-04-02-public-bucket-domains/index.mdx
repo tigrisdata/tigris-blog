@@ -1,8 +1,8 @@
 ---
 slug: public-bucket-domains
-title: "Introducing tigrisfiles.io for public content"
+title: "Introducing t3.tigrisfiles.io for public content"
 description: |
-  New Tigris accounts serve public content from a dedicated domain — tigrisfiles.io — separating public content delivery from API infrastructure.
+  New Tigris accounts serve public content from a dedicated domain — t3.tigrisfiles.io — separating public content delivery from API infrastructure.
 image: ./hero-image.webp
 keywords:
   - public buckets
@@ -24,11 +24,11 @@ import heroImage from "./hero-image.webp";
 <img
   src={heroImage}
   className="hero-image"
-  alt="Introducing tigrisfiles.io for Tigris public content"
+  alt="Introducing t3.tigrisfiles.io for Tigris public content"
 />
 
 New Tigris accounts now serve public content from a dedicated domain:
-`tigrisfiles.io`. This separates public content delivery from API
+`t3.tigrisfiles.io`. This separates public content delivery from API
 infrastructure.
 
 {/* truncate */}
@@ -38,7 +38,7 @@ infrastructure.
 New Tigris accounts serve public content — both
 [public buckets](https://www.tigrisdata.com/docs/buckets/public-bucket/) and
 [public objects in private buckets](https://www.tigrisdata.com/docs/objects/public-objects/)
-— from `tigrisfiles.io` instead of `t3.storage.dev`.
+— from `t3.tigrisfiles.io` instead of `t3.storage.dev`.
 
 Public content URLs use the bucket name as a subdomain:
 
@@ -54,7 +54,7 @@ through the CLI, SDKs, or S3 API — continue to use `t3.storage.dev`. When you
 use an SDK, every request is authenticated, whether the bucket is public or
 private. The only thing that changes is the URL you hand out for public access.
 
-Presigned URLs generated through the Tigris Console now use `tigrisfiles.io`
+Presigned URLs generated through the Tigris Console now use `t3.tigrisfiles.io`
 automatically. Presigned URLs you generate in your own code continue to work on
 whichever endpoint you already use.
 
@@ -67,7 +67,7 @@ Organizations, namespaces, and buckets belonging to known partners are also
 excluded regardless of account age.
 
 `fly.storage.tigris.dev`, used by many Fly.io users, follows the same rules. New
-accounts should use `tigrisfiles.io` for public content instead.
+accounts should use `t3.tigrisfiles.io` for public content instead.
 
 To switch existing content to the new domain, swap the hostname:
 
