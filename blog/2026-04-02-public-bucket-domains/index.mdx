@@ -48,17 +48,8 @@ https://my-assets.t3.tigrisfiles.io/logo.png
 
 No additional configuration required.
 
-## Does this affect the API?
-
-`tigrisfiles.io` is fully equivalent to `t3.storage.dev`. You can use it as your
-endpoint for API calls, the AWS CLI, SDKs, and public content:
-
-```bash
-aws s3api list-buckets --endpoint-url https://t3.tigrisfiles.io
-```
-
-New accounts must use `tigrisfiles.io` to serve public content. This restriction
-applies whether you access it through a browser, API, CLI, or SDK.
+This change applies only to public anonymous access. Private access through the
+CLI, SDKs, and the S3 API continues to use `t3.storage.dev` as before.
 
 Presigned URLs generated through the Tigris Console now use `tigrisfiles.io`
 automatically. Presigned URLs you generate in your own code continue to work on
