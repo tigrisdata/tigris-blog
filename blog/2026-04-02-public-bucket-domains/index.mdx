@@ -40,13 +40,22 @@ New Tigris accounts serve public content — both
 [public objects in private buckets](https://www.tigrisdata.com/docs/objects/public-objects/)
 — from `t3.tigrisfiles.io` instead of `t3.storage.dev`.
 
-Public content URLs use the bucket name as a subdomain:
+Public content is available on three dedicated domains, all serving the same
+content:
 
-```
-https://my-assets.t3.tigrisfiles.io/logo.png
-```
+| Domain                      | Example URL                                     |
+| --------------------------- | ----------------------------------------------- |
+| `BUCKET.t3.tigrisfiles.io`  | `https://my-assets.t3.tigrisfiles.io/logo.png`  |
+| `BUCKET.t3.tigrisbucket.io` | `https://my-assets.t3.tigrisbucket.io/logo.png` |
+| `BUCKET.t3.tigrisblob.io`   | `https://my-assets.t3.tigrisblob.io/logo.png`   |
 
-No additional configuration required.
+Pick whichever you prefer. All work out of the box with no additional
+configuration. Each uses the bucket name as a subdomain.
+
+## Why three domains?
+
+If one domain has issues, you can switch to another immediately. We can rotate
+domains without disrupting every user at once.
 
 This change only affects how public content is served to anonymous visitors. All
 authenticated operations — uploading, listing, deleting, and managing objects
