@@ -48,8 +48,11 @@ https://my-assets.t3.tigrisfiles.io/logo.png
 
 No additional configuration required.
 
-This change applies only to public anonymous access. Private access through the
-CLI, SDKs, and the S3 API continues to use `t3.storage.dev` as before.
+This change only affects how public content is served to anonymous visitors. All
+authenticated operations — uploading, listing, deleting, and managing objects
+through the CLI, SDKs, or S3 API — continue to use `t3.storage.dev`. When you
+use an SDK, every request is authenticated, whether the bucket is public or
+private. The only thing that changes is the URL you hand out for public access.
 
 Presigned URLs generated through the Tigris Console now use `tigrisfiles.io`
 automatically. Presigned URLs you generate in your own code continue to work on
