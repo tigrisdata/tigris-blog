@@ -27,60 +27,55 @@ import heroImage from "./hero-image.webp";
   alt="Introducing tigrisfiles.io for Tigris public content"
 />
 
-We're introducing a dedicated domain for serving public content on Tigris:
-`tigrisfiles.io`. New accounts will use this domain for all publicly accessible
-content, giving public content delivery its own home separate from API
+New Tigris accounts now serve public content from a dedicated domain:
+`tigrisfiles.io`. This separates public content delivery from API
 infrastructure.
 
 {/* truncate */}
 
 ## What's changing?
 
-New Tigris accounts will serve public content — both
+New Tigris accounts serve public content — both
 [public buckets](https://www.tigrisdata.com/docs/buckets/public-bucket/) and
 [public objects in private buckets](https://www.tigrisdata.com/docs/objects/public-objects/)
 — from `tigrisfiles.io` instead of `t3.storage.dev`.
 
-Your public content URLs will look like this:
+Public content URLs use the bucket name as a subdomain:
 
 ```
 https://my-assets.t3.tigrisfiles.io/logo.png
 ```
 
-The bucket name is the subdomain, following the virtual-hosted style you're
-already familiar with. Everything works out of the box with no additional
-configuration.
+No additional configuration required.
 
 ## Does this affect the API?
 
 `tigrisfiles.io` is fully equivalent to `t3.storage.dev`. You can use it as your
-endpoint for everything — API calls, the AWS CLI, SDKs, and public content all
-work through the same domain:
+endpoint for API calls, the AWS CLI, SDKs, and public content:
 
 ```bash
 aws s3api list-buckets --endpoint-url https://t3.tigrisfiles.io
 ```
 
-The only difference is that `t3.storage.dev` will no longer serve public content
-for new accounts. The restriction applies the same way regardless of how you
-access it: browser, API, CLI, or SDK.
+New accounts must use `tigrisfiles.io` to serve public content. This restriction
+applies whether you access it through a browser, API, CLI, or SDK.
 
 Presigned URLs generated through the Tigris console now use `tigrisfiles.io`
-automatically. Presigned URLs you generate in your own code will continue to
-work on whichever endpoint you already use — no changes needed.
+automatically. Presigned URLs you generate in your own code continue to work on
+whichever endpoint you already use.
 
 ## What about existing accounts?
 
-Nothing changes. If you already have public content on `*.t3.storage.dev`, your
-URLs will continue to work. This change only applies to new accounts.
+Nothing changes. If you already serve public content from `*.t3.storage.dev`,
+your URLs continue to work. This change applies only to new accounts.
 
 Organizations, namespaces, and buckets belonging to known partners are also
-excluded from these restrictions regardless of account age.
+excluded regardless of account age.
 
-Note that `fly.storage.tigris.dev`, used by many Fly.io users, follows the same
-rules — new accounts should use `tigrisfiles.io` for public content instead.
+`fly.storage.tigris.dev`, used by many Fly.io users, follows the same rules. New
+accounts should use `tigrisfiles.io` for public content instead.
 
-If you do want to switch to the new domain, it's a straightforward URL swap:
+To switch existing content to the new domain, swap the hostname:
 
 ```diff
 - https://my-bucket.t3.storage.dev/images/photo.jpg
@@ -91,18 +86,16 @@ If you do want to switch to the new domain, it's a straightforward URL swap:
 
 If you use a
 [custom domain](https://www.tigrisdata.com/docs/buckets/custom-domain/) for your
-public bucket, your custom domain will continue to work as before. New custom
-domain CNAME records should point to `BUCKET.t3.tigrisbucket.io` as described in
-the
+public bucket, it continues to work as before. New custom domain CNAME records
+should point to `BUCKET.t3.tigrisbucket.io` as described in the
 [custom domain docs](https://www.tigrisdata.com/docs/buckets/custom-domain/).
 
-We recommend setting up a custom domain for any production use of public
-content. A custom domain gives you full control over your URLs and makes your
-content independent of any platform domain changes.
+For production public content, we recommend a custom domain. It keeps your URLs
+stable regardless of platform domain changes.
 
 ## Getting started
 
-Creating a public bucket takes a single command:
+Create a public bucket with a single command:
 
 ```bash
 aws s3api create-bucket \
