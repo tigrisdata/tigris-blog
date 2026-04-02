@@ -1,0 +1,120 @@
+---
+slug: public-bucket-domains
+title: "Introducing tigrisfiles.io for public content"
+description: |
+  New Tigris accounts serve public content from a dedicated domain — tigrisfiles.io — separating public content delivery from API infrastructure.
+image: ./hero-image.webp
+keywords:
+  - public buckets
+  - object storage
+  - S3-compatible
+  - CDN
+  - static hosting
+  - custom domain
+authors:
+  - ks
+tags:
+  - Updates
+  - object storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Introducing tigrisfiles.io for Tigris public content"
+/>
+
+New Tigris accounts now serve public content from a dedicated domain:
+`tigrisfiles.io`. This separates public content delivery from API
+infrastructure.
+
+{/* truncate */}
+
+## What's changing?
+
+New Tigris accounts serve public content — both
+[public buckets](https://www.tigrisdata.com/docs/buckets/public-bucket/) and
+[public objects in private buckets](https://www.tigrisdata.com/docs/objects/public-objects/)
+— from `tigrisfiles.io` instead of `t3.storage.dev`.
+
+Public content URLs use the bucket name as a subdomain:
+
+```
+https://my-assets.t3.tigrisfiles.io/logo.png
+```
+
+No additional configuration required.
+
+## Does this affect the API?
+
+`tigrisfiles.io` is fully equivalent to `t3.storage.dev`. You can use it as your
+endpoint for API calls, the AWS CLI, SDKs, and public content:
+
+```bash
+aws s3api list-buckets --endpoint-url https://t3.tigrisfiles.io
+```
+
+New accounts must use `tigrisfiles.io` to serve public content. This restriction
+applies whether you access it through a browser, API, CLI, or SDK.
+
+Presigned URLs generated through the Tigris Console now use `tigrisfiles.io`
+automatically. Presigned URLs you generate in your own code continue to work on
+whichever endpoint you already use.
+
+## What about existing accounts?
+
+Nothing changes. If you already serve public content from `*.t3.storage.dev`,
+your URLs continue to work. This change applies only to new accounts.
+
+Organizations, namespaces, and buckets belonging to known partners are also
+excluded regardless of account age.
+
+`fly.storage.tigris.dev`, used by many Fly.io users, follows the same rules. New
+accounts should use `tigrisfiles.io` for public content instead.
+
+To switch existing content to the new domain, swap the hostname:
+
+```diff
+- https://my-bucket.t3.storage.dev/images/photo.jpg
++ https://my-bucket.t3.tigrisfiles.io/images/photo.jpg
+```
+
+## Custom domains
+
+If you use a
+[custom domain](https://www.tigrisdata.com/docs/buckets/custom-domain/) for your
+public bucket, it continues to work as before. New custom domain CNAME records
+should point to `BUCKET.t3.tigrisbucket.io` as described in the
+[custom domain docs](https://www.tigrisdata.com/docs/buckets/custom-domain/).
+
+For production public content, we recommend a custom domain. It keeps your URLs
+stable regardless of platform domain changes.
+
+## Getting started
+
+Create a public bucket with a single command:
+
+```bash
+aws s3api create-bucket \
+  --endpoint-url https://t3.storage.dev \
+  --bucket my-public-site \
+  --acl public-read
+```
+
+Your content is available immediately at
+`https://my-public-site.t3.tigrisfiles.io/`.
+
+See the
+[public bucket docs](https://www.tigrisdata.com/docs/buckets/public-bucket/) for
+the full setup guide, and the
+[custom domain docs](https://www.tigrisdata.com/docs/buckets/custom-domain/) to
+set up your own domain.
+
+<InlineCta
+  title={"Try Tigris public buckets"}
+  subtitle={"Globally distributed object storage with no egress fees"}
+  button={"Get Started"}
+/>
