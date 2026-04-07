@@ -1,0 +1,348 @@
+---
+slug: agent-plugins
+title: "Tigris Agent Plugins: Your AI Coding Agent Now Speaks Storage"
+description: >
+  Tigris now ships as a plugin for Claude Code, Cursor, and other AI coding
+  agents. Five skills, a storage subagent, and security rules give your agent
+  full Tigris fluency out of the box.
+image: ./hero-img.webp
+keywords:
+  - Tigris
+  - agent plugins
+  - Claude Code
+  - Cursor
+  - AI agents
+  - object storage
+  - S3
+  - MCP
+  - skills
+authors:
+  - davidmyriel
+tags:
+  - Updates
+  - AI
+  - Agents
+  - Object Storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import QuickSummary from "@site/src/components/QuickSummary";
+import heroImage from "./hero-img.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="The Tigris tiger handing colorful skill modules to an AI coding agent"
+/>
+
+<QuickSummary
+  readTime="7 min read"
+  items={[
+    {
+      title: (
+        <a href="#five-cli-skills-one-install">Five skills, one install.</a>
+      ),
+      description:
+        "Authentication, buckets, objects, access keys, and IAM — each skill loads automatically when the conversation needs it.",
+    },
+    {
+      title: (
+        <a href="#a-subagent-for-multi-step-workflows">A storage subagent.</a>
+      ),
+      description:
+        "A specialized agent handles multi-step workflows like project setup, S3 migration, dev sandboxes, and security audits.",
+    },
+    {
+      title: (
+        <a href="#install-on-claude-code-cursor-and-more">
+          Works where you work.
+        </a>
+      ),
+      description:
+        "Claude Code, Cursor, OpenCode, OpenAI Codex, and Pi are all supported. Install once, use everywhere.",
+    },
+    {
+      title: <a href="#two-security-rules-always-on">Security by default.</a>,
+      description:
+        "Built-in rules enforce private buckets, scoped access keys, snapshot-before-delete, and credential safety.",
+    },
+  ]}
+/>
+
+AI coding agents are good at writing application code. They are not good at
+infrastructure. Ask an agent to set up a storage bucket with the right access
+controls, CORS headers, and lifecycle rules, and you'll spend more time
+correcting the agent than you would have spent doing it yourself. The agent
+doesn't know your CLI, your SDK conventions, or the three safety checks you
+should always run before deleting anything in production.
+
+{/* truncate */}
+
+Today we're releasing
+[**Tigris Agent Plugins**](https://github.com/tigrisdata/tigris-agents-plugins),
+a plugin that teaches your AI coding agent how to use Tigris. It ships five
+skills that auto-load based on context, a specialized subagent for multi-step
+storage workflows, and a pair of security rules that keep the agent from doing
+anything reckless. It works with Claude Code, Cursor, OpenCode, OpenAI Codex,
+and Pi.
+
+The idea is simple: you shouldn't need to look up CLI flags or SDK methods while
+your agent is sitting right there. Install the plugin, and the next time you say
+"set up a bucket for my new project," the agent knows exactly what to do.
+
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import PluginFlowSvg from "./plugin-flow.svg";
+
+<MermaidFrame title="How the plugin connects your agent to Tigris">
+  <PluginFlowSvg
+    role="img"
+    aria-label="You prompt the AI agent, the Tigris plugin provides skills, a storage subagent, and security rules, then the agent acts through the CLI or MCP to reach Tigris storage"
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+## Five CLI skills, one install
+
+import skillsImage from "./skills.webp";
+
+<img
+  src={skillsImage}
+  alt="The five Tigris agent skills covering authentication, buckets, objects, access keys, and IAM"
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "0 auto",
+    display: "block",
+  }}
+/>
+
+Each skill is a focused reference that covers one surface area of Tigris. Skills
+load automatically when the conversation touches their domain — you don't
+activate them manually.
+
+| Skill                     | What it covers                                                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **tigris-authentication** | Installing the CLI, logging in via OAuth or credentials, configuring `~/.tigris/config.json`, switching organizations     |
+| **tigris-buckets**        | Creating and configuring buckets — regions, storage tiers, CORS, migrations, TTL, notifications, snapshots, and forks     |
+| **tigris-objects**        | Uploading, downloading, listing, moving, deleting, and presigning objects using unix-style commands and the low-level API |
+| **tigris-access-keys**    | Creating programmatic credentials, assigning per-bucket roles (Editor, ReadOnly, admin), rotating keys                    |
+| **tigris-iam**            | Managing IAM policies with AWS-compatible JSON, inviting users, assigning org roles                                       |
+
+The skills contain complete CLI references with every flag, alias, and usage
+example. They're written so that an AI agent can parse them reliably, but they
+read fine as human documentation too. When your agent loads the buckets skill,
+it knows that `tigris mk` is an alias for `tigris create`, that
+`--locations eur` creates a multi-region bucket scoped to Europe, and that
+`--enable-delete-protection true` is the flag you want on anything
+production-facing.
+
+:::caution Why this matters
+
+Agents hallucinate flags. Without the skill, an agent might guess
+`--region eu-west-1` (an AWS region, not a Tigris one) or invent a `--public`
+flag that doesn't exist. With the skill loaded, it uses the actual CLI surface
+and gets it right.
+
+:::
+
+In practice, this means you can say things like:
+
+```
+> Create a bucket for my app's user uploads. Make it private, set it to the
+  EUR multi-region, and add a 90-day TTL so old uploads get cleaned up.
+```
+
+The agent loads the buckets skill, runs `tigris mk` with the right flags, then
+calls `tigris buckets set-ttl` with the correct expiry syntax. Or ask it to
+generate a presigned upload URL for a client-side form — the objects skill knows
+the `tigris presign` command, its `--method put` flag, and the default expiry.
+No searching the docs, no guessing at flags.
+
+## A subagent for multi-step workflows
+
+import storageImage from "./storage.webp";
+
+<img
+  src={storageImage}
+  alt="The Tigris storage subagent orchestrating multi-step workflows"
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "0 auto",
+    display: "block",
+  }}
+/>
+
+Skills cover individual commands. Some tasks span multiple commands and require
+decisions between steps. For those, we built the **tigris-storage-agent**, a
+specialized subagent that handles multi-step workflows:
+
+**New project setup.** You say:
+
+```
+> I'm starting a new web app. Set up a storage bucket with an access key
+  and CORS for localhost.
+```
+
+The agent creates the bucket, generates a scoped access key, outputs the
+`TIGRIS_STORAGE_*` environment variables your app needs, and configures CORS for
+`http://localhost:3000`. Four steps, one prompt. You paste the env vars into
+`.env.local` and move on.
+
+**S3 migration.** You have an existing app on AWS S3 and want to switch without
+downtime. Tell the agent:
+
+```
+> Migrate my-aws-bucket on S3 to Tigris. I don't want any downtime.
+```
+
+The agent sets up a shadow bucket that transparently proxies reads to your
+existing S3 bucket. Objects migrate lazily on first access — no bulk copy job,
+no cutover window. When migration is complete, one command disables the shadow
+and you're fully on Tigris.
+
+**Dev sandbox.** You need to test a migration script against production data
+without risking the real thing:
+
+```
+> Fork the assets bucket into a sandbox I can test against.
+```
+
+Instead of copying terabytes into a test bucket, the agent takes a snapshot and
+creates a copy-on-write fork. The fork is instant and free regardless of bucket
+size. Writes to the fork don't touch the source. When you're done testing,
+delete the fork and move on.
+
+**Security audit.** You want to check that a bucket is production-ready:
+
+```
+> Audit the security posture of my user-uploads bucket.
+```
+
+The agent reviews the full configuration: public vs. private access, CORS
+origins, access key scoping, delete protection, lifecycle rules. It reports what
+it finds and suggests specific remediations — "delete protection is off, enable
+it with `tigris buckets set user-uploads --enable-delete-protection true`."
+
+The subagent also handles full **production deployments** — delete protection,
+custom domains, webhook notifications, scoped keys, and an initial snapshot, all
+in the right order from a single prompt.
+
+## Install on Claude Code, Cursor, and more
+
+The plugin follows the emerging standard for agent skills: a folder of markdown
+files that your agent reads as context. Installation depends on which agent
+you're using.
+
+### Claude Code
+
+Install from the plugin marketplace:
+
+```bash
+/plugin marketplace add tigrisdata/tigris-agents-plugins
+/plugin install tigris-storage@tigris-agents-plugins
+```
+
+### Cursor
+
+Add via **Settings → Rules → Add Rule → Remote Rule (Github)** with
+`tigrisdata/tigris-agents-plugins`. Cursor also picks up the two bundled rules —
+one applies security guardrails to every conversation, and the other
+auto-triggers on TypeScript/JavaScript files with SDK best practices.
+
+### Clone for any agent
+
+Clone the repo and copy the skill folders to the right directory:
+
+| Agent        | Skill directory              |
+| ------------ | ---------------------------- |
+| Claude Code  | `~/.claude/skills/`          |
+| Cursor       | `~/.cursor/skills/`          |
+| OpenCode     | `~/.config/opencode/skills/` |
+| OpenAI Codex | `~/.codex/skills/`           |
+| Pi           | `~/.pi/agent/skills/`        |
+
+## Two security rules, always on
+
+import securityImage from "./security.webp";
+
+<img
+  src={securityImage}
+  alt="Tigris agent plugin security rules enforcing private buckets and scoped access keys"
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "0 auto",
+    display: "block",
+  }}
+/>
+
+We built two rules into the plugin that apply automatically:
+
+**tigris-security** is always active. It enforces a set of guardrails: buckets
+are private by default, presigned URLs are preferred over public access, secret
+keys (anything starting with `tsec_`) are never exposed in output, access keys
+are scoped to specific buckets, and snapshots are taken before destructive
+operations. If the agent is about to delete a bucket, the rule reminds it to
+snapshot first and confirm with the user.
+
+**tigris-sdk-patterns** activates on TypeScript and JavaScript files. It encodes
+best practices for the `@tigrisdata/storage` SDK: environment variable
+configuration, error handling (always check `result.error` before
+`result.data`), pagination patterns, presigned URL generation for client
+uploads, and multipart upload configuration for large files. This prevents the
+class of bugs where the agent writes code that looks correct but skips error
+checks or ignores pagination.
+
+Together, these rules mean you can say "add an upload endpoint to my Express
+app" and the generated code will use presigned URLs for client uploads, check
+errors properly, configure multipart for large files, and never hardcode a
+secret key — all without you having to review for those things.
+
+## Pairs well with the Tigris MCP server
+
+The plugin gives your agent knowledge about the CLI and SDK. The
+[Tigris MCP server](https://mcp.storage.dev/) gives it the ability to act.
+Together, your agent can both explain what a command does and execute the
+operation directly.
+
+The remote MCP server runs at `https://mcp.storage.dev/mcp` and handles
+authentication via OAuth — no API keys to configure. It exposes tools for bucket
+management, object uploads and downloads, and presigned URL generation. The full
+tool list is on [mcp.storage.dev](https://mcp.storage.dev/).
+
+For Claude Code, adding the MCP server is one command:
+
+```bash
+claude mcp add --scope user --transport http tigris https://mcp.storage.dev/mcp
+```
+
+:::tip Recommended setup
+
+With both the plugin and MCP server installed, your agent has the full picture:
+it knows the CLI reference from the skills, it follows security rules from the
+guardrails, and it can execute storage operations through MCP tools. You can say
+"upload the build output to my assets bucket and give me a shareable link" and
+the agent will use `tigris_put_object_from_path` to upload the files, then
+`tigris_get_signed_url_object` to generate a presigned URL — all within the
+conversation. That's the setup we use internally, and it's the one we recommend.
+
+:::
+
+## Get started
+
+Install the plugin using the instructions
+[above](#install-on-claude-code-cursor-and-more), then point your agent at a
+real task — create a bucket, migrate from S3, or audit an existing bucket's
+security posture. The skills load automatically.
+
+The plugin is open source under the MIT license. If you want to add a skill, fix
+something, or adapt it for another agent platform, PRs are welcome:
+[github.com/tigrisdata/tigris-agents-plugins](https://github.com/tigrisdata/tigris-agents-plugins).
+
+<InlineCta
+  title="Teach your agent Tigris"
+  subtitle="Install the Tigris Agent Plugin in Claude Code or Cursor and give your AI coding agent full storage fluency — skills, subagent, and security rules included."
+  button="View on GitHub"
+  link="https://github.com/tigrisdata/tigris-agents-plugins"
+/>
