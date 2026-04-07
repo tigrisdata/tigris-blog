@@ -39,22 +39,22 @@ import heroImage from "./hero-img.webp";
   readTime="7 min read"
   items={[
     {
-      title: <a href="#five-skills-one-install">Five skills, one install.</a>,
+      title: <a href="#five-cli-skills-one-install">Five skills, one install.</a>,
       description:
         "Authentication, buckets, objects, access keys, and IAM — each skill loads automatically when the conversation needs it.",
     },
     {
-      title: <a href="#the-storage-subagent">A storage subagent.</a>,
+      title: <a href="#a-subagent-for-multi-step-workflows">A storage subagent.</a>,
       description:
         "A specialized agent handles multi-step workflows like project setup, S3 migration, dev sandboxes, and security audits.",
     },
     {
-      title: <a href="#works-where-you-work">Works where you work.</a>,
+      title: <a href="#install-on-claude-code-cursor-and-more">Works where you work.</a>,
       description:
         "Claude Code, Cursor, OpenCode, OpenAI Codex, and Pi are all supported. Install once, use everywhere.",
     },
     {
-      title: <a href="#security-by-default">Security by default.</a>,
+      title: <a href="#two-security-rules-always-on">Security by default.</a>,
       description:
         "Built-in rules enforce private buckets, scoped access keys, snapshot-before-delete, and credential safety.",
     },
@@ -82,7 +82,22 @@ The idea is simple: you shouldn't need to look up CLI flags or SDK methods while
 your agent is sitting right there. Install the plugin, and the next time you say
 "set up a bucket for my new project," the agent knows exactly what to do.
 
-## Five skills, one install
+![How the plugin connects your agent to Tigris — You prompt the AI agent, the Tigris plugin provides skills, a storage subagent, and security rules, then the agent acts through the CLI or MCP to reach Tigris storage](./plugin-flow.svg)
+
+## Five CLI skills, one install
+
+import skillsImage from "./skills.webp";
+
+<img
+  src={skillsImage}
+  alt="The five Tigris agent skills covering authentication, buckets, objects, access keys, and IAM"
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "0 auto",
+    display: "block",
+  }}
+/>
 
 Each skill is a focused reference that covers one surface area of Tigris. Skills
 load automatically when the conversation touches their domain — you don't
@@ -125,7 +140,20 @@ generate a presigned upload URL for a client-side form — the objects skill kno
 the `tigris presign` command, its `--method PUT` flag, and the default expiry.
 No searching the docs, no guessing at flags.
 
-## The storage subagent
+## A subagent for multi-step workflows
+
+import storageImage from "./storage.webp";
+
+<img
+  src={storageImage}
+  alt="The Tigris storage subagent orchestrating multi-step workflows"
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "0 auto",
+    display: "block",
+  }}
+/>
 
 Skills cover individual commands. Some tasks span multiple commands and require
 decisions between steps. For those, we built the **tigris-storage-agent**, a
@@ -178,25 +206,17 @@ origins, access key scoping, delete protection, lifecycle rules. It reports
 what it finds and suggests specific remediations — "delete protection is off,
 enable it with `tigris buckets set user-uploads --enable-delete-protection true`."
 
-**Production deployment.** You're shipping and need the full setup done right:
+The subagent also handles full **production deployments** — delete protection,
+custom domains, webhook notifications, scoped keys, and an initial snapshot, all
+in the right order from a single prompt.
 
-```
-> Set up a production bucket for assets.example.com with delete protection,
-  CORS, webhook notifications, and a scoped access key.
-```
-
-The agent walks through every step in the right order: create the bucket, enable
-delete protection, configure CORS for your domain, bind the custom domain, set
-up webhook notifications, create a scoped key, and take an initial snapshot.
-Nothing forgotten, nothing out of order.
-
-## Works where you work
+## Install on Claude Code, Cursor, and more
 
 The plugin follows the emerging standard for agent skills: a folder of markdown
 files that your agent reads as context. Installation depends on which agent
 you're using.
 
-### Claude Code (recommended)
+### Claude Code
 
 Install from the plugin marketplace:
 
@@ -224,7 +244,7 @@ Clone the repo and copy the skill folders to the right directory:
 | OpenAI Codex| `~/.codex/skills/`            |
 | Pi          | `~/.pi/agent/skills/`         |
 
-## Security by default
+## Two security rules, always on
 
 import securityImage from "./security.webp";
 
@@ -269,22 +289,10 @@ act. Together, your agent can both explain what a command does and execute the
 operation directly.
 
 The remote MCP server runs at `https://mcp.storage.dev/mcp` and handles
-authentication via OAuth — no API keys to configure. Add it to your agent and
-it gets tool access to list buckets, upload and download objects, generate
-presigned URLs, and manage bucket lifecycle. The full tool list:
-
-| MCP tool                         | What it does                     |
-| -------------------------------- | -------------------------------- |
-| `tigris_list_buckets`            | List all buckets                 |
-| `tigris_create_bucket`           | Create a new bucket              |
-| `tigris_delete_bucket`           | Delete a bucket                  |
-| `tigris_list_objects`            | List objects in a bucket         |
-| `tigris_put_object`              | Upload an object from text/data  |
-| `tigris_put_object_from_path`    | Upload a local file              |
-| `tigris_get_object`              | Download an object               |
-| `tigris_delete_object`           | Delete an object                 |
-| `tigris_get_signed_url_object`   | Generate a presigned URL         |
-| `tigris_upload_file_and_get_url` | Upload a file and return its URL |
+authentication via OAuth — no API keys to configure. It exposes tools for
+bucket management, object uploads and downloads, and presigned URL generation.
+The full tool list is in the
+[MCP server repo](https://github.com/tigrisdata/mcp).
 
 For Claude Code, adding the MCP server is one command:
 
@@ -306,27 +314,13 @@ conversation. That's the setup we use internally, and it's the one we recommend.
 
 ## Get started
 
-Install the plugin and point your agent at a real task. Ask it to create a
-bucket for a new project, migrate an S3 bucket, or audit an existing bucket's
-security posture. The skills load automatically — you just describe what you
-need.
-
-```bash
-# Claude Code
-/plugin marketplace add tigrisdata/tigris-agents-plugins
-/plugin install tigris-storage@tigris-agents-plugins
-
-# Add the MCP server for tool access
-claude mcp add --scope user --transport http tigris https://mcp.storage.dev/mcp
-```
-
-:::info Open source
+Install the plugin using the instructions [above](#install-on-claude-code-cursor-and-more), then
+point your agent at a real task — create a bucket, migrate from S3, or audit an
+existing bucket's security posture. The skills load automatically.
 
 The plugin is open source under the MIT license. If you want to add a skill,
 fix something, or adapt it for another agent platform, PRs are welcome:
 [github.com/tigrisdata/tigris-agents-plugins](https://github.com/tigrisdata/tigris-agents-plugins).
-
-:::
 
 <InlineCta
   title="Teach your agent Tigris"
