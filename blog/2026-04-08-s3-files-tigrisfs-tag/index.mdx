@@ -1,0 +1,265 @@
+---
+slug: s3-files-tigrisfs-tag
+title: "AWS built S3 Files. You can build it on any cloud with Tigris."
+description: >
+  AWS S3 Files gives you file system access to S3 buckets, but only on AWS.
+  TigrisFS and TAG give you the same on any cloud.
+image: ./hero-img.webp
+keywords:
+  - object storage
+  - TigrisFS
+  - Tigris Acceleration Gateway
+  - S3 Files
+  - multi-cloud
+  - POSIX
+  - ML training
+authors:
+  - ot
+tags:
+  - Build with Tigris
+  - object storage
+  - tigrisfs
+  - multi-cloud
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+AWS just shipped [S3 Files](https://aws.amazon.com/s3/features/files/), a
+feature that lets you mount S3 buckets as file systems on EC2 instances. POSIX
+semantics, intelligent caching backed by EFS infrastructure, up to 4 TB/s
+aggregate read throughput. It's a real capability solving a real problem: most
+tools that process big data, from ML training pipelines to analytics jobs,
+expect to read from a filesystem, not an API.
+
+The catch is that S3 Files only works with AWS compute, talking to AWS S3,
+running in AWS regions. The moment you need to train on cheaper GPUs somewhere
+else, or serve files closer to users on another continent, or just not be locked
+into one vendor's infrastructure, you're back to writing custom data loading
+code.
+
+You don't have to be. [TigrisFS](https://github.com/tigrisdata/tigrisfs) and the
+[Tigris Acceleration Gateway (TAG)](/blog/training-object-storage) give you the
+same two capabilities — POSIX file system access and intelligent local caching —
+on any cloud, with open source tooling, full S3 compatibility, and no egress
+fees.
+
+{/* truncate */}
+
+## What S3 Files actually solves
+
+S3 Files addresses two problems that have annoyed infrastructure engineers for
+years:
+
+**File system access to object storage.** Your training scripts, shell tools,
+and legacy applications expect to `open()`, `read()`, and `stat()` files. S3
+speaks HTTP. Someone has to translate. S3 Files puts EFS in front of S3 and
+gives you a POSIX mount point.
+
+**Intelligent caching for hot data.** Not every byte in a bucket needs to sit on
+fast storage. S3 Files lazily loads your active working set onto
+high-performance storage and expires unused data after a configurable window
+(1-365 days, defaulting to 30). Small files below a size threshold read directly
+from S3 without touching the cache.
+
+Both are solvable problems. Neither requires proprietary infrastructure.
+
+## Decomposing the problem
+
+S3 Files is two things stitched together:
+
+1. A **FUSE filesystem** that translates POSIX calls into S3 API calls
+2. A **local caching layer** that keeps hot data on fast storage
+
+Those are separable concerns. TigrisFS handles the first. TAG handles the
+second. And because both speak the S3 protocol, they compose: you can run
+TigrisFS pointed at TAG, which caches to local NVMe, which pulls from Tigris.
+
+The same bucket is accessible via the S3 API, the filesystem, or both at the
+same time. No name mangling, no block-level abstraction. An object you `PUT`
+with the API shows up as a file you can `cat`. A file you write to the mount
+shows up as an object you can `GET`. This is in contrast to tools like JuiceFS,
+which break files into blocks and obfuscate the filenames.
+
+Here's what the stack looks like:
+
+```text
+┌─────────────────────────────────────────────┐
+│  Your Application (ML training, analytics)  │
+├─────────────────────────────────────────────┤
+│  POSIX filesystem calls                     │
+├─────────────────────────────────────────────┤
+│  TigrisFS (FUSE)                            │
+│  Translates open/read/write → S3 API calls  │
+├─────────────────────────────────────────────┤
+│  TAG (local NVMe cache)                     │
+│  Serves hot data locally, fetches on miss   │
+├─────────────────────────────────────────────┤
+│  Tigris Object Storage                      │
+│  Globally distributed, S3-compatible        │
+└─────────────────────────────────────────────┘
+```
+
+Compare that to S3 Files, where every layer is an AWS-managed service bound to a
+single cloud. The functional result is the same: your application reads files
+from a mount point, hot data is served from local cache, cold data is pulled on
+demand. The difference is portability.
+
+| Capability                     | S3 Files           | TigrisFS + TAG                                |
+| ------------------------------ | ------------------ | --------------------------------------------- |
+| POSIX file system access       | Yes (EFS)          | Yes (FUSE)                                    |
+| Intelligent local caching      | Yes (EFS infra)    | Yes (TAG, NVMe-backed)                        |
+| Dual access (API + filesystem) | Yes                | Yes, no name mangling                         |
+| Works on any cloud             | No, AWS only       | Yes                                           |
+| Open source client             | No                 | [Yes](https://github.com/tigrisdata/tigrisfs) |
+| Egress fees                    | Standard AWS rates | None                                          |
+
+## Setting it up
+
+### Mount a bucket with TigrisFS
+
+TigrisFS runs on any x86_64 or aarch64 Linux system. Install it with one
+command:
+
+```sh
+curl -sSL https://raw.githubusercontent.com/tigrisdata/tigrisfs/refs/heads/main/install.sh | bash
+```
+
+Or install from a package:
+
+```sh
+# Debian/Ubuntu
+sudo apt install ./tigrisfs-*.deb
+
+# RHEL/Fedora/Rocky
+sudo dnf install ./tigrisfs-*.rpm
+```
+
+Configure your credentials in `/etc/default/tigrisfs`, then mount:
+
+```sh
+mkdir -p /mnt/tigris/training-data
+tigrisfs training-data /mnt/tigris/training-data
+```
+
+Now your bucket is a directory:
+
+```text
+$ ls /mnt/tigris/training-data/
+imagenet/  checkpoints/  configs/
+
+$ cat /mnt/tigris/training-data/configs/hyperparams.yaml
+learning_rate: 0.001
+batch_size: 256
+epochs: 90
+```
+
+Upload an object via the S3 API, and it appears in the filesystem. Write a file
+to the mount, and it appears in the bucket. No extra configuration.
+
+For production workloads, use systemd to manage the mount:
+
+```sh
+sudo systemctl enable --now tigrisfs@training-data.service
+```
+
+Your bucket will be available at `/mnt/tigris/training-data` across reboots.
+
+### Add TAG for local caching
+
+TAG is a local S3-compatible caching service designed for read-heavy workloads
+like ML training. It runs on the same instance as your compute, intercepts S3
+requests, and serves cache hits from local NVMe. On a cache miss, it fetches
+from Tigris and populates the cache for next time.
+
+Start TAG on your training instance:
+
+```sh
+tag --backend https://t3.storage.dev \
+    --cache-dir /mnt/nvme/tag-cache \
+    --listen :8080
+```
+
+Then point TigrisFS at TAG instead of Tigris directly:
+
+```sh
+tigrisfs training-data /mnt/tigris/training-data \
+    --endpoint http://localhost:8080
+```
+
+The first read of any file pulls from Tigris and caches locally. Every
+subsequent read hits NVMe. In benchmarks on a g5.8xlarge instance with 100k JPEG
+images, TAG delivered **5.7x faster warm-cache epoch duration** and cut the
+workers needed to saturate an A10G GPU from 16 to 4.
+
+### The full stack for an ML training job
+
+A production training setup uses both together. Here's what it looks like on a
+fresh GPU instance, on any cloud:
+
+```sh
+# Install TigrisFS
+curl -sSL https://raw.githubusercontent.com/tigrisdata/tigrisfs/refs/heads/main/install.sh | bash
+
+# Start TAG with local NVMe cache
+tag --backend https://t3.storage.dev \
+    --cache-dir /mnt/nvme/tag-cache \
+    --listen :8080 &
+
+# Mount dataset read-only through TAG
+mkdir -p /mnt/tigris/dataset
+tigrisfs my-training-dataset /mnt/tigris/dataset \
+    --endpoint http://localhost:8080 \
+    -o ro
+
+# Mount output bucket directly (no cache needed for writes)
+mkdir -p /mnt/tigris/output
+tigrisfs my-training-output /mnt/tigris/output
+
+# Run training — reads from filesystem, writes checkpoints to filesystem
+python train.py \
+    --data-dir /mnt/tigris/dataset \
+    --checkpoint-dir /mnt/tigris/output/checkpoints
+```
+
+Your training script reads data from `/mnt/tigris/dataset` as if it were a local
+disk. TAG caches the working set on NVMe. Checkpoints write to a separate
+bucket. The same script runs on an AWS g5, an Oracle Cloud A10, or a Hetzner
+bare metal box. Swap the instance, keep the storage.
+
+## Honest tradeoffs
+
+TigrisFS requires Linux and FUSE. If you need filesystem access on macOS or
+Windows, you're using the S3 API directly.
+
+TAG is optimized for read-heavy, multi-epoch workloads. For write-heavy
+pipelines, go through the S3 API.
+
+First-access latency is real. The cache needs to warm up, whether you're using
+TAG or S3 Files. The difference is that TAG's warm-cache performance is
+measurable: random access saturates the GPU at 4 workers instead of 16.
+
+TigrisFS benchmarks at **2,446 MiB/s reads** and **1,279 MiB/s writes** with 8
+threads on a 24-core Oracle Cloud instance (24 Gbps network). At those numbers,
+the bottleneck is the network card, not the filesystem.
+
+## What this gives you
+
+The same POSIX access as S3 Files, the same intelligent caching behavior, but
+portable.
+
+Run training on a cheaper GPU provider this week and a different one next month.
+Serve files from whichever region is closest to your users. Mount the same
+dataset on 50 machines across three clouds. The S3 API is the protocol that
+makes this possible, and when your filesystem client and caching layer both
+speak it, you're not locked into anyone's infrastructure.
+
+S3 Files is AWS acknowledging that file system access to object storage is a
+real need. The tooling to meet that need doesn't have to live behind a single
+cloud provider.
+
+<InlineCta
+  title="Get started with TigrisFS"
+  subtitle="Mount your Tigris buckets as local filesystems on any cloud."
+  button="Read the docs"
+  link="https://www.tigrisdata.com/docs/training/tigrisfs/"
+/>
