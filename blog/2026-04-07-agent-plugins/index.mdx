@@ -82,7 +82,16 @@ The idea is simple: you shouldn't need to look up CLI flags or SDK methods while
 your agent is sitting right there. Install the plugin, and the next time you say
 "set up a bucket for my new project," the agent knows exactly what to do.
 
-![How the plugin connects your agent to Tigris — You prompt the AI agent, the Tigris plugin provides skills, a storage subagent, and security rules, then the agent acts through the CLI or MCP to reach Tigris storage](./plugin-flow.svg)
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import PluginFlowSvg from "./plugin-flow.svg";
+
+<MermaidFrame title="How the plugin connects your agent to Tigris">
+  <PluginFlowSvg
+    role="img"
+    aria-label="You prompt the AI agent, the Tigris plugin provides skills, a storage subagent, and security rules, then the agent acts through the CLI or MCP to reach Tigris storage"
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
 
 ## Five CLI skills, one install
 
