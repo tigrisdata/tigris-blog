@@ -146,7 +146,7 @@ In practice, this means you can say things like:
 The agent loads the buckets skill, runs `tigris mk` with the right flags, then
 calls `tigris buckets set-ttl` with the correct expiry syntax. Or ask it to
 generate a presigned upload URL for a client-side form — the objects skill knows
-the `tigris presign` command, its `--method PUT` flag, and the default expiry.
+the `tigris presign` command, its `--method put` flag, and the default expiry.
 No searching the docs, no guessing at flags.
 
 ## A subagent for multi-step workflows
@@ -237,9 +237,9 @@ Install from the plugin marketplace:
 ### Cursor
 
 Add via **Settings → Rules → Add Rule → Remote Rule (Github)** with
-`tigrisdata/tigris-agents-plugins`. Cursor also picks up the two bundled rules,
-which auto-trigger on TypeScript/JavaScript files and apply security guardrails
-to every conversation.
+`tigrisdata/tigris-agents-plugins`. Cursor also picks up the two bundled
+rules — one applies security guardrails to every conversation, and the other
+auto-triggers on TypeScript/JavaScript files with SDK best practices.
 
 ### Clone for any agent
 
