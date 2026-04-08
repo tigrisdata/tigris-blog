@@ -42,7 +42,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .docusaurus
-          key: docusaurus-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          key:
+            docusaurus-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             docusaurus-${{ hashFiles('package-lock.json') }}-
             docusaurus-
