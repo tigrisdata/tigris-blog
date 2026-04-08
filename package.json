@@ -29,7 +29,6 @@
     "seo:apply:all": "node seo-reviewer.mjs --all --apply"
   },
   "dependencies": {
-    "@akebifiky/remark-simple-plantuml": "^1.0.2",
     "@docusaurus/core": "^3.1.1",
     "@docusaurus/preset-classic": "^3.1.1",
     "@docusaurus/theme-mermaid": "^3.1.1",
@@ -55,7 +54,6 @@
     "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-react": "^7.29.4",
-    "playwright": "^1.57.0",
     "prettier": "2.8.8",
     "typescript": "~5.2.2"
   },
