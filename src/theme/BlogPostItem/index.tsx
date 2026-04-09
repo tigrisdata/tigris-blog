@@ -43,8 +43,9 @@ export default function BlogPostItem({
             alt={metadata.title}
             className={styles.sideCardThumbnail}
             loading="lazy"
-            width={180}
-            height={180}
+            width={220}
+            height={123}
+            sizes="120px"
           />
         </Link>
       )}
