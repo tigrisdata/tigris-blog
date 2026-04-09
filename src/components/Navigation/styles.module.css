@@ -1,6 +1,6 @@
 .title {
-  margin: 0 0 0.35rem;
-  font-size: clamp(2.3rem, 5vw, 3.2rem);
+  margin: 0 0 1.35rem;
+  font-size: clamp(2rem, 5vw, 3.2rem);
   font-weight: 750;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -16,7 +16,7 @@
 }
 
 .container {
-  margin: 1rem 0 0.6rem;
+  margin: 1rem 0 3.1rem;
   text-align: center;
   padding: 0.8rem 1.1rem;
 }
@@ -29,6 +29,14 @@
   color: rgba(230, 245, 255, 0.9);
   position: relative;
   z-index: 1;
+  text-wrap: balance;
+}
+
+@media (min-width: 1355px) {
+  .container p {
+    max-width: none;
+    white-space: nowrap;
+  }
 }
 
 .navigation {
@@ -38,8 +46,18 @@
   justify-content: center;
   gap: 0.45rem;
   padding-bottom: 1.25rem;
-  text-align: center;
-  margin: 0;
+}
+
+@media (min-width: 997px) and (max-width: 1077px) {
+  .navigation {
+    flex-wrap: nowrap;
+  }
+
+  .link {
+    white-space: nowrap;
+    padding: 0.43rem 0.65rem;
+    font-size: 0.85rem;
+  }
 }
 
 .navigationItem {
@@ -73,12 +91,12 @@
 
 @media (max-width: 996px) {
   .title {
-    margin-bottom: 0.45rem;
-    font-size: clamp(1.8rem, 8vw, 2.45rem);
+    margin-bottom: 1.2rem;
+    font-size: clamp(2rem, 8vw, 3.2rem);
   }
 
   .container {
-    margin: 0.6rem 0 0.4rem;
+    margin: 0.6rem 0 2.9rem;
     padding: 0.6rem 0.8rem;
     border-radius: 0.8rem;
   }

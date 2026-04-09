@@ -14,8 +14,8 @@ export default function BlogPostItemContent({
 
   if (!isBlogPostPage && metadata.description) {
     const desc =
-      metadata.description.length > 160
-        ? metadata.description.slice(0, 160).trimEnd() + "…"
+      metadata.description.length > 300
+        ? metadata.description.slice(0, 300).trimEnd() + "…"
         : metadata.description;
     return (
       <div
