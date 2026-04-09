@@ -27,6 +27,8 @@
 .importantMainColumn {
   display: flex;
   height: 100%;
+  padding-right: 1.2rem;
+  border-right: 1px solid rgba(78, 217, 178, 0.25);
 }
 
 .importantNewsSideColumn {
@@ -34,12 +36,18 @@
   flex-direction: column;
   gap: 0.7rem;
   height: 100%;
+  padding-left: 1.2rem;
 }
 
 .importantSideItem {
   flex: 1;
   min-height: 0;
   display: flex;
+  border-bottom: 1px solid rgba(78, 217, 178, 0.2);
+}
+
+.importantSideItem:last-child {
+  border-bottom: none;
 }
 
 .importantMainCard {
@@ -171,9 +179,17 @@
     height: auto;
   }
 
+  .importantMainColumn {
+    border-right: none;
+    padding-right: 0;
+  }
+
   .importantNewsSideColumn {
     margin-top: 0.7rem;
     gap: 0.55rem;
+    padding-left: 0;
+    border-top: 1px solid rgba(78, 217, 178, 0.25);
+    padding-top: 0.7rem;
   }
 
   .importantSideCard {
