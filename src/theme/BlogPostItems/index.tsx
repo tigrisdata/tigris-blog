@@ -122,7 +122,7 @@ export default function BlogPostItems({
           <div className={clsx("row", styles.importantNewsRow)}>
             <div
               className={clsx(
-                "col col--6",
+                "col col--5",
                 styles.col,
                 styles.importantMainColumn
               )}
@@ -135,7 +135,7 @@ export default function BlogPostItems({
             {sideImportantNewsPosts.length > 0 && (
               <div
                 className={clsx(
-                  "col col--6",
+                  "col col--7",
                   styles.col,
                   styles.importantNewsSideColumn
                 )}

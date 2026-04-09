@@ -19,15 +19,16 @@
   display: flex;
   flex-direction: row;
   gap: 0.85rem;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .sideCardThumbnailLink {
   display: block;
-  width: 32%;
+  width: 38%;
   min-width: 7rem;
-  max-width: 10rem;
-  aspect-ratio: 2752 / 1536;
+  max-width: 12rem;
+  height: 100%;
+  align-self: stretch;
   border-radius: 0.55rem;
   overflow: hidden;
   flex: 0 0 auto;
