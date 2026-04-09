@@ -121,11 +121,7 @@ export default function BlogPostItems({
           <h2 className={styles.importantNewsHeading}>Important News</h2>
           <div className={clsx("row", styles.importantNewsRow)}>
             <div
-              className={clsx(
-                "col",
-                styles.col,
-                styles.importantMainColumn
-              )}
+              className={clsx("col", styles.col, styles.importantMainColumn)}
             >
               {renderPost(
                 mainImportantNewsPost,
