@@ -72,17 +72,22 @@ const config = {
     ],
   ],
 
-  plugins: [
-    [
-      "posthog-docusaurus",
-      {
-        apiKey: process.env.NEXT_PUBLIC_POSTHOG_APIKEY,
-        appUrl: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-        opt_in_site_apps: true,
-        enableInDevelopment: process.env.USE_POSTHOG_IN_DEVELOPMENT === "true",
-      },
-    ],
-  ],
+  plugins:
+    process.env.NEXT_PUBLIC_POSTHOG_APIKEY &&
+    process.env.NEXT_PUBLIC_POSTHOG_HOST
+      ? [
+          [
+            "posthog-docusaurus",
+            {
+              apiKey: process.env.NEXT_PUBLIC_POSTHOG_APIKEY,
+              appUrl: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+              opt_in_site_apps: true,
+              enableInDevelopment:
+                process.env.USE_POSTHOG_IN_DEVELOPMENT === "true",
+            },
+          ],
+        ]
+      : [],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
