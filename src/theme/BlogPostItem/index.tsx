@@ -24,7 +24,7 @@ export default function BlogPostItem({
     <BlogPostItemContainer
       className={clsx(
         className,
-        { [styles.item]: !isBlogPostPage },
+        { [styles.item]: !isBlogPostPage && !isFeaturedListCard },
         {
           [styles.importantMainCardLayout]:
             isImportantMainCard && !isBlogPostPage,

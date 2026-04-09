@@ -25,7 +25,8 @@
 .titleImageLink {
   display: block;
   overflow: hidden;
-  border-radius: 0.5rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(78, 217, 178, 0.2);
   margin-bottom: 1rem;
   aspect-ratio: 2752 / 1536;
 }

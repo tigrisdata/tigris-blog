@@ -8,11 +8,23 @@
 
 .tagsBelowTopSection {
   margin-bottom: 0.8rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(78, 217, 178, 0.2);
 }
 
 .importantNewsHeading {
   margin-bottom: 0.7rem;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  background: linear-gradient(
+    100deg,
+    #ecfffb 0%,
+    var(--ifm-color-primary-lightest) 40%,
+    var(--ifm-color-primary-light) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .importantNewsRow {
@@ -26,6 +38,8 @@
 
 .importantMainColumn {
   display: flex;
+  align-items: center;
+  justify-content: center;
   height: 100%;
   padding-right: 1.2rem;
   border-right: 1px solid rgba(78, 217, 178, 0.25);
@@ -58,10 +72,10 @@
   flex-direction: column;
   padding: 0.6rem 0.8rem 0.6rem 0;
   height: auto;
-  border-radius: 0;
+  border-radius: 0.5rem;
   border: 0;
   background: transparent;
-  transition: none;
+  transition: background 0.2s ease;
 }
 
 .importantMainCard h2 {
@@ -71,7 +85,6 @@
 }
 
 .importantMainCard:hover {
-  border-color: transparent;
   background: transparent;
 }
 
@@ -105,10 +118,10 @@
   align-items: stretch;
   overflow: hidden;
   padding: 0.6rem 0.8rem;
-  border-radius: 0;
+  border-radius: 0.5rem;
   border: 0;
   background: transparent;
-  transition: none;
+  transition: background 0.2s ease;
 }
 
 .importantSideCard h2 {
@@ -118,7 +131,6 @@
 }
 
 .importantSideCard:hover {
-  border-color: transparent;
   background: transparent;
 }
 
