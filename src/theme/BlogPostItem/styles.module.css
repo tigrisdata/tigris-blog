@@ -22,15 +22,14 @@
 
 .sideCardThumbnailLink {
   display: block;
-  width: 38%;
-  min-width: 7rem;
-  max-width: 12rem;
-  align-self: stretch;
+  flex: 0 0 45%;
+  max-width: 45%;
+  align-self: center;
   border-radius: 0.55rem;
   border: 1px solid rgba(78, 217, 178, 0.2);
   overflow: hidden;
-  flex: 0 0 auto;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.24);
+  aspect-ratio: 16 / 9;
 }
 
 .sideCardThumbnail {

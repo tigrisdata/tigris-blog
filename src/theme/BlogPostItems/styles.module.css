@@ -98,6 +98,7 @@
   margin-bottom: 1rem;
   border-radius: 0.65rem;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.26);
+  aspect-ratio: 1514 / 998;
 }
 
 .importantMainCard :global(.blog-card-description) {

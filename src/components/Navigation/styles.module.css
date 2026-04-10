@@ -3,7 +3,7 @@
   font-size: clamp(2rem, 5vw, 3.2rem);
   font-weight: 750;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.03em;
   background: linear-gradient(
     100deg,
     #ecfffb 0%,
