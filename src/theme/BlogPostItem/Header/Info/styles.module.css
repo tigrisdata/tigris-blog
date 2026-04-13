@@ -2,5 +2,10 @@
   font-size: 0.9rem;
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.authorNames {
+  color: var(--ifm-color-primary-light);
+  font-weight: 400;
 }

@@ -18,7 +18,7 @@ export default function BlogLayout(props: Props): ReactNode {
     <Layout {...layoutProps}>
       <div className="container margin-vert--lg">
         <div className="row">
-          {isHomePage && <Navigation location={location} />}
+          {isHomePage && <Navigation location={location} showTags={false} />}
           <main
             className={clsx("row", "col", {
               "col--12": !toc,

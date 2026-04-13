@@ -84,7 +84,7 @@ code {
 
   --ifm-global-radius: 0.4rem;
   --ifm-global-shadow-lw: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
-  --ifm-leading-desktop: 1.25;
+  --ifm-leading-desktop: 0.956;
   --ifm-leading: calc(var(--ifm-leading-desktop) * 1rem);
 
   --ifm-navbar-shadow: none;
@@ -1272,4 +1272,51 @@ table td {
   margin-left: auto;
   margin-right: auto;
   width: 100%;
+}
+
+/* Pagination buttons */
+.pagination-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ifm-spacing-horizontal);
+}
+
+.pagination-nav__link {
+  display: inline-block;
+  width: auto;
+  padding: 16px 24px;
+  border: 1px solid transparent;
+  border-radius: calc(var(--ifm-pagination-nav-border-radius) * 1.1);
+  opacity: 0.625;
+  font-weight: 400;
+  transition: all 0.3s ease;
+}
+
+.pagination-nav__link:hover {
+  opacity: 1;
+  border-color: var(--ifm-color-emphasis-300);
+}
+
+.pagination-nav__link--prev {
+  margin-right: auto;
+}
+
+.pagination-nav__link--next {
+  margin-left: auto;
+}
+
+@media (max-width: 996px) {
+  .pagination-nav__link {
+    opacity: 1;
+  }
+}
+
+.pagination-nav__link--prev .pagination-nav__label::before {
+  font-size: 1.15em;
+  margin-right: 4px;
+}
+
+.pagination-nav__link--next .pagination-nav__label::after {
+  font-size: 1.15em;
+  margin-left: 4px;
 }

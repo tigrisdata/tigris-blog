@@ -32,6 +32,7 @@ const config = {
   themes: ["@docusaurus/theme-mermaid"],
 
   clientModules: [
+    require.resolve("./src/util/ensureGtag.js"),
     require.resolve("./src/util/augmentConsoleLinks.js"),
     require.resolve("./src/util/hideNavbarInBlogPost.js"),
   ],
@@ -48,7 +49,7 @@ const config = {
         docs: false,
         blog: {
           routeBasePath: "/",
-          postsPerPage: 9,
+          postsPerPage: 12,
           blogTitle: "Tigris Blog",
           blogDescription: "A blog dedicated to all things storage!",
           blogSidebarTitle: "All our posts",

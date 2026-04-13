@@ -1,5 +1,6 @@
 .title {
   font-size: 1.25rem;
+  text-wrap: balance;
 }
 
 .titleLink {
@@ -25,7 +26,8 @@
 .titleImageLink {
   display: block;
   overflow: hidden;
-  border-radius: 0.5rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(78, 217, 178, 0.2);
   margin-bottom: 1rem;
   aspect-ratio: 2752 / 1536;
 }
@@ -61,6 +63,11 @@
 
 .zoomImage:hover::before {
   left: 100%;
+}
+
+.titleImageLink:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
 }
 
 .titleImageLink:hover .titleImage {
