@@ -5,49 +5,16 @@ import type { Props } from "@theme/BlogPostItems";
 import clsx from "clsx";
 import { useLocation } from "@docusaurus/router";
 import Navigation from "@site/src/components/Navigation/Navigation";
+import tigrisConfig from "@site/tigris.config";
 import styles from "./styles.module.css";
 
 type BlogListItem = Props["items"][number];
 
-function getImportantOrder(item: BlogListItem): number {
-  const frontMatter = item.content.frontMatter as Record<string, unknown>;
-  const order = frontMatter?.important_order;
-  const normalizedOrder =
-    typeof order === "number"
-      ? order
-      : typeof order === "string"
-      ? Number.parseInt(order, 10)
-      : Number.NaN;
-
-  return Number.isNaN(normalizedOrder)
-    ? Number.MAX_SAFE_INTEGER
-    : normalizedOrder;
-}
-
-function isImportantNews(item: BlogListItem): boolean {
-  const frontMatter = item.content.frontMatter as Record<string, unknown>;
-
-  if (!frontMatter) {
-    return false;
-  }
-
-  return (
-    frontMatter.important === true ||
-    frontMatter.important_news === true ||
-    frontMatter.pinned === true ||
-    frontMatter.pinned_news === true ||
-    frontMatter.important_main === true ||
-    frontMatter.pinned_main === true ||
-    typeof frontMatter.important_order === "number" ||
-    typeof frontMatter.important_order === "string"
-  );
-}
-
-function isMainImportantNews(item: BlogListItem): boolean {
-  const frontMatter = item.content.frontMatter as Record<string, unknown>;
-  return (
-    frontMatter?.important_main === true || frontMatter?.pinned_main === true
-  );
+function findItemBySlug(
+  items: BlogListItem[],
+  slug: string
+): BlogListItem | undefined {
+  return items.find(({ content }) => content.metadata.permalink.endsWith(slug));
 }
 
 export default function BlogPostItems({
@@ -67,36 +34,26 @@ export default function BlogPostItems({
     normalizedPathname.startsWith("/blog/page") ||
     normalizedPathname.startsWith("/page/");
   const showCategoryNavigation = isHomePage || isTagPage || isPaginatedBlogPage;
-  const importantNewsPosts = isHomePage
-    ? [...items]
-        .filter(isImportantNews)
-        .sort((a, b) => getImportantOrder(a) - getImportantOrder(b))
+
+  const featuredSlugs: string[] = tigrisConfig.featuredPosts ?? [];
+  const featuredPosts = isHomePage
+    ? featuredSlugs
+        .map((slug) => findItemBySlug(items, slug))
+        .filter((item): item is BlogListItem => item != null)
         .slice(0, 4)
     : [];
 
-  const mainImportantNewsPost =
-    importantNewsPosts.find(isMainImportantNews) ?? importantNewsPosts[0];
+  const mainFeaturedPost = featuredPosts[0];
+  const sideFeaturedPosts = featuredPosts.slice(1, 4);
 
-  const sideImportantNewsPosts = mainImportantNewsPost
-    ? importantNewsPosts
-        .filter(
-          ({ content: BlogPostContent }) =>
-            BlogPostContent.metadata.permalink !==
-            mainImportantNewsPost.content.metadata.permalink
-        )
-        .slice(0, 3)
-    : [];
-
-  const importantNewsPermalinks = new Set(
-    importantNewsPosts.map(
-      ({ content: BlogPostContent }) => BlogPostContent.metadata.permalink
-    )
+  const featuredPermalinks = new Set(
+    featuredPosts.map(({ content }) => content.metadata.permalink)
   );
   const regularGridItems =
-    isHomePage && importantNewsPermalinks.size > 0
+    isHomePage && featuredPermalinks.size > 0
       ? items.filter(
           ({ content: BlogPostContent }) =>
-            !importantNewsPermalinks.has(BlogPostContent.metadata.permalink)
+            !featuredPermalinks.has(BlogPostContent.metadata.permalink)
         )
       : items;
 
@@ -116,7 +73,7 @@ export default function BlogPostItems({
 
   return (
     <>
-      {isHomePage && mainImportantNewsPost && (
+      {isHomePage && mainFeaturedPost && (
         <section className={clsx("col col--12", styles.importantNewsSection)}>
           <h2 className={styles.importantNewsHeading}>Important News</h2>
           <div className={clsx("row", styles.importantNewsRow)}>
@@ -124,11 +81,11 @@ export default function BlogPostItems({
               className={clsx("col", styles.col, styles.importantMainColumn)}
             >
               {renderPost(
-                mainImportantNewsPost,
+                mainFeaturedPost,
                 `${styles.importantMainCard} important-main-card`
               )}
             </div>
-            {sideImportantNewsPosts.length > 0 && (
+            {sideFeaturedPosts.length > 0 && (
               <div
                 className={clsx(
                   "col",
@@ -136,13 +93,13 @@ export default function BlogPostItems({
                   styles.importantNewsSideColumn
                 )}
               >
-                {sideImportantNewsPosts.map((importantNewsPost) => (
+                {sideFeaturedPosts.map((featuredPost) => (
                   <div
-                    key={importantNewsPost.content.metadata.permalink}
+                    key={featuredPost.content.metadata.permalink}
                     className={clsx(styles.col, styles.importantSideItem)}
                   >
                     {renderPost(
-                      importantNewsPost,
+                      featuredPost,
                       `${styles.importantSideCard} important-side-card`
                     )}
                   </div>

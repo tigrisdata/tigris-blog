@@ -11,4 +11,12 @@ module.exports = {
   statusPageUrl: "https://status.tigrisdata.com/",
   getStartedUrl: "https://www.tigrisdata.com/docs/get-started/",
   reportAbuseUrl: "mailto:abuse@tigrisdata.com",
+
+  // First entry is the main hero card; the rest are side cards.
+  featuredPosts: [
+    "/training-object-storage",
+    "/multi-region-dual-region-buckets",
+    "/skill-library",
+    "/partner-integration-api",
+  ],
 };
