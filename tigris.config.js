@@ -15,8 +15,8 @@ module.exports = {
   // First entry is the main hero card; the rest are side cards.
   featuredPosts: [
     "/training-object-storage",
+    "/fifty-agents-one-bucket",
+    "/agent-plugins",
     "/multi-region-dual-region-buckets",
-    "/skill-library",
-    "/partner-integration-api",
   ],
 };
