@@ -103,11 +103,14 @@ happen in constant time, no matter how large the bucket is.
 
 ## One Lance file, two query engines
 
-To manage your context, you should store everything in one
-[Lance file on Tigris](https://www.tigrisdata.com/docs/libraries/lancedb/).
-Lance is an open file format designed for AI workloads. It holds search vectors,
-metadata, and raw files all in one place, so you don't need separate databases
-for each.
+Most agent stacks duplicate data across separate stores: a vector database for
+embeddings, a document store for raw files, a metadata database for labels. Each
+copy multiplies your storage bill. The point of using Lance on Tigris is to
+collapse all of that into a single file so your 50 GB stays 50 GB end to end.
+
+[Lance](https://www.tigrisdata.com/docs/libraries/lancedb/) is an open file
+format designed for AI workloads. It holds search vectors, metadata, and raw
+files all in one place. One file on Tigris, no copies in between.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
   <QueryEngines
@@ -178,11 +181,12 @@ for object storage.
   />
 </MermaidFrame>
 
-Isolation shows up everywhere in agent workloads. Sandboxed execution where the
-agent installs packages, breaks things, and you throw the fork away. Per-tenant
-isolation so no customer's agent touches another's data.
-[Dataset experimentation](/dataset-experimentation) across model versions
-without contamination.
+Agents need isolation more often than you'd expect. One agent might install
+packages and break its environment — with a fork, you throw it away and start
+clean. Another might run
+[experiments across model versions](/dataset-experimentation), and forks keep
+each run from contaminating the others. In multi-tenant setups, forks guarantee
+that no customer's agent can touch another's data.
 
 Cursor and Devin paid engineering teams to build this from scratch. Cursor's
 [checkpoints](https://cursor.com/docs/agent/chat/checkpoints), Devin's
