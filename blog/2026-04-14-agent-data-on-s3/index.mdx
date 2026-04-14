@@ -4,7 +4,7 @@ title: "Fifty agents for the price of one bucket"
 description: >
   O(1) bucket forking on Tigris gives every agent its own sandbox with no data
   duplication. One Lance file, two query engines, globally distributed reads.
-image: ./lance-duckdb.webp
+image: ./hero-image.webp
 keywords:
   - agents
   - bucket forking
@@ -26,7 +26,7 @@ tags:
 import InlineCta from "@site/src/components/InlineCta";
 import MermaidFrame from "@site/src/components/MermaidFrame";
 import QuickSummary from "@site/src/components/QuickSummary";
-import heroImage from "./lance-duckdb.webp";
+import heroImage from "./hero-image.webp";
 import BucketForking from "./bucket-forking.svg";
 import DataPipeline from "./data-pipeline.svg";
 import QueryEngines from "./query-engines.svg";
@@ -35,26 +35,26 @@ import ForkFan from "./fork-fan.svg";
 <img
   src={heroImage}
   className="hero-image"
-  alt="A knight riding a glowing duck, the Lance and DuckDB partnership over Tigris"
+  alt="Fifty agents for the price of one bucket — agent data on Tigris object storage"
 />
 
 <QuickSummary
   readTime="8 min read"
   items={[
     {
-      title: "One Lance file in the bucket:",
+      title: "One file replaces your data stack:",
       description:
-        "Vectors, metadata, and raw files live in a single Lance file on S3-compatible Tigris storage. Query it with LanceDB for vector search or DuckDB for SQL. Both read the same file, no migration needed.",
+        "Vectors, metadata, and raw files go in one Lance file on Tigris. Query with LanceDB for search or DuckDB for SQL. No separate stores to sync.",
     },
     {
-      title: "Instant isolation via bucket forking:",
+      title: "Give every agent its own data:",
       description:
-        "Fork a 50 GB bucket in constant time. Each agent gets its own writable copy without duplicating data. You pay for one copy plus new writes.",
+        "Bucket forking creates a writable copy in constant time with no duplication. Fifty agents, one storage bill.",
     },
     {
-      title: "Free replay via snapshots:",
+      title: "Replay any agent run:",
       description:
-        "Snapshots record a pointer, not a copy. Pin any moment in time and replay exactly what an agent saw, at zero additional storage cost.",
+        "Snapshots capture the exact bucket state at any moment. When an agent misbehaves, pin the version and see what it saw.",
     },
   ]}
 />
