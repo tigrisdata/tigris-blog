@@ -87,7 +87,7 @@ I built an agent like this last month. The agent was 200 lines. The plumbing
 was 2,000. Then I tried to run two in parallel and discovered I'd built one
 agent and a queue.
 
-<MermaidFrame title="The normal stack vs. one bucket on Tigris">
+<MermaidFrame title="The normal stack vs. one bucket on Tigris" style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
   <ArchitectureComparison
     role="img"
     aria-label="Comparison: the normal stack with five separate systems and a reranker, versus a single Lance file on Tigris queried through DuckDB or LanceDB"
@@ -127,7 +127,7 @@ amount of time whether the bucket is 1 MB or 50 GB. The fork shares all the
 underlying bytes with its parent and only diverges as new writes happen.
 Think `git checkout -b`, but for object storage.
 
-<MermaidFrame title="Fifty agents, one copy of the data">
+<MermaidFrame title="Fifty agents, one copy of the data" style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
   <BucketForking
     role="img"
     aria-label="One parent bucket holding 50 GB of shared, immutable blocks, with fifty per-agent forks branching off; each fork has its own writes layered on top while sharing the parent's data"
@@ -184,7 +184,7 @@ designed for AI workloads. It holds search vectors, metadata, and references
 to raw files all in one place, so you don't need separate databases for
 each.
 
-<MermaidFrame title="Write path">
+<MermaidFrame title="Write path" style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
   <DataPipeline
     role="img"
     aria-label="Data flows from raw images and text through a CLIP encoder into a Lance table, which is stored in a Tigris bucket. The only config change from plain S3 is the endpoint."
@@ -196,7 +196,7 @@ Two query engines, [LanceDB](https://www.tigrisdata.com/docs/libraries/lancedb/)
 and [DuckDB](https://www.tigrisdata.com/docs/quickstarts/duckdb/), read the
 same file with no migration between them.
 
-<MermaidFrame title="Read path">
+<MermaidFrame title="Read path" style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
   <QueryEngines
     role="img"
     aria-label="A single Lance file on Tigris serves both LanceDB for hybrid vector and full-text search, and DuckDB for SQL joins, window functions, and aggregation."
