@@ -1,0 +1,277 @@
+---
+slug: fifty-agents-one-bucket
+title: "Fifty agents for the price of one bucket"
+description: >
+  Bucket forking on Tigris gives every agent its own sandbox with no data
+  duplication. One Lance file, two query engines, globally distributed reads.
+image: ./hero-image.webp
+keywords:
+  - agents
+  - bucket forking
+  - object storage
+  - tigris
+  - s3
+  - lancedb
+  - duckdb
+  - agent memory
+authors:
+  - davidmyriel
+tags:
+  - Build with Tigris
+  - agents
+  - lancedb
+  - duckdb
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import QuickSummary from "@site/src/components/QuickSummary";
+import heroImage from "./hero-image.webp";
+import BucketForking from "./bucket-forking.svg";
+import QueryEngines from "./query-engines.svg";
+import ForkFan from "./fork-fan.svg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Fifty agents for the price of one bucket — agent data on Tigris object storage"
+/>
+
+<QuickSummary
+  readTime="8 min read"
+  items={[
+    {
+      title: "One file replaces your data stack:",
+      description:
+        "Vectors, metadata, and raw files go in one Lance file on Tigris. Query with LanceDB for search or DuckDB for SQL. No separate stores to sync.",
+    },
+    {
+      title: "Give every agent its own data:",
+      description:
+        "Bucket forking creates a writable copy in constant time with no duplication. Fifty agents, one storage bill.",
+    },
+    {
+      title: "Replay any agent run:",
+      description:
+        "Snapshots capture the exact bucket state at any moment. When an agent misbehaves, pin the version and see what it saw.",
+    },
+  ]}
+/>
+
+I [forked](/fork-buckets-like-code) a 50 GB bucket on Tigris fifty times.
+
+I was building an eval system, so fifty agents could each evaluate a different
+prompt against the same knowledge base without contaminating each other's
+results.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1rem auto" }}>
+  <ForkFan
+    role="img"
+    aria-label="One Tigris bucket forked into fifty independent agent copies with zero data duplication"
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+Every fork was a fully isolated, writable copy of the dataset, but my storage
+bill stayed at 50 GB because forks share the underlying data. Fifty agents,
+fifty independent views of the world, and
+[no egress fees](https://www.tigrisdata.com/docs/account-management/billing/)
+when they read from it. The isolation was solved. What I still needed was a way
+to query each agent's data and replay what it did.
+
+{/* truncate */}
+
+## Your agent's data can only grow
+
+Agent data grows, it rarely changes, and it gets read more than written.
+Yesterday's conversation turn and last week's tool call stay as they are. If you
+want a different embedding, you generate a new one. The whole stream is an
+[append-only log](/append-only-storage).
+
+[Object storage](https://www.tigrisdata.com/docs/overview/) fits this shape. You
+upload a file (a PUT), you download a file (a GET). No index to maintain, no
+schema to migrate.
+
+Tigris is built on the same principle. Every write is an immutable event, and
+the object store itself is the log. (See
+[our architecture post](/append-only-storage) for internals.) Because nothing is
+ever overwritten, Tigris can do two things that traditional storage can't:
+create an instant copy of a bucket without duplicating any data
+([a fork](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/)), and
+save a point-in-time view of a bucket that you can read later (a snapshot). Both
+happen in constant time, no matter how large the bucket is.
+
+## One Lance file, two query engines
+
+Most agent stacks duplicate data across separate stores: a vector database for
+embeddings, a document store for raw files, a metadata database for labels. Each
+copy multiplies your storage bill. The point of using Lance on Tigris is to
+collapse all of that into a single file so your 50 GB stays 50 GB end to end.
+
+[Lance](https://www.tigrisdata.com/docs/libraries/lancedb/) is an open file
+format designed for AI workloads. It holds search vectors, metadata, and raw
+files all in one place. One file on Tigris, no copies in between.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
+  <QueryEngines
+    role="img"
+    aria-label="A single Lance file on Tigris serves both LanceDB for hybrid vector and full-text search, and DuckDB for SQL joins, window functions, and aggregation."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+[LanceDB](https://www.tigrisdata.com/docs/libraries/lancedb/) and
+[DuckDB](https://www.tigrisdata.com/docs/quickstarts/duckdb/) both run as
+embedded libraries inside the agent process, not as separate servers you
+provision and manage. They read the Lance file directly from Tigris over S3,
+pulling only the columns and row groups each query needs. The data stays on
+storage; the compute runs wherever the agent runs. No database server in
+between, and both engines read the same file with no migration.
+
+Here is how you can run vector search with LanceDB in Python:
+
+```python
+import lancedb
+
+db = lancedb.connect(
+    "s3://my-agent-bucket/memory/",
+    storage_options={"endpoint": "https://fly.storage.tigris.dev", "region": "auto"},
+)
+table = db.open_table("landmarks")
+results = table.search([0.8, 0.7, 0.2]).limit(10).to_pandas()
+```
+
+Extending that to SQL analytics with
+[the Lance × DuckDB extension](https://www.lancedb.com/blog/lance-x-duckdb-sql-retrieval-on-the-multimodal-lakehouse-format):
+
+```sql
+-- Point DuckDB at Tigris
+CREATE SECRET (
+  TYPE LANCE, PROVIDER credential_chain,
+  SCOPE 's3://my-agent-bucket/'
+);
+
+-- Hybrid search: vector + full-text in one SQL query
+SELECT id, title, _hybrid_score
+FROM lance_hybrid_search(
+  's3://my-agent-bucket/memory/landmarks.lance',
+  'vec', [0.8, 0.7, 0.2]::FLOAT[],
+  'text', 'closest landmark to the river',
+  k = 10, alpha = 0.5
+)
+ORDER BY _hybrid_score DESC;
+```
+
+It's simple and minimal. Same Lance file, two engines, no migration.
+
+## Fork a bucket like a Git branch
+
+A fork is a writable copy of a bucket that starts out identical to the original.
+[Forking a bucket](/bucket-forking-deep-dive) on Tigris takes the same amount of
+time whether the bucket is 1 MB or 50 GB. The fork shares all the underlying
+bytes with its parent and only stores new data as writes happen. Fifty forks of
+a 50 GB bucket cost 50 GB of storage, not 2.5 TB. Think `git checkout -b`, but
+for object storage.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
+  <BucketForking
+    role="img"
+    aria-label="One parent bucket holding 50 GB of shared, immutable blocks, with fifty per-agent forks branching off; each fork has its own writes layered on top while sharing the parent's data"
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+Agents need isolation more often than you'd expect. One agent might install
+packages and break its environment — with a fork, you throw it away and start
+clean. Another might run
+[experiments across model versions](/dataset-experimentation), and forks keep
+each run from contaminating the others. In multi-tenant setups, forks guarantee
+that no customer's agent can touch another's data.
+
+Cursor and Devin paid engineering teams to build this from scratch. Cursor's
+[checkpoints](https://cursor.com/docs/agent/chat/checkpoints), Devin's
+[Blockdiff](https://cognition.ai/blog/blockdiff#primer-linux-filesystem-concepts).
+With Tigris it's
+[an API call](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/). The
+same machinery powers
+[how Agentuity built their agent cloud](/case-study-agentuity), running
+per-agent filesystems and sandbox snapshots over forks.
+
+Every agent forks the shared dataset on startup into its own sandbox:
+
+```bash
+# on startup
+npm install -g @tigrisdata/cli
+tigris forks create source-dataset forked-dataset-agent-1
+```
+
+The agent then queries its fork with the same Lance file it would have read from
+the parent — writes land only in the fork, so agents never step on each other:
+
+```sql
+SELECT name, city, country
+FROM 's3://forked-dataset-agent-1/memory/landmarks.lance'
+WHERE country = 'United Kingdom';
+```
+
+{/* prettier-ignore-start */}
+
+:::tip[Fork your first bucket]
+See the [bucket forking API guide](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/) to create a fork in one call.
+:::
+
+{/* prettier-ignore-end */}
+
+## Snapshots make every agent run replayable
+
+The moment you ship an agent, someone asks what it did on Tuesday at 14:32 when
+it told the customer the wrong thing. Answering that question from a single
+versioned bucket is a query, not a forensic dig across separate databases.
+
+A snapshot saves the exact state of a bucket at a specific moment. You can read
+from that snapshot later, even if the bucket has changed since then.
+[Tigris snapshots](/snapshots) record a pointer in the append-only log, not a
+copy of the data, so creating one is instant and adds nothing to your storage
+bill regardless of bucket size.
+
+Take a snapshot before every agent run and every embedding refresh. Answer "what
+was in the agent's memory at step 47?" by pinning a version. One API call, no
+event sourcing harness.
+
+{/* prettier-ignore-start */}
+
+:::tip[Take your first snapshot]
+See the [snapshots API guide](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/) to pin a bucket version in one call.
+:::
+
+{/* prettier-ignore-end */}
+
+## Why this only works on Tigris
+
+Tigris is [S3-compatible](/s3-compat), so every existing tool works unmodified.
+Forking and snapshots take the same amount of time whether your bucket is 10 MB
+or 10 TB. Because Tigris is
+[multi-cloud and globally distributed](/global-replication), your data is
+automatically cached close to wherever your code is running, so agents get
+low-latency access without you managing replicas.
+
+There are
+[no egress fees](https://www.tigrisdata.com/docs/account-management/billing/),
+which matters when agents pull large amounts of context on every run. Tigris
+ships an [MCP server](/hosted-mcp) so agents can list, create, and read buckets
+as a tool call. And if you ever leave, move your data with `aws s3 cp`.
+
+## The whole stack in one bucket
+
+Your data layer becomes an S3 endpoint. Fifty parallel agents share one bucket
+and pay for one copy of the data. Snapshots give you full replay of any agent
+run at zero additional storage cost. Every tool that speaks S3 already works, so
+you keep portability without doing anything extra. Your bill scales with bytes
+stored, not queries per second.
+
+<InlineCta
+  title="Ready to fork your first bucket?"
+  subtitle="One Lance file, fifty agents, zero data duplication. Get started with Tigris object storage."
+  button="Read the docs"
+  link="https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/"
+/>

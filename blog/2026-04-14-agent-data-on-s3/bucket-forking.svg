@@ -1,0 +1,105 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 600 320"
+  width="600"
+  height="320"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .label {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 12px;
+      fill: #bac1be;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .shared {
+      rx: 4;
+      ry: 4;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .writes {
+      rx: 4;
+      ry: 4;
+      fill: rgba(98, 254, 181, 0.12);
+      stroke: rgba(98, 254, 181, 0.4);
+      stroke-width: 1;
+    }
+  </style>
+
+  <text x="300" y="25" text-anchor="middle" class="title">
+    Fifty agents, one copy of the data
+  </text>
+  <text x="300" y="45" text-anchor="middle" class="sub">
+    each fork shares the parent's bytes; you only store new writes
+  </text>
+
+  <!-- Column headers -->
+  <text x="290" y="72" text-anchor="middle" class="sub">
+    shared data (50 GB)
+  </text>
+  <text x="510" y="72" text-anchor="middle" class="sub" fill="#62feb5">
+    new writes
+  </text>
+
+  <!-- Separator -->
+  <line
+    x1="476"
+    y1="78"
+    x2="476"
+    y2="270"
+    stroke="#2a3731"
+    stroke-width="1"
+    stroke-dasharray="3 3"
+  />
+
+  <!-- Agent 1 -->
+  <text x="95" y="104" text-anchor="end" class="small">Agent 1</text>
+  <rect x="105" y="85" width="368" height="28" class="shared" />
+  <rect x="480" y="85" width="30" height="28" class="writes" />
+
+  <!-- Agent 2 -->
+  <text x="95" y="146" text-anchor="end" class="small">Agent 2</text>
+  <rect x="105" y="127" width="368" height="28" class="shared" />
+  <rect x="480" y="127" width="14" height="28" class="writes" />
+
+  <!-- Agent 3 -->
+  <text x="95" y="188" text-anchor="end" class="small">Agent 3</text>
+  <rect x="105" y="169" width="368" height="28" class="shared" />
+  <rect x="480" y="169" width="42" height="28" class="writes" />
+
+  <!-- Ellipsis -->
+  <text x="300" y="225" text-anchor="middle" class="sub">…</text>
+
+  <!-- Agent 50 -->
+  <text x="95" y="258" text-anchor="end" class="small">Agent 50</text>
+  <rect x="105" y="239" width="368" height="28" class="shared" />
+  <rect x="480" y="239" width="22" height="28" class="writes" />
+
+  <!-- Bottom annotations -->
+  <text x="290" y="290" text-anchor="middle" class="sub">← stored once →</text>
+  <text x="510" y="290" text-anchor="middle" class="sub" fill="#62feb5">
+    ← per fork →
+  </text>
+
+  <text x="300" y="312" text-anchor="middle" class="sub">
+    Storage bill: 50 GB + writes, not 50 × 50 GB
+  </text>
+</svg>

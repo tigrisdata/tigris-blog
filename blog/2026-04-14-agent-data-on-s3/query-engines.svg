@@ -1,0 +1,98 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 700 310"
+  width="700"
+  height="310"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .label {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .box {
+      rx: 10;
+      ry: 10;
+      stroke-width: 1.5;
+      fill: #142229;
+      stroke: #2a3731;
+    }
+    .accent {
+      rx: 10;
+      ry: 10;
+      stroke-width: 1.5;
+      fill: #142229;
+      stroke: #62feb5;
+      stroke-opacity: 0.5;
+    }
+    .arrow {
+      stroke: #62feb5;
+      stroke-width: 2;
+      fill: none;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="ah2"
+      markerWidth="8"
+      markerHeight="6"
+      refX="8"
+      refY="3"
+      orient="auto"
+    >
+      <polygon points="0 0, 8 3, 0 6" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <text x="350" y="30" text-anchor="middle" class="title">
+    Read path: two engines, one file, zero migration
+  </text>
+
+  <rect x="240" y="60" width="220" height="68" class="accent" />
+  <text x="350" y="89" text-anchor="middle" class="label" fill="#62feb5">
+    Lance file on Tigris
+  </text>
+  <text x="350" y="109" text-anchor="middle" class="sub">
+    vectors + metadata + raw files
+  </text>
+
+  <rect x="20" y="178" width="220" height="86" class="box" />
+  <text x="130" y="207" text-anchor="middle" class="label">LanceDB</text>
+  <text x="130" y="227" text-anchor="middle" class="sub">
+    hybrid search (vector + FTS)
+  </text>
+  <text x="130" y="245" text-anchor="middle" class="sub">
+    reranking with RRF
+  </text>
+
+  <rect x="460" y="178" width="220" height="86" class="box" />
+  <text x="570" y="207" text-anchor="middle" class="label">DuckDB</text>
+  <text x="570" y="227" text-anchor="middle" class="sub">
+    SQL joins, window functions
+  </text>
+  <text x="570" y="245" text-anchor="middle" class="sub">
+    deduplication, aggregation
+  </text>
+
+  <path d="M285,128 L155,178" class="arrow" marker-end="url(#ah2)" />
+  <path d="M415,128 L545,178" class="arrow" marker-end="url(#ah2)" />
+
+  <text x="350" y="295" text-anchor="middle" class="sub">
+    Both read the same .lance file. Pick the engine that fits your query.
+  </text>
+</svg>

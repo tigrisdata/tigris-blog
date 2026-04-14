@@ -1,0 +1,123 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 720 290"
+  width="720"
+  height="290"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .label {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .box {
+      rx: 10;
+      ry: 10;
+      stroke-width: 1.5;
+      fill: #142229;
+      stroke: #2a3731;
+    }
+    .accent {
+      rx: 10;
+      ry: 10;
+      stroke-width: 1.5;
+      fill: #142229;
+      stroke: #62feb5;
+      stroke-opacity: 0.5;
+    }
+    .arrow {
+      stroke: #62feb5;
+      stroke-width: 2;
+      fill: none;
+    }
+    .config {
+      rx: 10;
+      ry: 10;
+      stroke-width: 1;
+      stroke-dasharray: 5 4;
+      fill: rgba(98, 254, 181, 0.04);
+      stroke: rgba(98, 254, 181, 0.2);
+    }
+    .mono {
+      font-size: 13px;
+      fill: #62feb5;
+      font-family: "Fira Code VF", ui-monospace, monospace;
+    }
+    .mono-sub {
+      font-size: 12px;
+      fill: #94a3b8;
+      font-family: "Fira Code VF", ui-monospace, monospace;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="ah"
+      markerWidth="8"
+      markerHeight="6"
+      refX="8"
+      refY="3"
+      orient="auto"
+    >
+      <polygon points="0 0, 8 3, 0 6" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <text x="360" y="30" text-anchor="middle" class="title">
+    Write path: raw data to one Lance file on Tigris
+  </text>
+
+  <rect x="10" y="65" width="140" height="70" class="box" />
+  <text x="80" y="95" text-anchor="middle" class="label">Raw data</text>
+  <text x="80" y="115" text-anchor="middle" class="sub">
+    images, text, metadata
+  </text>
+
+  <rect x="185" y="65" width="145" height="70" class="box" />
+  <text x="258" y="95" text-anchor="middle" class="label">CLIP encoder</text>
+  <text x="258" y="115" text-anchor="middle" class="sub">
+    generate embeddings
+  </text>
+
+  <rect x="365" y="65" width="145" height="70" class="box" />
+  <text x="438" y="95" text-anchor="middle" class="label">Lance table</text>
+  <text x="438" y="115" text-anchor="middle" class="sub">
+    vectors + metadata + raw files
+  </text>
+
+  <rect x="545" y="55" width="165" height="90" class="accent" />
+  <text x="628" y="88" text-anchor="middle" class="label" fill="#62feb5">
+    Tigris bucket
+  </text>
+  <text x="628" y="110" text-anchor="middle" class="sub">
+    s3://my-agent-bucket/
+  </text>
+  <text x="628" y="130" text-anchor="middle" class="sub">
+    memory/landmarks.lance
+  </text>
+
+  <path d="M150,100 L185,100" class="arrow" marker-end="url(#ah)" />
+  <path d="M330,100 L365,100" class="arrow" marker-end="url(#ah)" />
+  <path d="M510,100 L545,100" class="arrow" marker-end="url(#ah)" />
+
+  <rect x="10" y="185" width="700" height="80" class="config" />
+  <text x="35" y="213" class="sub">Only config change vs. plain S3:</text>
+  <text x="35" y="237" class="mono">
+    "aws_endpoint": "https://fly.storage.tigris.dev"
+  </text>
+  <text x="35" y="255" class="mono-sub">"aws_region": "auto"</text>
+</svg>
