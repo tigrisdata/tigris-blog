@@ -29,7 +29,6 @@ import MermaidFrame from "@site/src/components/MermaidFrame";
 import PullQuote from "@site/src/components/PullQuote";
 import QuickSummary from "@site/src/components/QuickSummary";
 import heroImage from "./lance-duckdb.webp";
-import ArchitectureComparison from "./architecture-comparison.svg";
 import BucketForking from "./bucket-forking.svg";
 import DataPipeline from "./data-pipeline.svg";
 import QueryEngines from "./query-engines.svg";
@@ -44,19 +43,19 @@ import QueryEngines from "./query-engines.svg";
   readTime="8 min read"
   items={[
     {
-      title: "The problem",
+      title: "One file",
       description:
-        "Production agents touch five systems (Postgres, a vector DB, Redis, S3, a logging service) and a sync script to glue them together.",
+        "Store vectors, metadata, and raw files in a single Lance file on Tigris object storage. Query with LanceDB or DuckDB.",
     },
     {
-      title: "The fix",
+      title: "Instant isolation",
       description:
-        "Agent data is append-only. Store it all in one Lance file on Tigris object storage. Query with LanceDB or DuckDB.",
+        "O(1) bucket forking gives every agent its own writable copy of the data. No duplication.",
     },
     {
-      title: "The payoff",
+      title: "Free replay",
       description:
-        "O(1) bucket forking gives every agent its own isolated copy. O(1) snapshots give you full replay. No data duplication.",
+        "O(1) snapshots capture the exact state of a bucket at any moment. Audit any agent run by pinning a version.",
     },
   ]}
 />
@@ -70,32 +69,7 @@ did, paying for it without going broke.
 
 {/* truncate */}
 
-## What it costs to run agents the normal way
-
-Pick any production agent and look at what it touches. A transcript of
-messages. A list of tool calls with arguments and responses. Embeddings for
-whatever it retrieved. Metadata about which documents matched. Generated
-outputs like images, PDFs, code, and audio. A trace you'll want to replay
-when something breaks.
-
-The current advice is to put each of these in a different system. Postgres for
-transcripts. Pinecone for embeddings. Redis for tool caching. S3 for
-artifacts. A logging service for traces. And a Python script that copies data
-between them on a schedule.
-
-I built an agent like this last month. The agent was 200 lines. The plumbing
-was 2,000. Then I tried to run two in parallel and discovered I'd built one
-agent and a queue.
-
-<MermaidFrame title="The normal stack vs. one bucket on Tigris" style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
-  <ArchitectureComparison
-    role="img"
-    aria-label="Comparison: the normal stack with five separate systems and a reranker, versus a single Lance file on Tigris queried through DuckDB or LanceDB"
-    style={{ width: "100%", height: "auto" }}
-  />
-</MermaidFrame>
-
-## The shape that actually fits
+## Agent data is append-only
 
 Agent data has a specific physics. It grows. It rarely changes. It gets read
 more than written. Yesterday's conversation turn won't be edited. Last
@@ -117,6 +91,34 @@ storage can't: create an instant copy of a bucket without duplicating any
 data ([a fork](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/)),
 and save a point-in-time view of a bucket that you can read later (a
 snapshot). Both happen in constant time, no matter how large the bucket is.
+
+## What an agent's data layer actually looks like
+
+The plumbing-free version stores everything in one
+[Lance file on Tigris](/lance-duckdb-tigris). Lance is an open file format
+designed for AI workloads. It holds search vectors, metadata, and references
+to raw files all in one place, so you don't need separate databases for
+each.
+
+<MermaidFrame title="Write path" style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
+  <DataPipeline
+    role="img"
+    aria-label="Data flows from raw images and text through a CLIP encoder into a Lance table, which is stored in a Tigris bucket. The only config change from plain S3 is the endpoint."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+Two query engines, [LanceDB](https://www.tigrisdata.com/docs/libraries/lancedb/)
+and [DuckDB](https://www.tigrisdata.com/docs/quickstarts/duckdb/), read the
+same file with no migration between them.
+
+<MermaidFrame title="Read path" style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
+  <QueryEngines
+    role="img"
+    aria-label="A single Lance file on Tigris serves both LanceDB for hybrid vector and full-text search, and DuckDB for SQL joins, window functions, and aggregation."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
 
 ## Forking: fifty agents, one copy of the data
 
@@ -176,68 +178,24 @@ Snapshot before every agent run. Snapshot before every embedding refresh.
 Answer "what was in the agent's memory at step 47?" by pinning a version.
 Same API, no event sourcing harness, no audit log table.
 
-## What an agent's data layer actually looks like
+## Why Tigris
 
-The plumbing-free version stores everything in one
-[Lance file on Tigris](/lance-duckdb-tigris). Lance is an open file format
-designed for AI workloads. It holds search vectors, metadata, and references
-to raw files all in one place, so you don't need separate databases for
-each.
-
-<MermaidFrame title="Write path" style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
-  <DataPipeline
-    role="img"
-    aria-label="Data flows from raw images and text through a CLIP encoder into a Lance table, which is stored in a Tigris bucket. The only config change from plain S3 is the endpoint."
-    style={{ width: "100%", height: "auto" }}
-  />
-</MermaidFrame>
-
-Two query engines, [LanceDB](https://www.tigrisdata.com/docs/libraries/lancedb/)
-and [DuckDB](https://www.tigrisdata.com/docs/quickstarts/duckdb/), read the
-same file with no migration between them.
-
-<MermaidFrame title="Read path" style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
-  <QueryEngines
-    role="img"
-    aria-label="A single Lance file on Tigris serves both LanceDB for hybrid vector and full-text search, and DuckDB for SQL joins, window functions, and aggregation."
-    style={{ width: "100%", height: "auto" }}
-  />
-</MermaidFrame>
-
-## Why Tigris specifically
-
-You could put Lance files on plain AWS S3. Tigris uses the same S3 API, so
-every existing tool works without changes. But
-[S3 compatibility](/s3-compat) is the floor, not the ceiling.
-
-Forking and snapshots take the same amount of time whether your bucket is
-10 MB or 10 TB. Per-agent isolation and replay fall out of the append-only
-design. Tigris automatically copies your data closer to wherever your code
-is running ([globally distributed](/global-replication) reads), so the
-"object storage is too slow" objection stops applying. There are [no egress fees](https://www.tigrisdata.com/docs/account-management/billing/),
+Tigris is [S3-compatible](/s3-compat), so every existing tool works
+unmodified. Forking and snapshots take the same amount of time whether your
+bucket is 10 MB or 10 TB. Tigris automatically copies your data closer to
+wherever your code is running
+([globally distributed](/global-replication) reads). There are
+[no egress fees](https://www.tigrisdata.com/docs/account-management/billing/),
 which matters when agents pull a lot of context. Tigris ships an
 [MCP server](/hosted-mcp) so agents can list, create, and read buckets as a
-tool call. And it's [just S3 underneath](/s3-any-cloud). Every tool works unmodified.
-If you ever leave, move your data with `aws s3 cp`.
-
-## What you give up
-
-If your agent needs sub-millisecond ANN retrieval at billion-vector scale,
-put a dedicated index (Pinecone, Qdrant) in front for the serving path. And
-if your write pattern is heavily mutable (frequent updates to existing
-records), columnar formats aren't built for that. Use Postgres for mutable
-state.
-
-Most agent workloads are append-only. If yours is, start here.
+tool call. And if you ever leave, move your data with `aws s3 cp`.
 
 ## What you actually get
 
 A 200-line agent that stays 200 lines. Fifty parallel agents for the cost of
-one bucket. Embeddings, traces, artifacts, and metadata in one place. Replay for free because a snapshot is just a pointer, not a copy.
-Portability for free because any tool that speaks S3 already works. A bill that scales with bytes stored, not queries per second.
-
-The vector database industry wants you to believe agent infrastructure is
-complicated. It isn't. Put your bytes on Tigris and get back to building
-the agent.
+one bucket. Embeddings, traces, artifacts, and metadata in one place. Replay
+for free because a snapshot is just a pointer, not a copy. Portability for
+free because any tool that speaks S3 already works. A bill that scales with
+bytes stored, not queries per second.
 
 <InlineCta />
