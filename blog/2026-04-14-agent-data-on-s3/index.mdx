@@ -84,9 +84,9 @@ to query each agent's data and replay what it did.
 ## Your agent's data can only grow
 
 Agent data grows, it rarely changes, and it gets read more than written.
-Yesterday's conversation turn and last week's tool call stay as they are. If
-you want a different embedding, you generate a new one. The whole stream is
-an [append-only log](/append-only-storage).
+Yesterday's conversation turn and last week's tool call stay as they are. If you
+want a different embedding, you generate a new one. The whole stream is an
+[append-only log](/append-only-storage).
 
 [Object storage](https://www.tigrisdata.com/docs/overview/) fits this shape. You
 upload a file (a PUT), you download a file (a GET). No index to maintain, no
@@ -138,7 +138,8 @@ table = db.open_table("landmarks")
 results = table.search([0.8, 0.7, 0.2]).limit(10).to_pandas()
 ```
 
-Extending that to SQL analytics with [the Lance × DuckDB extension](https://www.lancedb.com/blog/lance-x-duckdb-sql-retrieval-on-the-multimodal-lakehouse-format):
+Extending that to SQL analytics with
+[the Lance × DuckDB extension](https://www.lancedb.com/blog/lance-x-duckdb-sql-retrieval-on-the-multimodal-lakehouse-format):
 
 ```sql
 -- Point DuckDB at Tigris
@@ -200,9 +201,8 @@ npm install -g @tigrisdata/cli
 tigris forks create source-dataset forked-dataset-agent-1
 ```
 
-The agent then queries its fork with the same Lance file it would have read
-from the parent — writes land only in the fork, so agents never step on each
-other:
+The agent then queries its fork with the same Lance file it would have read from
+the parent — writes land only in the fork, so agents never step on each other:
 
 ```sql
 SELECT name, city, country
@@ -210,10 +210,13 @@ FROM 's3://forked-dataset-agent-1/memory/landmarks.lance'
 WHERE country = 'United Kingdom';
 ```
 
-{/* prettier-ignore */}
+{/* prettier-ignore-start */}
+
 :::tip[Fork your first bucket]
 See the [bucket forking API guide](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/) to create a fork in one call.
 :::
+
+{/* prettier-ignore-end */}
 
 ## Snapshots make every agent run replayable
 
@@ -231,10 +234,13 @@ Take a snapshot before every agent run and every embedding refresh. Answer "what
 was in the agent's memory at step 47?" by pinning a version. One API call, no
 event sourcing harness.
 
-{/* prettier-ignore */}
+{/* prettier-ignore-start */}
+
 :::tip[Take your first snapshot]
 See the [snapshots API guide](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/) to pin a bucket version in one call.
 :::
+
+{/* prettier-ignore-end */}
 
 ## Why this only works on Tigris
 
