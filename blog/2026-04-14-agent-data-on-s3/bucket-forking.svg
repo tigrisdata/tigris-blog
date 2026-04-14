@@ -1,60 +1,105 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 460" width="650" height="460" style="background: transparent;">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 600 320"
+  width="600"
+  height="320"
+  style="background: transparent"
+>
   <style>
-    text { font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
-    .label { font-size: 14px; fill: #e2e8f0; font-weight: 600; }
-    .small { font-size: 12px; fill: #bac1be; }
-    .title { font-size: 16px; fill: #62feb5; font-weight: 600; }
-    .sub { font-size: 12px; fill: #94a3b8; }
-    .parent { rx: 10; ry: 10; stroke-width: 1.5; fill: #142229; stroke: #62feb5; stroke-opacity: 0.5; }
-    .fork { rx: 10; ry: 10; stroke-width: 1.5; fill: #142229; stroke: #2a3731; }
-    .write { rx: 4; ry: 4; fill: rgba(98,254,181,0.08); stroke: rgba(98,254,181,0.3); stroke-width: 1; }
-    .link { stroke: #62feb5; stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; stroke-opacity: 0.5; }
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .label {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 12px;
+      fill: #bac1be;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .shared {
+      rx: 4;
+      ry: 4;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .writes {
+      rx: 4;
+      ry: 4;
+      fill: rgba(98, 254, 181, 0.12);
+      stroke: rgba(98, 254, 181, 0.4);
+      stroke-width: 1;
+    }
   </style>
 
-  <text x="325" y="32" text-anchor="middle" class="title">Fifty agents, one copy of the data</text>
-  <text x="325" y="52" text-anchor="middle" class="sub">forks share underlying bytes; only writes diverge</text>
+  <text x="300" y="25" text-anchor="middle" class="title">
+    Fifty agents, one copy of the data
+  </text>
+  <text x="300" y="45" text-anchor="middle" class="sub">
+    each fork shares the parent's bytes; you only store new writes
+  </text>
 
-  <rect x="30" y="160" width="190" height="140" class="parent"/>
-  <text x="125" y="215" text-anchor="middle" class="label">Parent bucket</text>
-  <text x="125" y="237" text-anchor="middle" class="sub">50 GB shared data</text>
-  <text x="125" y="257" text-anchor="middle" class="sub">(immutable blocks)</text>
+  <!-- Column headers -->
+  <text x="290" y="72" text-anchor="middle" class="sub">
+    shared data (50 GB)
+  </text>
+  <text x="510" y="72" text-anchor="middle" class="sub" fill="#62feb5">
+    new writes
+  </text>
 
-  <g>
-    <rect x="340" y="76" width="200" height="60" class="fork"/>
-    <text x="385" y="111" class="small">Agent 1 fork</text>
-    <rect x="482" y="90" width="46" height="32" class="write"/>
-    <text x="505" y="111" text-anchor="middle" class="small" fill="#62feb5">+w</text>
-    <path d="M220,200 C270,180 300,120 340,106" class="link"/>
-  </g>
+  <!-- Separator -->
+  <line
+    x1="476"
+    y1="78"
+    x2="476"
+    y2="270"
+    stroke="#2a3731"
+    stroke-width="1"
+    stroke-dasharray="3 3"
+  />
 
-  <g>
-    <rect x="340" y="156" width="200" height="60" class="fork"/>
-    <text x="385" y="191" class="small">Agent 2 fork</text>
-    <rect x="482" y="170" width="46" height="32" class="write"/>
-    <text x="505" y="191" text-anchor="middle" class="small" fill="#62feb5">+w</text>
-    <path d="M220,220 C270,210 300,196 340,186" class="link"/>
-  </g>
+  <!-- Agent 1 -->
+  <text x="95" y="104" text-anchor="end" class="small">Agent 1</text>
+  <rect x="105" y="85" width="368" height="28" class="shared" />
+  <rect x="480" y="85" width="30" height="28" class="writes" />
 
-  <g>
-    <rect x="340" y="236" width="200" height="60" class="fork"/>
-    <text x="385" y="271" class="small">Agent 3 fork</text>
-    <rect x="482" y="250" width="46" height="32" class="write"/>
-    <text x="505" y="271" text-anchor="middle" class="small" fill="#62feb5">+w</text>
-    <path d="M220,240 C270,250 300,260 340,266" class="link"/>
-  </g>
+  <!-- Agent 2 -->
+  <text x="95" y="146" text-anchor="end" class="small">Agent 2</text>
+  <rect x="105" y="127" width="368" height="28" class="shared" />
+  <rect x="480" y="127" width="14" height="28" class="writes" />
 
-  <text x="440" y="332" text-anchor="middle" class="sub">…</text>
+  <!-- Agent 3 -->
+  <text x="95" y="188" text-anchor="end" class="small">Agent 3</text>
+  <rect x="105" y="169" width="368" height="28" class="shared" />
+  <rect x="480" y="169" width="42" height="28" class="writes" />
 
-  <g>
-    <rect x="340" y="356" width="200" height="60" class="fork"/>
-    <text x="385" y="391" class="small">Agent 50 fork</text>
-    <rect x="482" y="370" width="46" height="32" class="write"/>
-    <text x="505" y="391" text-anchor="middle" class="small" fill="#62feb5">+w</text>
-    <path d="M220,260 C270,300 300,360 340,386" class="link"/>
-  </g>
+  <!-- Ellipsis -->
+  <text x="300" y="225" text-anchor="middle" class="sub">…</text>
 
-  <text x="595" y="111" class="sub">writes</text>
-  <text x="595" y="191" class="sub">writes</text>
-  <text x="595" y="271" class="sub">writes</text>
-  <text x="595" y="391" class="sub">writes</text>
+  <!-- Agent 50 -->
+  <text x="95" y="258" text-anchor="end" class="small">Agent 50</text>
+  <rect x="105" y="239" width="368" height="28" class="shared" />
+  <rect x="480" y="239" width="22" height="28" class="writes" />
+
+  <!-- Bottom annotations -->
+  <text x="290" y="290" text-anchor="middle" class="sub">← stored once →</text>
+  <text x="510" y="290" text-anchor="middle" class="sub" fill="#62feb5">
+    ← per fork →
+  </text>
+
+  <text x="300" y="312" text-anchor="middle" class="sub">
+    Storage bill: 50 GB + writes, not 50 × 50 GB
+  </text>
 </svg>

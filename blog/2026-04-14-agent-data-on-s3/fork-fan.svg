@@ -1,0 +1,127 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 650 80"
+  width="650"
+  height="80"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .label {
+      font-size: 13px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 11px;
+      fill: #bac1be;
+    }
+    .sub {
+      font-size: 11px;
+      fill: #94a3b8;
+    }
+    .bucket {
+      rx: 8;
+      ry: 8;
+      stroke-width: 1.5;
+      fill: #142229;
+      stroke: #62feb5;
+      stroke-opacity: 0.5;
+    }
+    .fork {
+      rx: 2;
+      ry: 2;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 0.5;
+    }
+    .arrow {
+      stroke: #62feb5;
+      stroke-width: 1.5;
+      fill: none;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="ah-fan"
+      markerWidth="6"
+      markerHeight="5"
+      refX="6"
+      refY="2.5"
+      orient="auto"
+    >
+      <polygon points="0 0, 6 2.5, 0 5" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <rect x="8" y="8" width="120" height="44" class="bucket" />
+  <text x="68" y="27" text-anchor="middle" class="label">Tigris bucket</text>
+  <text x="68" y="42" text-anchor="middle" class="sub">50 GB</text>
+
+  <path d="M128,30 L166,30" class="arrow" marker-end="url(#ah-fan)" />
+
+  <rect x="175" y="13" width="7" height="34" class="fork" />
+  <rect x="184" y="13" width="7" height="34" class="fork" />
+  <rect x="193" y="13" width="7" height="34" class="fork" />
+  <rect x="202" y="13" width="7" height="34" class="fork" />
+  <rect x="211" y="13" width="7" height="34" class="fork" />
+  <rect x="220" y="13" width="7" height="34" class="fork" />
+  <rect x="229" y="13" width="7" height="34" class="fork" />
+  <rect x="238" y="13" width="7" height="34" class="fork" />
+  <rect x="247" y="13" width="7" height="34" class="fork" />
+  <rect x="256" y="13" width="7" height="34" class="fork" />
+  <rect x="265" y="13" width="7" height="34" class="fork" />
+  <rect x="274" y="13" width="7" height="34" class="fork" />
+  <rect x="283" y="13" width="7" height="34" class="fork" />
+  <rect x="292" y="13" width="7" height="34" class="fork" />
+  <rect x="301" y="13" width="7" height="34" class="fork" />
+  <rect x="310" y="13" width="7" height="34" class="fork" />
+  <rect x="319" y="13" width="7" height="34" class="fork" />
+  <rect x="328" y="13" width="7" height="34" class="fork" />
+  <rect x="337" y="13" width="7" height="34" class="fork" />
+  <rect x="346" y="13" width="7" height="34" class="fork" />
+  <rect x="355" y="13" width="7" height="34" class="fork" />
+  <rect x="364" y="13" width="7" height="34" class="fork" />
+  <rect x="373" y="13" width="7" height="34" class="fork" />
+  <rect x="382" y="13" width="7" height="34" class="fork" />
+  <rect x="391" y="13" width="7" height="34" class="fork" />
+  <rect x="400" y="13" width="7" height="34" class="fork" />
+  <rect x="409" y="13" width="7" height="34" class="fork" />
+  <rect x="418" y="13" width="7" height="34" class="fork" />
+  <rect x="427" y="13" width="7" height="34" class="fork" />
+  <rect x="436" y="13" width="7" height="34" class="fork" />
+  <rect x="445" y="13" width="7" height="34" class="fork" />
+  <rect x="454" y="13" width="7" height="34" class="fork" />
+  <rect x="463" y="13" width="7" height="34" class="fork" />
+  <rect x="472" y="13" width="7" height="34" class="fork" />
+  <rect x="481" y="13" width="7" height="34" class="fork" />
+  <rect x="490" y="13" width="7" height="34" class="fork" />
+  <rect x="499" y="13" width="7" height="34" class="fork" />
+  <rect x="508" y="13" width="7" height="34" class="fork" />
+  <rect x="517" y="13" width="7" height="34" class="fork" />
+  <rect x="526" y="13" width="7" height="34" class="fork" />
+  <rect x="535" y="13" width="7" height="34" class="fork" />
+  <rect x="544" y="13" width="7" height="34" class="fork" />
+  <rect x="553" y="13" width="7" height="34" class="fork" />
+  <rect x="562" y="13" width="7" height="34" class="fork" />
+  <rect x="571" y="13" width="7" height="34" class="fork" />
+  <rect x="580" y="13" width="7" height="34" class="fork" />
+  <rect x="589" y="13" width="7" height="34" class="fork" />
+  <rect x="598" y="13" width="7" height="34" class="fork" />
+  <rect x="607" y="13" width="7" height="34" class="fork" />
+  <rect x="616" y="13" width="7" height="34" class="fork" />
+
+  <text x="178.5" y="60" text-anchor="middle" class="sub">1</text>
+  <text x="187.5" y="60" text-anchor="middle" class="sub">2</text>
+  <text x="196.5" y="60" text-anchor="middle" class="sub">3</text>
+  <text x="208" y="60" text-anchor="middle" class="sub">…</text>
+  <text x="619.5" y="60" text-anchor="middle" class="sub">50</text>
+
+  <text x="400" y="74" text-anchor="middle" class="sub">
+    1 bucket, 50 forks, zero duplication
+  </text>
+</svg>
