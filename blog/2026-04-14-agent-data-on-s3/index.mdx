@@ -28,7 +28,6 @@ import MermaidFrame from "@site/src/components/MermaidFrame";
 import QuickSummary from "@site/src/components/QuickSummary";
 import heroImage from "./hero-image.webp";
 import BucketForking from "./bucket-forking.svg";
-import DataPipeline from "./data-pipeline.svg";
 import QueryEngines from "./query-engines.svg";
 import ForkFan from "./fork-fan.svg";
 
@@ -84,10 +83,10 @@ to query each agent's data and replay what it did.
 
 ## Your agent's data can only grow
 
-However, it rarely changes, and gets read more than written. Yesterday's
-conversation turn and last week's tool call stay as they are. If you want a
-different embedding, you generate a new one. The whole stream is an
-[append-only log](/append-only-storage).
+Agent data grows, it rarely changes, and it gets read more than written.
+Yesterday's conversation turn and last week's tool call stay as they are. If
+you want a different embedding, you generate a new one. The whole stream is
+an [append-only log](/append-only-storage).
 
 [Object storage](https://www.tigrisdata.com/docs/overview/) fits this shape. You
 upload a file (a PUT), you download a file (a GET). No index to maintain, no
@@ -104,7 +103,7 @@ happen in constant time, no matter how large the bucket is.
 
 ## One Lance file, two query engines
 
-Store everything in one
+To manage your context, you should store everything in one
 [Lance file on Tigris](https://www.tigrisdata.com/docs/libraries/lancedb/).
 Lance is an open file format designed for AI workloads. It holds search vectors,
 metadata, and raw files all in one place, so you don't need separate databases
@@ -126,13 +125,40 @@ pulling only the columns and row groups each query needs. The data stays on
 storage; the compute runs wherever the agent runs. No database server in
 between, and both engines read the same file with no migration.
 
-<MermaidFrame style={{ maxWidth: "42rem", margin: "1.75rem auto" }}>
-  <DataPipeline
-    role="img"
-    aria-label="Data flows from raw images and text through a CLIP encoder into a Lance table, which is stored in a Tigris bucket. The only config change from plain S3 is the endpoint."
-    style={{ width: "100%", height: "auto" }}
-  />
-</MermaidFrame>
+Here is how you can run vector search with LanceDB in Python:
+
+```python
+import lancedb
+
+db = lancedb.connect(
+    "s3://my-agent-bucket/memory/",
+    storage_options={"endpoint": "https://fly.storage.tigris.dev", "region": "auto"},
+)
+table = db.open_table("landmarks")
+results = table.search([0.8, 0.7, 0.2]).limit(10).to_pandas()
+```
+
+Extending that to SQL analytics with [the Lance × DuckDB extension](https://www.lancedb.com/blog/lance-x-duckdb-sql-retrieval-on-the-multimodal-lakehouse-format):
+
+```sql
+-- Point DuckDB at Tigris
+CREATE SECRET (
+  TYPE LANCE, PROVIDER credential_chain,
+  SCOPE 's3://my-agent-bucket/'
+);
+
+-- Hybrid search: vector + full-text in one SQL query
+SELECT id, title, _hybrid_score
+FROM lance_hybrid_search(
+  's3://my-agent-bucket/memory/landmarks.lance',
+  'vec', [0.8, 0.7, 0.2]::FLOAT[],
+  'text', 'closest landmark to the river',
+  k = 10, alpha = 0.5
+)
+ORDER BY _hybrid_score DESC;
+```
+
+It's simple and minimal. Same Lance file, two engines, no migration.
 
 ## Fork a bucket like a Git branch
 
@@ -166,9 +192,28 @@ same machinery powers
 [how Agentuity built their agent cloud](/case-study-agentuity), running
 per-agent filesystems and sandbox snapshots over forks.
 
-:::tip[Fork your first bucket] See the
-[bucket forking API guide](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/)
-to create a fork in one call. :::
+Every agent forks the shared dataset on startup into its own sandbox:
+
+```bash
+# on startup
+npm install -g @tigrisdata/cli
+tigris forks create source-dataset forked-dataset-agent-1
+```
+
+The agent then queries its fork with the same Lance file it would have read
+from the parent — writes land only in the fork, so agents never step on each
+other:
+
+```sql
+SELECT name, city, country
+FROM 's3://forked-dataset-agent-1/memory/landmarks.lance'
+WHERE country = 'United Kingdom';
+```
+
+{/* prettier-ignore */}
+:::tip[Fork your first bucket]
+See the [bucket forking API guide](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/) to create a fork in one call.
+:::
 
 ## Snapshots make every agent run replayable
 
@@ -186,9 +231,10 @@ Take a snapshot before every agent run and every embedding refresh. Answer "what
 was in the agent's memory at step 47?" by pinning a version. One API call, no
 event sourcing harness.
 
-:::tip[Take your first snapshot] See the
-[snapshots API guide](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/)
-to pin a bucket version in one call. :::
+{/* prettier-ignore */}
+:::tip[Take your first snapshot]
+See the [snapshots API guide](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/) to pin a bucket version in one call.
+:::
 
 ## Why this only works on Tigris
 
