@@ -32,6 +32,7 @@ const config = {
   themes: ["@docusaurus/theme-mermaid"],
 
   clientModules: [
+    require.resolve("./src/util/ensureGtag.js"),
     require.resolve("./src/util/augmentConsoleLinks.js"),
     require.resolve("./src/util/hideNavbarInBlogPost.js"),
   ],
@@ -48,7 +49,7 @@ const config = {
         docs: false,
         blog: {
           routeBasePath: "/",
-          postsPerPage: 9,
+          postsPerPage: 12,
           blogTitle: "Tigris Blog",
           blogDescription: "A blog dedicated to all things storage!",
           blogSidebarTitle: "All our posts",
@@ -71,17 +72,22 @@ const config = {
     ],
   ],
 
-  plugins: [
-    [
-      "posthog-docusaurus",
-      {
-        apiKey: process.env.NEXT_PUBLIC_POSTHOG_APIKEY,
-        appUrl: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-        opt_in_site_apps: true,
-        enableInDevelopment: process.env.USE_POSTHOG_IN_DEVELOPMENT === "true",
-      },
-    ],
-  ],
+  plugins:
+    process.env.NEXT_PUBLIC_POSTHOG_APIKEY &&
+    process.env.NEXT_PUBLIC_POSTHOG_HOST
+      ? [
+          [
+            "posthog-docusaurus",
+            {
+              apiKey: process.env.NEXT_PUBLIC_POSTHOG_APIKEY,
+              appUrl: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+              opt_in_site_apps: true,
+              enableInDevelopment:
+                process.env.USE_POSTHOG_IN_DEVELOPMENT === "true",
+            },
+          ],
+        ]
+      : [],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */

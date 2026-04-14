@@ -1,14 +1,22 @@
 module.exports = {
-  dashboardUrl: "https://console.tigris.dev/",
-  loginUrl: "https://console.tigris.dev/signin",
-  signUpUrl: "https://console.tigris.dev/signup",
+  dashboardUrl: "https://console.storage.dev/",
+  loginUrl: "https://console.storage.dev/signin",
+  signUpUrl: "https://console.storage.dev/signup",
   earlyAccessUrl: "https://hello.tigrisdata.com/forms/early-access/",
-  consoleUrl: "https://console.tigris.dev/",
+  consoleUrl: "https://console.storage.dev/",
   blogUrl: "https://www.tigrisdata.com/blog/",
   websiteUrl: "https://www.tigrisdata.com",
   discordUrl: "https://community.tigrisdata.com/",
   docsUrl: "https://www.tigrisdata.com/docs",
-  statusPageUrl: "https://status.tigris.dev/",
+  statusPageUrl: "https://status.tigrisdata.com/",
   getStartedUrl: "https://www.tigrisdata.com/docs/get-started/",
   reportAbuseUrl: "mailto:abuse@tigrisdata.com",
+
+  // First entry is the main hero card; the rest are side cards.
+  featuredPosts: [
+    "/training-object-storage",
+    "/multi-region-dual-region-buckets",
+    "/skill-library",
+    "/partner-integration-api",
+  ],
 };
