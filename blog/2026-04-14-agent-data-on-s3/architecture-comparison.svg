@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" height="460" style="background: transparent;">
+  <style>
+    text { font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .label { font-size: 14px; fill: #e2e8f0; font-weight: 600; }
+    .title { font-size: 16px; fill: #62feb5; font-weight: 600; }
+    .sub { font-size: 12px; fill: #94a3b8; }
+    .box { rx: 10; ry: 10; stroke-width: 1.5; fill: #142229; stroke: #2a3731; }
+    .accent { rx: 10; ry: 10; stroke-width: 1.5; fill: #142229; stroke: #62feb5; stroke-opacity: 0.5; }
+    .arrow { stroke: #62feb5; stroke-width: 2; fill: none; }
+    .divider { stroke: #2a3731; stroke-width: 1; stroke-dasharray: 4 4; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <text x="215" y="32" text-anchor="middle" class="title">The normal way</text>
+  <text x="215" y="50" text-anchor="middle" class="sub">five systems, one sync script, hidden complexity</text>
+
+  <rect x="175" y="80" width="80" height="44" class="box"/>
+  <text x="215" y="107" text-anchor="middle" class="label">Query</text>
+
+  <rect x="30" y="174" width="130" height="48" class="box"/>
+  <text x="95" y="203" text-anchor="middle" class="label">Vector DB</text>
+
+  <rect x="170" y="174" width="110" height="48" class="box"/>
+  <text x="225" y="203" text-anchor="middle" class="label">Postgres</text>
+
+  <rect x="290" y="174" width="100" height="48" class="box"/>
+  <text x="340" y="203" text-anchor="middle" class="label">Redis</text>
+
+  <rect x="100" y="240" width="110" height="48" class="box"/>
+  <text x="155" y="269" text-anchor="middle" class="label">S3 (raw)</text>
+
+  <rect x="220" y="240" width="130" height="48" class="box"/>
+  <text x="285" y="269" text-anchor="middle" class="label">Logging svc</text>
+
+  <path d="M215,124 L95,174" class="arrow" marker-end="url(#arrowhead)"/>
+  <path d="M215,124 L225,174" class="arrow" marker-end="url(#arrowhead)"/>
+  <path d="M215,124 L340,174" class="arrow" marker-end="url(#arrowhead)"/>
+  <path d="M215,124 Q170,210 155,240" class="arrow" marker-end="url(#arrowhead)"/>
+  <path d="M215,124 Q260,210 285,240" class="arrow" marker-end="url(#arrowhead)"/>
+
+  <rect x="140" y="326" width="160" height="48" class="box"/>
+  <text x="220" y="355" text-anchor="middle" class="label">Reranker</text>
+
+  <path d="M95,222 Q150,285 200,326" class="arrow" marker-end="url(#arrowhead)"/>
+  <path d="M225,222 L220,326" class="arrow" marker-end="url(#arrowhead)"/>
+  <path d="M340,222 Q280,285 240,326" class="arrow" marker-end="url(#arrowhead)"/>
+  <path d="M155,288 Q180,310 210,326" class="arrow" marker-end="url(#arrowhead)"/>
+  <path d="M285,288 Q255,310 230,326" class="arrow" marker-end="url(#arrowhead)"/>
+
+  <rect x="170" y="400" width="100" height="44" class="box"/>
+  <text x="220" y="427" text-anchor="middle" class="label">Results</text>
+  <path d="M220,374 L220,400" class="arrow" marker-end="url(#arrowhead)"/>
+
+  <line x1="460" y1="20" x2="460" y2="445" class="divider"/>
+
+  <text x="680" y="32" text-anchor="middle" class="title">One bucket on Tigris</text>
+  <text x="680" y="50" text-anchor="middle" class="sub">one engine, one file, no sync</text>
+
+  <rect x="640" y="80" width="80" height="44" class="box"/>
+  <text x="680" y="107" text-anchor="middle" class="label">Query</text>
+
+  <rect x="595" y="174" width="170" height="48" class="accent"/>
+  <text x="680" y="203" text-anchor="middle" class="label" fill="#62feb5">DuckDB / LanceDB</text>
+
+  <rect x="570" y="268" width="220" height="68" class="accent"/>
+  <text x="680" y="295" text-anchor="middle" class="label" fill="#62feb5">Lance file on Tigris</text>
+  <text x="680" y="315" text-anchor="middle" class="sub">vectors + metadata + refs</text>
+
+  <rect x="630" y="400" width="100" height="44" class="box"/>
+  <text x="680" y="427" text-anchor="middle" class="label">Results</text>
+
+  <path d="M680,124 L680,174" class="arrow" marker-end="url(#arrowhead)"/>
+  <path d="M680,222 L680,268" class="arrow" marker-end="url(#arrowhead)"/>
+  <path d="M680,336 L680,400" class="arrow" marker-end="url(#arrowhead)"/>
+</svg>

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" height="460" style="background: transparent;">
+  <style>
+    text { font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .label { font-size: 14px; fill: #e2e8f0; font-weight: 600; }
+    .small { font-size: 12px; fill: #bac1be; }
+    .title { font-size: 16px; fill: #62feb5; font-weight: 600; }
+    .sub { font-size: 12px; fill: #94a3b8; }
+    .parent { rx: 10; ry: 10; stroke-width: 1.5; fill: #142229; stroke: #62feb5; stroke-opacity: 0.5; }
+    .fork { rx: 10; ry: 10; stroke-width: 1.5; fill: #142229; stroke: #2a3731; }
+    .write { rx: 4; ry: 4; fill: rgba(98,254,181,0.08); stroke: rgba(98,254,181,0.3); stroke-width: 1; }
+    .link { stroke: #62feb5; stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; stroke-opacity: 0.5; }
+  </style>
+
+  <text x="450" y="32" text-anchor="middle" class="title">Fifty agents, one copy of the data</text>
+  <text x="450" y="52" text-anchor="middle" class="sub">forks share underlying bytes; only writes diverge</text>
+
+  <rect x="40" y="160" width="200" height="140" class="parent"/>
+  <text x="140" y="215" text-anchor="middle" class="label">Parent bucket</text>
+  <text x="140" y="237" text-anchor="middle" class="sub">50 GB shared data</text>
+  <text x="140" y="257" text-anchor="middle" class="sub">(immutable blocks)</text>
+
+  <g>
+    <rect x="490" y="76" width="220" height="60" class="fork"/>
+    <text x="540" y="111" class="small">Agent 1 fork</text>
+    <rect x="648" y="90" width="50" height="32" class="write"/>
+    <text x="673" y="111" text-anchor="middle" class="small" fill="#62feb5">+w</text>
+    <path d="M240,200 C350,180 410,120 490,106" class="link"/>
+  </g>
+
+  <g>
+    <rect x="490" y="156" width="220" height="60" class="fork"/>
+    <text x="540" y="191" class="small">Agent 2 fork</text>
+    <rect x="648" y="170" width="50" height="32" class="write"/>
+    <text x="673" y="191" text-anchor="middle" class="small" fill="#62feb5">+w</text>
+    <path d="M240,220 C350,210 410,196 490,186" class="link"/>
+  </g>
+
+  <g>
+    <rect x="490" y="236" width="220" height="60" class="fork"/>
+    <text x="540" y="271" class="small">Agent 3 fork</text>
+    <rect x="648" y="250" width="50" height="32" class="write"/>
+    <text x="673" y="271" text-anchor="middle" class="small" fill="#62feb5">+w</text>
+    <path d="M240,240 C350,250 410,260 490,266" class="link"/>
+  </g>
+
+  <text x="600" y="332" text-anchor="middle" class="sub">…</text>
+
+  <g>
+    <rect x="490" y="356" width="220" height="60" class="fork"/>
+    <text x="540" y="391" class="small">Agent 50 fork</text>
+    <rect x="648" y="370" width="50" height="32" class="write"/>
+    <text x="673" y="391" text-anchor="middle" class="small" fill="#62feb5">+w</text>
+    <path d="M240,260 C350,300 410,360 490,386" class="link"/>
+  </g>
+
+  <text x="770" y="111" class="sub">writes</text>
+  <text x="770" y="191" class="sub">writes</text>
+  <text x="770" y="271" class="sub">writes</text>
+  <text x="770" y="391" class="sub">writes</text>
+</svg>
