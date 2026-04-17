@@ -2,7 +2,7 @@
 slug: cache-coherence-antithesis
 title: "How we fixed cache coherence in Tigris with Antithesis"
 description: |
-  Four bugs, one seam. How Tigris used Antithesis to find and fix cache coherence bugs — tombstone barriers, reorder, and a three-layer defense.
+  Four bugs, one seam. How Tigris used Antithesis under fault injection to find and fix cache coherence bugs — tombstone barriers, reorder, three-layer defense.
 image: ./hero-image.webp
 keywords:
   - cache coherence
@@ -79,14 +79,14 @@ hold under fault.
 
 To hit the latency budget, every read goes through a Redis-backed edge cache in
 front of FoundationDB metadata and S3-backed block storage. A cache hit returns
-without ever touching FDB. Speed is exactly what makes reads dangerous. Any
+without ever touching FDB. Speed is what makes reads dangerous. Any
 architecture that places a cache in front of a strongly consistent store is a
 contradiction: the store guarantees that every read after a write reflects the
 latest state, while the cache guarantees that most reads never touch the store.
 Under clean operation, the two stay in sync because invalidations succeed and
 events arrive in order. Under failure, they diverge.
 
-This is the cache coherence problem, named in computer architecture[^mesi] and
+This is the cache coherence problem, first studied in computer architecture[^mesi] and
 inherited by every system that fronts a consistent store with a cache. Facebook
 documented their version in their Memcache paper[^memcache]. Jepsen classifies
 the user-visible symptom — a read returning a value that doesn't reflect a prior
@@ -113,7 +113,7 @@ against real regional gateways, servers, workers, FDB instances, caches, and
 block storage. Tests write in one region and read from another, verifying
 replication and read-after-write consistency end-to-end.
 
-That caught a lot. It did not catch these.
+That caught a lot, but not these.
 
 Two gaps: no fault injection, and scenarios authored by engineers. The first gap
 meant CI only exercised clean paths — stable network, healthy regions,
@@ -128,7 +128,7 @@ Antithesis runs the full system in a deterministic simulator under aggressive
 fault injection, explores the state space autonomously, and lets you replay any
 violation it finds. It's full-system property-based testing with faults.
 
-Porting CI tests over cost work. Integration tests are binary — operations pass
+Porting CI tests over took work. Integration tests are binary — operations pass
 or fail. Under fault there's a third state: ambiguous. A write returns a
 timeout; did it commit or not? A script that reads the timeout as "failure"
 produces false negatives when the object is actually there. So the first job was
@@ -139,13 +139,13 @@ thousands of scenarios, each under a different pattern of injected faults.
 
 On top of the standard Antithesis fault catalog we added regional faults —
 entire regions slowing or going offline, not just individual processes. That's
-where the interesting bugs surface, because losing a region means the
+where the hard bugs surface, because losing a region means the
 replication pipeline, cache layer, and regional servers all go down together,
 and the system has to handle the combination.
 
 Between July 2025 and March 2026 the setup ran 591 workloads, 73,178 virtual
 hours, and explored roughly 20.3 million unique system states across 211,006
-rollouts. Results land in Slack; triage converts into Linear. I review the
+rollouts. Results land in Slack; triage converts into Linear. We review the
 Antithesis runs daily. Antithesis's companion post covers the testing
 methodology and the bug-finding journey in more detail.
 
@@ -242,7 +242,7 @@ This is a last-writer-wins problem[^crdts], and the bug was that we never
 enforced last-writer-wins. Ordering across components that don't share a clock
 is the problem Lamport framed in 1978[^lamport]; in practice, any replication
 layer that accepts events out of order needs an explicit timestamp comparison to
-decide which wins. The fix was exactly that: reject an incoming event whose
+decide which wins. The fix was that: reject an incoming event whose
 `LastModified` is older than the object already present. Newer data always wins,
 regardless of event arrival order.
 
@@ -252,7 +252,7 @@ Under specific failure conditions involving partial regional faults, the read
 path could observe a state that did not reflect a previously acknowledged write.
 The fix tightened the read-path guarantees so the system validates state before
 serving, even under degraded regional conditions. It's the least-bounded of the
-four and a current focus for ongoing testing; a fuller write-up lands with the
+four and a current focus; a fuller write-up lands with the
 next round of component-level tests.
 
 ## The fix: reorder, then barrier
@@ -295,7 +295,7 @@ Reordering closes the race within a single operation. It does not handle the
 case where a stale version arrives later through async replication and tries to
 repopulate the cache. That's what the tombstone barrier is for.
 
-A tombstone is a marker. Instead of simply removing a deleted key from the
+A tombstone is a marker. Instead of removing a deleted key from the
 cache, we replace it with an entry that says "this key was deleted at this
 timestamp." On the read path, a tombstone tells the gateway to return 404
 immediately without going to FDB. On the write path, a tombstone is a gate:
@@ -319,15 +319,15 @@ keys that will never be queried again. The TTL has to outlast any plausible
 replication delay, retry window, or async event that might deliver a stale
 version of the deleted object. Too short and a delayed event clears the barrier
 and re-caches a stale copy; the loop restarts. Getting this right depends on
-worst-case replication lag under failure conditions, which is exactly the kind
-of parameter that's hard to reason about without testing under actual faults. We
-run with five minutes for local objects and longer for remote.
+worst-case replication lag under failure conditions, which is hard to reason
+about without testing under faults. We run with five minutes for local objects
+and longer for remote.
 
 Three alternatives we considered and rejected:
 
 - **ETag check on every cache hit.** Requires an FDB round-trip per read, which
   defeats the cache.
-- **Aggressively shorter TTLs.** Shrinks the window without closing it, and
+- **Shorter TTLs.** Shrinks the window without closing it, and
   costs hit rate across every object to solve a delete-specific problem.
 - **Move the deferred eviction earlier, but still after the FDB delete.**
   Doesn't close the race. A concurrent GET can still win between FDB returning
