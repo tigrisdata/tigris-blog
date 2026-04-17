@@ -75,13 +75,13 @@ against the latest state. Those are the guarantees we sell, and they have to
 hold under fault.
 
 To hit the latency budget, every read goes through the edge cache in front of
-FoundationDB (FDB) metadata and S3-backed block storage. A cache hit returns
-without ever touching FDB. Speed is what makes reads dangerous. Any architecture
-that places a cache in front of a strongly consistent store is a contradiction:
-the store guarantees that every read after a write reflects the latest state,
-while the cache guarantees that most reads never touch the store. Under clean
-operation, the two stay in sync because invalidations succeed and events arrive
-in order. Under failure, they diverge.
+FoundationDB (FDB) metadata and block storage. A cache hit returns without ever
+touching FDB. Speed is what makes reads dangerous. Any architecture that places
+a cache in front of a strongly consistent store is a contradiction: the store
+guarantees that every read after a write reflects the latest state, while the
+cache guarantees that most reads never touch the store. Under clean operation,
+the two stay in sync because invalidations succeed and events arrive in order.
+Under failure, they diverge.
 
 This is the cache coherence problem, first studied in computer
 architecture[^mesi] and inherited by every system that fronts a consistent store
@@ -93,7 +93,7 @@ violation of strong serializability[^jepsen-stale].
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <TwoLayerRead
     role="img"
-    aria-label="Two-layer read path: client to gateway to edge cache, with cache hit returning directly and cache miss going through to FoundationDB and S3 block storage."
+    aria-label="Two-layer read path: client to gateway to edge cache, with cache hit returning directly and cache miss going through to FoundationDB and block storage."
     style={{ width: "100%", height: "auto" }}
   />
 </MermaidFrame>
@@ -108,7 +108,7 @@ Tigris runs a full multi-region deployment in CI, not a single-node mock. Every
 PR spins up the same shape of system we run in production — API gateways, a
 distributed cache layer, worker pools, multiple FoundationDB clusters, and block
 stores spread across regions — and runs integration tests, S3 compatibility
-tests, and Go's race detector against it. Tests write in one region and read
+tests, and a data-race detector against it. Tests write in one region and read
 from another, verifying replication and read-after-write consistency end-to-end.
 
 That caught a lot, but these tests all assumed that the world was in a somewhat
