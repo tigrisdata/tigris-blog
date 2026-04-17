@@ -68,8 +68,6 @@ import ThreeLayerStack from "./three-layer-stack.svg";
 
 {/* truncate */}
 
-## A contradiction, by design
-
 Tigris is an S3-compatible object storage service with strong consistency within
 a region and eventual consistency across regions, with sub-second replication
 lag. A PUT returns; the next GET from the same region returns the object. A
@@ -78,20 +76,20 @@ against the latest state. Those are the guarantees we sell, and they have to
 hold under fault.
 
 To hit the latency budget, every read goes through a Redis-backed edge cache in
-front of FoundationDB metadata and S3-backed block storage. A cache hit returns
-without ever touching FDB. Speed is what makes reads dangerous. Any
+front of FoundationDB (FDB) metadata and S3-backed block storage. A cache hit
+returns without ever touching FDB. Speed is what makes reads dangerous. Any
 architecture that places a cache in front of a strongly consistent store is a
 contradiction: the store guarantees that every read after a write reflects the
 latest state, while the cache guarantees that most reads never touch the store.
 Under clean operation, the two stay in sync because invalidations succeed and
 events arrive in order. Under failure, they diverge.
 
-This is the cache coherence problem, first studied in computer architecture[^mesi] and
-inherited by every system that fronts a consistent store with a cache. Facebook
-documented their version in their Memcache paper[^memcache]. Jepsen classifies
-the user-visible symptom — a read returning a value that doesn't reflect a prior
-completed write — as a stale read, a violation of strong
-serializability[^jepsen-stale].
+This is the cache coherence problem, first studied in computer
+architecture[^mesi] and inherited by every system that fronts a consistent store
+with a cache. Facebook documented their version in their Memcache
+paper[^memcache]. Jepsen classifies the user-visible symptom — a read returning
+a value that doesn't reflect a prior completed write — as a stale read, a
+violation of strong serializability[^jepsen-stale].
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <TwoLayerRead
@@ -113,23 +111,21 @@ against real regional gateways, servers, workers, FDB instances, caches, and
 block storage. Tests write in one region and read from another, verifying
 replication and read-after-write consistency end-to-end.
 
-That caught a lot, but not these.
+That caught a lot, but these tests all assumed that the world was in a somewhat
+healthy state with a stable network, healthy regions, and responsive databases.
+Our test coverage was also limited to what we could imagine could go wrong. The
+failure combinations that produce real consistency bugs such as a region slowing
+mid-replication, a retry arriving out of order, or a blip during an async
+invalidation weren't in the suite because they're combinations of rare issues
+and hard to recreate as deterministic tests.
 
-Two gaps: no fault injection, and scenarios authored by engineers. The first gap
-meant CI only exercised clean paths — stable network, healthy regions,
-responsive databases. The second meant coverage was bounded by what we thought
-to write. The failure combinations that produce real consistency bugs — a region
-slowing mid-replication, a retry arriving out of order, a Redis blip during an
-async invalidation — weren't in the suite because they're combinatorial and hard
-to articulate as tests.
+We chose Antithesis to close these testing gaps. Antithesis runs the full system
+in a deterministic simulator with aggressive fault injection, explores the state
+space autonomously, and lets you replay any violation it finds. It's full-system
+property-based testing with fault injection built in.
 
-We started with Antithesis in July 2025 specifically to close those gaps.
-Antithesis runs the full system in a deterministic simulator under aggressive
-fault injection, explores the state space autonomously, and lets you replay any
-violation it finds. It's full-system property-based testing with faults.
-
-Porting CI tests over took work. Integration tests are binary — operations pass
-or fail. Under fault there's a third state: ambiguous. A write returns a
+Porting our CI tests over took work. Integration tests are binary — operations
+pass or fail. Under fault there's a third state: ambiguous. A write returns a
 timeout; did it commit or not? A script that reads the timeout as "failure"
 produces false negatives when the object is actually there. So the first job was
 refactoring integration tests into fault-tolerant scripts (read, write,
@@ -137,25 +133,26 @@ read-then-write, delete, rename) that reason about all three outcomes. The
 scripts compose: Antithesis orchestrates random sequences across hundreds of
 thousands of scenarios, each under a different pattern of injected faults.
 
-On top of the standard Antithesis fault catalog we added regional faults —
-entire regions slowing or going offline, not just individual processes. That's
-where the hard bugs surface, because losing a region means the
-replication pipeline, cache layer, and regional servers all go down together,
-and the system has to handle the combination.
+On top of the standard Antithesis fault catalog we added regional faults (entire
+regions slowing or going offline) not just individual processes. That's where
+the hard bugs surface. Losing a region means the replication pipeline, cache
+layer, and regional servers all go down together and the system has to handle
+any such combination.
 
 Between July 2025 and March 2026 the setup ran 591 workloads, 73,178 virtual
 hours, and explored roughly 20.3 million unique system states across 211,006
-rollouts. Results land in Slack; triage converts into Linear. We review the
-Antithesis runs daily. Antithesis's companion post covers the testing
-methodology and the bug-finding journey in more detail.
+rollouts. Test results land in Slack and the triage converts into Linear issues
+for us to fix. We review the Antithesis runs daily.
 
 ## Four bugs, one seam
 
-All four bugs Antithesis found share a single shape: a window between a metadata
-operation succeeding in FDB and the edge cache reflecting that change. Under
-normal conditions the window is closed by an invalidation or a deferred cleanup.
-Under fault the window widens, and the cache and the metadata store go out of
-sync.
+Anthesis helped us find four key bugs in Tigris, but all of them share a common
+shape of issue: a window between a metadata operation succeeding in FDB and the
+edge cache reflecting that change. Under normal conditions the window is closed
+by an invalidation or a deferred cleanup. Under fault the window widens, and the
+cache and the metadata store go out of sync. This is the poster child for the
+kinds of issues that only show up in production in ways that we can't easily
+dream up in our test suites.
 
 ### Bug 1: the delete-then-read race
 
@@ -252,8 +249,8 @@ Under specific failure conditions involving partial regional faults, the read
 path could observe a state that did not reflect a previously acknowledged write.
 The fix tightened the read-path guarantees so the system validates state before
 serving, even under degraded regional conditions. It's the least-bounded of the
-four and a current focus; a fuller write-up lands with the
-next round of component-level tests.
+four and a current focus; a fuller write-up lands with the next round of
+component-level tests.
 
 ## The fix: reorder, then barrier
 
@@ -295,10 +292,10 @@ Reordering closes the race within a single operation. It does not handle the
 case where a stale version arrives later through async replication and tries to
 repopulate the cache. That's what the tombstone barrier is for.
 
-A tombstone is a marker. Instead of removing a deleted key from the
-cache, we replace it with an entry that says "this key was deleted at this
-timestamp." On the read path, a tombstone tells the gateway to return 404
-immediately without going to FDB. On the write path, a tombstone is a gate:
+A tombstone is a marker. Instead of removing a deleted key from the cache, we
+replace it with an entry that says "this key was deleted at this timestamp." On
+the read path, a tombstone tells the gateway to return 404 immediately without
+going to FDB. On the write path, a tombstone is a gate:
 
 ```
 on cache_write(key, object):
@@ -327,8 +324,8 @@ Three alternatives we considered and rejected:
 
 - **ETag check on every cache hit.** Requires an FDB round-trip per read, which
   defeats the cache.
-- **Shorter TTLs.** Shrinks the window without closing it, and
-  costs hit rate across every object to solve a delete-specific problem.
+- **Shorter TTLs.** Shrinks the window without closing it, and costs hit rate
+  across every object to solve a delete-specific problem.
 - **Move the deferred eviction earlier, but still after the FDB delete.**
   Doesn't close the race. A concurrent GET can still win between FDB returning
   and the eviction executing.
