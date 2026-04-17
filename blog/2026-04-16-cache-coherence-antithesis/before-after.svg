@@ -1,0 +1,73 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 760 400"
+  width="760"
+  height="400"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title { font-size: 15px; fill: #62feb5; font-weight: 600; }
+    .sub { font-size: 12px; fill: #94a3b8; }
+    .section { font-size: 14px; font-weight: 600; }
+    .small { font-size: 12px; fill: #bac1be; }
+    .step { rx: 4; ry: 4; fill: #1a2e35; stroke: #2a4050; stroke-width: 1; }
+    .danger { rx: 4; ry: 4; fill: rgba(207, 91, 91, 0.12); stroke: rgba(207, 91, 91, 0.5); stroke-width: 1.5; }
+    .safe { rx: 4; ry: 4; fill: rgba(98, 254, 181, 0.10); stroke: rgba(98, 254, 181, 0.5); stroke-width: 1.5; }
+    .coral { fill: #cf5b5b; }
+    .green { fill: #62feb5; }
+  </style>
+
+  <text x="380" y="25" text-anchor="middle" class="title">Reorder closes the race</text>
+
+  <!-- BEFORE column -->
+  <text x="190" y="60" text-anchor="middle" class="section coral">Before</text>
+  <text x="190" y="78" text-anchor="middle" class="sub">FDB delete first, cache evicted later</text>
+
+  <rect x="80" y="95" width="220" height="30" class="step" />
+  <text x="190" y="114" text-anchor="middle" class="small">1. acquire key lock</text>
+
+  <rect x="80" y="130" width="220" height="30" class="step" />
+  <text x="190" y="149" text-anchor="middle" class="small">2. delete from FDB</text>
+
+  <rect x="80" y="165" width="220" height="30" class="danger" />
+  <text x="190" y="184" text-anchor="middle" class="small coral">← race window →</text>
+
+  <rect x="80" y="200" width="220" height="30" class="step" />
+  <text x="190" y="219" text-anchor="middle" class="small">3. (deferred) evict cache</text>
+
+  <rect x="80" y="235" width="220" height="30" class="step" />
+  <text x="190" y="254" text-anchor="middle" class="small">4. (deferred) write tombstone</text>
+
+  <rect x="80" y="270" width="220" height="30" class="step" />
+  <text x="190" y="289" text-anchor="middle" class="small">5. release lock</text>
+
+  <text x="190" y="325" text-anchor="middle" class="small coral">concurrent GET can win between step 2 and step 3</text>
+
+  <!-- Divider -->
+  <line x1="380" y1="60" x2="380" y2="340" stroke="#2a4050" stroke-width="1" stroke-dasharray="3 3" />
+
+  <!-- AFTER column -->
+  <text x="570" y="60" text-anchor="middle" class="section green">After</text>
+  <text x="570" y="78" text-anchor="middle" class="sub">evict under lock, then FDB delete</text>
+
+  <rect x="460" y="95" width="220" height="30" class="step" />
+  <text x="570" y="114" text-anchor="middle" class="small">1. acquire key lock</text>
+
+  <rect x="460" y="130" width="220" height="30" class="safe" />
+  <text x="570" y="149" text-anchor="middle" class="small green">2. evict cache (under lock)</text>
+
+  <rect x="460" y="165" width="220" height="30" class="step" />
+  <text x="570" y="184" text-anchor="middle" class="small">3. delete from FDB</text>
+
+  <rect x="460" y="200" width="220" height="30" class="step" />
+  <text x="570" y="219" text-anchor="middle" class="small">4. (deferred) evict + tombstone</text>
+
+  <rect x="460" y="235" width="220" height="30" class="step" />
+  <text x="570" y="254" text-anchor="middle" class="small">5. release lock</text>
+
+  <text x="570" y="325" text-anchor="middle" class="small green">lock held, cache already evicted — no window</text>
+</svg>
