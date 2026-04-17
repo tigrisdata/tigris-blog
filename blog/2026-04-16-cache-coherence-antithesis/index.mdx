@@ -26,6 +26,7 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import QuickSummary from "@site/src/components/QuickSummary";
+import MermaidFrame from "@site/src/components/MermaidFrame";
 import heroimage from "./hero-image.webp";
 import TwoLayerRead from "./two-layer-read.svg";
 import DeleteRace from "./delete-race.svg";
@@ -92,10 +93,13 @@ the user-visible symptom — a read returning a value that doesn't reflect a pri
 completed write — as a stale read, a violation of strong
 serializability[^jepsen-stale].
 
-<TwoLayerRead
-  role="img"
-  aria-label="Two-layer read path: client to gateway to Redis edge cache, with cache hit returning directly and cache miss going through to FoundationDB and S3 block storage."
-/>
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <TwoLayerRead
+    role="img"
+    aria-label="Two-layer read path: client to gateway to Redis edge cache, with cache hit returning directly and cache miss going through to FoundationDB and S3 block storage."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
 
 Antithesis[^antithesis] found four manifestations of this divergence in
 production code paths that CI exercised on every PR. Each one is a different
@@ -199,10 +203,13 @@ the deleted object. No engineer would have written that test, because no
 engineer would have thought to test a millisecond-wide interleaving between two
 steps of the same operation.
 
-<DeleteRace
-  role="img"
-  aria-label="Two timelines showing the delete-then-read race. Request A deletes: lock, FDB delete, gap, deferred evict, unlock. Request B issues a concurrent GET that arrives during the gap and hits the edge cache, returning 200 with the deleted object body."
-/>
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <DeleteRace
+    role="img"
+    aria-label="Two timelines showing the delete-then-read race. Request A deletes: lock, FDB delete, gap, deferred evict, unlock. Request B issues a concurrent GET that arrives during the gap and hits the edge cache, returning 200 with the deleted object body."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
 
 ### Bug 2: rename treating cache invalidation as a hard dependency
 
@@ -274,10 +281,13 @@ the cache eviction fails — would mean a Redis blip blocks every delete, which 
 strictly worse than a brief window of stale cache bounded by TTL. FDB is the
 authoritative operation; the cache is a performance optimization.
 
-<BeforeAfter
-  role="img"
-  aria-label="Side-by-side comparison of the delete path. Before: lock, FDB delete, race window, deferred evict, deferred tombstone, unlock. After: lock, evict cache under lock, FDB delete, deferred evict plus tombstone, unlock. No race window after the reorder."
-/>
+<MermaidFrame style={{ maxWidth: "46rem", margin: "1.5rem auto" }}>
+  <BeforeAfter
+    role="img"
+    aria-label="Side-by-side comparison of the delete path. Before: lock, FDB delete, race window, deferred evict, deferred tombstone, unlock. After: lock, evict cache under lock, FDB delete, deferred evict plus tombstone, unlock. No race window after the reorder."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
 
 ### Barrier
 
@@ -323,10 +333,13 @@ Three alternatives we considered and rejected:
   Doesn't close the race. A concurrent GET can still win between FDB returning
   and the eviction executing.
 
-<TombstoneBarrier
-  role="img"
-  aria-label="Tombstone barrier diagram. Three sources — read-through populate, async replication from a follower region, and retry of a delayed event — all pass through a timestamp check before the edge cache. If the incoming object is older than the tombstone, the write is rejected. Otherwise, it is written to the cache."
-/>
+<MermaidFrame style={{ maxWidth: "46rem", margin: "1.5rem auto" }}>
+  <TombstoneBarrier
+    role="img"
+    aria-label="Tombstone barrier diagram. Three sources — read-through populate, async replication from a follower region, and retry of a delayed event — all pass through a timestamp check before the edge cache. If the incoming object is older than the tombstone, the write is rejected. Otherwise, it is written to the cache."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
 
 The barrier is source-agnostic, failure-tolerant, and applies to every write
 path — not just deletes. Renames, overwrites, any mutation that writes a
@@ -358,10 +371,13 @@ layer catches a class of failure the one above cannot:
   consistency[^spanner]; the mechanism is different but the requirement is the
   same.
 
-<ThreeLayerStack
-  role="img"
-  aria-label="Three-layer vertical stack. Top layer: write path with eager invalidation. Middle layer: read path with tombstone barriers. Bottom layer: replication boundary with timestamp ordering. An arrow on the left labeled failure modes shows each layer catches what the one above misses."
-/>
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <ThreeLayerStack
+    role="img"
+    aria-label="Three-layer vertical stack. Top layer: write path with eager invalidation. Middle layer: read path with tombstone barriers. Bottom layer: replication boundary with timestamp ordering. An arrow on the left labeled failure modes shows each layer catches what the one above misses."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
 
 Each layer individually was already in the system. Each layer individually
 passed its tests. What we audited, and what the fixes apply to, is every code
