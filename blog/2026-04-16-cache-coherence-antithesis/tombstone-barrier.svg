@@ -1,8 +1,8 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 760 380"
-  width="760"
-  height="380"
+  viewBox="0 0 800 400"
+  width="800"
+  height="400"
   style="background: transparent"
 >
   <style>
@@ -15,58 +15,67 @@
     .label { font-size: 13px; fill: #e2e8f0; font-weight: 600; }
     .small { font-size: 12px; fill: #bac1be; }
     .source { rx: 6; ry: 6; fill: #1a2e35; stroke: #2a4050; stroke-width: 1.5; }
-    .gate { rx: 6; ry: 6; fill: rgba(98, 254, 181, 0.12); stroke: rgba(98, 254, 181, 0.6); stroke-width: 2; }
+    .gate { rx: 6; ry: 6; fill: rgba(98, 254, 181, 0.10); stroke: rgba(98, 254, 181, 0.6); stroke-width: 2; }
     .cache { rx: 6; ry: 6; fill: #1a2e35; stroke: #62feb5; stroke-width: 1.5; }
+    .drop { rx: 6; ry: 6; fill: rgba(207, 91, 91, 0.10); stroke: rgba(207, 91, 91, 0.6); stroke-width: 1.5; stroke-dasharray: 5 4; }
     .coral { fill: #cf5b5b; }
     .green { fill: #62feb5; }
   </style>
 
-  <text x="380" y="25" text-anchor="middle" class="title">Tombstone barrier</text>
-  <text x="380" y="45" text-anchor="middle" class="sub">every cache write passes through a timestamp check, regardless of source</text>
-
-  <!-- Three sources -->
-  <rect x="30" y="80" width="180" height="50" class="source" />
-  <text x="120" y="100" text-anchor="middle" class="label">Read-through</text>
-  <text x="120" y="118" text-anchor="middle" class="small">normal populate on miss</text>
-
-  <rect x="30" y="165" width="180" height="50" class="source" />
-  <text x="120" y="185" text-anchor="middle" class="label">Async replication</text>
-  <text x="120" y="203" text-anchor="middle" class="small">from a follower region</text>
-
-  <rect x="30" y="250" width="180" height="50" class="source" />
-  <text x="120" y="270" text-anchor="middle" class="label">Retry</text>
-  <text x="120" y="288" text-anchor="middle" class="small">delayed event delivery</text>
-
-  <!-- Barrier gate -->
-  <rect x="300" y="140" width="180" height="120" class="gate" />
-  <text x="390" y="170" text-anchor="middle" class="label" fill="#62feb5">Tombstone check</text>
-  <text x="390" y="196" text-anchor="middle" class="small">obj.LastModified</text>
-  <text x="390" y="214" text-anchor="middle" class="small">&gt; tombstone_ts ?</text>
-  <text x="390" y="244" text-anchor="middle" class="small green">yes → write</text>
-
-  <!-- Cache -->
-  <rect x="570" y="165" width="160" height="65" class="cache" />
-  <text x="650" y="192" text-anchor="middle" class="label">Edge cache</text>
-  <text x="650" y="212" text-anchor="middle" class="small">only fresh writes land</text>
-
-  <!-- Rejected -->
-  <text x="390" y="300" text-anchor="middle" class="small coral">no → reject (stale)</text>
-  <line x1="390" y1="310" x2="390" y2="340" stroke="#cf5b5b" stroke-width="1.5" stroke-dasharray="4 3" />
-  <text x="390" y="356" text-anchor="middle" class="small coral">dropped</text>
-
-  <!-- Arrows from sources into gate -->
   <defs>
-    <marker id="arrNorm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <marker id="arrGrey2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
       <path d="M0,0 L10,5 L0,10 Z" fill="#94a3b8" />
     </marker>
-    <marker id="arrGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <marker id="arrGreen2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
       <path d="M0,0 L10,5 L0,10 Z" fill="#62feb5" />
+    </marker>
+    <marker id="arrCoral2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#cf5b5b" />
     </marker>
   </defs>
 
-  <line x1="210" y1="105" x2="300" y2="180" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrNorm)" />
-  <line x1="210" y1="190" x2="300" y2="200" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrNorm)" />
-  <line x1="210" y1="275" x2="300" y2="220" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrNorm)" />
+  <text x="400" y="28" text-anchor="middle" class="title">Tombstone barrier</text>
+  <text x="400" y="50" text-anchor="middle" class="sub">every cache write passes through a timestamp check, regardless of source</text>
 
-  <line x1="480" y1="200" x2="570" y2="197" stroke="#62feb5" stroke-width="1.5" marker-end="url(#arrGreen)" />
+  <!-- Three sources on the left -->
+  <rect x="30" y="90" width="190" height="54" class="source" />
+  <text x="125" y="112" text-anchor="middle" class="label">Read-through</text>
+  <text x="125" y="130" text-anchor="middle" class="small">normal populate on miss</text>
+
+  <rect x="30" y="170" width="190" height="54" class="source" />
+  <text x="125" y="192" text-anchor="middle" class="label">Async replication</text>
+  <text x="125" y="210" text-anchor="middle" class="small">from a follower region</text>
+
+  <rect x="30" y="250" width="190" height="54" class="source" />
+  <text x="125" y="272" text-anchor="middle" class="label">Retry</text>
+  <text x="125" y="290" text-anchor="middle" class="small">delayed event delivery</text>
+
+  <!-- Barrier gate in the middle -->
+  <rect x="320" y="150" width="200" height="100" class="gate" />
+  <text x="420" y="178" text-anchor="middle" class="label" fill="#62feb5">Tombstone check</text>
+  <text x="420" y="202" text-anchor="middle" class="small">obj.LastModified &gt;</text>
+  <text x="420" y="218" text-anchor="middle" class="small">tombstone_ts ?</text>
+
+  <!-- Edge cache on the right -->
+  <rect x="600" y="165" width="170" height="70" class="cache" />
+  <text x="685" y="192" text-anchor="middle" class="label">Edge cache</text>
+  <text x="685" y="212" text-anchor="middle" class="small">only fresh writes land</text>
+
+  <!-- Drop sink below the gate -->
+  <rect x="350" y="310" width="140" height="50" class="drop" />
+  <text x="420" y="332" text-anchor="middle" class="label" fill="#cf5b5b">Dropped</text>
+  <text x="420" y="350" text-anchor="middle" class="small coral">stale, not cached</text>
+
+  <!-- Arrows from sources into gate -->
+  <line x1="220" y1="117" x2="318" y2="175" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrGrey2)" />
+  <line x1="220" y1="197" x2="318" y2="200" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrGrey2)" />
+  <line x1="220" y1="277" x2="318" y2="225" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrGrey2)" />
+
+  <!-- Gate → Edge cache (pass, green) -->
+  <line x1="520" y1="200" x2="598" y2="200" stroke="#62feb5" stroke-width="1.8" marker-end="url(#arrGreen2)" />
+  <text x="559" y="190" text-anchor="middle" class="small green">pass</text>
+
+  <!-- Gate → Dropped (reject, coral) -->
+  <line x1="420" y1="250" x2="420" y2="308" stroke="#cf5b5b" stroke-width="1.8" marker-end="url(#arrCoral2)" />
+  <text x="444" y="283" text-anchor="start" class="small coral">reject</text>
 </svg>
