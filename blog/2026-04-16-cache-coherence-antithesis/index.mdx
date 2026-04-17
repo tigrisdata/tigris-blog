@@ -13,7 +13,6 @@ keywords:
   - strong serializability
   - object storage
   - FoundationDB
-  - Redis
   - Tigris
 authors:
   - adil
@@ -75,14 +74,14 @@ DELETE returns; the next GET returns 404. Conditional operations evaluate
 against the latest state. Those are the guarantees we sell, and they have to
 hold under fault.
 
-To hit the latency budget, every read goes through a Redis-backed edge cache in
-front of FoundationDB (FDB) metadata and S3-backed block storage. A cache hit
-returns without ever touching FDB. Speed is what makes reads dangerous. Any
-architecture that places a cache in front of a strongly consistent store is a
-contradiction: the store guarantees that every read after a write reflects the
-latest state, while the cache guarantees that most reads never touch the store.
-Under clean operation, the two stay in sync because invalidations succeed and
-events arrive in order. Under failure, they diverge.
+To hit the latency budget, every read goes through the edge cache in front of
+FoundationDB (FDB) metadata and S3-backed block storage. A cache hit returns
+without ever touching FDB. Speed is what makes reads dangerous. Any architecture
+that places a cache in front of a strongly consistent store is a contradiction:
+the store guarantees that every read after a write reflects the latest state,
+while the cache guarantees that most reads never touch the store. Under clean
+operation, the two stay in sync because invalidations succeed and events arrive
+in order. Under failure, they diverge.
 
 This is the cache coherence problem, first studied in computer
 architecture[^mesi] and inherited by every system that fronts a consistent store
@@ -94,7 +93,7 @@ violation of strong serializability[^jepsen-stale].
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <TwoLayerRead
     role="img"
-    aria-label="Two-layer read path: client to gateway to Redis edge cache, with cache hit returning directly and cache miss going through to FoundationDB and S3 block storage."
+    aria-label="Two-layer read path: client to gateway to edge cache, with cache hit returning directly and cache miss going through to FoundationDB and S3 block storage."
     style={{ width: "100%", height: "auto" }}
   />
 </MermaidFrame>
@@ -105,11 +104,12 @@ angle on the same seam.
 
 ## What we were testing before, and what we weren't
 
-Tigris runs a full three-region cluster in CI — not a single-cluster mock. Every
-PR exercises integration tests, S3 compatibility tests, and Go's race detector,
-against real regional gateways, servers, workers, FDB instances, caches, and
-block storage. Tests write in one region and read from another, verifying
-replication and read-after-write consistency end-to-end.
+Tigris runs a full multi-region deployment in CI, not a single-node mock. Every
+PR spins up the same shape of system we run in production — API gateways, a
+distributed cache layer, worker pools, multiple FoundationDB clusters, and block
+stores spread across regions — and runs integration tests, S3 compatibility
+tests, and Go's race detector against it. Tests write in one region and read
+from another, verifying replication and read-after-write consistency end-to-end.
 
 That caught a lot, but these tests all assumed that the world was in a somewhat
 healthy state with a stable network, healthy regions, and responsive databases.
@@ -216,14 +216,14 @@ replicate metadata to all regions, invalidate caches for the old key in every
 region.
 
 The old code treated the cache invalidation for the old key as a hard
-requirement for the rename to succeed. A transient Redis failure caused the
+requirement for the rename to succeed. A transient cache failure caused the
 invalidation to fail, which caused the rename to be reported as failed, which
 triggered a rollback path on an operation that had already committed in FDB. A
 best-effort downstream step was taking down a durable upstream operation.
 
 The fix is structural: decouple the two. Rename succeeds when the FDB
 transaction commits. Cache invalidation follows asynchronously. A transient
-Redis failure can't block a durable metadata operation; the tombstone barrier on
+cache failure can't block a durable metadata operation; the tombstone barrier on
 the read path (below) handles the possibility of a stale cache hit in the
 interim.
 
@@ -271,10 +271,10 @@ delete(key):
 ```
 
 The lock prevents a concurrent read from repopulating the cache during the
-window. We swallow the eviction error on purpose: if Redis is temporarily
+window. We swallow the eviction error on purpose: if the cache is temporarily
 unreachable, the FDB delete still proceeds. The deferred eviction and tombstone
 still run afterward as defense in depth. The alternative — fail the delete if
-the cache eviction fails — would mean a Redis blip blocks every delete, which is
+the cache eviction fails — would mean a cache blip blocks every delete, which is
 strictly worse than a brief window of stale cache bounded by TTL. FDB is the
 authoritative operation; the cache is a performance optimization.
 
@@ -356,8 +356,8 @@ layer catches a class of failure the one above cannot:
   the cache is reachable and the eviction succeeds. It doesn't handle the case
   where a stale version shows up later through async replication and tries to
   repopulate the cache. The tombstone is a read-time check, not a write-time
-  guarantee. Even if the eviction fails, even if Redis is unreachable, even if a
-  follower delivers a stale copy, the tombstone blocks the repopulation.
+  guarantee. Even if the eviction fails, even if the cache is unreachable, even
+  if a follower delivers a stale copy, the tombstone blocks the repopulation.
 - **Replication boundary: timestamp ordering.** The first two layers handle
   divergence within a region. Across regions, replication events arrive
   asynchronously and can be delivered out of order or retried. Without an
@@ -383,9 +383,9 @@ has to be caught by the next. That is the class of coverage CI wasn't giving us,
 and the class of coverage Antithesis is built for.
 
 The edge cache can no longer serve a stale entry after a successful mutation,
-regardless of whether the eager eviction succeeded, whether Redis was reachable
-at delete time, or whether replication events arrive out of order. The cache is
-still a performance optimization. It just can't violate consistency.
+regardless of whether the eager eviction succeeded, whether the cache was
+reachable at delete time, or whether replication events arrive out of order. The
+cache is still a performance optimization. It just can't violate consistency.
 
 We haven't encountered a cache coherence bug since the reorder and barrier
 landed.

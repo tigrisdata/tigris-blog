@@ -28,7 +28,7 @@
   </defs>
 
   <text x="380" y="28" text-anchor="middle" class="title">Two-layer read path</text>
-  <text x="380" y="50" text-anchor="middle" class="sub">Redis edge cache in front of FoundationDB + S3 block storage</text>
+  <text x="380" y="50" text-anchor="middle" class="sub">Edge cache in front of FoundationDB + S3 block storage</text>
 
   <!-- Nodes arranged horizontally at y = 140-200 -->
   <!-- Client -->
@@ -41,8 +41,7 @@
 
   <!-- Edge cache -->
   <rect x="350" y="150" width="140" height="60" class="accent" />
-  <text x="420" y="178" text-anchor="middle" class="label">Edge cache</text>
-  <text x="420" y="196" text-anchor="middle" class="small">Redis</text>
+  <text x="420" y="186" text-anchor="middle" class="label">Edge cache</text>
 
   <!-- FDB -->
   <rect x="560" y="110" width="170" height="50" class="node" />
