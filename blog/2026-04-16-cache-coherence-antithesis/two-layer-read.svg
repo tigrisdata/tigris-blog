@@ -58,8 +58,8 @@
   <line x1="290" y1="150" x2="340" y2="150" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)" />
 
   <!-- Cache hit arc back -->
-  <path d="M 410 120 Q 410 70 235 70 Q 235 70 235 120" fill="none" stroke="#62feb5" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrg)" />
-  <text x="322" y="62" text-anchor="middle" class="small" fill="#62feb5">hit: return without touching FDB</text>
+  <path d="M 410 120 Q 322 40 235 120" fill="none" stroke="#62feb5" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrg)" />
+  <text x="322" y="52" text-anchor="middle" class="small" fill="#62feb5">hit: return without touching FDB</text>
 
   <!-- Cache miss to FDB -->
   <line x1="480" y1="140" x2="540" y2="100" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)" />

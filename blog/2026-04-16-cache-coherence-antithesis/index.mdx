@@ -73,12 +73,12 @@ Tigris is an S3-compatible object storage service with strong consistency within
 a region and eventual consistency across regions, with sub-second replication
 lag. A PUT returns; the next GET from the same region returns the object. A
 DELETE returns; the next GET returns 404. Conditional operations evaluate
-against the latest state. Those are the guarantees we sell, and the ones we have
-to keep under fault.
+against the latest state. Those are the guarantees we sell, and they have to
+hold under fault.
 
 To hit the latency budget, every read goes through a Redis-backed edge cache in
 front of FoundationDB metadata and S3-backed block storage. A cache hit returns
-without ever touching FDB. It is also what makes them dangerous. Any
+without ever touching FDB. Speed is exactly what makes reads dangerous. Any
 architecture that places a cache in front of a strongly consistent store is a
 contradiction: the store guarantees that every read after a write reflects the
 latest state, while the cache guarantees that most reads never touch the store.
@@ -97,9 +97,9 @@ serializability[^jepsen-stale].
   aria-label="Two-layer read path: client to gateway to Redis edge cache, with cache hit returning directly and cache miss going through to FoundationDB and S3 block storage."
 />
 
-Antithesis[^antithesis] found four separate manifestations of this divergence in
-production code paths that CI was exercising on every PR. Each one is a
-different angle on the same seam.
+Antithesis[^antithesis] found four manifestations of this divergence in
+production code paths that CI exercised on every PR. Each one is a different
+angle on the same seam.
 
 ## What we were testing before, and what we weren't
 
@@ -122,11 +122,10 @@ to articulate as tests.
 We started with Antithesis in July 2025 specifically to close those gaps.
 Antithesis runs the full system in a deterministic simulator under aggressive
 fault injection, explores the state space autonomously, and lets you replay any
-violation it finds. It is, essentially, full-system property-based testing with
-faults.
+violation it finds. It's full-system property-based testing with faults.
 
-Porting CI tests over was not free. Integration tests are binary — operations
-pass or fail. Under fault there's a third state: ambiguous. A write returns a
+Porting CI tests over cost work. Integration tests are binary — operations pass
+or fail. Under fault there's a third state: ambiguous. A write returns a
 timeout; did it commit or not? A script that reads the timeout as "failure"
 produces false negatives when the object is actually there. So the first job was
 refactoring integration tests into fault-tolerant scripts (read, write,
@@ -193,12 +192,12 @@ paper describes a structurally identical problem under the name "delete
 consistency"[^memcache-34] and proposes lease tokens as the remedy — a
 conceptually parallel mechanism to the tombstone barrier we describe below.
 
-The Antithesis delete-then-get workload caught this on the first run with the
-Antithesis-specific workload. It issued a DELETE followed by an immediate GET on
-the same key from regional endpoints; the GET arrived in the few-millisecond
-window between step 2 and step 3 and returned the deleted object. No engineer
-would have written that test, because no engineer would have thought to test a
-millisecond-wide interleaving between two steps of the same operation.
+The Antithesis delete-then-get workload caught it on the first run. It issued a
+DELETE followed by an immediate GET on the same key from regional endpoints; the
+GET arrived in the few-millisecond window between step 2 and step 3 and returned
+the deleted object. No engineer would have written that test, because no
+engineer would have thought to test a millisecond-wide interleaving between two
+steps of the same operation.
 
 <DeleteRace
   role="img"
@@ -218,7 +217,7 @@ invalidation to fail, which caused the rename to be reported as failed, which
 triggered a rollback path on an operation that had already committed in FDB. A
 best-effort downstream step was taking down a durable upstream operation.
 
-The fix is a structural one: decouple the two. Rename succeeds when the FDB
+The fix is structural: decouple the two. Rename succeeds when the FDB
 transaction commits. Cache invalidation follows asynchronously. A transient
 Redis failure can't block a durable metadata operation; the tombstone barrier on
 the read path (below) handles the possibility of a stale cache hit in the
@@ -232,13 +231,13 @@ sequence. Under Antithesis fault injection, events are delayed, retried, and
 reordered in ways production rarely produces, and the replication code was not
 comparing timestamps. An older version of an object could overwrite a newer one.
 
-This is a last-writer-wins problem[^crdts], and the bug was that
-last-writer-wins wasn't being enforced. Ordering across components that don't
-share a clock is the problem Lamport framed in 1978[^lamport]; in practice, any
-replication layer that accepts events out of order needs an explicit timestamp
-comparison to decide which wins. The fix was exactly that: reject an incoming
-event whose `LastModified` is older than the object already present. Newer data
-always wins, regardless of event arrival order.
+This is a last-writer-wins problem[^crdts], and the bug was that we never
+enforced last-writer-wins. Ordering across components that don't share a clock
+is the problem Lamport framed in 1978[^lamport]; in practice, any replication
+layer that accepts events out of order needs an explicit timestamp comparison to
+decide which wins. The fix was exactly that: reject an incoming event whose
+`LastModified` is older than the object already present. Newer data always wins,
+regardless of event arrival order.
 
 ### Bug 4: strong consistency violation under regional failure
 
@@ -268,7 +267,7 @@ delete(key):
 ```
 
 The lock prevents a concurrent read from repopulating the cache during the
-window. The eviction error is swallowed intentionally: if Redis is temporarily
+window. We swallow the eviction error on purpose: if Redis is temporarily
 unreachable, the FDB delete still proceeds. The deferred eviction and tombstone
 still run afterward as defense in depth. The alternative — fail the delete if
 the cache eviction fails — would mean a Redis blip blocks every delete, which is
@@ -370,21 +369,20 @@ path where the three layers interact — the places where a failure in one layer
 has to be caught by the next. That is the class of coverage CI wasn't giving us,
 and the class of coverage Antithesis is built for.
 
-The result is that the edge cache is now structurally incapable of serving a
-stale entry after a successful mutation, regardless of whether the eager
-eviction succeeded, whether Redis was reachable at delete time, or whether
-replication events arrive out of order. The cache is still a performance
-optimization. It just can't violate consistency.
+The edge cache can no longer serve a stale entry after a successful mutation,
+regardless of whether the eager eviction succeeded, whether Redis was reachable
+at delete time, or whether replication events arrive out of order. The cache is
+still a performance optimization. It just can't violate consistency.
 
 We haven't encountered a cache coherence bug since the reorder and barrier
 landed.
 
 ## What's next
 
-Our Antithesis setup so far exercises the system end-to-end through the S3 API.
-All four of these bugs surfaced there. The next step is component-level testing
-— putting individual subsystems under Antithesis in isolation, where the fault
-surface is narrower and the invariants are more specific.
+Our Antithesis setup exercises the system end-to-end through the S3 API, which
+is where all four of these bugs surfaced. The next step is component-level
+testing — putting individual subsystems under Antithesis in isolation, where the
+fault surface is narrower and the invariants are more specific.
 
 Three targets:
 
@@ -408,7 +406,7 @@ Three targets:
 Antithesis's companion post goes deeper on the methodology side — how the
 simulator explores, how determinism enables replay, what a property-based test
 under fault injection actually looks like. Read it for the testing-methodology
-view of this work. {/* TKTK antithesis post URL */}
+view. {/* TKTK antithesis post URL */}
 
 <InlineCta
   title="Strong consistency, tested under fault"
