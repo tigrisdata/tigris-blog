@@ -217,7 +217,7 @@ engineer would have thought of it.
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <DeleteRace
     role="img"
-    aria-label="Two timelines showing the delete-then-read race. Request A deletes: lock, FDB delete, gap, deferred evict, unlock. Request B issues a concurrent GET that arrives during the gap and hits the edge cache, returning 200 with the deleted object body."
+    aria-label="Sequence diagram showing the delete-then-read race. Request A deletes from FDB, but the deferred cache eviction fails silently. Request B issues a GET that hits the stale edge cache and returns 200 with the deleted object body."
     style={{ width: "100%", height: "auto" }}
   />
 </MermaidFrame>

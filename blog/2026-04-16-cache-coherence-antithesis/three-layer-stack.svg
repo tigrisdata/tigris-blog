@@ -1,54 +1,50 @@
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 720 380"
-  width="720"
-  height="380"
-  style="background: transparent"
->
-  <style>
-    text {
-      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
-        Helvetica, Arial, sans-serif;
-    }
-    .title { font-size: 16px; fill: #62feb5; font-weight: 600; }
-    .sub { font-size: 12px; fill: #94a3b8; }
-    .label { font-size: 14px; fill: #e2e8f0; font-weight: 600; }
-    .small { font-size: 12px; fill: #bac1be; }
-    .layer-write { rx: 6; ry: 6; fill: rgba(98, 254, 181, 0.10); stroke: rgba(98, 254, 181, 0.5); stroke-width: 1.5; }
-    .layer-read { rx: 6; ry: 6; fill: rgba(91, 164, 207, 0.10); stroke: rgba(91, 164, 207, 0.5); stroke-width: 1.5; }
-    .layer-repl { rx: 6; ry: 6; fill: rgba(207, 142, 91, 0.10); stroke: rgba(207, 142, 91, 0.5); stroke-width: 1.5; }
-    .green { fill: #62feb5; }
-    .blue { fill: #5ba4cf; }
-    .sand { fill: #cf8e5b; }
-  </style>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 0 1510 630" width="1510" height="630" style="background:#0e1920">
+  <text x="460" y="44" fill="#c8d6de" font-size="24" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="460" dy="0">Three Layers of Cache-Coherence Defense</tspan></text>
+  <text x="420" y="72" fill="#8fa3b0" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="420" dy="0">Each layer catches what the one above it misses</tspan></text>
 
-  <text x="360" y="25" text-anchor="middle" class="title">Three-layer defense</text>
-  <text x="360" y="45" text-anchor="middle" class="sub">each layer catches what the one above misses</text>
+  <!-- L1: Write Path — Eager Invalidation (green) -->
+  <g opacity="1"><rect x="280" y="120" width="900" height="130" rx="8" ry="8" fill="#142229" stroke="#62FEB5" stroke-width="2.5"/></g>
+  <text x="300" y="154" fill="#62FEB5" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">L1</tspan></text>
+  <text x="340" y="160" fill="#c8d6de" font-size="20" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="340" dy="0">Write Path — Eager Invalidation</tspan></text>
+  <text x="300" y="193" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">Deletes evict the cache entry BEFORE the mutation commits to the primary store, not after.</tspan></text>
+  <text x="300" y="223" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">Closes the gap between "source of truth changed" and "cache knows about it."</tspan></text>
 
-  <!-- Write path -->
-  <rect x="160" y="75" width="450" height="70" class="layer-write" />
-  <text x="385" y="100" text-anchor="middle" class="label green">Write path — eager invalidation</text>
-  <text x="385" y="122" text-anchor="middle" class="small">close the gap before the mutation commits</text>
+  <!-- L2: Read Path — Tombstone Barriers (steel blue) -->
+  <g opacity="1"><rect x="280" y="300" width="900" height="130" rx="8" ry="8" fill="#142229" stroke="#5BA4CF" stroke-width="2.5"/></g>
+  <text x="300" y="334" fill="#5BA4CF" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">L2</tspan></text>
+  <text x="340" y="340" fill="#c8d6de" font-size="20" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="340" dy="0">Read Path — Tombstone Barriers</tspan></text>
+  <text x="300" y="373" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">Timestamp check on every cache-write path blocks stale re-population.</tspan></text>
+  <text x="300" y="403" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">Catches stale data even if eviction failed or cache was unreachable.</tspan></text>
 
-  <!-- Read path -->
-  <rect x="160" y="165" width="450" height="70" class="layer-read" />
-  <text x="385" y="190" text-anchor="middle" class="label blue">Read path — tombstone barriers</text>
-  <text x="385" y="212" text-anchor="middle" class="small">block stale re-population on every cache write</text>
+  <!-- L3: Metadata Layer — Tombstone Returns (sandstone) -->
+  <g opacity="1"><rect x="280" y="480" width="900" height="130" rx="8" ry="8" fill="#142229" stroke="#CF8E5B" stroke-width="2.5"/></g>
+  <text x="300" y="514" fill="#CF8E5B" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">L3</tspan></text>
+  <text x="340" y="520" fill="#c8d6de" font-size="20" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="340" dy="0">Metadata Layer — Tombstone Returns</tspan></text>
+  <text x="300" y="553" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">404 responses now carry the tombstone record with deletion timestamp.</tspan></text>
+  <text x="300" y="583" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">Gateway compares cache entry against tombstone, evicts stale data on the way out.</tspan></text>
 
-  <!-- Replication boundary -->
-  <rect x="160" y="255" width="450" height="70" class="layer-repl" />
-  <text x="385" y="280" text-anchor="middle" class="label sand">Replication boundary — timestamp ordering</text>
-  <text x="385" y="302" text-anchor="middle" class="small">newer data always wins, regardless of arrival order</text>
+  <!-- Failure modes arrow -->
+  <g opacity="1"><path d="M180,580 L180,180" fill="none" stroke="#CF5B5B" stroke-width="2.5" stroke-linecap="round"/><polyline points="184.7,186.5 180,180 175.3,186.5" fill="none" stroke="#CF5B5B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="60" y="375" fill="#CF5B5B" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="60" dy="0">Failure modes</tspan></text>
+  <text x="72" y="405" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="72" dy="0">escalate</tspan></text>
 
-  <!-- Failure modes arrow on left -->
-  <defs>
-    <marker id="arrUp" viewBox="0 0 10 10" refX="5" refY="0" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M0,10 L5,0 L10,10 Z" fill="#94a3b8" />
-    </marker>
-  </defs>
-  <line x1="100" y1="310" x2="100" y2="105" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrUp)" />
-  <text x="85" y="210" text-anchor="middle" class="small" transform="rotate(-90, 85, 210)">failure modes caught upward</text>
+  <!-- Catches annotations -->
+  <g opacity="0.5"><rect x="1230" y="120" width="300" height="130" rx="8" ry="8" fill="#142229" stroke="#1e3340" stroke-width="1" stroke-dasharray="6 4"/></g>
+  <text x="1250" y="151" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">Catches</tspan></text>
+  <text x="1250" y="183" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">Direct writes where the</tspan></text>
+  <text x="1250" y="205" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">cache is reachable and</tspan></text>
+  <text x="1250" y="227" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">eviction succeeds.</tspan></text>
 
-  <!-- Footer note -->
-  <text x="360" y="360" text-anchor="middle" class="small">CI tested each layer individually. Antithesis tested the gaps between them.</text>
+  <g opacity="0.5"><rect x="1230" y="300" width="300" height="130" rx="8" ry="8" fill="#142229" stroke="#1e3340" stroke-width="1" stroke-dasharray="6 4"/></g>
+  <text x="1250" y="331" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">Catches</tspan></text>
+  <text x="1250" y="363" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">Stale re-population via</tspan></text>
+  <text x="1250" y="385" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">async events after a</tspan></text>
+  <text x="1250" y="407" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">successful delete.</tspan></text>
+
+  <g opacity="0.5"><rect x="1230" y="480" width="300" height="130" rx="8" ry="8" fill="#142229" stroke="#1e3340" stroke-width="1" stroke-dasharray="6 4"/></g>
+  <text x="1250" y="511" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">Catches</tspan></text>
+  <text x="1250" y="543" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">Stale cache entries when</tspan></text>
+  <text x="1250" y="565" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">tombstone barrier is absent</tspan></text>
+  <text x="1250" y="587" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">or never landed.</tspan></text>
 </svg>
