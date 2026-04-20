@@ -83,12 +83,15 @@ cache guarantees that most reads never touch the store. Under clean operation,
 the two stay in sync because invalidations succeed and events arrive in order.
 Under failure, they diverge.
 
-This is the cache coherence problem, first studied in computer
-architecture[^mesi] and inherited by every system that fronts a consistent store
-with a cache. Facebook documented their version in their Memcache
-paper[^memcache]. Jepsen classifies the user-visible symptom — a read returning
-a value that doesn't reflect a prior completed write — as a stale read, a
-violation of strong serializability[^jepsen-stale].
+This is the
+[cache coherence problem](https://en.wikipedia.org/wiki/Cache_coherence), first
+studied in computer architecture and inherited by every system that fronts a
+consistent store with a cache. Facebook documented their version in their
+[Memcache paper](https://research.facebook.com/publications/scaling-memcache-at-facebook/).
+Jepsen classifies the user-visible symptom — a read returning a value that
+doesn't reflect a prior completed write — as a
+[stale read](https://jepsen.io/consistency/phenomena/stale-read), a violation of
+strong serializability.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <TwoLayerRead
@@ -98,9 +101,9 @@ violation of strong serializability[^jepsen-stale].
   />
 </MermaidFrame>
 
-Antithesis[^antithesis] found three manifestations of this divergence in
-production code paths that CI exercised on every PR. Each one is a different
-angle on the same seam.
+[Antithesis](https://antithesis.com) found three manifestations of this
+divergence in production code paths that CI exercised on every PR. Each one is a
+different angle on the same seam.
 
 ## What we were testing before, and what we weren't
 
@@ -191,16 +194,20 @@ fails, or the cache call times out, the only mechanism left is TTL. FDB has
 moved on and the cache sits frozen in the past. The entry survives and every
 read during that window returns the deleted object.
 
-This is a linearizability violation[^linearizability]. Linearizability requires
-that every operation appear to take effect atomically at a single point in real
-time between its invocation and its response. A DELETE that returns and is
-immediately followed by a GET that sees the deleted object cannot be placed on
-any consistent real-time timeline. Jepsen classifies the observed symptom as a
-stale read and treats it as a safety violation of strong
-serializability[^strong-ser], not a performance regression. Facebook's Memcache
-paper describes a structurally identical problem under the name "delete
-consistency"[^memcache-34] and proposes lease tokens as the remedy — a
-conceptually parallel mechanism to the tombstone barrier we describe below.
+This is a
+[linearizability](https://cs.brown.edu/~mph/HerlihyW90/p463-herlihy.pdf)
+violation. Linearizability requires that every operation appear to take effect
+atomically at a single point in real time between its invocation and its
+response. A DELETE that returns and is immediately followed by a GET that sees
+the deleted object cannot be placed on any consistent real-time timeline. Jepsen
+classifies the observed symptom as a stale read and treats it as a safety
+violation of
+[strong serializability](https://jepsen.io/consistency/models/strong-serializable),
+not a performance regression. Facebook's Memcache paper describes a structurally
+identical problem under the name
+["delete consistency"](https://research.facebook.com/publications/scaling-memcache-at-facebook/)
+and proposes lease tokens as the remedy — a conceptually parallel mechanism to
+the tombstone barrier we describe below.
 
 The Antithesis delete-then-get workload caught it on the first run. It issued a
 DELETE followed by an immediate GET on the same key from regional endpoints.
@@ -422,44 +429,3 @@ under fault injection actually looks like.
   button="Read the docs"
   link="https://www.tigrisdata.com/docs/"
 />
-
----
-
-[^mesi]:
-    Hennessy, J. L., & Patterson, D. A., _Computer Architecture: A Quantitative
-    Approach_, Chapter 5 on cache coherence protocols. The MESI protocol is the
-    canonical hardware-level treatment. The distributed systems problem is the
-    same invalidation-and-coherence problem without the luxury of a shared bus.
-
-[^memcache]:
-    Nishtala, R., et al., "Scaling Memcache at Facebook," NSDI 2013. See
-    especially Section 3.3 on delete consistency.
-
-[^jepsen-stale]:
-    Kingsbury, K., "Consistency Models: Stale Read," Jepsen.
-    [https://jepsen.io/consistency/phenomena/stale-read](https://jepsen.io/consistency/phenomena/stale-read).
-    A stale read is a safety violation of strong serializability, not a
-    performance issue.
-
-[^antithesis]:
-    Antithesis is a deterministic simulation testing platform. The system under
-    test runs in a hypervisor-level simulator that controls scheduling, network,
-    disk, and time; faults are injected deterministically, the state space is
-    explored autonomously, and any violation found is exactly replayable.
-
-[^linearizability]:
-    Herlihy, M. P., & Wing, J. M., "Linearizability: A Correctness Condition for
-    Concurrent Objects," ACM TOPLAS 1990. The formal definition of
-    linearizability and its real-time ordering constraint.
-
-[^strong-ser]:
-    "Consistency Models: Strong Serializable," Jepsen.
-    [https://jepsen.io/consistency/models/strong-serializable](https://jepsen.io/consistency/models/strong-serializable).
-    Strong serializability combines serializability with linearizability:
-    transactions appear to execute in some serial order, and that order respects
-    real time.
-
-[^memcache-34]:
-    Nishtala et al. 2013, Section 3.3. Facebook's lease-token mechanism gives
-    the cache a way to reject a stale write that arrives after a delete —
-    structurally parallel to the tombstone barrier.
