@@ -163,21 +163,19 @@ from FDB. Cache eviction happened in a deferred cleanup step that ran after the
 FDB delete returned. The sequence was:
 
 ```
-deleteWithLock():
+delete(key):
   1. acquire key lock
-  2. defer release lock
-  3. call deleteObjects():
-     3a. defer on success: DeleteWithTomb(key)
-         → writes tombstone, then evicts cache
-     3b. commit FDB delete
-     3c. [3a fires as deleteObjects returns]
-  4. [deferred lock release fires as deleteWithLock returns]
+  2. delete from FDB            ← object is now gone
+  3. (deferred) evict cache     ← can fail silently
+  4. (deferred) write tombstone
+  5. release key lock
+  ← If step 3 fails, cache still serves the deleted object until TTL expires
 ```
 
-If step 3c failed, the DELETE still returned success. The FDB delete in step 3b
+If step 3 failed, the DELETE still returned success. The FDB delete in step 2
 had already committed, so as far as the client knew, the object was gone. The
-failed eviction got logged and that was it. Step 4 released the lock, and the
-cache kept the old entry until async invalidation fired or its TTL expired.
+failed eviction got logged and that was it. The lock released, and the cache
+kept the old entry until async invalidation fired or its TTL expired.
 
 After that, any GET for that key hit the cache and got back the deleted object
 with a 200. FDB said the object was gone, the cache said it was still there, and
@@ -265,27 +263,25 @@ delete(key):
   5. release key lock
 ```
 
-The lock prevents a concurrent read from repopulating the cache during the
-window. We swallow the eviction error on purpose: if the cache is temporarily
-unreachable, the FDB delete still proceeds. The deferred eviction and tombstone
-still run afterward as defense in depth. The alternative — fail the delete if
-the cache eviction fails — would mean a cache blip blocks every delete, which is
-strictly worse than a brief window of stale cache bounded by TTL. FDB is the
-authoritative operation; the cache is a performance optimization.
+The eager eviction clears the cache before FDB commits, so any subsequent read
+finds the cache empty and falls through to FDB. We swallow the eviction error on
+purpose: if the cache is temporarily unreachable, the FDB delete still proceeds.
+The deferred eviction and tombstone still run afterward as defense in depth. FDB
+is the authoritative operation; the cache is a performance optimization.
 
 <MermaidFrame style={{ maxWidth: "46rem", margin: "1.5rem auto" }}>
   <BeforeAfter
     role="img"
-    aria-label="Side-by-side comparison of the delete path. Before: lock, FDB delete, race window, deferred evict, deferred tombstone, unlock. After: lock, evict cache under lock, FDB delete, deferred evict plus tombstone, unlock. No race window after the reorder."
+    aria-label="Side-by-side comparison of the delete path. Before: lock, FDB delete, deferred evict that can fail silently, deferred tombstone, unlock. After: lock, evict cache before FDB delete, FDB delete, deferred evict plus tombstone, unlock. Cache cleared before FDB commits."
     style={{ width: "100%", height: "auto" }}
   />
 </MermaidFrame>
 
 ### Barrier
 
-Reordering closes the race within a single operation. It does not handle the
-case where a stale version arrives later through async replication and tries to
-repopulate the cache. That's what the tombstone barrier is for.
+The reorder handles the case where the eager eviction succeeds. It does not
+handle the case where a stale entry arrives later through a fallback region and
+tries to repopulate the cache. That's what the tombstone barrier is for.
 
 A tombstone is a marker. Instead of removing a deleted key from the cache, we
 replace it with an entry that says "this key was deleted at this timestamp." The
@@ -302,8 +298,8 @@ on cache_write(key, object):
     write to cache
 ```
 
-Every write to the cache — direct read-through, async replication from a
-follower region, retry of a delayed event — passes through this check. If the
+Every write to the cache — direct read-through, fallback region read, or a raced
+read that started before the delete landed — passes through this check. If the
 object being written is older than the tombstone, the write is rejected. That is
 what makes the barrier work regardless of where the stale data came from.
 
@@ -322,14 +318,14 @@ Three alternatives we considered and rejected:
   defeats the cache.
 - **Shorter TTLs.** Shrinks the window without closing it, and costs hit rate
   across every object to solve a delete-specific problem.
-- **Move the deferred eviction earlier, but still after the FDB delete.**
-  Doesn't close the race. A concurrent GET can still win between FDB returning
-  and the eviction executing.
+- **Retry the eviction synchronously on failure.** If the cache is down, every
+  delete fails. A cache outage becomes a delete outage. Worse than a brief
+  stale-read window bounded by TTL.
 
 <MermaidFrame style={{ maxWidth: "46rem", margin: "1.5rem auto" }}>
   <TombstoneBarrier
     role="img"
-    aria-label="Tombstone barrier diagram. Three sources — read-through populate, async replication from a follower region, and retry of a delayed event — all pass through a timestamp check before the edge cache. If the incoming object is older than the tombstone, the write is rejected. Otherwise, it is written to the cache."
+    aria-label="Tombstone barrier diagram. Three sources — read-through populate, fallback region read, and raced read — all pass through a timestamp check before the edge cache. If the incoming object is older than the tombstone, the write is rejected. Otherwise, it is written to the cache."
     style={{ width: "100%", height: "auto" }}
   />
 </MermaidFrame>
@@ -350,11 +346,11 @@ layer catches a class of failure the one above cannot:
   it.
 - **Read path: tombstone barriers.** Eager invalidation handles the case where
   the cache is reachable and the eviction succeeds. It doesn't handle the case
-  where a stale version shows up later through async replication and tries to
+  where a stale entry arrives later through a fallback region and tries to
   repopulate the cache. The tombstone is a barrier on cache writes: before a new
   entry is written, the code compares its timestamp to the tombstone, and if the
-  tombstone is newer the write is skipped. Even if a follower delivers a stale
-  copy, the tombstone keeps it from poisoning the cache.
+  tombstone is newer the write is skipped. Even if a fallback read delivers a
+  stale copy, the tombstone keeps it from poisoning the cache.
 - **Metadata layer: tombstone returns.** The first two layers live in the cache
   and don't help when the gateway reconciles responses across regions. A 404
   response from the metadata layer carries no timestamp, so a delete can't be
@@ -379,13 +375,15 @@ path where the three layers interact — the places where a failure in one layer
 has to be caught by the next. That is the class of coverage CI wasn't giving us,
 and the class of coverage Antithesis is built for.
 
-The edge cache can no longer serve a stale entry after a successful mutation,
-regardless of whether the eager eviction succeeded, whether the cache was
-reachable at delete time, or whether replication events arrive out of order. The
-cache is still a performance optimization. It just can't violate consistency.
+A single cache failure no longer translates into a stale read. If the eager
+eviction succeeds, subsequent reads find the cache empty and fall through to
+FDB. If it fails, the deferred tombstone write still lands and the barrier
+blocks stale re-population. And if both of those fail, the metadata layer
+returns the tombstone with its timestamp so the gateway can reject the stale
+cache entry. The cache is still a performance optimization. It just doesn't need
+to be perfectly correct for the system to preserve consistency.
 
-We haven't encountered a cache coherence bug since the reorder and barrier
-landed.
+We haven't encountered a cache coherence bug since these changes landed.
 
 ## What's next
 
