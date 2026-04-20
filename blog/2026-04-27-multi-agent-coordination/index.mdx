@@ -1,0 +1,228 @@
+---
+slug: multi-agent-coordination
+title: "Your bucket is already a message queue"
+description: |
+  Use Tigris object notifications to coordinate AI agents without deploying a message queue. A writer/watcher pattern turns your bucket into an event bus.
+image: ./hero-image.webp
+keywords:
+  - multi-agent coordination
+  - object notifications
+  - webhooks
+  - content moderation
+  - distributed systems
+  - AI agents
+  - object storage
+authors:
+  - xe
+tags:
+  - Engineering
+  - AI
+  - object-storage
+  - webhooks
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Two robots on separate platforms passing a bucket labeled 'MESSAGES' between them via a pulley line, with a colorful cityscape in the background. Robot A sends the bucket while Robot B receives a report."
+/>
+
+Every AI agent is an island. They have their own context window, prompt, tools,
+and a largely frozen view of the world. The moment you have more than one of
+them and they need to cooperate you've left "prompt engineering" and walked into
+the land of distributed systems problems.
+
+This problem is something we've been solving in site reliability for decades:
+coordinating multiple services that need to hand work back and forth. Ideally
+you want those services to not have to know or care about each other's
+existence. When you look through the sacred texts, they dictate that this must
+be solved with a message queue like RabbitMQ, Kafka, NATS, or SQS. You configure
+topics, manage consumers, have to think about delivery semantics, and write
+runbooks for what happens when your broker's disk fills up.
+
+This does work, but it's a whole production system that needs its own
+monitoring, auth story, scaling plan, and rapidly growing bill at the end of the
+month. Every time I need to deploy one of them I die a little on the inside.
+
+What if you could cut out the middleman and just use your object storage as your
+queue? Tigris lets you make your bucket into your queue with
+[object notifications](https://www.tigrisdata.com/docs/buckets/object-notifications/).
+These make Tigris send you webhooks when things change so that your agents get
+alerted instead of having to look in the bucket over and over and over.
+
+## Webhooks are the 2007 pattern your agents need
+
+Webhooks are one of the most simple and enduring patterns on the modern
+Internet: you give a service a URL and whenever something happens the service
+sends a POST request to that URL with the payload. Your handler then does
+whatever it wants with that payload. GitHub uses webhooks to fire off Slack
+messages for every commit, issue, and opened PR in your repos. Stripe uses them
+for payment events. Discord, Linear, PagerDuty, half the SaaS-industrial-complex
+runs on webhooks. They predate Kubernetes, Kafka, and have outlived both REST
+hype cycles.
+
+Object storage can do the same thing. Configure
+[a notification rule](https://www.tigrisdata.com/docs/buckets/object-notifications/)
+on a bucket and you'll get an HTTP `POST` to your endpoint every time an object
+is created, modified, or deleted. The payload includes the bucket name, key,
+size, ETag, and timestamp. You can also filter your rules by prefix so a watcher
+only hears about the keys it actually cares about. You can attach a bearer token
+so the watcher can verify the call really came from Tigris and not an evil
+hacker trying to trick your systems into mining Bitcoin or other nefarious
+deeds.
+
+That's the entire feature. No broker to deploy, no consumer groups to balance,
+no sacrifices to the dark gods of partition keys. Your storage and your event
+bus are the same thing.
+
+## The writer/watcher pattern: agents that never talk
+
+When you use this in production, you often come up with a writer/watcher pair.
+One agent does something that writes objects to the bucket, another agent takes
+those objects to do something useful in reaction. Neither agent knows the other
+exists. The bucket and notification rule are what binds them together. If you
+want to add a third downstream agent later, add another notification rule. The
+original two agents don't need to change.
+
+As an example, let's take a look at a problem that seems like it'd be easy but
+ends up actually being hard in subtle ways: content moderation. Let's say you're
+running a social media platform where users can post text with an image
+attached. Other users can report the posts. The standard pipeline for this is
+that a user reports a post and that post gets put into a queue for a human
+moderator to look over and take action from there. This seems simple, but the
+human moderator is one of the weaker links in the chain. These moderators often
+work
+[grueling jobs that make them burn out](https://www.theverge.com/2019/2/25/18229714/cognizant-facebook-content-moderator-interviews-trauma-working-conditions-arizona).
+It's one of the worst jobs in tech and the industry has a long history of
+treating the people doing it _terribly_.
+
+AI agents have none of those problems. They don't burn out. They don't need
+therapy. They're not great at the genuinely hard moderation calls (you should
+never have them make the final word on a takedown), but they're excellent at the
+first pass "vibe check": seeing if things are clearly fine, clearly not fine, or
+an edge case. This kind of filtering can absorb most of the volume of reports
+and let your human moderators focus on the cases that actually need human
+judgement.
+
+## Example: content moderation with two agents
+
+The pipeline I built to demonstrate this lives in
+[tigrisdata-community/agent-coordination-moderation](https://github.com/tigrisdata-community/agent-coordination-moderation):
+
+![Moderation pipeline: a client POSTs to Agent A (Ingest), which calls Claude to classify and writes pending/{id}.json to Tigris. An object notification fires Agent B (Router), which moves the object to flagged/, needs-review/, or approved/. Flagged items POST to a human review webhook.](./moderation-pipeline.svg)
+
+Agent A is the ingest agent. It takes a `POST /submit` with a post ID, the text,
+and an optional image URL. Imagine this being wired up into an existing report
+flow as an internal microservice. It then returns HTTP 201 so Tigris keeps
+chugging along.
+
+In the background, Agent A asks Claude to classify the post against a fixed set
+of categories (hate speech, spam, NSFW content, harassment, etc) and writes that
+classification result back to Tigris, triggering an object notification to Agent
+B.
+
+Agent B is the router agent. It receives notifications from Tigris and then
+looks at the classification to make a decision:
+
+- If there's no violation, move the record to `approved/`.
+- If there's strong confidence of a violation, move it to `flagged/` and `POST`
+  to a human review webhook (Slack, ticket queue, PagerDuty, whatever).
+- If there's weak confidence, move it to `needs-review/`.
+
+This "move" is an
+[atomic rename](https://www.tigrisdata.com/docs/objects/object-rename/) so the
+object disappears from `pending/` and the watcher's job is done.
+
+Setting up this notification rule is one CLI call:
+
+```
+tigris buckets set-notifications moderation-pipeline \
+  --url https://your-router-host.public.domain.here/webhook \
+  --token "$WEBHOOK_SECRET" \
+  --filter 'WHERE `key` REGEXP "^pending/"'
+```
+
+That's the entire integration. The router only hears about objects under
+`pending/` so any moves to the other folders don't trigger recursive feedback
+loops where the router keeps notifying itself forever.
+
+## Things that bit me so they don't bite you
+
+Roses have their thorns, here's what bit me while I was working on this example
+so that you can go into coding battle aware of the tradeoffs.
+
+Object notifications are at-least-once. This is the same deliverability
+guarantee that SQS gives you: your watcher will get object notifications at
+least once (but potentially more than once). The router in the demo uses an ETag
+based deduper and ignores notifications when the object was already moved.
+Idempotency is not optional here. If your handler isn't truly idempotent, you
+don't have a working system. You have a system that hasn't broken yet.
+
+Webhook auth isn't optional here. It's tempting to live on the wild side and let
+just this one hidden endpoint stay hidden, but your watcher endpoint needs to be
+_public_. If it's public and unauthenticated, anyone can POST whatever they want
+to it. Tigris notification rules support a bearer token you can verify before
+doing anything with the payload. The repo has a middleware that's about 10 lines
+of Go, Claude can translate that into whatever language your app is written in.
+
+If you need to have Tigris retry delivering the webhook, return HTTP status 500.
+Failure is inevitable and when things fail you really don't want messages to be
+dropped. In order to tell Tigris to retry sending the webhook later, return a
+HTTP 500 (internal server error) status and Tigris will retry delivering it up
+to three times. Don't return 200 if you didn't actually do the work, that's how
+events get silently dropped at 3 am.
+
+Object ordering is not guaranteed. Notifications can and will arrive out of
+order. If ordering matters for your use case, please be sure to encode the order
+into the object key or read the timestamp from the object itself rather than
+trusting things to be in temporal order.
+
+It's worth noting that none of this is unique to Tigris. These are most of the
+same constraints you have with any message queue. The win in this case is that
+you're just writing the producer and the consumer, not having to deal with the
+sisyphean madness of the infrastructure setup.
+
+## Where else silent agents beat chatty ones
+
+Once this pattern clicks with you, you'll see where it can fit everywhere.
+Here's a few ideas to get you started:
+
+- **Image processing:** Agent A uploads raw photos. Agent B generates
+  thumbnails. Agent C analyzes the images for content policy violations,
+  generates alt-text, or runs OCR across the images. Each stage is independent
+  and you can re-run any stage by retriggering the notification.
+- **Document indexing:** Writer agents dump new documents into a bucket. The
+  watcher chunks text, generates embeddings, and writes them to another place in
+  the bucket. Add another agent to keep a knowledge graph in sync.
+- **CI artifact distribution:** Your build agents write binaries to Tigris.
+  Deployment agents watch and ship them to staging. Promote to production by
+  copying them to a different prefix that a different agent cares about.
+- **Log analysis:** A service writes structured logs to Tigris. An analysis
+  agent watches, runs anomaly detection, and writes alerts somewhere a PagerDuty
+  integration is watching.
+- **Multi-step research:** A simulation agent watches, runs experiments, and
+  writes results into Tigris. Synthesis agents can then read those results and
+  roll them up into reports.
+
+The common pattern here is "produce something, react to it". Anything that fits
+that shape can be built without standing up a queue, deploying a broker, or
+writing yet another consumer group configuration. All the complexity has been
+collapsed into a single point: Tigris.
+
+Multi-agent systems get a reputation for being brittle and operationally hairy
+because of the coordination layer between them. Your queue is its own production
+system. Your queue's permissions are their own attack surface. Why should they
+have to be separate from the storage system you're already using? Make your
+storage coordinate your agents and the whole layer of problems vanishes.
+
+It's less impressive on a slide. It's a lot easier to keep running at 3am.
+
+<InlineCta
+  title="Ready to connect your agents?"
+  subtitle="Use Tigris object notifications to coordinate your multi-agent systems without deploying a message queue."
+  button="Read the docs"
+  link="https://www.tigrisdata.com/docs/use-cases/agent-coordination/"
+/>

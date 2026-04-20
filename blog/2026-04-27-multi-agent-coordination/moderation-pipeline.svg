@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 940" width="1200" height="940" role="img" aria-labelledby="title desc">
+  <title id="title">Content moderation pipeline</title>
+  <desc id="desc">A client posts to Agent A which classifies with Claude and writes pending/{id}.json to Tigris. An object notification fires Agent B, which routes the object to flagged/, needs-review/, or approved/. Flagged items are posted to a human review webhook.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8fa3b0" />
+    </marker>
+    <marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#62FEB5" />
+    </marker>
+    <style>
+      .label { fill: #c8d6de; font: 500 18px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .edge  { fill: #8fa3b0; font: 400 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .dark  { fill: #0A171E; font: 600 18px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .mono  { font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; }
+      .stroke-line { stroke: #8fa3b0; stroke-width: 2; fill: none; }
+      .stroke-accent { stroke: #62FEB5; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="940" fill="#0e1920" rx="10" />
+
+  <!-- Row 1: Client and Agent A -->
+  <rect x="60"  y="60" width="160" height="60" rx="10" fill="#142229" stroke="#2a4050" stroke-width="2" />
+  <text x="140" y="95" text-anchor="middle" class="label">Client</text>
+
+  <rect x="520" y="60" width="280" height="60" rx="10" fill="#142229" stroke="#2a4050" stroke-width="2" />
+  <text x="660" y="95" text-anchor="middle" class="label">Agent A: Ingest</text>
+
+  <!-- Arrow Client → Agent A -->
+  <line x1="220" y1="90" x2="520" y2="90" class="stroke-line" marker-end="url(#arrow)" />
+  <text x="370" y="75" text-anchor="middle" class="edge mono">POST /submit</text>
+
+  <!-- Row 2: Tigris bucket (accent) -->
+  <rect x="440" y="250" width="440" height="60" rx="10" fill="#62FEB5" stroke="#62FEB5" stroke-width="2" />
+  <text x="660" y="285" text-anchor="middle" class="dark mono">Tigris: pending/{id}.json</text>
+
+  <!-- Arrow Agent A → Tigris -->
+  <line x1="660" y1="120" x2="660" y2="250" class="stroke-line" marker-end="url(#arrow)" />
+  <text x="680" y="190" class="edge">Claude classify</text>
+
+  <!-- Row 3: Agent B -->
+  <rect x="520" y="440" width="280" height="60" rx="10" fill="#142229" stroke="#2a4050" stroke-width="2" />
+  <text x="660" y="475" text-anchor="middle" class="label">Agent B: Router</text>
+
+  <!-- Arrow Tigris → Agent B (accent since it's the notification) -->
+  <line x1="660" y1="310" x2="660" y2="440" class="stroke-accent" marker-end="url(#arrow-accent)" />
+  <text x="680" y="380" class="edge">object notification</text>
+
+  <!-- Row 4: Three outcome buckets -->
+  <rect x="60"  y="650" width="220" height="60" rx="10" fill="#142229" stroke="#CF5B5B" stroke-width="2" />
+  <text x="170" y="685" text-anchor="middle" class="label mono">flagged/</text>
+
+  <rect x="520" y="650" width="280" height="60" rx="10" fill="#142229" stroke="#CF8E5B" stroke-width="2" />
+  <text x="660" y="685" text-anchor="middle" class="label mono">needs-review/</text>
+
+  <rect x="920" y="650" width="220" height="60" rx="10" fill="#142229" stroke="#62FEB5" stroke-width="2" />
+  <text x="1030" y="685" text-anchor="middle" class="label mono">approved/</text>
+
+  <!-- Fan-out arrows from Agent B -->
+  <line x1="560" y1="500" x2="220" y2="650" class="stroke-line" marker-end="url(#arrow)" />
+  <line x1="660" y1="500" x2="660" y2="650" class="stroke-line" marker-end="url(#arrow)" />
+  <line x1="760" y1="500" x2="980" y2="650" class="stroke-line" marker-end="url(#arrow)" />
+
+  <!-- Row 5: human review webhook -->
+  <rect x="60" y="840" width="400" height="60" rx="10" fill="#142229" stroke="#CF5B5B" stroke-width="2" stroke-dasharray="8 6" />
+  <text x="260" y="875" text-anchor="middle" class="label mono">POST to REVIEW_WEBHOOK_URL</text>
+
+  <!-- Arrow flagged/ → webhook -->
+  <line x1="170" y1="710" x2="220" y2="840" class="stroke-line" marker-end="url(#arrow)" />
+</svg>
