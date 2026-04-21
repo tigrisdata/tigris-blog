@@ -50,8 +50,7 @@
 
   <!-- Blocks -->
   <rect x="560" y="200" width="170" height="50" class="node" />
-  <text x="645" y="222" text-anchor="middle" class="label">Block storage</text>
-  <text x="645" y="240" text-anchor="middle" class="small">S3</text>
+  <text x="645" y="232" text-anchor="middle" class="label">Block storage</text>
 
   <!-- Forward request arrows: Client → Gateway → Edge cache -->
   <line x1="140" y1="180" x2="186" y2="180" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrGrey)" />

@@ -67,12 +67,15 @@ import ThreeLayerStack from "./three-layer-stack.svg";
 
 {/* truncate */}
 
-Tigris is an S3-compatible object storage service with strong consistency within
-a region and eventual consistency across regions, with sub-second replication
-lag. A PUT returns; the next GET from the same region returns the object. A
-DELETE returns; the next GET returns 404. Conditional operations evaluate
-against the latest state. Those are the guarantees we sell, and they have to
-hold under fault.
+Tigris is an S3-compatible object storage service. All same-region requests get
+[strong consistency](https://www.tigrisdata.com/docs/concepts/consistency/)
+regardless of bucket type. Cross-region requests are also strongly consistent
+for single-region and multi-region buckets; global and dual-region buckets trade
+that for availability, with eventual consistency and sub-second replication lag.
+A PUT returns; the next GET from the same region returns the object. A DELETE
+returns; the next GET returns 404. Conditional operations evaluate against the
+latest state. Those are the guarantees we sell, and they have to hold under
+fault.
 
 To hit the latency budget, every read goes through the edge cache in front of
 FoundationDB (FDB) metadata and block storage. A cache hit returns without ever
@@ -433,7 +436,7 @@ with AI coding assistants, if you want to try the approach on your own system.
 
 <InlineCta
   title="Strong consistency, tested under fault"
-  subtitle="Tigris is S3-compatible object storage with strong consistency within a region, eventual consistency across regions, and sub-second replication. Tested in Antithesis every night."
+  subtitle="Tigris is S3-compatible object storage with strong consistency for all same-region requests and cross-region on single-region and multi-region buckets. Tested in Antithesis every night."
   button="Read the docs"
   link="https://www.tigrisdata.com/docs/"
 />
