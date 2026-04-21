@@ -1,6 +1,6 @@
 ---
 slug: antithesis
-title: "How we fixed cache coherence in Tigris with Antithesis"
+title: "Testing Distributed Systems Under Chaos"
 description: |
   Three bugs, one seam. How Tigris used Antithesis under fault injection to find and fix cache coherence bugs — tombstone barriers, reorder, three-layer defense.
 image: ./hero-image.webp
@@ -76,12 +76,11 @@ hold under fault.
 
 To hit the latency budget, every read goes through the edge cache in front of
 FoundationDB (FDB) metadata and block storage. A cache hit returns without ever
-touching FDB. Speed is what makes reads dangerous. Any architecture that places
-a cache in front of a strongly consistent store is a contradiction: the store
-guarantees that every read after a write reflects the latest state, while the
-cache guarantees that most reads never touch the store. Under clean operation,
-the two stay in sync because invalidations succeed and events arrive in order.
-Under failure, they diverge.
+touching FDB. Any architecture that places a cache in front of a strongly
+consistent store is a contradiction: the store guarantees that every read after
+a write reflects the latest state, while the cache guarantees that most reads
+never touch the store. Under clean operation, the two stay in sync because
+invalidations succeed and events arrive in order. Under failure, they diverge.
 
 This is the
 [cache coherence problem](https://en.wikipedia.org/wiki/Cache_coherence), first
@@ -155,8 +154,7 @@ common root cause: cache coherence — the window between a metadata operation
 succeeding in FDB and the edge cache reflecting that change. Under normal
 conditions the window is closed by an invalidation or a deferred cleanup. Under
 fault the window widens, and the cache and the metadata store go out of sync.
-This is the poster child for the kinds of issues that only show up in production
-in ways that we can't easily dream up in our test suites.
+These are the bugs that CI can't cover because no one thinks to write them.
 
 ### Bug 1: the delete-then-read race
 
@@ -216,8 +214,8 @@ GET hit the edge cache and came back with the deleted object. This is a strong
 consistency violation: Tigris guarantees that a DELETE followed by a GET
 returns 404. The bug requires the cache eviction to fail silently while the FDB
 delete succeeds — a split outcome the code path had no way to detect or recover
-from. No engineer would have written a test for this interleaving because no
-engineer would have thought of it.
+from. No one writes a test for a split outcome between two deferred steps of the
+same operation.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <DeleteRace
@@ -273,8 +271,7 @@ delete(key):
 The eager eviction clears the cache before FDB commits, so any subsequent read
 finds the cache empty and falls through to FDB. We swallow the eviction error on
 purpose: if the cache is temporarily unreachable, the FDB delete still proceeds.
-The deferred eviction and tombstone still run afterward as defense in depth. FDB
-is the authoritative operation; the cache is a performance optimization.
+The deferred eviction and tombstone still run afterward as defense in depth.
 
 <MermaidFrame style={{ maxWidth: "46rem", margin: "1.5rem auto" }}>
   <BeforeAfter
@@ -288,7 +285,7 @@ is the authoritative operation; the cache is a performance optimization.
 
 The reorder handles the case where the eager eviction succeeds. It does not
 handle the case where a stale entry arrives later through a fallback region and
-tries to repopulate the cache. That's what the tombstone barrier is for.
+tries to repopulate the cache. The tombstone barrier handles that.
 
 A tombstone is a marker. Instead of removing a deleted key from the cache, we
 replace it with an entry that says "this key was deleted at this timestamp." The
@@ -307,8 +304,8 @@ on cache_write(key, object):
 
 Every write to the cache — direct read-through, fallback region read, or a raced
 read that started before the delete landed — passes through this check. If the
-object being written is older than the tombstone, the write is rejected. That is
-what makes the barrier work regardless of where the stale data came from.
+object being written is older than the tombstone, the write is rejected. The
+barrier works regardless of where the stale data came from.
 
 The tombstone itself has a TTL. Without one, the cache fills with markers for
 keys that will never be queried again. The TTL has to outlast any plausible
