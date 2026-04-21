@@ -21,8 +21,8 @@
   <g opacity="1"><rect x="280" y="480" width="900" height="130" rx="8" ry="8" fill="#142229" stroke="#CF8E5B" stroke-width="2.5"/></g>
   <text x="300" y="514" fill="#CF8E5B" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">L3</tspan></text>
   <text x="340" y="520" fill="#c8d6de" font-size="20" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="340" dy="0">Metadata Layer — Tombstone Returns</tspan></text>
-  <text x="300" y="553" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">404 responses now carry the tombstone record with deletion timestamp.</tspan></text>
-  <text x="300" y="583" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">Gateway compares cache entry against tombstone, evicts stale data on the way out.</tspan></text>
+  <text x="300" y="553" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">Metadata response returns tombstone record with delete timestamp.</tspan></text>
+  <text x="300" y="583" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="300" dy="0">Gateway compares delete against remote responses during reconciliation.</tspan></text>
 
   <!-- Failure modes arrow -->
   <g opacity="1"><path d="M180,580 L180,180" fill="none" stroke="#CF5B5B" stroke-width="2.5" stroke-linecap="round"/><polyline points="184.7,186.5 180,180 175.3,186.5" fill="none" stroke="#CF5B5B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
@@ -44,7 +44,7 @@
 
   <g opacity="0.5"><rect x="1230" y="480" width="300" height="130" rx="8" ry="8" fill="#142229" stroke="#1e3340" stroke-width="1" stroke-dasharray="6 4"/></g>
   <text x="1250" y="511" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">Catches</tspan></text>
-  <text x="1250" y="543" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">Stale cache entries when</tspan></text>
-  <text x="1250" y="565" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">tombstone barrier is absent</tspan></text>
-  <text x="1250" y="587" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">or never landed.</tspan></text>
+  <text x="1250" y="543" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">Stale remote copies when</tspan></text>
+  <text x="1250" y="565" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">cache is bypassed or</tspan></text>
+  <text x="1250" y="587" fill="#c8d6de" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1250" dy="0">tombstone barrier not cached.</tspan></text>
 </svg>

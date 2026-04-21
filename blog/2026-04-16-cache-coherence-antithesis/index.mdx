@@ -186,11 +186,10 @@ on its TTL.
 
 The eviction can fail for plenty of reasons. Tigris has two mechanisms that
 clear stale cache entries: an async invalidation task that fans out to every
-gateway after FDB commits, and a TTL on each cache entry that eventually ages it
-out. If the process crashes before the async task runs, or the task itself
-fails, or the cache call times out, the only mechanism left is TTL. FDB has
-moved on and the cache sits frozen in the past. The entry survives and every
-read during that window returns the deleted object.
+region after FDB commits, and a TTL on each cache entry that eventually ages it
+out. If the task itself fails, or the cache call times out, the only mechanism
+left is TTL. FDB has moved on and the cache sits frozen in the past. The entry
+survives and every read during that window returns the deleted object.
 
 This is a
 [linearizability](https://cs.brown.edu/~mph/HerlihyW90/p463-herlihy.pdf)
@@ -263,20 +262,20 @@ delete(key):
   1. acquire key lock
   2. evict cache entry          ← moved before FDB delete
   3. delete from FDB
-  4. (deferred) evict again
-     + write tombstone          ← defense-in-depth
+  4. (deferred) write tombstone ← defense-in-depth
   5. release key lock
 ```
 
 The eager eviction clears the cache before FDB commits, so any subsequent read
 finds the cache empty and falls through to FDB. We swallow the eviction error on
 purpose: if the cache is temporarily unreachable, the FDB delete still proceeds.
-The deferred eviction and tombstone still run afterward as defense in depth.
+The deferred addition of the tombstone still establishes the read barrier
+afterward as additional defense in depth.
 
 <MermaidFrame style={{ maxWidth: "46rem", margin: "1.5rem auto" }}>
   <BeforeAfter
     role="img"
-    aria-label="Side-by-side comparison of the delete path. Before: lock, FDB delete, deferred evict that can fail silently, deferred tombstone, unlock. After: lock, evict cache before FDB delete, FDB delete, deferred evict plus tombstone, unlock. Cache cleared before FDB commits."
+    aria-label="Side-by-side comparison of the delete path. Before: lock, FDB delete, deferred evict that can fail silently, deferred tombstone, unlock. After: lock, evict cache before FDB delete, FDB delete, deferred tombstone, unlock. Cache cleared before FDB commits."
     style={{ width: "100%", height: "auto" }}
   />
 </MermaidFrame>
@@ -355,15 +354,23 @@ layer catches a class of failure the one above cannot:
   entry is written, the code compares its timestamp to the tombstone, and if the
   tombstone is newer the write is skipped. Even if a fallback read delivers a
   stale copy, the tombstone keeps it from poisoning the cache.
-- **Metadata layer: tombstone returns.** The first two layers live in the cache
-  and don't help when the gateway reconciles responses across regions. A 404
-  response from the metadata layer carries no timestamp, so a delete can't be
-  compared against a stale entry in cache, and the stale one is served. The fix
-  extended the metadata response to return the tombstone record itself when a
-  key has been deleted, with the time of delete. The gateway now compares the
-  cache entry's timestamp against the tombstone's, returns the correct result,
-  and evicts the stale cache entry on the way out. This is the safety net for
-  cases where the cache is absent or the tombstone barrier never landed.
+- **Metadata layer: tombstone returns.** The tombstone barrier in cache is the
+  first line of defense against serving deleted objects, but as part of this
+  testing we also wanted to harden the path that does not rely on cache at all.
+  When the gateway reconciles responses across regions and the local cluster no
+  longer has the key, we need to ensure it does not select a stale copy from a
+  remote cluster. In normal operation, this path is typically masked by the
+  tombstone barrier in cache, which causes the request to resolve to a 404
+  before reconciliation ever becomes relevant. But this testing is intentionally
+  focused on the cases where that protection is not present — for example, if
+  tombstone barriers are not cached, or if the cache is bypassed entirely. To
+  make that path robust on its own, the fix extends the metadata response to
+  return the tombstone record itself, including the delete timestamp, when a key
+  has been removed. That gives the gateway enough information to compare the
+  delete against remote responses, make the correct decision during
+  reconciliation, and return the right result. Cache remains the first barrier,
+  but this ensures correctness even when tombstone barrier caching is disabled,
+  skipped, or otherwise never comes into play.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <ThreeLayerStack
