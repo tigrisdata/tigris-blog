@@ -1,0 +1,432 @@
+---
+slug: antithesis
+title: "Testing Distributed Systems Under Chaos"
+description: |
+  Three bugs, one seam. How Tigris used Antithesis under fault injection to find and fix cache coherence bugs — tombstone barriers, reorder, three-layer defense.
+image: ./hero-image.webp
+keywords:
+  - cache coherence
+  - distributed systems testing
+  - Antithesis
+  - tombstone barrier
+  - linearizability
+  - strong serializability
+  - object storage
+  - FoundationDB
+  - Tigris
+authors:
+  - adil
+tags:
+  - Engineering
+  - Consistency
+  - Testing
+  - Antithesis
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import QuickSummary from "@site/src/components/QuickSummary";
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import heroimage from "./hero-image.webp";
+import TwoLayerRead from "./two-layer-read.svg";
+import DeleteRace from "./delete-race.svg";
+import BeforeAfter from "./before-after.svg";
+import TombstoneBarrier from "./tombstone-barrier.svg";
+import ThreeLayerStack from "./three-layer-stack.svg";
+
+<img
+  src={heroimage}
+  className="hero-image"
+  alt="Cache coherence: a cache in front of a consistent store"
+/>
+
+<QuickSummary
+  readTime="12 min read"
+  items={[
+    {
+      title: "A cache in front of a consistent store is a contradiction.",
+      description:
+        "The store guarantees every read reflects the latest write. The cache guarantees most reads never touch the store. Under failure, they diverge.",
+    },
+    {
+      title: "Antithesis found three manifestations of the same seam.",
+      description:
+        "Delete-then-read race, rename treating cache invalidation as a hard dependency, and deleted objects resurfacing under regional failure. Same root cause, three different code paths.",
+    },
+    {
+      title: "The fix is a three-layer defense.",
+      description:
+        "Eager invalidation on the write path, tombstone barriers on the read path, tombstone returns from the metadata layer. Each layer catches what the one above misses.",
+    },
+    {
+      title: "Individually-tested mechanisms aren't enough.",
+      description:
+        "CI exercised each layer and each layer passed. The bugs lived in the gaps between layers under fault. That's what Antithesis is for.",
+    },
+  ]}
+/>
+
+{/* truncate */}
+
+Tigris is an S3-compatible object storage service with strong consistency within
+a region and eventual consistency across regions, with sub-second replication
+lag. A PUT returns; the next GET from the same region returns the object. A
+DELETE returns; the next GET returns 404. Conditional operations evaluate
+against the latest state. Those are the guarantees we sell, and they have to
+hold under fault.
+
+To hit the latency budget, every read goes through the edge cache in front of
+FoundationDB (FDB) metadata and block storage. A cache hit returns without ever
+touching FDB. Any architecture that places a cache in front of a strongly
+consistent store is a contradiction: the store guarantees that every read after
+a write reflects the latest state, while the cache guarantees that most reads
+never touch the store. Under clean operation, the two stay in sync because
+invalidations succeed and events arrive in order. Under failure, they diverge.
+
+This is the
+[cache coherence problem](https://en.wikipedia.org/wiki/Cache_coherence), first
+studied in computer architecture and inherited by every system that fronts a
+consistent store with a cache. Facebook documented their version in their
+[Memcache paper](https://research.facebook.com/publications/scaling-memcache-at-facebook/).
+Jepsen classifies the user-visible symptom — a read returning a value that
+doesn't reflect a prior completed write — as a
+[stale read](https://jepsen.io/consistency/phenomena/stale-read), a violation of
+strong serializability.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <TwoLayerRead
+    role="img"
+    aria-label="Two-layer read path: client to gateway to edge cache, with cache hit returning directly and cache miss going through to FoundationDB and block storage."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+[Antithesis](https://antithesis.com) found three manifestations of this
+divergence in production code paths that CI exercised on every PR. Each one is a
+different angle on the same seam.
+
+## What we were testing before, and what we weren't
+
+Tigris runs a full multi-region deployment in CI, not a single-node mock. Every
+PR spins up the same shape of system we run in production — API gateways, a
+distributed cache layer, worker pools, multiple FoundationDB clusters, and block
+stores spread across regions — and runs integration tests, S3 compatibility
+tests, and a data-race detector against it. Tests write in one region and read
+from another, verifying replication and read-after-write consistency end-to-end.
+
+That caught a lot, but these tests all assumed that the world was in a somewhat
+healthy state with a stable network, healthy regions, and responsive databases.
+Our test coverage was also limited to what we could imagine could go wrong. The
+failure combinations that produce real consistency bugs such as a region slowing
+mid-replication, a retry arriving out of order, or a blip during an async
+invalidation weren't in the suite because they're combinations of rare issues
+and hard to recreate as deterministic tests.
+
+We chose Antithesis to close these testing gaps. Antithesis runs the full system
+in a deterministic simulator with aggressive fault injection, explores the state
+space autonomously, and lets you replay any violation it finds. It's full-system
+property-based testing with fault injection built in.
+
+Porting our CI tests over took work. Integration tests are binary — operations
+pass or fail. Under fault there's a third state: ambiguous. A write returns a
+timeout; did it commit or not? A script that reads the timeout as "failure"
+produces false negatives when the object is actually there. So the first job was
+refactoring integration tests into fault-tolerant scripts (read, write,
+read-then-write, delete, rename) that reason about all three outcomes. The
+scripts compose: Antithesis orchestrates random sequences across hundreds of
+thousands of scenarios, each under a different pattern of injected faults.
+
+On top of the standard Antithesis fault catalog we added regional faults (entire
+regions slowing or going offline) not just individual processes. That's where
+the hard bugs surface. Losing a region means the replication pipeline, cache
+layer, and regional servers all go down together and the system has to handle
+any such combination.
+
+Between July 2025 and March 2026 the setup ran 330 integration test runs and 261
+Antithesis workload runs — 73,178 virtual hours total — and explored roughly
+20.3 million unique system states across 211,006 executions. Test results land
+in Slack and the triage converts into Linear issues for us to fix. We review the
+Antithesis runs daily.
+
+## Three bugs, one seam
+
+Antithesis helped us find three key bugs in Tigris, but all of them share a
+common root cause: cache coherence — the window between a metadata operation
+succeeding in FDB and the edge cache reflecting that change. Under normal
+conditions the window is closed by an invalidation or a deferred cleanup. Under
+fault the window widens, and the cache and the metadata store go out of sync.
+These are the bugs that CI can't cover because no one thinks to write them.
+
+### Bug 1: the delete-then-read race
+
+The original delete path went through `deleteWithLock()`. The function acquired
+a per-key cache lock, then called `deleteObjects()` which deleted the object
+from FDB. Cache eviction happened in a deferred cleanup step that ran after the
+FDB delete returned. The sequence was:
+
+```
+delete(key):
+  1. acquire key lock
+  2. delete from FDB            ← object is now gone
+  3. (deferred) evict cache     ← can fail silently
+  4. (deferred) write tombstone
+  5. release key lock
+  ← If step 3 fails, cache still serves the deleted object until TTL expires
+```
+
+If step 3 failed, the DELETE still returned success. The FDB delete in step 2
+had already committed, so as far as the client knew, the object was gone. The
+failed eviction got logged and that was it. The lock released, and the cache
+kept the old entry until async invalidation fired or its TTL expired.
+
+After that, any GET for that key hit the cache and got back the deleted object
+with a 200. FDB said the object was gone, the cache said it was still there, and
+reads went through the cache. The DELETE succeeded but the next GET returned
+what was just deleted, and it kept returning it until the cache entry aged out
+on its TTL.
+
+The eviction can fail for plenty of reasons. Tigris has two mechanisms that
+clear stale cache entries: an async invalidation task that fans out to every
+gateway after FDB commits, and a TTL on each cache entry that eventually ages it
+out. If the process crashes before the async task runs, or the task itself
+fails, or the cache call times out, the only mechanism left is TTL. FDB has
+moved on and the cache sits frozen in the past. The entry survives and every
+read during that window returns the deleted object.
+
+This is a
+[linearizability](https://cs.brown.edu/~mph/HerlihyW90/p463-herlihy.pdf)
+violation. Linearizability requires that every operation appear to take effect
+atomically at a single point in real time between its invocation and its
+response. A DELETE that returns and is immediately followed by a GET that sees
+the deleted object cannot be placed on any consistent real-time timeline. Jepsen
+classifies the observed symptom as a stale read and treats it as a safety
+violation of
+[strong serializability](https://jepsen.io/consistency/models/strong-serializable),
+not a performance regression. Facebook's Memcache paper describes a structurally
+identical problem under the name
+["delete consistency"](https://research.facebook.com/publications/scaling-memcache-at-facebook/)
+and proposes lease tokens as the remedy — a conceptually parallel mechanism to
+the tombstone barrier we describe below.
+
+The Antithesis delete-then-get workload caught it on the first run. It issued a
+DELETE followed by an immediate GET on the same key from regional endpoints.
+Under fault injection, the cache eviction sometimes failed, and the follow-up
+GET hit the edge cache and came back with the deleted object. This is a strong
+consistency violation: Tigris guarantees that a DELETE followed by a GET
+returns 404. The bug requires the cache eviction to fail silently while the FDB
+delete succeeds — a split outcome the code path had no way to detect or recover
+from. No one writes a test for a split outcome between two deferred steps of the
+same operation.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <DeleteRace
+    role="img"
+    aria-label="Sequence diagram showing the delete-then-read race. Request A deletes from FDB, but the deferred cache eviction fails silently. Request B issues a GET that hits the stale edge cache and returns 200 with the deleted object body."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+### Bug 2: rename treating cache invalidation as a hard dependency
+
+A rename in Tigris is an atomic copy-then-delete at the metadata layer. The
+rename commits as a single metadata transaction in FDB. After the commit, the
+code invalidated the edge cache entry for the old key — and it treated that call
+as required for the rename to succeed.
+
+If a transient cache timeout caused the invalidation to fail, `RenameObject`
+returned an error to the client. Cache invalidation is best-effort by nature. A
+cache that fails to clear will eventually age out on its TTL. A best-effort
+downstream step was taking down a durable upstream operation.
+
+The fix was to stop treating it as a blocker. The invalidation still runs in the
+same path, still tries to tombstone the old key, but its error is logged and
+ignored. The rename returns success once the FDB commit lands. If the cache call
+fails, the entry is cleared asynchronously. The tombstone barrier on the read
+path (below) handles the possibility of a stale cache hit in the interim.
+
+### Bug 3: deleted objects resurfacing under regional failure
+
+Under specific failure conditions involving partial regional faults, a deleted
+object could reappear on reads before the delete had fully settled across the
+region's components. The fix tightened the read-path guarantees so the system
+validates before serving, even under degraded regional conditions.
+
+## The fix: reorder, then barrier
+
+### Reorder
+
+The first change is to the delete path itself. Instead of deleting from FDB
+first and evicting the cache in a deferred cleanup, the code now evicts the
+cache eagerly while holding the per-key lock, then deletes from FDB:
+
+```
+delete(key):
+  1. acquire key lock
+  2. evict cache entry          ← moved before FDB delete
+  3. delete from FDB
+  4. (deferred) evict again
+     + write tombstone          ← defense-in-depth
+  5. release key lock
+```
+
+The eager eviction clears the cache before FDB commits, so any subsequent read
+finds the cache empty and falls through to FDB. We swallow the eviction error on
+purpose: if the cache is temporarily unreachable, the FDB delete still proceeds.
+The deferred eviction and tombstone still run afterward as defense in depth.
+
+<MermaidFrame style={{ maxWidth: "46rem", margin: "1.5rem auto" }}>
+  <BeforeAfter
+    role="img"
+    aria-label="Side-by-side comparison of the delete path. Before: lock, FDB delete, deferred evict that can fail silently, deferred tombstone, unlock. After: lock, evict cache before FDB delete, FDB delete, deferred evict plus tombstone, unlock. Cache cleared before FDB commits."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+### Barrier
+
+The reorder handles the case where the eager eviction succeeds. It does not
+handle the case where a stale entry arrives later through a fallback region and
+tries to repopulate the cache. The tombstone barrier handles that.
+
+A tombstone is a marker. Instead of removing a deleted key from the cache, we
+replace it with an entry that says "this key was deleted at this timestamp." The
+tombstone is a barrier on cache writes — before a new entry is written, the code
+compares its timestamp to the tombstone, and if the tombstone is newer the write
+is skipped:
+
+```
+on cache_write(key, object):
+  tombstone_ts = get_tombstone_timestamp(key)
+  if tombstone_ts exists AND object.last_modified <= tombstone_ts:
+    reject                       // stale data, do not cache
+  else:
+    write to cache
+```
+
+Every write to the cache — direct read-through, fallback region read, or a raced
+read that started before the delete landed — passes through this check. If the
+object being written is older than the tombstone, the write is rejected. The
+barrier works regardless of where the stale data came from.
+
+The tombstone itself has a TTL. Without one, the cache fills with markers for
+keys that will never be queried again. The TTL has to outlast any plausible
+replication delay, retry window, or async event that might deliver a stale
+version of the deleted object. Too short and a delayed event clears the barrier
+and re-caches a stale copy; the loop restarts. Getting this right depends on
+worst-case replication lag under failure conditions, which is hard to reason
+about without testing under faults. We run with five minutes for local objects
+and longer for remote.
+
+Three alternatives we considered and rejected:
+
+- **ETag check on every cache hit.** Requires an FDB round-trip per read, which
+  defeats the cache.
+- **Shorter TTLs.** Shrinks the window without closing it, and costs hit rate
+  across every object to solve a delete-specific problem.
+- **Retry the eviction synchronously on failure.** If the cache is down, every
+  delete fails. A cache outage becomes a delete outage. Worse than a brief
+  stale-read window bounded by TTL.
+
+<MermaidFrame style={{ maxWidth: "46rem", margin: "1.5rem auto" }}>
+  <TombstoneBarrier
+    role="img"
+    aria-label="Tombstone barrier diagram. Three sources — read-through populate, fallback region read, and raced read — all pass through a timestamp check before the edge cache. If the incoming object is older than the tombstone, the write is rejected. Otherwise, it is written to the cache."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+The barrier is source-agnostic, failure-tolerant, and applies to every write
+path — not just deletes. Renames, overwrites, any mutation that writes a
+tombstone gets the same protection.
+
+## Three layers, one property
+
+The general pattern that came out of the audit is a three-layer defense. Each
+layer catches a class of failure the one above cannot:
+
+- **Write path: eager invalidation.** Deletes invalidate the cache entry before
+  the mutation commits to the primary store, not after. Any gap between "the
+  source of truth changed" and "the cache knows about it" is a window for a
+  concurrent read to serve stale data. Eager eviction under the key lock closes
+  it.
+- **Read path: tombstone barriers.** Eager invalidation handles the case where
+  the cache is reachable and the eviction succeeds. It doesn't handle the case
+  where a stale entry arrives later through a fallback region and tries to
+  repopulate the cache. The tombstone is a barrier on cache writes: before a new
+  entry is written, the code compares its timestamp to the tombstone, and if the
+  tombstone is newer the write is skipped. Even if a fallback read delivers a
+  stale copy, the tombstone keeps it from poisoning the cache.
+- **Metadata layer: tombstone returns.** The first two layers live in the cache
+  and don't help when the gateway reconciles responses across regions. A 404
+  response from the metadata layer carries no timestamp, so a delete can't be
+  compared against a stale entry in cache, and the stale one is served. The fix
+  extended the metadata response to return the tombstone record itself when a
+  key has been deleted, with the time of delete. The gateway now compares the
+  cache entry's timestamp against the tombstone's, returns the correct result,
+  and evicts the stale cache entry on the way out. This is the safety net for
+  cases where the cache is absent or the tombstone barrier never landed.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <ThreeLayerStack
+    role="img"
+    aria-label="Three-layer vertical stack. Top layer: write path with eager invalidation. Middle layer: read path with tombstone barriers. Bottom layer: metadata layer with tombstone returns. An arrow on the left labeled failure modes shows each layer catches what the one above misses."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+Each layer individually was already in the system. Each layer individually
+passed its tests. What we audited, and what the fixes apply to, is every code
+path where the three layers interact — the places where a failure in one layer
+has to be caught by the next. That is the class of coverage CI wasn't giving us,
+and the class of coverage Antithesis is built for.
+
+A single cache failure no longer translates into a stale read. If the eager
+eviction succeeds, subsequent reads find the cache empty and fall through to
+FDB. If it fails, the deferred tombstone write still lands and the barrier
+blocks stale re-population. And if both of those fail, the metadata layer
+returns the tombstone with its timestamp so the gateway can reject the stale
+cache entry. The cache is still a performance optimization. It just doesn't need
+to be perfectly correct for the system to preserve consistency.
+
+We haven't encountered a cache coherence bug since these changes landed.
+
+## What's next
+
+Our Antithesis setup exercises the system end-to-end through the S3 API, which
+is where all three of these bugs surfaced. The next step is component-level
+testing — putting individual subsystems under Antithesis in isolation, where the
+fault surface is narrower and the invariants are more specific.
+
+Three targets:
+
+- **Replication pipeline.** Metadata distribution, block distribution, and cache
+  invalidation run independently. Under faults, the gaps between them widen, and
+  the ordering and delivery assumptions between the paths are where the next
+  class of bugs is likely to live.
+- **Async processing layer.** Background processes handle replication delivery,
+  cache invalidation, tombstone cleanup, and lifecycle management. When one of
+  them fails mid-operation, recovery has to avoid leaving partially-completed
+  work and has to avoid duplicating side effects. Those are hard properties to
+  verify with scripted tests because the failure timing matters as much as the
+  failure itself.
+- **Regional failover.** We support single-region, dual-region, multi-region,
+  and global buckets, each with different consistency and availability
+  properties. With regional faults added to the Antithesis setup, the next
+  question is whether service continues from remaining regions, whether
+  replication catches up cleanly on recovery, and whether all regions converge
+  to the same state afterward.
+
+Antithesis's companion post goes deeper on the methodology side — how the
+simulator explores, how determinism enables replay, what a property-based test
+under fault injection actually looks like.
+[Read it for the testing-methodology view.](https://antithesis.com/blog/2026/tigrisdata/)
+
+Antithesis also recently open-sourced
+[skills for writing Antithesis tests](https://github.com/antithesishq/antithesis-skills)
+with AI coding assistants, if you want to try the approach on your own system.
+
+<InlineCta
+  title="Strong consistency, tested under fault"
+  subtitle="Tigris is S3-compatible object storage with strong consistency within a region, eventual consistency across regions, and sub-second replication. Tested in Antithesis every night."
+  button="Read the docs"
+  link="https://www.tigrisdata.com/docs/"
+/>

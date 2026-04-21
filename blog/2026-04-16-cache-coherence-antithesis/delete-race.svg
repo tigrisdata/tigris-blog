@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 0 1340 700" width="1340" height="700" style="background:#0e1920">
+  <text x="520" y="44" fill="#c8d6de" font-size="24" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="520" dy="0">Delete-Then-Read Race</tspan></text>
+  <text x="280" y="72" fill="#8fa3b0" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="280" dy="0">Deferred cache eviction fails silently — cache serves deleted object until TTL expires</tspan></text>
+
+  <!-- Actor headers -->
+  <g opacity="1"><rect x="60" y="100" width="180" height="56" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="86" y="133" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="86" dy="0">Request A (DELETE)</tspan></text>
+
+  <g opacity="1"><rect x="340" y="100" width="180" height="56" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="395" y="133" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="395" dy="0">Key Lock</tspan></text>
+
+  <g opacity="1"><rect x="620" y="100" width="180" height="56" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="660" y="133" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="660" dy="0">FoundationDB</tspan></text>
+
+  <g opacity="1"><rect x="900" y="100" width="180" height="56" rx="8" ry="8" fill="#142229" stroke="#62FEB5" stroke-width="2.5"/></g>
+  <text x="946" y="133" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="946" dy="0">Edge Cache</tspan></text>
+
+  <g opacity="1"><rect x="1180" y="100" width="180" height="56" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="1220" y="133" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1220" dy="0">Request B (GET)</tspan></text>
+
+  <!-- Lifelines -->
+  <g opacity="1"><path d="M150,156 L150,676" fill="none" stroke="#2a4050" stroke-width="1" stroke-dasharray="6 4" stroke-linecap="round"/></g>
+  <g opacity="1"><path d="M430,156 L430,676" fill="none" stroke="#2a4050" stroke-width="1" stroke-dasharray="6 4" stroke-linecap="round"/></g>
+  <g opacity="1"><path d="M710,156 L710,676" fill="none" stroke="#2a4050" stroke-width="1" stroke-dasharray="6 4" stroke-linecap="round"/></g>
+  <g opacity="1"><path d="M990,156 L990,676" fill="none" stroke="#2a4050" stroke-width="1" stroke-dasharray="6 4" stroke-linecap="round"/></g>
+  <g opacity="1"><path d="M1270,156 L1270,676" fill="none" stroke="#2a4050" stroke-width="1" stroke-dasharray="6 4" stroke-linecap="round"/></g>
+
+  <!-- Stale window zone -->
+  <g opacity="0.15"><rect x="100" y="320" width="1200" height="140" rx="8" ry="8" fill="#CF5B5B" stroke="#CF5B5B" stroke-width="1.5" stroke-dasharray="6 4"/></g>
+  <text x="112" y="342" fill="#CF5B5B" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="112" dy="0">STALE WINDOW — eviction failed, cache still serves deleted object until TTL expires</tspan></text>
+
+  <!-- Step 1: acquire lock -->
+  <g opacity="1"><path d="M150,200 L430,200" fill="none" stroke="#c8d6de" stroke-width="2" stroke-linecap="round"/><polyline points="423.5,204.7 430,200 423.5,195.3" fill="none" stroke="#c8d6de" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="192" y="191" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="192" dy="0">1. acquire lock</tspan></text>
+
+  <!-- Step 2: FDB delete succeeds -->
+  <g opacity="1"><path d="M150,250 L710,250" fill="none" stroke="#c8d6de" stroke-width="2" stroke-linecap="round"/><polyline points="703.5,254.7 710,250 703.5,245.3" fill="none" stroke="#c8d6de" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="332" y="241" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="332" dy="0">2. FDB delete succeeds</tspan></text>
+
+  <!-- Step 3: deferred evict FAILS -->
+  <g opacity="1"><path d="M150,300 L990,300" fill="none" stroke="#CF5B5B" stroke-width="2" stroke-linecap="round"/><polyline points="983.5,304.7 990,300 983.5,295.3" fill="none" stroke="#CF5B5B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="400" y="291" fill="#CF5B5B" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="400" dy="0">3. (defer) evict cache — FAILS (timeout, crash, unreachable)</tspan></text>
+
+  <!-- Step 4: GET arrives, hits stale cache -->
+  <g opacity="1"><path d="M1270,380 L990,380" fill="none" stroke="#CF5B5B" stroke-width="2" stroke-linecap="round"/><polyline points="996.5,375.3 990,380 996.5,384.7" fill="none" stroke="#CF5B5B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="1048" y="371" fill="#CF5B5B" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1048" dy="0">4. GET — hits stale cache</tspan></text>
+
+  <!-- Step 5: returns deleted body -->
+  <g opacity="1"><path d="M990,420 L1270,420" fill="none" stroke="#CF5B5B" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round"/><polyline points="1263.5,424.7 1270,420 1263.5,415.3" fill="none" stroke="#CF5B5B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="1032" y="413" fill="#CF5B5B" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="1032" dy="0">5. 200 OK + stale body</tspan></text>
+
+  <!-- Step 6: write tombstone (too late) -->
+  <g opacity="1"><path d="M150,490 L710,490" fill="none" stroke="#c8d6de" stroke-width="2" stroke-linecap="round"/><polyline points="703.5,494.7 710,490 703.5,485.3" fill="none" stroke="#c8d6de" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="332" y="481" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="332" dy="0">6. (defer) write tombstone</tspan></text>
+
+  <!-- Step 7: release lock -->
+  <g opacity="1"><path d="M150,540 L430,540" fill="none" stroke="#c8d6de" stroke-width="2" stroke-linecap="round"/><polyline points="423.5,544.7 430,540 423.5,535.3" fill="none" stroke="#c8d6de" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="192" y="531" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="192" dy="0">7. release lock</tspan></text>
+
+  <!-- Callout box -->
+  <g opacity="0.4"><rect x="60" y="610" width="1300" height="70" rx="8" ry="8" fill="#142229" stroke="#CF5B5B" stroke-width="1.5" stroke-dasharray="6 4"/></g>
+  <text x="80" y="639" fill="#CF5B5B" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="80" dy="0">The bug requires cache eviction to fail silently while FDB delete succeeds — a split outcome the code path cannot detect.</tspan></text>
+  <text x="80" y="663" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="80" dy="0">Every read returns the deleted object until async invalidation arrives or cache TTL expires.</tspan></text>
+</svg>

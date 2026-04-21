@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 0 1460 690" width="1460" height="690" style="background:#0e1920">
+  <text x="560" y="44" fill="#c8d6de" font-size="24" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="560" dy="0">Tombstone Barrier</tspan></text>
+  <text x="390" y="72" fill="#8fa3b0" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="390" dy="0">every cache write passes through a timestamp check before it lands</tspan></text>
+
+  <!-- Three source boxes on the left -->
+  <g opacity="1"><rect x="60" y="130" width="280" height="80" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="200" y="163" fill="#c8d6de" font-size="16" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="200" dy="0">Read-through populate</tspan></text>
+  <text x="200" y="190" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="200" dy="0">cache miss, gateway writes the result</tspan></text>
+
+  <g opacity="1"><rect x="60" y="260" width="280" height="80" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="200" y="293" fill="#c8d6de" font-size="16" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="200" dy="0">Fallback region read</tspan></text>
+  <text x="200" y="320" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="200" dy="0">local region unavailable, read from another</tspan></text>
+
+  <g opacity="1"><rect x="60" y="390" width="280" height="80" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="200" y="423" fill="#c8d6de" font-size="16" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="200" dy="0">Raced read</tspan></text>
+  <text x="200" y="450" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="200" dy="0">read started before the delete landed</tspan></text>
+
+  <!-- Gate box in the middle -->
+  <g opacity="1"><rect x="520" y="220" width="300" height="150" rx="8" ry="8" fill="rgba(98,254,181,0.10)" stroke="rgba(98,254,181,0.6)" stroke-width="2.5"/></g>
+  <text x="670" y="265" fill="#62FEB5" font-size="18" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="670" dy="0">Tombstone check</tspan></text>
+  <text x="670" y="300" fill="#8fa3b0" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="670" dy="0">obj.LastModified &gt;</tspan></text>
+  <text x="670" y="322" fill="#8fa3b0" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="670" dy="0">tombstone_ts ?</tspan></text>
+
+  <!-- Edge cache on the right -->
+  <g opacity="1"><rect x="1000" y="245" width="240" height="100" rx="8" ry="8" fill="#142229" stroke="#62FEB5" stroke-width="2"/></g>
+  <text x="1120" y="285" fill="#c8d6de" font-size="18" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="1120" dy="0">Edge Cache</tspan></text>
+  <text x="1120" y="315" fill="#8fa3b0" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="1120" dy="0">only fresh entries land</tspan></text>
+
+  <!-- Drop sink below the gate -->
+  <g opacity="1"><rect x="580" y="470" width="180" height="70" rx="8" ry="8" fill="rgba(207,91,91,0.10)" stroke="rgba(207,91,91,0.6)" stroke-width="1.5" stroke-dasharray="6 4"/></g>
+  <text x="670" y="500" fill="#CF5B5B" font-size="16" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="670" dy="0">Dropped</tspan></text>
+  <text x="670" y="525" fill="#CF5B5B" font-size="13" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="670" dy="0">stale, does not cache</tspan></text>
+
+  <!-- Arrows from sources into gate -->
+  <g opacity="1"><path d="M340,170 L520,260" fill="none" stroke="#8fa3b0" stroke-width="2" stroke-linecap="round"/><polyline points="514,256 520,260 515,253" fill="none" stroke="#8fa3b0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g opacity="1"><path d="M340,300 L520,295" fill="none" stroke="#8fa3b0" stroke-width="2" stroke-linecap="round"/><polyline points="513.5,299.7 520,295 513.5,290.3" fill="none" stroke="#8fa3b0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g opacity="1"><path d="M340,430 L520,330" fill="none" stroke="#8fa3b0" stroke-width="2" stroke-linecap="round"/><polyline points="514,334 520,330 515,327" fill="none" stroke="#8fa3b0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+
+  <!-- Gate → Edge cache (pass, green) -->
+  <g opacity="1"><path d="M820,295 L1000,295" fill="none" stroke="#62FEB5" stroke-width="2.5" stroke-linecap="round"/><polyline points="993.5,299.7 1000,295 993.5,290.3" fill="none" stroke="#62FEB5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="910" y="283" fill="#62FEB5" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="910" dy="0">pass</tspan></text>
+
+  <!-- Gate → Dropped (reject, coral) -->
+  <g opacity="1"><path d="M670,370 L670,470" fill="none" stroke="#CF5B5B" stroke-width="2.5" stroke-linecap="round"/><polyline points="674.7,463.5 670,470 665.3,463.5" fill="none" stroke="#CF5B5B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="695" y="425" fill="#CF5B5B" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="695" dy="0">reject</tspan></text>
+
+  <!-- Callout box -->
+  <g opacity="0.4"><rect x="60" y="580" width="1200" height="60" rx="8" ry="8" fill="#142229" stroke="#1e3340" stroke-width="1" stroke-dasharray="6 4"/></g>
+  <text x="80" y="608" fill="#8fa3b0" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="80" dy="0">Source-agnostic: any cache write, regardless of origin, is rejected if the object is older than the tombstone.</tspan></text>
+</svg>
