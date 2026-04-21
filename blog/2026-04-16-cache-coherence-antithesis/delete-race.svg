@@ -28,7 +28,7 @@
 
   <!-- Stale window zone -->
   <g opacity="0.15"><rect x="100" y="320" width="1200" height="140" rx="8" ry="8" fill="#CF5B5B" stroke="#CF5B5B" stroke-width="1.5" stroke-dasharray="6 4"/></g>
-  <text x="112" y="342" fill="#CF5B5B" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="112" dy="0">STALE WINDOW — eviction failed, cache still serves deleted object until TTL expires</tspan></text>
+  <text x="112" y="342" fill="#CF5B5B" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="112" dy="0">STALE WINDOW — eviction failed, cache still serves deleted objects until TTL expires or async invalidation happens</tspan></text>
 
   <!-- Step 1: acquire lock -->
   <g opacity="1"><path d="M150,200 L430,200" fill="none" stroke="#c8d6de" stroke-width="2" stroke-linecap="round"/><polyline points="423.5,204.7 430,200 423.5,195.3" fill="none" stroke="#c8d6de" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
