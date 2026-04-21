@@ -1,5 +1,42 @@
 {
   "trailingSlash": true,
+  "headers": [
+    {
+      "source": "/blog/:path*.md",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/markdown; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/blog/",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "</blog/llms.txt>; rel=\"alternate\"; type=\"text/plain\""
+        },
+        {
+          "key": "Vary",
+          "value": "Accept"
+        }
+      ]
+    },
+    {
+      "source": "/blog/:path+/",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "</blog/llms.txt>; rel=\"alternate\"; type=\"text/plain\""
+        },
+        {
+          "key": "Vary",
+          "value": "Accept"
+        }
+      ]
+    }
+  ],
   "redirects": [
     {
       "source": "/blog/tags/data-modeling/",
@@ -10,6 +47,54 @@
       "source": "/blog/shadow-bucket-thumbnails/",
       "destination": "/blog/effortless-global-image-delivery/",
       "permanent": true
+    },
+    {
+      "source": "/blog/",
+      "has": [
+        {
+          "type": "header",
+          "key": "accept",
+          "value": ".*text/markdown.*"
+        }
+      ],
+      "destination": "/blog/index.md",
+      "statusCode": 307
+    },
+    {
+      "source": "/blog/:path+/",
+      "has": [
+        {
+          "type": "header",
+          "key": "accept",
+          "value": ".*text/markdown.*"
+        }
+      ],
+      "destination": "/blog/:path.md",
+      "statusCode": 307
+    },
+    {
+      "source": "/blog/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(ClaudeBot|ChatGPT-User|GPTBot|Google-Extended|PerplexityBot|Cohere-AI|OAI-SearchBot|YouBot|AI2Bot|Applebot-Extended|Meta-ExternalAgent|Meta-ExternalFetcher|Firecrawl|JinaBot).*"
+        }
+      ],
+      "destination": "/blog/index.md",
+      "statusCode": 307
+    },
+    {
+      "source": "/blog/:path+/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(ClaudeBot|ChatGPT-User|GPTBot|Google-Extended|PerplexityBot|Cohere-AI|OAI-SearchBot|YouBot|AI2Bot|Applebot-Extended|Meta-ExternalAgent|Meta-ExternalFetcher|Firecrawl|JinaBot).*"
+        }
+      ],
+      "destination": "/blog/:path.md",
+      "statusCode": 307
     }
   ]
 }
