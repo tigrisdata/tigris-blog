@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 0 1440 660" width="1440" height="660" style="background:#0e1920">
+  <text x="560" y="44" fill="#c8d6de" font-size="24" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" opacity="1"><tspan x="560" dy="0">The Fix: Evict Before Delete</tspan></text>
+
+  <!-- BEFORE zone (left, red dashed border) -->
+  <g opacity="0.15"><rect x="60" y="80" width="600" height="480" rx="8" ry="8" fill="#CF5B5B" stroke="#CF5B5B" stroke-width="1.5" stroke-dasharray="6 4"/></g>
+  <text x="360" y="115" fill="#CF5B5B" font-size="20" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="360" dy="0">Before</tspan></text>
+  <text x="360" y="142" fill="#8fa3b0" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="360" dy="0">FDB delete first, cache evicted later</tspan></text>
+
+  <!-- Before steps -->
+  <g opacity="1"><rect x="120" y="170" width="480" height="50" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="360" y="200" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="360" dy="0">1. acquire key lock</tspan></text>
+
+  <g opacity="1"><rect x="120" y="235" width="480" height="50" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="360" y="265" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="360" dy="0">2. delete from FDB</tspan></text>
+
+  <g opacity="1"><rect x="120" y="300" width="480" height="50" rx="8" ry="8" fill="rgba(207,91,91,0.15)" stroke="#CF5B5B" stroke-width="2"/></g>
+  <text x="360" y="330" fill="#CF5B5B" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="360" dy="0">3. (deferred) evict cache — can fail silently</tspan></text>
+
+  <g opacity="1"><rect x="120" y="365" width="480" height="50" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="360" y="395" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="360" dy="0">4. (deferred) write tombstone</tspan></text>
+
+  <g opacity="1"><rect x="120" y="430" width="480" height="50" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="360" y="460" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="360" dy="0">5. release lock</tspan></text>
+
+  <text x="360" y="520" fill="#CF5B5B" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="360" dy="0">if step 3 fails, cache serves deleted object until TTL</tspan></text>
+
+  <!-- Divider -->
+  <g opacity="1"><path d="M720,80 L720,560" fill="none" stroke="#2a4050" stroke-width="1" stroke-dasharray="6 4" stroke-linecap="round"/></g>
+
+  <!-- AFTER zone (right, green dashed border) -->
+  <g opacity="0.15"><rect x="780" y="80" width="600" height="480" rx="8" ry="8" fill="#62FEB5" stroke="#62FEB5" stroke-width="1.5" stroke-dasharray="6 4"/></g>
+  <text x="1080" y="115" fill="#62FEB5" font-size="20" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="1080" dy="0">After</tspan></text>
+  <text x="1080" y="142" fill="#8fa3b0" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="1080" dy="0">evict before FDB delete</tspan></text>
+
+  <!-- After steps -->
+  <g opacity="1"><rect x="840" y="170" width="480" height="50" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="1080" y="200" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="1080" dy="0">1. acquire key lock</tspan></text>
+
+  <g opacity="1"><rect x="840" y="235" width="480" height="50" rx="8" ry="8" fill="rgba(98,254,181,0.10)" stroke="#62FEB5" stroke-width="2"/></g>
+  <text x="1080" y="265" fill="#62FEB5" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="1080" dy="0">2. evict cache entry  ← moved before FDB delete</tspan></text>
+
+  <g opacity="1"><rect x="840" y="300" width="480" height="50" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="1080" y="330" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="1080" dy="0">3. delete from FDB</tspan></text>
+
+  <g opacity="1"><rect x="840" y="365" width="480" height="50" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="1080" y="395" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="1080" dy="0">4. (deferred) write tombstone</tspan></text>
+
+  <g opacity="1"><rect x="840" y="430" width="480" height="50" rx="8" ry="8" fill="#142229" stroke="#2a4050" stroke-width="2"/></g>
+  <text x="1080" y="460" fill="#c8d6de" font-size="15" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="1080" dy="0">5. release lock</tspan></text>
+
+  <text x="1080" y="520" fill="#62FEB5" font-size="14" font-family="Virgil, 'Comic Sans MS', cursive, sans-serif" text-anchor="middle" opacity="1"><tspan x="1080" dy="0">cache cleared before FDB commits — reads fall through to FDB</tspan></text>
+</svg>

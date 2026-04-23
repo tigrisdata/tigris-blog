@@ -1,0 +1,78 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 760 340"
+  width="760"
+  height="340"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title { font-size: 16px; fill: #62feb5; font-weight: 600; }
+    .sub { font-size: 12px; fill: #94a3b8; }
+    .label { font-size: 13px; fill: #e2e8f0; font-weight: 600; }
+    .small { font-size: 12px; fill: #bac1be; }
+    .node { rx: 6; ry: 6; fill: #1a2e35; stroke: #2a4050; stroke-width: 1.5; }
+    .accent { rx: 6; ry: 6; fill: rgba(98, 254, 181, 0.12); stroke: rgba(98, 254, 181, 0.5); stroke-width: 1.5; }
+  </style>
+
+  <defs>
+    <marker id="arrGrey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#94a3b8" />
+    </marker>
+    <marker id="arrGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <text x="380" y="28" text-anchor="middle" class="title">Two-layer read path</text>
+  <text x="380" y="50" text-anchor="middle" class="sub">Edge cache in front of FoundationDB + block storage</text>
+
+  <!-- Nodes arranged horizontally at y = 140-200 -->
+  <!-- Client -->
+  <rect x="30" y="150" width="110" height="60" class="node" />
+  <text x="85" y="186" text-anchor="middle" class="label">Client</text>
+
+  <!-- Gateway -->
+  <rect x="190" y="150" width="110" height="60" class="node" />
+  <text x="245" y="186" text-anchor="middle" class="label">Gateway</text>
+
+  <!-- Edge cache -->
+  <rect x="350" y="150" width="140" height="60" class="accent" />
+  <text x="420" y="186" text-anchor="middle" class="label">Edge cache</text>
+
+  <!-- FDB -->
+  <rect x="560" y="110" width="170" height="50" class="node" />
+  <text x="645" y="132" text-anchor="middle" class="label">FoundationDB</text>
+  <text x="645" y="150" text-anchor="middle" class="small">metadata</text>
+
+  <!-- Blocks -->
+  <rect x="560" y="200" width="170" height="50" class="node" />
+  <text x="645" y="232" text-anchor="middle" class="label">Block storage</text>
+
+  <!-- Forward request arrows: Client → Gateway → Edge cache -->
+  <line x1="140" y1="180" x2="186" y2="180" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrGrey)" />
+  <line x1="300" y1="180" x2="346" y2="180" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrGrey)" />
+
+  <!-- Cache → FDB and Cache → Blocks (miss path, dashed) -->
+  <line x1="490" y1="165" x2="556" y2="140" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrGrey)" />
+  <line x1="490" y1="195" x2="556" y2="220" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrGrey)" />
+
+  <!-- Cache-hit arc: routed BELOW the nodes so it doesn't collide with subtitle -->
+  <!-- From Edge cache bottom (x=420, y=210) curving down and back up to Gateway bottom (x=245, y=210) -->
+  <path d="M 420 210 C 420 265, 245 265, 245 210" fill="none" stroke="#62feb5" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrGreen)" />
+  <text x="332" y="283" text-anchor="middle" class="small" fill="#62feb5">hit: return without touching FDB</text>
+
+  <!-- Miss label -->
+  <text x="525" y="275" text-anchor="middle" class="small">miss: FDB + block read, then populate</text>
+
+  <!-- Legend -->
+  <line x1="90" y1="312" x2="125" y2="312" stroke="#62feb5" stroke-width="1.5" stroke-dasharray="4 3" />
+  <text x="133" y="316" class="small" fill="#62feb5">cache hit</text>
+  <line x1="240" y1="312" x2="275" y2="312" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 3" />
+  <text x="283" y="316" class="small">cache miss</text>
+  <line x1="400" y1="312" x2="435" y2="312" stroke="#94a3b8" stroke-width="1.5" />
+  <text x="443" y="316" class="small">request flow</text>
+</svg>

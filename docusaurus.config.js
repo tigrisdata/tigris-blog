@@ -72,8 +72,23 @@ const config = {
     ],
   ],
 
-  plugins:
-    process.env.NEXT_PUBLIC_POSTHOG_APIKEY &&
+  plugins: [
+    [
+      "@signalwire/docusaurus-plugin-llms-txt",
+      {
+        siteTitle: "Tigris Blog",
+        siteDescription:
+          "Technical blog from Tigris, a globally distributed, S3-compatible object storage service. Covers storage, cloud infrastructure, AI/ML, and developer tools.",
+        content: {
+          enableMarkdownFiles: true,
+          enableLlmsFullTxt: true,
+          includeDocs: false,
+          includeBlog: true,
+          includePages: false,
+        },
+      },
+    ],
+    ...(process.env.NEXT_PUBLIC_POSTHOG_APIKEY &&
     process.env.NEXT_PUBLIC_POSTHOG_HOST
       ? [
           [
@@ -87,7 +102,8 @@ const config = {
             },
           ],
         ]
-      : [],
+      : []),
+  ],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
