@@ -6,25 +6,50 @@ env:
   NEXT_PUBLIC_POSTHOG_APIKEY: dummy_for_testing
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Pull submodules
-        run: git submodule update --init --recursive
-
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Check category tags
         run: ./scripts/check-category-tags.sh
 
-      - name: Check types + linting + build
-        run: |
-          npm install
-          npx prettier --check .
-          npx eslint .
-          npm run build
+      - name: Prettier
+        run: npx prettier --check .
+
+      - name: ESLint
+        run: npx eslint .
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Restore Docusaurus cache
+        uses: actions/cache@v4
+        with:
+          path: .docusaurus
+          key:
+            docusaurus-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            docusaurus-${{ hashFiles('package-lock.json') }}-
+            docusaurus-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
