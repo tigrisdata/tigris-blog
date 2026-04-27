@@ -74,13 +74,6 @@ Tigris has always given you the primitives: buckets, scoped access keys,
 snapshots, object notifications. Agent Kit composes them into the four workflows
 that every agent system ends up rebuilding from scratch.
 
-:::caution Pre-1.0
-
-Agent Kit is published as `0.1.x`. The API is ready today but may evolve
-further.
-
-:::
-
 ## The gap between object storage and agent workflows
 
 Object storage is low-level on purpose. A bucket is a namespace for keys. Put an
@@ -117,8 +110,7 @@ composed from the underlying storage and IAM APIs you already have.
 ## The four primitives
 
 Each primitive composes a few storage and IAM calls into one function with a
-matching teardown. Every one returns a discriminated union — `{ data }` on
-success, `{ error }` on failure — so failures are checked, not thrown.
+matching teardown.
 
 ### Forks: give every agent its own copy of a dataset {#forks}
 
@@ -152,8 +144,10 @@ requirement.
 Doing this by hand is one snapshot of the source plus two calls per fork —
 create a bucket from the snapshot, mint a scoped access key — and a matching set
 of revoke-and-delete calls when you're done. For fifty agents, that's over a
-hundred API calls, each with its own error path. With Agent Kit, it's one call
-that returns everything wired together:
+hundred API calls against `@tigrisdata/storage` and `@tigrisdata/iam`, each with
+its own error path you have to wire together. Agent Kit still makes those calls
+under the hood — it just composes them, so you write one function instead of
+the orchestration around it:
 
 ```typescript
 import { createForks, teardownForks } from "@tigrisdata/agent-kit";
@@ -172,7 +166,7 @@ await Promise.all(
   })
 );
 
-// One call cleans up everything.
+// One function tears down every fork bucket and revokes its credentials.
 await teardownForks(forkSet);
 ```
 
@@ -184,12 +178,14 @@ radius to one agent, not the whole dataset.
 
 :::
 
-If one fork in the batch fails to create, `createForks` returns the ones that
-succeeded along with the snapshot ID, so you can retry or tear down the partial
-result. Teardown is best-effort — it continues through failures and reports
-every error in a single aggregated result. The API is shaped around how agent
-systems actually fail: partially, unevenly, in ways that shouldn't crash the
-whole pipeline.
+If one fork in the batch fails to create, `createForks` stops and returns the
+ones that succeeded along with the snapshot ID, so you can retry or tear down
+the partial result. The failed fork's error doesn't surface in the returned
+data — if you need to know exactly which one tripped, instrument the call or
+inspect the snapshot directly. Teardown is best-effort: it continues through
+failures and reports every error in a single aggregated result. The API is
+shaped around how agent systems actually fail — partially, unevenly, in ways
+that shouldn't crash the whole pipeline.
 
 ### Workspaces: scratch buckets that clean themselves up {#workspaces}
 
@@ -229,9 +225,10 @@ if (!workspace.credentials) {
 }
 ```
 
-What was previously a three-call sequence — create bucket, set TTL, mint
-credentials — with three separate failure modes is now one call with one result
-to check.
+Under the hood, that's still three calls — create bucket, set TTL, mint
+credentials — with three separate failure modes. Agent Kit composes them, so
+you write one function and check one result instead of orchestrating the
+sequence yourself.
 
 :::tip The TTL field pays for itself
 
@@ -320,72 +317,55 @@ idempotent, or let the next stage deduplicate on object key.
 
 :::
 
-## Composing all four in one agent run
+## Composing the primitives in one agent run
 
-The primitives are designed to stack. Here's a complete multi-agent eval run
-using every one of them — fork a corpus for parallel runs, give each agent a
-workspace, checkpoint results, wake the orchestrator when reports land:
+The primitives are designed to stack. Here's a multi-agent eval run that pins
+the corpus's known-good state, forks it for parallel runs, and wakes the
+orchestrator the moment any agent drops a report:
 
 ```typescript
 import {
   createForks,
   teardownForks,
-  createWorkspace,
-  teardownWorkspace,
   checkpoint,
   setupCoordination,
 } from "@tigrisdata/agent-kit";
 
-// 1. Fork the shared corpus for five parallel eval runs.
+// 1. Pin the corpus's known-good state before any agent touches it.
+//    If a run goes sideways, restore from this checkpoint into a fresh fork.
+const { data: baseline, error: ckptErr } = await checkpoint("training-data", {
+  name: "pre-eval-baseline",
+});
+if (ckptErr) throw ckptErr;
+
+// 2. Fork the corpus so each agent gets its own writable copy.
 const { data: forkSet, error: forkErr } = await createForks(
   "training-data",
   5,
-  { credentials: { role: "ReadOnly" } }
+  { credentials: { role: "Editor" } }
 );
 if (forkErr) throw forkErr;
 
-// 2. Each run gets its own writable workspace with a 1-day TTL.
-const sessions = await Promise.all(
-  forkSet.forks.map(async (fork) => {
-    const { data: workspace, error } = await createWorkspace(
-      `eval-${fork.bucket}`,
-      {
-        ttl: { days: 1 },
-        enableSnapshots: true,
-        credentials: { role: "Editor" },
-      }
-    );
-    if (error) throw error;
-    return { fork, workspace };
-  })
-);
-
-// 3. Wake the orchestrator when any run drops a report.
+// 3. Wake the orchestrator the moment any run drops a report.
 await setupCoordination("eval-reports", {
   webhookUrl: "https://orchestrator.example.com/eval-complete",
   filter: 'WHERE `key` REGEXP "^reports/"',
-  auth: { token: process.env.WEBHOOK_SECRET! },
+  auth: { token: process.env.WEBHOOK_SECRET },
 });
 
-// 4. Run agents, checkpoint each workspace at the end.
-await Promise.all(
-  sessions.map(async ({ fork, workspace }) => {
-    await runEvalAgent(fork, workspace);
-    await checkpoint(workspace.bucket, { name: "final" });
-  })
-);
+// 4. Run each agent on its own fork.
+await Promise.all(forkSet.forks.map((fork) => runEvalAgent(fork)));
 
-// 5. Tear down forks and workspaces. Checkpoints remain on each workspace's
-//    bucket until the bucket is deleted — snapshot metadata is free.
+// 5. Tear down forks and revoke their credentials. The baseline checkpoint
+//    stays on training-data — snapshot metadata is free.
 await teardownForks(forkSet);
-await Promise.all(
-  sessions.map(({ workspace }) => teardownWorkspace(workspace))
-);
 ```
 
 This is the shape most multi-agent runs end up in. The primitives stay close to
 their underlying storage and IAM calls, so when a step fails you can reason
-about what actually got provisioned and what didn't.
+about what actually got provisioned and what didn't. If your agents don't need
+a starting dataset and just need empty scratch space, swap `createForks` for
+`createWorkspace` — same lifecycle, different starting point.
 
 ## Which primitive fits which job
 
@@ -408,24 +388,23 @@ that graph is reading from. Your OpenAI Assistant has a thread; an agent-kit
 workspace is the private scratch bucket that assistant writes artifacts into.
 Use Agent Kit alongside whatever framework you're already on, not instead of it.
 
-## Why Agent Kit stays small
+## A thin layer over storage and IAM
 
-Agent Kit isn't a framework. It's four composed workflows that sit below
-whatever you're already using — LangChain, CrewAI, your own, or something that
-doesn't exist yet.
+Agent Kit isn't a framework. It's a handful of composed workflows that sit
+below whatever you're already using — LangChain, CrewAI, your own, or something
+that doesn't exist yet.
 
-The whole package is under six hundred lines of TypeScript. Every function
+Today the whole package is under six hundred lines of TypeScript. As we add
+more composite workflows, the design rules stay the same: every function
 returns `TigrisResponse<T>` — a discriminated union of `{ data }` or
-`{ error }`, no exceptions. Every `create*` or `setup*` has a matching
-`teardown`. Config maps to both storage and IAM. If you can read
-`@tigrisdata/storage`, you can read the whole of Agent Kit in a sitting.
+`{ error }`, no exceptions; every `create*` or `setup*` has a matching
+`teardown`; config maps to both storage and IAM.
 
-That smallness is deliberate. The failure mode we've seen most often in agent
-tooling is over-abstracted libraries that hide what they're doing — which is
-fine until something breaks, and then you need to know exactly which API calls
-ran in what order. Agent Kit stays close to the primitives. Every function maps
-to one or two underlying storage or IAM calls. When something fails, you can
-reason about it.
+The failure mode we've seen most often in agent tooling is over-abstracted
+libraries that hide what they're doing — which is fine until something breaks,
+and then you need to know exactly which API calls ran in what order. Agent Kit
+stays close to the primitives. Every function maps to one or two underlying
+storage or IAM calls. When something fails, you can reason about it.
 
 ## Install Agent Kit
 
