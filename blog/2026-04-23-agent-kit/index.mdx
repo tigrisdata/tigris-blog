@@ -146,8 +146,8 @@ create a bucket from the snapshot, mint a scoped access key — and a matching s
 of revoke-and-delete calls when you're done. For fifty agents, that's over a
 hundred API calls against `@tigrisdata/storage` and `@tigrisdata/iam`, each with
 its own error path you have to wire together. Agent Kit still makes those calls
-under the hood — it just composes them, so you write one function instead of
-the orchestration around it:
+under the hood — it just composes them, so you write one function instead of the
+orchestration around it:
 
 ```typescript
 import { createForks, teardownForks } from "@tigrisdata/agent-kit";
@@ -180,12 +180,12 @@ radius to one agent, not the whole dataset.
 
 If one fork in the batch fails to create, `createForks` stops and returns the
 ones that succeeded along with the snapshot ID, so you can retry or tear down
-the partial result. The failed fork's error doesn't surface in the returned
-data — if you need to know exactly which one tripped, instrument the call or
-inspect the snapshot directly. Teardown is best-effort: it continues through
-failures and reports every error in a single aggregated result. The API is
-shaped around how agent systems actually fail — partially, unevenly, in ways
-that shouldn't crash the whole pipeline.
+the partial result. The failed fork's error doesn't surface in the returned data
+— if you need to know exactly which one tripped, instrument the call or inspect
+the snapshot directly. Teardown is best-effort: it continues through failures
+and reports every error in a single aggregated result. The API is shaped around
+how agent systems actually fail — partially, unevenly, in ways that shouldn't
+crash the whole pipeline.
 
 ### Workspaces: scratch buckets that clean themselves up {#workspaces}
 
@@ -226,9 +226,9 @@ if (!workspace.credentials) {
 ```
 
 Under the hood, that's still three calls — create bucket, set TTL, mint
-credentials — with three separate failure modes. Agent Kit composes them, so
-you write one function and check one result instead of orchestrating the
-sequence yourself.
+credentials — with three separate failure modes. Agent Kit composes them, so you
+write one function and check one result instead of orchestrating the sequence
+yourself.
 
 :::tip The TTL field pays for itself
 
@@ -363,8 +363,8 @@ await teardownForks(forkSet);
 
 This is the shape most multi-agent runs end up in. The primitives stay close to
 their underlying storage and IAM calls, so when a step fails you can reason
-about what actually got provisioned and what didn't. If your agents don't need
-a starting dataset and just need empty scratch space, swap `createForks` for
+about what actually got provisioned and what didn't. If your agents don't need a
+starting dataset and just need empty scratch space, swap `createForks` for
 `createWorkspace` — same lifecycle, different starting point.
 
 ## Which primitive fits which job
@@ -390,15 +390,15 @@ Use Agent Kit alongside whatever framework you're already on, not instead of it.
 
 ## A thin layer over storage and IAM
 
-Agent Kit isn't a framework. It's a handful of composed workflows that sit
-below whatever you're already using — LangChain, CrewAI, your own, or something
-that doesn't exist yet.
+Agent Kit isn't a framework. It's a handful of composed workflows that sit below
+whatever you're already using — LangChain, CrewAI, your own, or something that
+doesn't exist yet.
 
-Today the whole package is under six hundred lines of TypeScript. As we add
-more composite workflows, the design rules stay the same: every function
-returns `TigrisResponse<T>` — a discriminated union of `{ data }` or
-`{ error }`, no exceptions; every `create*` or `setup*` has a matching
-`teardown`; config maps to both storage and IAM.
+Today the whole package is under six hundred lines of TypeScript. As we add more
+composite workflows, the design rules stay the same: every function returns
+`TigrisResponse<T>` — a discriminated union of `{ data }` or `{ error }`, no
+exceptions; every `create*` or `setup*` has a matching `teardown`; config maps
+to both storage and IAM.
 
 The failure mode we've seen most often in agent tooling is over-abstracted
 libraries that hide what they're doing — which is fine until something breaks,
