@@ -1,0 +1,129 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 720 300"
+  width="720"
+  height="300"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .kit-label {
+      font-size: 14px;
+      fill: #f1f5f9;
+      font-weight: 700;
+    }
+    .label {
+      font-size: 13px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 11px;
+      fill: #94a3b8;
+    }
+    .kit {
+      rx: 8;
+      ry: 8;
+      fill: #142229;
+      stroke: #62feb5;
+      stroke-width: 1.5;
+      stroke-opacity: 0.6;
+    }
+    .prim {
+      rx: 6;
+      ry: 6;
+      fill: #142229;
+      stroke: #62feb5;
+      stroke-width: 1;
+      stroke-opacity: 0.4;
+    }
+    .sdk {
+      rx: 6;
+      ry: 6;
+      fill: #0e1920;
+      stroke: #8fa3b0;
+      stroke-width: 1;
+      stroke-opacity: 0.45;
+    }
+    .arrow-kit {
+      stroke: #62feb5;
+      stroke-opacity: 0.55;
+      stroke-width: 1.2;
+      fill: none;
+    }
+    .arrow-sdk {
+      stroke: #8fa3b0;
+      stroke-opacity: 0.45;
+      stroke-width: 1;
+      fill: none;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="ah-kit"
+      markerWidth="6"
+      markerHeight="5"
+      refX="5.8"
+      refY="2.5"
+      orient="auto"
+    >
+      <polygon points="0 0, 6 2.5, 0 5" fill="#62feb5" fill-opacity="0.6" />
+    </marker>
+    <marker
+      id="ah-sdk"
+      markerWidth="6"
+      markerHeight="5"
+      refX="5.8"
+      refY="2.5"
+      orient="auto"
+    >
+      <polygon points="0 0, 6 2.5, 0 5" fill="#8fa3b0" fill-opacity="0.55" />
+    </marker>
+  </defs>
+
+  <!-- Row 1: Agent Kit -->
+  <rect x="260" y="14" width="200" height="44" class="kit" />
+  <text x="360" y="40" text-anchor="middle" class="kit-label">@tigrisdata/agent-kit</text>
+
+  <!-- AK -> primitives -->
+  <path d="M360,58 L105,116" class="arrow-kit" marker-end="url(#ah-kit)" />
+  <path d="M360,58 L275,116" class="arrow-kit" marker-end="url(#ah-kit)" />
+  <path d="M360,58 L445,116" class="arrow-kit" marker-end="url(#ah-kit)" />
+  <path d="M360,58 L615,116" class="arrow-kit" marker-end="url(#ah-kit)" />
+
+  <!-- Row 2: primitives -->
+  <rect x="32"  y="116" width="146" height="48" class="prim" />
+  <text x="105" y="146" text-anchor="middle" class="label">Forks</text>
+
+  <rect x="202" y="116" width="146" height="48" class="prim" />
+  <text x="275" y="146" text-anchor="middle" class="label">Workspaces</text>
+
+  <rect x="372" y="116" width="146" height="48" class="prim" />
+  <text x="445" y="146" text-anchor="middle" class="label">Checkpoints</text>
+
+  <rect x="542" y="116" width="146" height="48" class="prim" />
+  <text x="615" y="146" text-anchor="middle" class="label">Coordination</text>
+
+  <!-- primitives -> SDKs -->
+  <!-- Forks -> storage, iam -->
+  <path d="M105,164 L230,240" class="arrow-sdk" marker-end="url(#ah-sdk)" />
+  <path d="M105,164 L490,240" class="arrow-sdk" marker-end="url(#ah-sdk)" />
+  <!-- Workspaces -> storage, iam -->
+  <path d="M275,164 L230,240" class="arrow-sdk" marker-end="url(#ah-sdk)" />
+  <path d="M275,164 L490,240" class="arrow-sdk" marker-end="url(#ah-sdk)" />
+  <!-- Checkpoints -> storage -->
+  <path d="M445,164 L230,240" class="arrow-sdk" marker-end="url(#ah-sdk)" />
+  <!-- Coordination -> storage -->
+  <path d="M615,164 L230,240" class="arrow-sdk" marker-end="url(#ah-sdk)" />
+
+  <!-- Row 3: SDKs -->
+  <rect x="140" y="240" width="180" height="48" class="sdk" />
+  <text x="230" y="270" text-anchor="middle" class="label">@tigrisdata/storage</text>
+
+  <rect x="400" y="240" width="180" height="48" class="sdk" />
+  <text x="490" y="270" text-anchor="middle" class="label">@tigrisdata/iam</text>
+</svg>
