@@ -162,7 +162,12 @@ FROM lance_hybrid_search(
 ORDER BY _hybrid_score DESC;
 ```
 
-It's simple and minimal. Same Lance file, two engines, no migration.
+It's simple and minimal. Same Lance file, two engines, no migration. If you want
+a full lakehouse on top of Tigris instead — with snapshots, time travel, and a
+Postgres- or DuckDB-backed catalog — pair DuckDB with
+[DuckLake](https://www.tigrisdata.com/blog/ducklake/) and see
+[Data Time Travel with DuckLake and Tigris](https://www.tigrisdata.com/blog/ducklake-time-travel/)
+for what that unlocks.
 
 ## Fork a bucket like a Git branch
 
