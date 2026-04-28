@@ -63,16 +63,15 @@ import heroImage from "./hero-img.webp";
   ]}
 />
 
-Today, we're introducing
-[**`@tigrisdata/agent-kit`**](https://www.npmjs.com/package/@tigrisdata/agent-kit),
-a TypeScript SDK for the storage workflows that AI agents actually need. Four
+[**`@tigrisdata/agent-kit`**](https://www.npmjs.com/package/@tigrisdata/agent-kit)
+is a new TypeScript SDK for the storage workflows AI agents actually need. Four
 primitives — forks, workspaces, checkpoints, coordination — each with a
 `teardown` that cleans up credentials and storage. No dangling keys, no
 half-provisioned state.
 
-Tigris has always given you the primitives: buckets, scoped access keys,
-snapshots, object notifications. Agent Kit composes them into the four workflows
-that every agent system ends up rebuilding from scratch.
+Tigris already gives you the primitives: buckets, scoped access keys, snapshots,
+object notifications. Agent Kit composes them into the four workflows that every
+agent system ends up rebuilding from scratch.
 
 ## The gap between object storage and agent workflows
 
@@ -88,9 +87,9 @@ building agents, where the requests sound like:
 - "When someone else finishes writing to `stage-1/`, wake me up."
 
 Each is three to five API calls against `@tigrisdata/storage` and
-`@tigrisdata/iam`. For fifty parallel agents, that's a lot of plumbing, and
-plumbing is where errors live. The most common failure modes: forgotten access
-keys, unset TTLs, scratch buckets that quietly bill for a year.
+`@tigrisdata/iam`. For fifty parallel agents, that's a lot of code to get right.
+The failures are mundane: forgotten access keys, unset TTLs, scratch buckets
+that quietly bill for a year.
 
 [**Agent Kit is our answer to that gap.**](https://www.tigrisdata.com/docs/ai/agent-kit/)
 Four primitives that match how agent systems are actually structured, each one
@@ -129,7 +128,7 @@ import sailingImage from "./sailing.webp";
 
 Forks are copy-on-write clones of a bucket. Create a fork, and you get a new
 bucket that shares the underlying data with the source but diverges the moment
-either side writes. Fifty forks don't cost fifty times the storage — they cost
+either side writes. Fifty forks don't cost fifty times the storage. They cost
 one times the storage plus whatever the forks produce.
 
 :::note Prerequisite
@@ -180,12 +179,11 @@ radius to one agent, not the whole dataset.
 
 If one fork in the batch fails to create, `createForks` stops and returns the
 ones that succeeded along with the snapshot ID, so you can retry or tear down
-the partial result. The failed fork's error doesn't surface in the returned data
-— if you need to know exactly which one tripped, instrument the call or inspect
-the snapshot directly. Teardown is best-effort: it continues through failures
-and reports every error in a single aggregated result. The API is shaped around
-how agent systems actually fail — partially, unevenly, in ways that shouldn't
-crash the whole pipeline.
+the partial result. The failed fork's error doesn't surface in the returned
+data; if you need to know exactly which one tripped, instrument the call or
+inspect the snapshot directly. Teardown is best-effort: it continues through
+failures and reports every error in a single aggregated result. Agent systems
+fail partially, and the API is shaped around that.
 
 ### Workspaces: scratch buckets that clean themselves up {#workspaces}
 
@@ -242,10 +240,9 @@ money after a day.
 ### Checkpoints: mark a bucket's state before risky work {#checkpoints}
 
 When an agent does something surprising, the question you want to answer is
-"what was in the bucket when the agent read from it?" Without checkpoints, the
-answer is "whatever is in the bucket now, minus whatever the agent overwrote,
-plus whatever anyone else changed in the meantime." Which is to say, you can't
-answer.
+"what was in the bucket when the agent read from it?" Without checkpoints, you
+can't answer it. The bucket now contains whatever the agent overwrote on top of
+whatever anyone else changed in the meantime.
 
 Checkpoints are named snapshots. Take one before a risky operation, keep going.
 If things go sideways, restore the checkpoint into a fresh fork and investigate.
@@ -290,10 +287,10 @@ import tentImage from "./tent.webp";
   }}
 />
 
-Multi-agent systems need a way for stages to trigger each other. Polling is
-wasteful. Schedulers are another thing to run. Tigris buckets already fire
-webhooks when objects change — Agent Kit wraps that in a primitive shaped like
-an agent pipeline stage:
+Multi-agent systems need a way for stages to trigger each other without polling
+or running another scheduler. Tigris buckets already fire webhooks when objects
+change, and Agent Kit wraps that in a primitive shaped like an agent pipeline
+stage:
 
 ```typescript
 import { setupCoordination, teardownCoordination } from "@tigrisdata/agent-kit";
@@ -307,8 +304,8 @@ if (error) throw error;
 ```
 
 When any agent writes to `results/` in that bucket, the orchestrator gets a
-POST. No cron, no polling loop, no queue to stand up. The next stage runs when
-the previous stage finishes writing.
+POST. No polling loop or queue to stand up; the next stage runs when the
+previous stage finishes writing.
 
 :::info Delivery semantics
 
@@ -390,9 +387,9 @@ Use Agent Kit alongside whatever framework you're already on, not instead of it.
 
 ## A thin layer over storage and IAM
 
-Agent Kit isn't a framework. It's a handful of composed workflows that sit below
-whatever you're already using — LangChain, CrewAI, your own, or something that
-doesn't exist yet.
+Agent Kit is a handful of composed workflows that sit below whatever framework
+you're already using — LangChain, CrewAI, your own, or something that doesn't
+exist yet. It isn't trying to replace any of them.
 
 Today the whole package is under six hundred lines of TypeScript. As we add more
 composite workflows, the design rules stay the same: every function returns
@@ -400,11 +397,11 @@ composite workflows, the design rules stay the same: every function returns
 exceptions; every `create*` or `setup*` has a matching `teardown`; config maps
 to both storage and IAM.
 
-The failure mode we've seen most often in agent tooling is over-abstracted
-libraries that hide what they're doing — which is fine until something breaks,
-and then you need to know exactly which API calls ran in what order. Agent Kit
-stays close to the primitives. Every function maps to one or two underlying
-storage or IAM calls. When something fails, you can reason about it.
+Agent tooling has a habit of over-abstracting: libraries hide what they're
+doing, which is fine until something breaks and you need to know exactly which
+API calls ran in what order. Agent Kit stays close to the primitives, so every
+function maps to one or two underlying storage or IAM calls and you can reason
+about a failure when it happens.
 
 ## Install Agent Kit
 
