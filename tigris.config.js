@@ -14,9 +14,9 @@ module.exports = {
 
   // First entry is the main hero card; the rest are side cards.
   featuredPosts: [
+    "/agent-shell-release",
     "/training-object-storage",
     "/agent-kit",
     "/antithesis",
-    "/fifty-agents-one-bucket",
   ],
 };
