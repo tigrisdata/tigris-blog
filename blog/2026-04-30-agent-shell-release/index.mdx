@@ -1,0 +1,187 @@
+---
+slug: agent-shell-release
+title: We gave just-bash persistent storage
+date: 2026-04-30
+description: >
+  Meet @tigrisdata/agent-shell: a virtual bash environment that gives AI agents
+  persistent storage on Tigris buckets, with forks and snapshots for safety.
+image: ./hero-image.webp
+keywords:
+  - tigris
+  - agent-shell
+  - just-bash
+  - AI agents
+  - object storage
+  - sandboxing
+  - prompt injection
+  - bucket forking
+  - snapshots
+authors:
+  - xe
+tags:
+  - Build with Tigris
+  - Updates
+  - AI
+  - Agents
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A hooded figure made of green ASCII shell commands stands beside a bucket icon, next to the headline 'Shell Agents, Real Storage. Virtual bash. Real persistence.'"
+/>
+
+Agents love bash. They quickly
+[generate complex shell commands](http://braintrust.dev/app/braintrust-labs/p/bash-evals/experiments/bash-claude-sonnet-4-5?c=sql-claude-sonnet-4-5&r=b665a3b6-a046-4584-a8f7-2289ef580384&s=510baab2-879b-4a8e-9f9f-c4cb716dc6f4&fs=1),
+and are extremely powerful at manipulating data and processing text, all without
+tool calls. But there's a problem: they need to be sandboxed, and most sandboxes
+are overkill for simple agents that do things like `jq`, `sed`, and `awk`. Sure,
+there are safer ways to give agents access to real command line tools like
+virtual machines, microvms, and
+[just-bash](https://github.com/vercel-labs/just-bash), but all of them have
+significant drawbacks ranging from needing to have root to create virtual
+machines to just-bash's memory-only persistence.
+
+We think that just-bash is the right shape of a solution for something like
+agents built on Tigris, so we gave just-bash persistent storage backed by
+Tigris. Give your agents our
+[@tigrisdata/agent-shell](https://www.npmjs.com/package/@tigrisdata/agent-shell)
+package, and they can work in a virtual bash environment on an in-memory
+filesystem, and when they're ready to write their changes, they `flush` their
+changes to write to a Tigris bucket.
+
+Want to learn more? Keep on reading.
+
+## Security doesn't have to be shell-ish
+
+Giving agents a regular old shell with a real filesystem is about as secure as
+it sounds. Simon Willison has been
+[writing about this for months](https://simonwillison.net/series/prompt-injection/).
+Virtual shells like just-bash are an experiment in how to give agents a shell
+with proper isolation, without the weight of a sandbox. During a run, data only
+mutates within the shell, and agents only have access to the buckets you give
+them.
+
+That's why we built agent-shell on top of just-bash to give it the persistence
+it craves without the overhead of a sandbox around the entire world. agent-shell
+is a virtual bash-like environment, based on just-bash, that mounts a Tigris
+bucket as if it was a normal Unix filesystem. As far as your agents care it's a
+Unix system, they know this! This lets you `ls`, `sha256sum`, and more on your
+data as if it was on your laptop instead of existing as objects in the
+multicloud. Why should you have to download your data to operate on it?
+
+More importantly, when you combine this with
+[forks](https://www.tigrisdata.com/docs/forks/) and
+[snapshots](https://www.tigrisdata.com/docs/snapshots/), even commands as scary
+as `rm -rf /` become entirely safe. Add in some
+[@tigrisdata/agent-kit](https://www.npmjs.com/package/@tigrisdata/agent-kit) as
+seasoning and your agents get a shell to an isolated bucket fork:
+
+```ts
+import { createWorkspace, teardownWorkspace } from "@tigrisdata/agent-kit";
+import { TigrisShell } from "@tigrisdata/agent-shell";
+
+const { data: workspace } = await createWorkspace("agent-workspace-abc", {
+  ttl: { days: 1 }, // auto-expire objects after 1 day
+  enableSnapshots: true, // allow checkpointing later
+  credentials: { role: "Editor" }, // optional scoped access key
+});
+
+const shell = new TigrisShell({
+  accessKeyId: workspace.credentials?.accessKeyId,
+  secretAccessKey: workspace.credentials?.secretAccessKey,
+  bucket: workspace.bucket, // auto-mounted at /workspace
+});
+
+// pass this as an agent tool
+await shell.exec("ls -la");
+```
+
+Et voila! You're off to the agentic races. You can see how this would develop
+from here: your agents have access to your data as if it was local, even though
+it isn't. You also don't have to worry about prompt injection tricking the agent
+into running [exploit code](https://copy.fail/) because you've completely
+bypassed the normal shell. Agents can do anything they want, but malicious
+actions have no permanent effect.
+
+## But wait, there's more!
+
+This is cool enough on its own, but we didn't stop there. We added our own
+custom commands to just-bash that let you fork and snapshot buckets as well as
+presign URLs for your agentic workflows. Here's a sneak peek at the buckety
+goodness:
+
+```text
+$ presign hello.txt
+https://my-awesome-bucket.t3.tigrisfiles.io/hello.txt?...
+
+$ presign --put hello.txt
+
+$ fork xe-screenshots xe-screenshots-botw-only
+
+$ snapshot xe-screenshots --name "Before adding Funky Kong dataset"
+
+$ snapshot xe-screenshots --list
+```
+
+This lets you generate download links for your objects, upload links for clients
+to
+[directly upload objects](https://www.tigrisdata.com/docs/sdks/tigris/client-uploads/),
+[fork your buckets](https://www.tigrisdata.com/docs/forks/), generate
+[snapshots for your buckets](https://www.tigrisdata.com/docs/snapshots/), and
+list all the snapshots for your buckets. Snapshots let your agents make mistakes
+and roll back with the
+[restore function in agent-kit](https://www.npmjs.com/package/@tigrisdata/agent-kit#checkpoints).
+
+## Yo dawg, heard you like buckets
+
+You can even mount many buckets in the same environment:
+
+```ts
+import { TigrisShell } from "@tigrisdata/agent-shell";
+
+const shell = new TigrisShell({
+  accessKeyId: process.env.TIGRIS_STORAGE_ACCESS_KEY_ID,
+  secretAccessKey: process.env.TIGRIS_STORAGE_SECRET_ACCESS_KEY,
+  bucket: "agent-workspace", // auto-mounted at /workspace
+});
+
+shell.mount("shared-datasets", "/datasets");
+```
+
+If you want to see _all your buckets at once_, you can run agent-shell locally
+with `npx`:
+
+```
+npx @tigrisdata/agent-shell
+```
+
+Or check out [https://tigris.sh](https://tigris.sh):
+
+<div style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <iframe
+    src="https://tigris.sh"
+    title="tigris.sh"
+    frameBorder="0"
+    style={{ width: "100%", height: "480px", display: "block" }}
+  />
+</div>
+
+## Bash ahead fearlessly
+
+When you combine bucket forks, agent-kit, and agent-shell, your agents can run
+whatever destructive nonsense they want and the worst case is rolling back a
+snapshot. We think that's key to making agents safe so that you can offload
+context to them and then never get woken up about it again.
+
+Try it on your next agent and see how much sandbox you can ditch.
+
+<InlineCta
+  title="Shell-yeah!"
+  subtitle="agent-shell lets you isolate workloads with a lightweight bash-like environment so they can't step on other workloads. Give it a try!"
+  button="NPM 📦"
+  link="https://www.npmjs.com/package/@tigrisdata/agent-shell"
+/>
