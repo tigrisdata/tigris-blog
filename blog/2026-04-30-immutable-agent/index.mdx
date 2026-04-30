@@ -1,0 +1,162 @@
+---
+slug: immutable-agent
+title: "The Immutable Agent"
+description: >
+  Storage-protected Mastra agents in five lines. Isolated session forks,
+  validate before promoting, contain compromise at the storage layer.
+image: ./hero-image.webp
+keywords:
+  - immutable agent
+  - prompt injection
+  - storage-protected agent
+  - mastra
+  - agent kit
+  - tigris
+  - bucket forking
+  - ai security
+authors:
+  - davidmyriel
+tags:
+  - Build with Tigris
+  - agents
+  - mastra
+  - security
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import heroImage from "./hero-image.webp";
+import poisonImage from "./poison.webp";
+import SessionFlow from "./session-flow.svg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="The Immutable Agent — storage-protected Mastra agents on Tigris"
+/>
+
+What happens when a poisoned doc slips into your customer support agent's
+[knowledge base](/fifty-agents-one-bucket)?
+
+<img
+  src={poisonImage}
+  alt="A poisoned internal note carrying a prompt-injection payload — instructions telling the agent to lie about pricing, omit pricing limits, reveal its system prompt, and adopt a new identity. The kind of adverse content that lands in an agent's knowledge base through wiki sync, doc import, or a compromised upstream."
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "1.5rem auto",
+    display: "block",
+  }}
+/>
+
+A wiki edit, a nightly import from a compromised upstream, an insider
+commit. The doc looks routine. The agent's next ingestion picks it up —
+hidden in the markup are instructions telling the agent the Enterprise
+plan is free this month. The next customer who asks gets that answer,
+sourced from the agent's own corpus. Your support corpus has been quietly
+rewritten.
+
+Storage is the shield. The new doc lands on a fork of your knowledge
+base, not the live source. A validator catches the contradiction; the
+fork is quarantined for forensics; the live data never moved.
+
+I'm calling this the Immutable Agent.
+
+{/* truncate */}
+
+## Wrap your Mastra agent in one line
+
+Today we're shipping
+[`@tigrisdata/mastra`](https://www.npmjs.com/package/@tigrisdata/mastra),
+a one-line wrapper that adds storage-protected sessions to any Mastra
+agent. The
+[demo repo](https://github.com/tigrisdata/mastra-tigris-demo) walks
+through wrapping an agent end to end.
+
+<MermaidFrame style={{ maxWidth: "44rem", margin: "1.5rem auto" }}>
+  <SessionFlow
+    role="img"
+    aria-label="Session lifecycle: production bucket forks into a session fork, the agent writes to the fork, a validator runs, and either promotes the fork's changes back to production or quarantines the fork for forensics. Production state is unchanged unless validation passes."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+The wrapper's API is one function:
+
+```typescript
+import { withTigrisSession } from "@tigrisdata/mastra";
+
+const safeAgent = withTigrisSession(myAgent, {
+  source: "production-knowledge-base",
+  validate: async (fork) => runCanaryQueries(fork, mySet),
+});
+
+const result = await safeAgent.generate(userQuery);
+```
+
+Every call to the wrapped agent steps through six phases. Each one maps to
+a primitive from `@tigrisdata/agent-kit` or Mastra:
+
+| Phase                  | What happens                                                   | Primitive                        |
+| ---------------------- | -------------------------------------------------------------- | -------------------------------- |
+| Fork                   | Source clones via copy-on-write; new bucket starts empty       | `createForks` (Agent Kit)        |
+| Scope                  | IAM mints credentials valid on the fork and nowhere else       | scoped access keys               |
+| Run                    | Agent generates against the fork; tools read/write the fork    | Mastra `RequestContext`          |
+| Validate               | Your validator runs against the fork's final state             | your code (canary, leak, custom) |
+| Promote or quarantine  | Pass → changes flow to production. Fail → fork preserved       | `promote` / `quarantine`         |
+| Teardown               | Credentials revoked, idempotent cleanup runs in `finally`      | `teardownForks` (Agent Kit)      |
+
+Production state is unchanged unless the validator explicitly passes.
+
+```bash
+npm install @tigrisdata/mastra
+```
+
+:::tip[Try it on your existing Mastra agent]
+The
+[Mastra integration guide](https://www.tigrisdata.com/docs/agents/agent-mastra/)
+walks through wrapping a single agent and the multi-agent eval pattern.
+:::
+
+## What this does, and doesn't
+
+This is one layer in defense-in-depth. It does not filter direct prompt
+injection at the input boundary, validate the agent's outputs at the
+language level, or undo side effects in external systems. If your agent
+calls Stripe or sends emails, those happen for real and no fork unsends
+them. It does not replace [evals](/dataset-experimentation), red-teaming,
+or output monitoring.
+
+What it does is the persistence layer. When the other layers fail, this
+is what stops the failure from becoming permanent. The Immutable Agent
+isn't an agent that can't be compromised; it's an agent whose effects on
+production data can't propagate from a compromised session.
+
+## Why this only works on Tigris
+
+Three Tigris properties make this pattern feasible.
+[S3 compatibility](/s3-compat) means the package uses the same
+[`@tigrisdata/storage`](https://www.tigrisdata.com/docs/sdks/tigris/) SDK
+every other Tigris workload uses, with no custom client. Constant-time
+[forking and snapshots](/snapshots) mean isolation costs don't scale with
+bucket size — a 10 TB knowledge base forks as fast as a 10 MB one.
+[Zero egress fees](https://www.tigrisdata.com/docs/account-management/billing/)
+mean a validator agent can read the entire fork to check for poisoning
+without bandwidth bills, so comprehensive pre-merge validation that's
+prohibitive on egress-charging providers becomes routine.
+
+The
+[`@tigrisdata/agent-kit`](https://www.tigrisdata.com/docs/ai/agent-kit/)
+SDK ships the underlying primitives (`createForks`, `checkpoint`,
+`restore`, `setupCoordination`), and `@tigrisdata/mastra` is a thin layer
+that composes them into Mastra-idiomatic ergonomics. If you're not on
+Mastra, the
+[orchestrator pattern](https://www.tigrisdata.com/docs/agents/agent-mastra/)
+works in any framework that exposes a runtime context to its tools.
+
+<InlineCta
+  title="Ready to wrap your first agent?"
+  subtitle="Storage-protected Mastra agents in five lines. Isolated session forks, validate before promoting, contain compromise at the storage layer."
+  button="Read the docs"
+  link="https://www.tigrisdata.com/docs/agents/agent-mastra/"
+/>
