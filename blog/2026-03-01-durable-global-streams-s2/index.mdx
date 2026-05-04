@@ -3,8 +3,8 @@ slug: durable-global-streams-s2
 title: "Durable global streams in Tigris with S2"
 description: >-
   S2 Lite turns S3-compatible object storage into a durable streaming platform.
-  Run it on Tigris for globally distributed streams with zero egress fees and
-  automatic multi-region replication.
+  Run it on Tigris for high-cardinality workloads — per-agent reasoning traces,
+  event firehoses — with zero egress fees and global replication.
 image: ./hero-image.webp
 keywords:
   - S2
@@ -16,6 +16,9 @@ keywords:
   - stream storage
   - SlateDB
   - Kafka alternative
+  - AI agents
+  - agent infrastructure
+  - multi-agent systems
 authors:
   - xe
 tags:
@@ -23,6 +26,7 @@ tags:
   - Engineering
   - Streaming
   - Open Source
+  - AI
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
@@ -47,21 +51,27 @@ message queue; it's a durable, ordered, append-only stream store. With
 hardware you can look at on top of Tigris. I have it running in my homelab
 Kubernetes cluster to ingest the Bluesky public feed.
 
+S2 themselves are pitching this as
+[infrastructure for distributed AI agents](https://s2.dev/blog/distributed-ai-agents),
+and the fit is obvious once you see it: a stream per agent, durable reasoning
+traces, replay from sequence zero to audit how a conclusion formed. Traditional
+queues weren't built for that shape of workload. S2 was.
+
 ## The streaming spectrum
 
 Streaming and messaging systems can get surprisingly complicated based on the
-levels of abstraction and complexity at play. To understand where S2 fits,
-let's cover the different kinds of systems you'll see in the wild. None of
-these are perfect (sometimes you _do_ want to just drop data), but each has
-their own tradeoffs that make things easier or harder.
+levels of abstraction and complexity at play. To understand where S2 fits, let's
+cover the different kinds of systems you'll see in the wild. None of these are
+perfect (sometimes you _do_ want to just drop data), but each has their own
+tradeoffs that make things easier or harder.
 
 ### Shout to the void
 
-If you've ever used an IRC channel, this is what I'm talking about. If nobody
-is around to hear your message, it is as good as gone. If a consumer is
+If you've ever used an IRC channel, this is what I'm talking about. If nobody is
+around to hear your message, it is as good as gone. If a consumer is
 disconnected when the message is sent, they won't receive it. This is great for
-things like cache invalidation, typing indicators in chat applications, or
-other fundamentally ephemeral data along that line.
+things like cache invalidation, typing indicators in chat applications, or other
+fundamentally ephemeral data along that line.
 
 These systems are usually very cheap to run and have little to no resource
 requirements. Consider these options:
@@ -72,11 +82,11 @@ requirements. Consider these options:
 
 ### Worker queues
 
-One of the main drawbacks with shout-to-the-void systems is that they work
-great for broadcast-style messages or unicast-style messages, but they don't
-really have a good way to handle a case where you need one worker out of a
-group to handle a given message. This is where worker queues like Amazon's SQS,
-RabbitMQ, or Redis/Valkey RPUSH/LPOP come into play.
+One of the main drawbacks with shout-to-the-void systems is that they work great
+for broadcast-style messages or unicast-style messages, but they don't really
+have a good way to handle a case where you need one worker out of a group to
+handle a given message. This is where worker queues like Amazon's SQS, RabbitMQ,
+or Redis/Valkey RPUSH/LPOP come into play.
 
 With those queues you build up a bunch of state server-side and then as workers
 grab data, they slowly chew through the backlog until nothing is left. This idea
@@ -95,19 +105,19 @@ to multiple topics or risk data loss by having your consumers do that
 replication after consumption.
 
 This does work (for what it's worth I've seen this pan out at fairly large
-scales with the right kind of discipline), but there's a better option:
-durable, replayable streams.
+scales with the right kind of discipline), but there's a better option: durable,
+replayable streams.
 
 This is where systems like NATS JetStream and Redis Streams come in. They
 maintain an ordered log of events on the server side with consumer groups
-tracking positions. For efficiency the server usually maintains at least a
-day of scrollback, but most of the time you only need a few hours.
+tracking positions. For efficiency the server usually maintains at least a day
+of scrollback, but most of the time you only need a few hours.
 
 ### Apache Kafka
 
-And finally we have the final boss of streaming infrastructure: Apache Kafka. Don't set it
-up from scratch, save that for your enemies to do for you. It is a byzantine
-abomination that really earns its name from the
+And finally we have the final boss of streaming infrastructure: Apache Kafka.
+Don't set it up from scratch, save that for your enemies to do for you. It is a
+byzantine abomination that really earns its name from the
 [kafkaesque](https://en.wikipedia.org/wiki/Franz_Kafka) process you need to go
 through to use it. Once it's set up it's fairly decent, but as a result of it
 being the workhorse in many Fortune 500 companies, it ends up accumulating
@@ -126,13 +136,18 @@ read position by tracking sequence numbers, timestamps, or tail offsets. Any
 number of consumers can independently read the same stream at their own pace
 without any server-side coordination.
 
-Where S2 really stands apart is durability. NATS JetStream flushes to disk
-every two minutes before acknowledging (Jepsen
+Where S2 really stands apart is durability. NATS JetStream flushes to disk every
+two minutes before acknowledging (Jepsen
 [found problems](https://jepsen.io/analyses/nats-jetstream-2.9.0) with this).
 Redis Streams is in-memory first. S2 writes to object storage _before_
 acknowledging. Your data is durable on S3-compatible storage before S2 tells you
 the write succeeded. This helps avoid the
 [MongoDB problem of data durability](https://youtu.be/b2F-DItXtZs).
+
+This matters more than usual when the stream _is_ the audit trail. If you're
+logging an agent's reasoning steps and tool calls, "acknowledged but lost" isn't
+a missing log line — it's a hallucinated decision with no provenance. You want
+the bytes on disk before the ack comes back.
 
 ## What S2 actually is
 
@@ -245,10 +260,33 @@ data for a day or so.
 This pattern works for any high-volume event source: webhook ingestion, IoT
 telemetry, CDC streams from your database, logs from code execution sandboxes.
 S2 calls this "high-cardinality streams" because you can create a separate
-stream per user, per session, or per device without worrying about partition
-limits. These partition limits are where systems like Kafka can cause a lot of
-grief, being able to spin up arbitrary amounts of streams with a moment's notice
-is a blessing that you won't really understand until you need to and can't.
+stream per user, per session, per device, or per agent without worrying about
+partition limits. These partition limits are where systems like Kafka can cause
+a lot of grief, being able to spin up arbitrary amounts of streams with a
+moment's notice is a blessing that you won't really understand until you need to
+and can't.
+
+## Coordinating distributed agents
+
+The shape of an agent workload is awkward for traditional streaming systems.
+Each agent needs its own bounded execution context — no shared memory, no
+crosstalk between reasoning paths — but you also want all of those contexts
+durable, replayable, and visible to a supervisor or a human reviewer. That's
+hard to express with consumer groups and partition counts. It's straightforward
+to express with a stream per agent.
+
+Give every agent its own S2 stream. Each tool call, model output, and
+intermediate reasoning step gets appended in order. Spin up a new stream when an
+agent forks a sub-task; let cohorts of agents read each other's streams when you
+want them to coordinate. Multiple downstream consumers — a supervisor agent, an
+evals pipeline, a logger, a human reviewer — each read at their own pace from
+the same data without you having to fan anything out.
+
+When you want to debug why an agent reached a conclusion, replay the stream from
+sequence zero. The whole reasoning trace is sitting durably in Tigris, ordered,
+timestamped, and exactly what the agent saw. This is the part that makes evals
+and post-hoc analysis tractable instead of a forensics exercise against
+scattered log lines.
 
 ## Why object storage for streams
 
@@ -300,7 +338,7 @@ If you build something interesting with S2 on Tigris, come tell us about it in
 and we'll keep telling you about all the cool ways you can use object storage.
 
 <InlineCta
-  title="Need durable storage for your streams?"
+  title="Durable streams for multi-agent systems"
   subtitle="Tigris gives you globally distributed, S3-compatible object storage with zero egress fees. Point S2 Lite at it and start streaming."
   button="Get started with Tigris"
 />
