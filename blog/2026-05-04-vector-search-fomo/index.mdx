@@ -1,0 +1,270 @@
+---
+slug: vector-search-fomo
+title: "Read while sleeping: an LLM wiki for my vector search FOMO"
+date: 2026-05-04
+description: >
+  I run Qdrant, and I also have to know what every other vector DB ships every
+  week. So I built llm-digest, a nightly cron that reads my feeds, updates an
+  LLM wiki on Tigris, and drops a digest URL in my Slack each morning.
+image: ./hero-image.webp
+keywords:
+  - tigris
+  - llm-wiki
+  - llm-digest
+  - vector search
+  - karpathy
+  - github actions
+  - knowledge base
+  - rss
+  - claude code
+  - staging-then-promote
+authors:
+  - davidmyriel
+tags:
+  - Build with Tigris
+  - AI
+  - Agents
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import QuickSummary from "@site/src/components/QuickSummary";
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import heroImage from "./hero-image.webp";
+import competitionImage from "./competition.webp";
+import Pipeline from "./pipeline.svg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A dark IDE panel showing a git-style diff of overnight wiki updates: new pages on binary quantization, an updated vendor release timeline, and a contradiction surfaced on Turbopuffer pricing tiers. A small status block reads 'Flush ✓ · Snapshot v412 · Presigned digest 30d'."
+/>
+
+<QuickSummary
+  readTime="6 min read"
+  items={[
+    {
+      title: <a href="#llm-digest-the-wiki-does-the-reading">What it is.</a>,
+      description:
+        "A nightly agent-driven pipeline that maintains an LLM wiki on Tigris and posts a single digest URL to Slack each morning.",
+    },
+    {
+      title: <a href="#how-it-actually-works">How it works.</a>,
+      description:
+        "GitHub Actions cron, headless Claude Code, a Tigris bucket via the @tigrisdata/storage SDK, and a presigned digest URL in Slack.",
+    },
+    {
+      title: <a href="#where-tigris-earns-its-place">Why Tigris.</a>,
+      description:
+        "Snapshots, copy-on-write forks, and presigned URLs as native primitives, plus a 30-line staging-then-promote pattern that gives unattended runs atomic upload.",
+    },
+    {
+      title: <a href="#what-this-isnt">Limits.</a>,
+      description:
+        "Works at personal scale (100–200 wiki pages). Past that, the index outgrows context and you've reinvented RAG.",
+    },
+  ]}
+/>
+
+I run Qdrant in production. I have opinions about its filtering, its scalar
+quantization, the way it handles payload indexes. And because I'm the one who'd
+argue for or against switching, I also have to know what every other vector DB
+shipped this week, including the flagged features and the benchmark numbers that
+look a little too clean.
+
+That's how my browser ended up with 200 unread tabs, roughly half arXiv papers
+and half vendor changelogs and HN threads I half-read on my phone and never came
+back to. The field moves faster than I read, and two weeks ago I had to write a
+one-pager on filtered vector search for a partner call. I spent two hours
+rebuilding context I'd already had: release notes I'd skimmed in March, a paper
+from February, an HN thread that disagreed with a vendor's own pricing page.
+
+<img
+  src={competitionImage}
+  alt="A close-up of one diff hunk on a wiki vendor page: a competitor flipped binary quantization on behind a feature flag in v1.29 and the wiki picked up the change overnight."
+  style={{
+    maxWidth: "42rem",
+    width: "100%",
+    margin: "1.5rem auto",
+    display: "block",
+    borderRadius: "6px",
+  }}
+/>
+
+So I built `llm-digest`, a nightly GitHub Actions cron that reads my feeds,
+updates a markdown wiki on a Tigris bucket, and posts a single digest URL to
+Slack. I wake up to the day's reading already done, with notes on what shipped
+and which one paper to actually click through.
+
+## The Karpathy insight
+
+[Andrej Karpathy's LLM Wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
+describes the pattern in a paragraph. You drop raw sources into a `sources/`
+folder, then you point an LLM agent at it with a prompt that tells it how to
+maintain a wiki. The agent extracts entities and updates a parallel `wiki/`
+folder of plain markdown, with one page per concept, vendor, paper, or person.
+You read the wiki; the agent writes it.
+
+:::tip Compile-time, not query-time
+
+The difference from RAG: synthesis happens **once, at ingest time**, into a
+durable artifact you can read. RAG re-derives the answer on every query against
+raw chunks. The wiki gets denser over time — new sources update old pages,
+contradictions surface explicitly, and by month three the page on
+`[[binary-quantization]]` is a real reference with provenance back to every
+paper that contributed to it.
+
+:::
+
+The catch in the gist is that ingestion is manual; you do it when you remember
+to, which in practice is rarely. My version doesn't wait for me to remember.
+
+## llm-digest: the wiki does the reading
+
+A GitHub repo holds the schema, the slash commands, and a list of RSS feeds,
+while a Tigris bucket holds the wiki itself. The scheduling layer is three lines
+of YAML:
+
+```yaml
+# .github/workflows/daily-ingest.yml
+on:
+  schedule:
+    - cron: "0 7 * * *" # 07:00 UTC daily
+```
+
+There's no web app, no vector store, no custom backend behind any of this. The
+user-facing interface is a URL in Slack and an Obsidian vault on my laptop
+synced from the bucket, and the 200 unread tabs are at 47 now and falling.
+
+## What's in the morning digest
+
+A single page, generated at the end of each ingest run:
+
+```markdown
+# 2026-05-04 · Daily digest
+
+7 sources ingested · 23 pages updated · 4 created · 1 contradiction.
+
+**Theme:** binary quantization is moving from research to production.
+
+## Sources ingested
+
+- [[2026-05-bbq-at-scale]] — arXiv:2604.01183, "BBQ at scale"
+- [[hn-43821-turbopuffer]]
+- [[2026-05-vendor-release-notes]] ...
+
+## Pages updated
+
+- [[binary-quantization]] — added 2026 production reports section
+- [[hnsw]] — a vendor flagged binary quantization in v1.29; release-notes link
+  added
+- [[turbopuffer]] — pricing tier names contradicted by HN thread; older claim
+  retained pending vendor confirmation
+
+## Recommended
+
+- "BBQ at scale" — clearest single read of the day.
+
+## Open questions
+
+- Is the 200-candidate cross-encoder rerank still required at int1?
+- Which vendors are still gating quantization behind feature flags?
+```
+
+I wake up to it, click into the two pages worth reading, and get on with my
+morning.
+
+## How it actually works
+
+The whole thing fits in one picture. The LLM never writes to the live wiki
+directly — it writes to a fresh scratch area in the bucket, and we only "commit"
+that scratch into the live wiki if a separate lint check passes.
+
+<MermaidFrame
+  title="The LLM writes to a scratch area in the bucket, lint checks it, and only a clean scratch gets renamed into the live wiki."
+  style={{ maxWidth: "42rem", margin: "1.5rem auto" }}
+>
+  <Pipeline
+    role="img"
+    aria-label="Pipeline diagram. A nightly cron starts Claude Code, which writes new wiki pages into a versioned scratch prefix in the bucket. Lint then verifies the scratch. On a critical lint failure the scratch is dropped and the live wiki is unchanged. On clean lint, the scratch is server-side renamed into the live wiki and a presigned digest URL is posted to Slack."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+The script at the heart of this is small. It opens a Tigris S3 client through
+`@tigrisdata/storage`, figures out which feed URLs are new (deduped against a
+tiny `state.json` in the bucket), and invokes Claude Code in headless `-p` mode
+with the `/ingest-batch` slash command. That slash command is a markdown file in
+the repo, identical to the one I use locally:
+
+```markdown
+# .claude/commands/ingest-batch.md
+
+For each URL in the input list:
+
+1. Fetch and clean the article. Save to sources/articles/<date>-<slug>.md.
+2. Identify entities (people, vendors, models, papers, concepts).
+3. Extend the existing wiki/ page or create a new one if this is the
+   second-or-later mention across sources.
+4. Surface contradictions with prior claims per CLAUDE.md rules.
+5. Cross-link all touched pages bidirectionally.
+```
+
+Every page Claude Code writes lands in `staging/<runId>/...` in the bucket —
+never directly into the live `wiki/` tree. After ingestion, `/lint-wiki` runs
+against that scratch area and emits a JSON severity report. A critical issue
+throws, the staging prefix is left to be garbage-collected by tomorrow's run,
+and the live wiki is exactly where it was an hour ago. A clean report runs
+`/compile-digest` to add today's digest page into the same scratch, then
+server-side renames every staged object into its live location in one pass. The
+digest URL gets presigned and posted to Slack:
+
+```typescript
+// scripts/share.ts
+const url = await presign(`wiki/digest/${today}.md`, 30 * 86400);
+await fetch(process.env.SLACK_WEBHOOK_URL!, {
+  method: "POST",
+  body: JSON.stringify({ text: `Today's digest: ${url}` }),
+});
+```
+
+The whole pipeline runs in about 200 lines of TypeScript and 100 lines of YAML.
+
+## Where Tigris earns its place
+
+The project follows a rule: don't pitch a tool unless it solves a real problem.
+
+The load-bearing piece is the storage layer, not a clever framework. A nightly
+unattended job needs durable shared storage that any runner can mount, plus
+enough primitives to make the upload atomic and the failure modes survivable.
+Tigris gives me the bucket, the snapshot, the copy-on-write fork, and the
+presigned URL natively, and the staging-then-promote pattern is about thirty
+lines I own in `scripts/lib/storage.ts`:
+
+```typescript
+// scripts/ingest.ts (the shape that matters)
+await withStagingPromote(async ({ stage }) => {
+  await snapshot(BUCKET, `pre-ingest-${ts}`);
+
+  await runSlashCommand("ingest-batch", { urls: newUrls, stage });
+  const lint = await runSlashCommand("lint-wiki", { stage });
+
+  if (hasCritical(lint)) {
+    await notify("aborted", lint);
+    throw new AgentError("critical lint"); // ← no promote. live tree untouched.
+  }
+
+  await runSlashCommand("compile-digest", { stage });
+}); // ← server-side rename staging → live
+```
+
+Every write goes to `staging/<runId>/`. On success, `withStagingPromote`
+server-side renames the staged objects into their live locations in one pass; on
+a thrown error, nothing is renamed and the staging prefix is garbage-collected
+on the next run's first action. There is no separate restore primitive, no
+half-mutated tree, no race between "agent finished" and "cleanup ran." The
+rollback is structural.
+
+`presign` turns the daily digest into a URL I can read on my phone, which is
+what gives the system a user-facing artifact at all. `snapshot` runs at the
+start of each run as a passive safety net for the rare day I notice the wiki
+drifted three runs ago and need to walk back via `fork --snapshot <version>`.
