@@ -218,9 +218,9 @@ Tigris-specific code path.
 single run atomic. It doesn't help when a run "succeeds" but quietly produces a
 wiki I don't actually want, where the agent drifted from the schema in a way
 that didn't trip a validator. I might not notice for three days.
-[`createBucketSnapshot`](https://www.tigrisdata.com/docs/buckets/snapshots/)
+[`createBucketSnapshot`](https://www.tigrisdata.com/docs/snapshots/)
 runs at the top of every ingest, and
-[`fork(srcBucket, recovered, { snapshotVersion })`](https://www.tigrisdata.com/docs/buckets/forking/)
+[`fork(srcBucket, recovered, { snapshotVersion })`](https://www.tigrisdata.com/docs/forks/)
 lets me walk back. Spin up a fork pointing at Friday's snapshot, repoint
 `TIGRIS_STORAGE_BUCKET`, and the next ingest builds on the recovered version.
 The verdict in `TIGRIS_FEATURES.md` is "convenient, not load-bearing" and that's
@@ -229,7 +229,7 @@ call.
 
 **Presigned URLs are the delivery.** The digest is the user-facing artifact of
 this whole pipeline; without delivery the system doesn't do anything for me.
-[`getPresignedUrl(path, 30 * 86400)`](https://www.tigrisdata.com/docs/objects/presigned-urls/)
+[`getPresignedUrl(path, 30 * 86400)`](https://www.tigrisdata.com/docs/objects/presigned/)
 turns the markdown digest into a one-line URL I drop in Slack. The phone opens
 it without auth, the link expires in 30 days, and the same primitive lets me
 share a digest with a colleague who isn't on my GitHub or paste a wiki page into
