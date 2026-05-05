@@ -244,9 +244,6 @@ staging prefix, the runId namespacing, the partial-flush failure mode, and the
 GC sweep yourself. That's about thirty lines of pattern code that goes away once
 agent-shell takes responsibility for the buffer.
 
-Around 1700 lines of TypeScript and ~80 lines of YAML across the whole repo,
-small enough to read in an afternoon.
-
 ## I ran this last night
 
 End-to-end, against a fresh Tigris bucket, with two URLs from a Hacker News RSS
@@ -291,18 +288,6 @@ your own bucket, you get the same output. The atomicity isn't a footnote in the
 docs; it's a script you can re-run any time you want to retest the claim against
 a future version of agent-shell or the SDK.
 
-## What this isn't
-
-This isn't a replacement for reading. The wiki is good at structured reference
-and current state. It's bad at argumentation, framing, and the part where the
-authors tell you what they got wrong before they figured it out. The digest
-tells me what to read in full.
-
-There's also a ceiling. The pattern breaks somewhere between 100 and a few
-hundred wiki pages, when the master index stops fitting in the model's context
-window. At that point you split by domain or layer retrieval underneath and
-accept that you've reinvented RAG with extra steps.
-
 ## How I work with it
 
 My week with the wiki has four touchpoints and that's all of them. Mornings I
@@ -322,45 +307,6 @@ but because I trust the wiki to surface the ones that matter, and I trust myself
 to walk away from the ones it summarized for me. When you can answer "what's the
 current state of binary quantization" in three seconds by clicking a
 `[[wiki-link]]`, the anxiety goes somewhere quieter.
-
-## Further reading
-
-**Tigris primitives the post leans on**
-
-- [Bucket snapshots](https://www.tigrisdata.com/docs/buckets/snapshots/) — the
-  daily safety net behind the multi-day rollback story.
-- [Bucket forking (copy-on-write)](https://www.tigrisdata.com/docs/buckets/forking/)
-  — what `fork(srcBucket, recovered, { snapshotVersion })` calls under the hood.
-- [Presigned URLs](https://www.tigrisdata.com/docs/objects/presigned-urls/) —
-  how the digest reaches Slack and your phone.
-- [Tigris docs index](https://www.tigrisdata.com/docs/) — everything else,
-  including pricing.
-
-**SDKs and packages**
-
-- [`@tigrisdata/storage`](https://www.npmjs.com/package/@tigrisdata/storage) —
-  the Tigris S3 SDK used outside the agent loop (snapshot, presign, fork).
-- [`@tigrisdata/agent-shell`](https://www.npmjs.com/package/@tigrisdata/agent-shell)
-  — the JS-virtual filesystem with the atomic-flush guarantee.
-- [Anthropic SDK messages API](https://docs.anthropic.com/en/api/messages) — the
-  agent loop's runner.
-- [Mozilla Readability](https://github.com/mozilla/readability) — the
-  deterministic preprocessor that made `fetch_url` affordable.
-
-**Related reading**
-
-- [Fifty agents, one bucket](/blog/fifty-agents-one-bucket) — the post that
-  first put copy-on-write fork on my radar.
-- [Agent-shell release post](/blog/agent-shell-release) — the launch post for
-  the package this build leans on.
-- [Bucket forking deep dive](/blog/bucket-forking-deep-dive) — what's actually
-  happening when a fork is created.
-- [Build agents with bucket forking](/blog/build-agents-with-bucket-forking) —
-  the broader pattern this post is one instance of.
-- [Karpathy's LLM Wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
-  — the original pattern this builds on.
-- [`llm-digest` on GitHub](https://github.com/davidmyriel/llm-digest) — the
-  reference implementation, including the `scripts/experiments/` verifiers.
 
 <InlineCta
   title="Build your own LLM digest"
