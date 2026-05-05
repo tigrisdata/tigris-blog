@@ -62,10 +62,11 @@ pricing page.
   }}
 />
 
-So I built `llm-digest`, a nightly GitHub Actions cron that reads my feeds,
-updates a markdown wiki on a [Tigris](https://www.tigrisdata.com/) bucket, and
-posts a single digest URL to Slack. I wake up to the day's reading already done,
-with notes on what shipped and which one paper to actually click through.
+So I built [`llm-digest`](https://github.com/davidmyriel/llm-digest), a nightly
+GitHub Actions cron that reads my feeds, updates a markdown wiki on a
+[Tigris](https://www.tigrisdata.com/) bucket, and posts a single digest URL to
+Slack. I wake up to the day's reading already done, with notes on what shipped
+and which one paper to actually click through.
 
 ## The Karpathy insight
 
@@ -92,9 +93,9 @@ to, which in practice is rarely. My version doesn't wait for me to remember.
 
 ## llm-digest: the wiki does the reading
 
-A GitHub repo holds the schema, the tool implementations, and a list of RSS
-feeds, while a Tigris bucket holds the wiki itself. The scheduling layer is
-three lines of YAML:
+A [GitHub repo](https://github.com/davidmyriel/llm-digest) holds the schema, the
+tool implementations, and a list of RSS feeds, while a Tigris bucket holds the
+wiki itself. The scheduling layer is three lines of YAML:
 
 ```yaml
 # .github/workflows/daily-ingest.yml
