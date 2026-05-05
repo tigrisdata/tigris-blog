@@ -268,25 +268,20 @@ and can't.
 
 ## Coordinating distributed agents
 
-The shape of an agent workload is awkward for traditional streaming systems.
-Each agent needs its own bounded execution context — no shared memory, no
-crosstalk between reasoning paths — but you also want all of those contexts
-durable, replayable, and visible to a supervisor or a human reviewer. That's
-hard to express with consumer groups and partition counts. It's straightforward
-to express with a stream per agent.
+Agents need an awkward combination of properties: each one bounded to its own
+execution context with no crosstalk between reasoning paths, but all of those
+contexts durable and visible to a supervisor or human reviewer. A stream per
+agent gives you that.
 
-Give every agent its own S2 stream. Each tool call, model output, and
-intermediate reasoning step gets appended in order. Spin up a new stream when an
-agent forks a sub-task; let cohorts of agents read each other's streams when you
-want them to coordinate. Multiple downstream consumers — a supervisor agent, an
-evals pipeline, a logger, a human reviewer — each read at their own pace from
-the same data without you having to fan anything out.
+Give every agent its own S2 stream. Tool calls and model outputs get appended in
+order. When an agent forks a sub-task, spin up a new stream. When cohorts need
+to coordinate, let them tail each other. A supervisor agent, an evals pipeline,
+and a human reviewer can all read from the same data at their own pace without
+you fanning anything out.
 
-When you want to debug why an agent reached a conclusion, replay the stream from
-sequence zero. The whole reasoning trace is sitting durably in Tigris, ordered,
-timestamped, and exactly what the agent saw. This is the part that makes evals
-and post-hoc analysis tractable instead of a forensics exercise against
-scattered log lines.
+To debug why an agent reached a conclusion, replay from sequence zero. The
+reasoning trace sits durably in Tigris in the order the agent produced it, which
+is what makes evals and post-hoc analysis tractable.
 
 ## Why object storage for streams
 
