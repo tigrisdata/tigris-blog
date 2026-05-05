@@ -162,10 +162,10 @@ export async function withMountedBucket<T>(
   const shell = mountWikiBucket();
   try {
     const result = await fn(shell);
-    await shell.flush(); // ← atomic promote to Tigris
+    await shell.flush(); // atomic promote to Tigris
     return result;
   } catch (e) {
-    await shell.discard(); // ← buffer dropped; bucket untouched
+    await shell.discard(); // buffer dropped; bucket untouched
     throw e;
   }
 }
@@ -218,9 +218,9 @@ Tigris-specific code path.
 single run atomic. It doesn't help when a run "succeeds" but quietly produces a
 wiki I don't actually want, where the agent drifted from the schema in a way
 that didn't trip a validator. I might not notice for three days.
-[`createBucketSnapshot`](https://www.tigrisdata.com/docs/snapshots/)
+[`createBucketSnapshot`](https://www.tigrisdata.com/docs/buckets/snapshots/)
 runs at the top of every ingest, and
-[`fork(srcBucket, recovered, { snapshotVersion })`](https://www.tigrisdata.com/docs/forks/)
+[`fork(srcBucket, recovered, { snapshotVersion })`](https://www.tigrisdata.com/docs/buckets/forking/)
 lets me walk back. Spin up a fork pointing at Friday's snapshot, repoint
 `TIGRIS_STORAGE_BUCKET`, and the next ingest builds on the recovered version.
 The verdict in `TIGRIS_FEATURES.md` is "convenient, not load-bearing" and that's
@@ -229,7 +229,7 @@ call.
 
 **Presigned URLs are the delivery.** The digest is the user-facing artifact of
 this whole pipeline; without delivery the system doesn't do anything for me.
-[`getPresignedUrl(path, 30 * 86400)`](https://www.tigrisdata.com/docs/objects/presigned/)
+[`getPresignedUrl(path, 30 * 86400)`](https://www.tigrisdata.com/docs/objects/presigned-urls/)
 turns the markdown digest into a one-line URL I drop in Slack. The phone opens
 it without auth, the link expires in 30 days, and the same primitive lets me
 share a digest with a colleague who isn't on my GitHub or paste a wiki page into
@@ -249,4 +249,121 @@ small enough to read in an afternoon.
 ## I ran this last night
 
 End-to-end, against a fresh Tigris bucket, with two URLs from a Hacker News RSS
-feed. Here's the per-iteration lo
+feed. Here's the per-iteration log straight off stderr:
+
+```
+ingest.start
+ingest.snapshot snapshotVersion=1778000882992955252  # +2.0s
+iter  1 stop=tool_use tools=[fetch_url, fetch_url]            in=    512  out=  152
+iter  2 stop=tool_use tools=[fetch_url, list_wiki, write_source]   in= 7,425  out=1,399
+iter  3 stop=tool_use tools=[fetch_url, list_wiki]            in= 15,712  out=1,557
+iter  4 stop=tool_use tools=[write_source]                    in= 17,289  out=1,855
+iter  5 stop=tool_use tools=[write_wiki_page]                 in= 17,819  out=2,814
+iter  6 stop=tool_use tools=[write_wiki_page]                 in= 19,088  out=4,295
+iter  7 stop=tool_use tools=[write_wiki_page]                 in= 21,483  out=4,894
+iter  8 stop=tool_use tools=[write_wiki_page]                 in= 22,137  out=5,551
+iter  9 stop=tool_use tools=[write_wiki_page]                 in= 22,850  out=6,130
+iter 10 stop=tool_use tools=[write_wiki_page]                 in= 23,482  out=6,667
+iter 11 stop=tool_use tools=[write_wiki_page]                 in= 24,071  out=7,570
+iter 12 stop=tool_use tools=[write_wiki_page]                 in= 25,562  out=8,049
+iter 13 stop=tool_use tools=[list_wiki]                       in= 27,025  out=8,100
+iter 14 stop=tool_use tools=[list_wiki, list_wiki, list_wiki] in= 27,142  out=8,228
+iter 15 stop=tool_use tools=[save_digest]                     in= 27,489  out=9,262
+iter 16 stop=end_turn  tools=[]                               in= 28,798  out=9,771
+ingest.flushed iterations=16 inputTokens=28,798 outputTokens=9,771
+ingest.presigned digestPath=wiki/digest/2026-05-05.md
+ingest.done newUrlsCount=2 digestUrl=https://...
+```
+
+Three minutes fifteen seconds, sixteen iterations, eight wiki pages plus two
+sources plus the digest. **About $0.23 in API spend.** Atomic flush at the end,
+state.json updated, presigned URL generated. A separate verification I ran right
+before this confirmed the discard semantics held: write a sentinel file inside
+`withMountedBucket`, throw, re-mount, list the bucket. The sentinel was nowhere
+to be found and the live tree was byte-for-byte identical to before the run.
+
+The verification artifacts live alongside the code:
+`scripts/experiments/shell-flush.ts` confirms a thrown error doesn't promote a
+sentinel, `scripts/experiments/byte-equal-after-throw.ts` confirms the bucket
+listing is identical pre and post. If you fork the repo and run them against
+your own bucket, you get the same output. The atomicity isn't a footnote in the
+docs; it's a script you can re-run any time you want to retest the claim against
+a future version of agent-shell or the SDK.
+
+## What this isn't
+
+This isn't a replacement for reading. The wiki is good at structured reference
+and current state. It's bad at argumentation, framing, and the part where the
+authors tell you what they got wrong before they figured it out. The digest
+tells me what to read in full.
+
+There's also a ceiling. The pattern breaks somewhere between 100 and a few
+hundred wiki pages, when the master index stops fitting in the model's context
+window. At that point you split by domain or layer retrieval underneath and
+accept that you've reinvented RAG with extra steps.
+
+## How I work with it
+
+My week with the wiki has four touchpoints and that's all of them. Mornings I
+read the digest in Slack on my phone over coffee, then click into one or two
+pages worth reading in full. About once a week I edit `config/feeds.txt` if
+there's a new vendor or paper venue I want tracked. Maybe once a month I open
+Obsidian, pointed at the bucket via `rclone`, and browse the graph for
+connections the agent missed. When I find a URL between scheduled runs that I
+want tonight's wiki to absorb, I append it to `queue.txt` in the bucket and the
+next ingest picks it up alongside the day's RSS.
+
+That's the entire interaction surface. The wiki is the UI, and the wiki lives in
+your Obsidian vault.
+
+The FOMO is gone. Not because I'm seeing every paper (I see fewer than before)
+but because I trust the wiki to surface the ones that matter, and I trust myself
+to walk away from the ones it summarized for me. When you can answer "what's the
+current state of binary quantization" in three seconds by clicking a
+`[[wiki-link]]`, the anxiety goes somewhere quieter.
+
+## Further reading
+
+**Tigris primitives the post leans on**
+
+- [Bucket snapshots](https://www.tigrisdata.com/docs/buckets/snapshots/) — the
+  daily safety net behind the multi-day rollback story.
+- [Bucket forking (copy-on-write)](https://www.tigrisdata.com/docs/buckets/forking/)
+  — what `fork(srcBucket, recovered, { snapshotVersion })` calls under the hood.
+- [Presigned URLs](https://www.tigrisdata.com/docs/objects/presigned-urls/) —
+  how the digest reaches Slack and your phone.
+- [Tigris docs index](https://www.tigrisdata.com/docs/) — everything else,
+  including pricing.
+
+**SDKs and packages**
+
+- [`@tigrisdata/storage`](https://www.npmjs.com/package/@tigrisdata/storage) —
+  the Tigris S3 SDK used outside the agent loop (snapshot, presign, fork).
+- [`@tigrisdata/agent-shell`](https://www.npmjs.com/package/@tigrisdata/agent-shell)
+  — the JS-virtual filesystem with the atomic-flush guarantee.
+- [Anthropic SDK messages API](https://docs.anthropic.com/en/api/messages) — the
+  agent loop's runner.
+- [Mozilla Readability](https://github.com/mozilla/readability) — the
+  deterministic preprocessor that made `fetch_url` affordable.
+
+**Related reading**
+
+- [Fifty agents, one bucket](/blog/fifty-agents-one-bucket) — the post that
+  first put copy-on-write fork on my radar.
+- [Agent-shell release post](/blog/agent-shell-release) — the launch post for
+  the package this build leans on.
+- [Bucket forking deep dive](/blog/bucket-forking-deep-dive) — what's actually
+  happening when a fork is created.
+- [Build agents with bucket forking](/blog/build-agents-with-bucket-forking) —
+  the broader pattern this post is one instance of.
+- [Karpathy's LLM Wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
+  — the original pattern this builds on.
+- [`llm-digest` on GitHub](https://github.com/davidmyriel/llm-digest) — the
+  reference implementation, including the `scripts/experiments/` verifiers.
+
+<InlineCta
+  title="Build your own LLM digest"
+  subtitle="The repo is open. Fork it, point it at your feeds, set five secrets, and your wiki starts updating tonight. Your first 5 GB on Tigris are free."
+  button="Get the repo"
+  link="https://github.com/davidmyriel/llm-digest"
+/>
