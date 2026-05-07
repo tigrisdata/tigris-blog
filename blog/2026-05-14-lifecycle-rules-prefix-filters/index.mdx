@@ -1,0 +1,265 @@
+---
+slug: lifecycle-rules-prefix-filters
+title: "You wanted more lifecycle rules. They're here."
+description:
+  Tigris lifecycle rules now support multiple rules per bucket with prefix
+  filters, so you can mix transitions and expirations across different prefixes.
+keywords:
+  - object storage
+  - blob storage
+  - s3
+  - lifecycle rules
+  - prefix filtering
+authors:
+  - garren
+tags:
+  - Updates
+  - object storage
+  - s3
+  - feature
+  - lifecycle
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+{/* TODO: Add hero image. Suggested: Ty in front of a Minecraft hopper-and-chest sorting room. */}
+
+Anyone who's spent a weekend in Minecraft knows the moment. You've got eleven
+double chests labeled "STUFF", you can't find your iron, and you finally cave
+and build the sorting room. Hoppers feeding chests, item filters routing
+cobblestone to the bulk room, lava bucket waiting for the rotten flesh you'll
+never use. Once you have it, you wonder how you lived without it.
+
+A Tigris bucket without proper lifecycle rules is the same situation. One giant
+chest. No hoppers. You're paying to keep your build screenshots from 2022
+sitting next to last night's logs.
+
+Last year, [we shipped lifecycle rules](/blog/lifecycle-rules) for Tigris. One
+rule per bucket, one transition or one expiration. They have been incredibly
+useful for a lot of users. But we wanted to take it further. Today is that day:
+**multiple rules per bucket**, **prefix filters**, transitions and expirations
+mixed however you want.
+
+The hoppers are here.
+
+{/* truncate */}
+
+## What's actually new
+
+Before this update, you got one lifecycle rule per bucket, applied to every
+object in it. That's enough to do "move everything older than 30 days to
+Archive," but not much more.
+
+Now:
+
+- A bucket can have **multiple lifecycle rules**.
+- Each rule can be scoped to a key prefix using `Filter.Prefix`. Omit the filter
+  (or pass `Filter: {}`) to apply the rule to every object in the bucket.
+- Transition and expiration rules can be mixed in the same bucket however you
+  want.
+- Each rule can have an `ID` (up to 36 characters) so you can name what it does.
+- A single rule can include both a transition and an expiration, but only one of
+  each. So `Standard → IA → expire` fits in one rule, while chaining
+  `Standard → IA → Glacier` takes two.
+
+Here's the new shape of a single rule:
+
+```json
+{
+  "ID": "logs-to-ia",
+  "Status": "Enabled",
+  "Filter": { "Prefix": "logs/" },
+  "Transitions": [{ "Days": 30, "StorageClass": "STANDARD_IA" }]
+}
+```
+
+That's the building block. Let's use it.
+
+## The Minecraft mapping
+
+If the metaphor isn't clicking yet, here's the cheat sheet:
+
+| Minecraft                   | Tigris lifecycle                       |
+| :-------------------------- | :------------------------------------- |
+| Hopper with item filter     | Rule with `Filter.Prefix`              |
+| Chest                       | Storage tier (Standard / IA / Glacier) |
+| Lava bucket                 | `Expiration`                           |
+| Multiple hoppers, same item | Multiple rules on the same prefix      |
+
+OK, enough Minecraft. Let's build three sorting rooms.
+
+## Sorting room 1: Logs with retention tiers
+
+Imagine your service writes structured logs to `logs/` in a bucket. Engineers
+grep them every day for the first month. Quarterly audits pull from them for a
+year. After that, nobody touches them. Compliance still says you keep them for
+18 months and then they go away.
+
+Before, you'd need a cron job to do this. Or three buckets. Or a lot of luck.
+
+Now you write one rule that does both: a transition and an expiration on the
+same prefix.
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "logs-tiered-retention",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "logs/" },
+      "Transitions": [{ "Days": 30, "StorageClass": "STANDARD_IA" }],
+      "Expiration": { "Days": 540 }
+    }
+  ]
+}
+```
+
+The rule moves anything under `logs/` to Infrequent Access after 30 days, then
+deletes it after 540. Logs older than a month live in cheaper storage. Logs
+older than 18 months don't live anywhere.
+
+This is the pattern [the previous post](/blog/lifecycle-rules) promised: slowly
+punting things down the tier list before they're eventually deleted.
+
+<InlineCta
+  title="Want to try it out?"
+  subtitle="Make a global bucket with no egress fees"
+  button="Get Started"
+/>
+
+## Sorting room 2: One bucket, three workloads
+
+Now picture a SaaS app that stores three kinds of objects in one bucket:
+
+- `uploads/` — user-generated content. These are forever.
+- `thumbnails/` — automatically generated from uploads. Regenerable, so they
+  should expire.
+- `exports/` — one-time CSV downloads. Once the user has the file, it's dead
+  weight.
+
+Three workloads, three lifecycles, one bucket. With prefix filtering you write
+two rules and you're done:
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "thumbnails-expire",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "thumbnails/" },
+      "Expiration": { "Days": 30 }
+    },
+    {
+      "ID": "exports-expire",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "exports/" },
+      "Expiration": { "Days": 7 }
+    }
+  ]
+}
+```
+
+Uploads don't need a rule. They live forever, which is the whole point.
+
+Before this change, you had two options for this kind of thing: run a deletion
+script and hope it stays correct, or split your bucket into three. Both were
+bad. Now it's two JSON objects in a config file.
+
+## Sorting room 3: An ML training pipeline
+
+If you're training models on Tigris, your bucket probably looks something like
+this:
+
+- `datasets/raw/` — your source data. Used hard during a training run, barely
+  after.
+- `checkpoints/` — model snapshots from each run. Hot during training, cold once
+  the run is done.
+- `artifacts/intermediate/` — embeddings, tokenized batches, debug outputs. You
+  generate them, you regenerate them, and you mostly throw them away.
+
+This is where multi-rule lifecycle earns its keep. One bucket holds three
+prefixes, each on its own policy:
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "raw-archive",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "datasets/raw/" },
+      "Transitions": [{ "Days": 14, "StorageClass": "GLACIER" }]
+    },
+    {
+      "ID": "checkpoints-cool",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "checkpoints/" },
+      "Transitions": [{ "Days": 7, "StorageClass": "STANDARD_IA" }]
+    },
+    {
+      "ID": "intermediate-expire",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "artifacts/intermediate/" },
+      "Expiration": { "Days": 3 }
+    }
+  ]
+}
+```
+
+Raw datasets get archived two weeks after a training run. Checkpoints cool down
+to Infrequent Access after a week. Intermediate artifacts get deleted after
+three days.
+
+Zero egress on Tigris helps here. Archiving training data on other clouds is a
+decision you think twice about because thawing it back out costs you. On Tigris,
+it's storage that costs less.
+
+## A note on what's not here yet
+
+Filtering is by key prefix only. Not by object tags. If you've used S3 lifecycle
+rules in anger, you've probably reached for tag-based filters at some point.
+"Expire everything tagged `temp`." "Transition objects tagged `cold`." We don't
+have that yet. Prefix filtering covers most of what people reach for, but if tag
+filtering is the missing piece for you, let us know. That feedback shapes what
+we build next.
+
+## How to turn it on
+
+Same one-liner as before. The JSON file holds more rules now:
+
+```text
+aws s3api put-bucket-lifecycle-configuration \
+  --bucket my-bucket \
+  --lifecycle-configuration file://lifecycle.json
+```
+
+If your bucket already has data in it, the new rules apply on the next scan. No
+backfill flag, no migration. Go make a coffee.
+
+## Wrapping up
+
+Every Minecraft player eventually builds the sorting room because the
+alternative is chaos. Buckets are no different. Lifecycle rules stop you paying
+to store the bits that aren't earning their keep.
+
+We've got more on the way: tag-based filtering, and a few things we're not quite
+ready to talk about yet. Keep your eyes peeled.
+
+Happy sorting!
+
+<InlineCta
+  title="Set and forget object storage"
+  subtitle={
+    <p>
+      <>
+        Filter by prefix,
+        <br />
+      </>
+      <>
+        more hoppers in your bucket;
+        <br />
+      </>
+      <>old bytes drift away.</>
+    </p>
+  }
+  button="Get started today!"
+/>
