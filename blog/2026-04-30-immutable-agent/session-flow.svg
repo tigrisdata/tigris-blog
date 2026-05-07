@@ -119,7 +119,7 @@
 
   <!-- Title -->
   <text x="360" y="25" text-anchor="middle" class="title">
-    The Immutable Agent — session lifecycle
+    The Immutable Agent: session lifecycle
   </text>
   <text x="360" y="45" text-anchor="middle" class="sub">
     every run forks production, validates the fork, then promotes or quarantines
