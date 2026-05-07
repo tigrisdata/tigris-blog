@@ -103,7 +103,7 @@ I'm calling this the Immutable Agent.
 ## Wrap your Mastra agent in one line
 
 Today we're publishing
-[`immutable-agent`](https://github.com/tigrisdata/immutable-agent), a reference
+[`immutable-agent`](https://github.com/davidmyriel/immutable-agent), a reference
 implementation of the storage-protected agent pattern on Tigris and
 [Mastra](https://mastra.ai/). We picked Mastra because it treats request-scoped
 context as a first-class concept, which gives us a clean place to thread fork
@@ -121,7 +121,7 @@ package it.
 
 The wrapper's API is one function. The simplified shape, from
 `src/runs/handle-customer.ts` in the
-[`immutable-agent`](https://github.com/tigrisdata/immutable-agent) repo:
+[`immutable-agent`](https://github.com/davidmyriel/immutable-agent) repo:
 
 ```typescript
 import { withTigrisSession } from "../lib/mastra";
@@ -154,7 +154,7 @@ If the validator doesn't pass, no application running today reads anything
 different. The active pointer never moves.
 
 ```bash
-git clone https://github.com/tigrisdata/immutable-agent
+git clone https://github.com/davidmyriel/immutable-agent
 cd immutable-agent
 npm install && npm run verify-setup
 ```
@@ -425,5 +425,5 @@ works in anything that exposes a runtime context to its tools.
   title="Ready to fork the reference?"
   subtitle="The repo runs end-to-end on a fresh clone in under five minutes. Read src/lib/, fork the validators, plug your agent in."
   button="See the repo"
-  link="https://github.com/tigrisdata/immutable-agent"
+  link="https://github.com/davidmyriel/immutable-agent"
 />
