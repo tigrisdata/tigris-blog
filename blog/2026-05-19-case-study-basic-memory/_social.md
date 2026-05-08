@@ -2,11 +2,11 @@
 
 Most AI memory keeps your context locked to one platform. Switch tools and your notes don't come with you.
 
-Basic Memory does the opposite. Your knowledge graph lives as plain Markdown files in your own Tigris bucket. Edit them in any text editor. Point Claude, ChatGPT, Cursor, or any other MCP-compatible tool at the same files, and your context is right there — no proprietary format, no exit tax.
+[Basic Memory](https://basicmemory.com/) takes the opposite approach. Your knowledge graph lives as plain Markdown files in your own Tigris bucket. Edit them in any text editor. Point Claude, ChatGPT, Cursor, or any other MCP-compatible tool at the same files and your context is right there — no proprietary format, no exit tax.
 
-The case study I co-wrote with David Myriel goes into how a four-person team built the cloud product: per-tenant buckets provisioned in 5–20 seconds via the Tigris Partner API, bidirectional rclone sync that stays viable because of zero egress fees, and bucket snapshots as a time machine for users' notes.
+Our new case study goes into how a four-person team built the cloud product: per-tenant buckets provisioned in 5–20 seconds via the Tigris Partner Integration API, bidirectional rclone sync that stays viable because of zero egress, and bucket snapshots as point-in-time restore for users' notes.
 
-The part I keep coming back to: an AI product that won't let your data come with you when you leave isn't really yours. Worth reading even if you don't use Basic Memory — the pattern (markdown-as-objects, one bucket per tenant, MCP as the universal read/write API) is the cleanest take on portable AI context I've seen.
+The pattern is worth a look even if you're not building memory products. Markdown-as-objects, one bucket per tenant, MCP as the universal read/write API — it's a clean answer to "what does portable AI context actually look like?"
 
 https://www.tigrisdata.com/blog/case-study-basic-memory
 
