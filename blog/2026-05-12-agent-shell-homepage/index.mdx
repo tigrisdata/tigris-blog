@@ -43,8 +43,8 @@ So obviously, we used
 to embed a live demo of Tigris as a filesystem inside your browser and put it
 right on the homepage. Interrupt the demo by pressing enter in it, run `login`,
 go through the OAuth flow, and then all your buckets are _right there_. Use
-`ls`, `cat`, and `cd` to poke around in them as if they were normal files on your
-laptop, phone, tablet, or Steam Deck.
+`ls`, `cat`, and `cd` to poke around in them as if they were normal files on
+your laptop, phone, tablet, or Steam Deck.
 
 Okay, we don't seriously think that this will become the main way people manage
 their buckets. For one the window is a bit too small for a lot of serious
@@ -120,10 +120,10 @@ some server cluster somewhere.
 
 ### APIs are the lies we tell ourselves so we can sleep at night
 
-A terrible way to think about OS kernels and their system calls is that
-running a process is fundamentally dependency injection. This means that when
-you start a `bash` command on your laptop, the OS kernel is injecting filesystem
-access, network access, and other IO actions into your process.
+A terrible way to think about OS kernels and their system calls is that running
+a process is fundamentally dependency injection. This means that when you start
+a `bash` command on your laptop, the OS kernel is injecting filesystem access,
+network access, and other IO actions into your process.
 
 When you start a process in a container, the OS kernel is just injecting
 different layers for filesystem and network access. After it does this, it
