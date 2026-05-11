@@ -4,6 +4,7 @@ title: "You wanted more lifecycle rules. They're here."
 description:
   Tigris lifecycle rules now support multiple rules per bucket with prefix
   filters, so you can mix transitions and expirations across different prefixes.
+image: ./hero-image.webp
 keywords:
   - object storage
   - blob storage
@@ -21,8 +22,15 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
 
-{/* TODO: Add hero image. Suggested: Ty in front of a Minecraft hopper-and-chest sorting room. */}
+{/* TODO @garren: replace this hero with the Minecraft sorting-room concept (Ty in front of hoppers feeding chests labeled Standard / IA / Glacier). Save as hero-image.webp in this folder. */}
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Ty in a Minecraft sorting room watching hoppers route objects between chests labeled Standard, Infrequent Access, and Glacier"
+/>
 
 Anyone who's spent a weekend in Minecraft knows the moment. You've got eleven
 double chests labeled "STUFF", you can't find your iron, and you finally cave
@@ -30,9 +38,9 @@ and build the sorting room. Hoppers feeding chests, item filters routing
 cobblestone to the bulk room, lava bucket waiting for the rotten flesh you'll
 never use. Once you have it, you wonder how you lived without it.
 
-A Tigris bucket without proper lifecycle rules is the same situation. One giant
-chest. No hoppers. You're paying to keep your build screenshots from 2022
-sitting next to last night's logs.
+Buckets without proper lifecycle rules are the same situation. One giant chest.
+No hoppers. You're paying to keep your build screenshots from 2022 sitting next
+to last night's logs.
 
 Last year, [we shipped lifecycle rules](/blog/lifecycle-rules) for Tigris. One
 rule per bucket, one transition or one expiration. They have been incredibly
@@ -73,20 +81,9 @@ Here's the new shape of a single rule:
 }
 ```
 
-That's the building block. Let's use it.
+![A card-style diagram of one rule: ID and Enabled status at the top, then three rows — FILTER (folder icon, prefix value, omit to apply to every object), TRANSITION (arrow icon, STANDARD_IA or GLACIER at a Days threshold, no cold-to-warm transitions), and EXPIRATION (X icon, delete at a Days threshold).](./rule-anatomy.svg)
 
-## The Minecraft mapping
-
-If the metaphor isn't clicking yet, here's the cheat sheet:
-
-| Minecraft                   | Tigris lifecycle                       |
-| :-------------------------- | :------------------------------------- |
-| Hopper with item filter     | Rule with `Filter.Prefix`              |
-| Chest                       | Storage tier (Standard / IA / Glacier) |
-| Lava bucket                 | `Expiration`                           |
-| Multiple hoppers, same item | Multiple rules on the same prefix      |
-
-OK, enough Minecraft. Let's build three sorting rooms.
+That's the building block. Let's build three sorting rooms.
 
 ## Sorting room 1: Logs with retention tiers
 
@@ -118,14 +115,10 @@ The rule moves anything under `logs/` to Infrequent Access after 30 days, then
 deletes it after 540. Logs older than a month live in cheaper storage. Logs
 older than 18 months don't live anywhere.
 
-This is the pattern [the previous post](/blog/lifecycle-rules) promised: slowly
-punting things down the tier list before they're eventually deleted.
-
-<InlineCta
-  title="Want to try it out?"
-  subtitle="Make a global bucket with no egress fees"
-  button="Get Started"
-/>
+Exactly what [the previous post](/blog/lifecycle-rules) promised: slowly
+punting things down the tier list before they're eventually deleted. Same
+savings shape too — older logs at IA cost a fraction of fresh logs at
+Standard, and at day 540 they cost nothing.
 
 ## Sorting room 2: One bucket, three workloads
 
@@ -209,9 +202,37 @@ Raw datasets get archived two weeks after a training run. Checkpoints cool down
 to Infrequent Access after a week. Intermediate artifacts get deleted after
 three days.
 
-Zero egress on Tigris helps here. Archiving training data on other clouds is a
-decision you think twice about because thawing it back out costs you. On Tigris,
-it's storage that costs less.
+Zero egress on a globally distributed, multi-cloud bucket helps here. Archiving
+training data on other clouds is a decision you think twice about because
+thawing it back out costs you. On Tigris, it's storage that costs less.
+
+[Pt 1's savings example](/blog/lifecycle-rules): a 120 TB bucket dropped from
+$2,450 to $833 a month after 92 TB moved to Archive. About two thirds off the
+original bill. Raw datasets dwarf checkpoints and intermediate artifacts in
+most training pipelines, so the bulk of the savings on Tigris comes from the
+`GLACIER` transition on `datasets/raw/`. Teams running training workloads on
+Tigris, including [Beam](https://www.beam.cloud), see most of their storage
+cost in the raw corpus — exactly what this rule shape addresses.
+{/* TODO @garren: confirm Beam attribution is OK; they're publicly named as a Tigris customer but I don't have direct confirmation that they use lifecycle rules this way. Swap to another training customer or remove the name if it's not the right call. */}
+
+## How rules are evaluated
+
+Multi-rule lifecycle on Tigris doesn't have a coordination layer in front of
+the workers. Each rule runs on its own worker, walking the bucket
+oldest-first. If two rules match the same object, whichever worker picks it
+up first does the work.
+
+You can't transition from a colder tier to a warmer one. Once an object
+lands in `GLACIER`, no rule can pull it back to `STANDARD_IA`. When two
+transitions race, the one that fires first is the only one that matters —
+the other has nothing to do by the time it arrives.
+
+When a transition and an expiration fire on the same object at roughly the
+same moment, [pt 1's global replication](/blog/lifecycle-rules) settles it
+the same way it settles any other concurrent metadata update: by timestamp.
+Multi-rule reuses the architecture pt 1 walked through.
+
+![A state diagram showing three storage tiers (Standard, Infrequent Access, Glacier) in a row, with green forward transition arrows between them. Orange expiration arrows from each tier converge on a Deleted node below. A dashed red arc curves over the tier row from Glacier back toward Standard, struck through with an X and labeled "NO PATH BACK," showing that backwards transitions are blocked.](./tier-flow.svg)
 
 ## A note on what's not here yet
 
@@ -224,7 +245,8 @@ we build next.
 
 ## How to turn it on
 
-Same one-liner as before. The JSON file holds more rules now:
+Same one-liner as before. The JSON file holds more rules now — up to ten per
+bucket. That cap is arbitrary; we can raise it if you need more.
 
 ```text
 aws s3api put-bucket-lifecycle-configuration \
@@ -232,8 +254,10 @@ aws s3api put-bucket-lifecycle-configuration \
   --lifecycle-configuration file://lifecycle.json
 ```
 
-If your bucket already has data in it, the new rules apply on the next scan. No
-backfill flag, no migration. Go make a coffee.
+If your bucket already has data in it, the new rules apply on the next scan,
+oldest-first — no backfill flag, no migration. Expect the first action
+within a few minutes, or up to fifteen or twenty if the scheduler just
+finished a sweep.
 
 ## Wrapping up
 
@@ -243,8 +267,6 @@ to store the bits that aren't earning their keep.
 
 We've got more on the way: tag-based filtering, and a few things we're not quite
 ready to talk about yet. Keep your eyes peeled.
-
-Happy sorting!
 
 <InlineCta
   title="Set and forget object storage"
