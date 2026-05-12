@@ -1,0 +1,88 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 720 295"
+  width="720"
+  height="295"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .label {
+      font-size: 13px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 11px;
+      fill: #bac1be;
+    }
+    .pass-label {
+      font-size: 13px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .pass-small {
+      font-size: 11px;
+      fill: #62feb5;
+    }
+    .box {
+      rx: 6;
+      ry: 6;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .pass-box {
+      rx: 6;
+      ry: 6;
+      fill: rgba(98, 254, 181, 0.1);
+      stroke: rgba(98, 254, 181, 0.5);
+      stroke-width: 1.5;
+    }
+  </style>
+
+  <!-- Title -->
+  <text x="360" y="25" text-anchor="middle" class="title">
+    Defense-in-depth
+  </text>
+  <text x="360" y="45" text-anchor="middle" class="sub">
+    this package contributes the storage layer; pair it with input filtering and observability
+  </text>
+
+  <!-- Layer 1: Input filtering -->
+  <rect x="20" y="65" width="680" height="40" class="box" />
+  <text x="35" y="90" class="label">Input filtering</text>
+  <text x="685" y="90" text-anchor="end" class="small">Lakera, NeMo Guardrails</text>
+
+  <!-- Layer 2: Output validation -->
+  <rect x="20" y="110" width="680" height="40" class="box" />
+  <text x="35" y="135" class="label">Output validation</text>
+  <text x="685" y="135" text-anchor="end" class="small">red-teaming, output monitors</text>
+
+  <!-- Layer 3: Side-effect safeguards -->
+  <rect x="20" y="155" width="680" height="40" class="box" />
+  <text x="35" y="180" class="label">Side-effect safeguards</text>
+  <text x="685" y="180" text-anchor="end" class="small">Stripe idempotency, email queues</text>
+
+  <!-- Layer 4: Storage layer (highlighted) -->
+  <rect x="20" y="200" width="680" height="40" class="pass-box" />
+  <text x="35" y="225" class="pass-label">Storage layer (this package)</text>
+  <text x="685" y="225" text-anchor="end" class="pass-small">immutable-agent</text>
+
+  <!-- Layer 5: Audit + observability -->
+  <rect x="20" y="245" width="680" height="40" class="box" />
+  <text x="35" y="270" class="label">Audit + observability</text>
+  <text x="685" y="270" text-anchor="end" class="small">Langfuse, Arize, Mastra obs.</text>
+</svg>
