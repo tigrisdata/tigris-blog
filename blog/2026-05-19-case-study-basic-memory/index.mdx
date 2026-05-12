@@ -68,12 +68,16 @@ import heroImage from "./basic-memory-hero.webp";
 We are the sum of our experiences. All of your notes, your back and forth with
 your AI, your history: all of it shapes how AI tools help us work. There's some
 element of _who you are_ that's contained in your context. But it's all so
-fragile. Switching models or changing platforms resets your context, and you're
-back to zero.
+fragile. Switching models or changing platforms, even just opening a new chat,
+resets your most valuable context, and you're back to zero.
 
 [Basic Memory](https://basicmemory.com/) fixes that start-from-zero problem.
-Users own their own context as a knowledge graph stored in plain Markdown files,
-no proprietary formats. You can edit them directly if you spot a mistake, or you
+Imagine plugging a stenographer into each of your AI interactions, one that
+writes down everything you discuss with it, the decisions you make, the
+conclusions you reach, and that knows how to call up exactly the details that
+matter when you need to refer to them in the future. Users own and control their
+own context as a knowledge graph stored in plain Markdown files, no proprietary
+formats. You can edit your notes directly via an Apple Notes-esque webapp or you
 can use their MCP server directly in your AI tool of choice.
 
 When building their cloud offering, Basic Memory needed a storage backend that
@@ -89,9 +93,12 @@ restrictions.**
 
 Basic Memory started as a Thanksgiving-weekend project in 2024. Paul Hernandez
 had spent twenty years writing software for startups and large companies, and he
-used Claude and ChatGPT daily. He was tired of platforms locking him in just
-because they held his context. How could he switch to a better model without
-paying the exit tax? When Anthropic released the
+used Claude and ChatGPT daily. Built-in AI memory was in its earliest infancy.
+Chat couldn't possibly save all the information he wanted it to, and Claude
+didn't even have a memory at the time. Paul could foresee issues with inevitable
+product lock-in once they did. How could he save all the context he wanted? And
+how could he switch to a better model without paying the exit tax? When
+Anthropic released the
 [Model Context Protocol](https://modelcontextprotocol.io/), the path was
 obvious: give every AI assistant access to the same knowledge base through a
 single MCP server, stored as plain Markdown.
@@ -102,11 +109,13 @@ everything for full-text search. The MCP server exposes the knowledge base to
 Claude, ChatGPT, Gemini, Cursor, VS Code, and any other MCP-compatible tool.
 Both the human and the AI read and write the same files.
 
-Basic Memory's edge over built-in AI memory features is transparency. ChatGPT's
-memory is a black box; Basic Memory's is a folder of Markdown files you can open
-in any text editor. With more than 2,500 GitHub stars and 57,000 downloads per
-month, it has found its audience among developers and knowledge workers who want
-to own their AI context.
+Basic Memory's edge over built-in AI memory features is partly the sheer volume
+of information it can retain, link together, and call up on command. But,
+philosophically, their edge (and virtually their one-word motto) is
+transparency. Basic Memory's is a folder of Markdown files you can open in any
+text editor. With more than 3,000 GitHub stars and 57,000 downloads per month,
+it has found its audience among developers and knowledge workers who want to own
+their AI context.
 
 <BreakoutQuote
   username="Paul Hernandez"
@@ -281,8 +290,9 @@ customer at a price they'll pay.
 
 ## A time machine for your knowledge base
 
-Months of AI conversations build up real work. Losing it because you switched
-tools is the worst-case scenario for memory like this. Basic Memory uses
+Months of AI conversations build up massive context. Losing it because you
+switched tools is the worst-case scenario for memory like this. Basic Memory
+uses
 [Tigris bucket snapshots](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/)
 to give every user point-in-time restore, and exposes the whole thing through
 the CLI: create, list, browse, delete, and restore from any snapshot.
@@ -344,12 +354,12 @@ commits, hard upsells, opaque billing — don't fit that shape.
 
 ## What's next
 
-Basic Memory recently shipped a web editor, conversation import from ChatGPT and
-Claude, and per-project cloud routing — individual projects can route through
-the cloud while others stay local. Coming soon is a **teams product**:
-organizations where each user keeps their own bucket but shares an
-organization-level bucket for common knowledge. New team members can fork the
-shared bucket and start with a base set of notes instantly.
+Basic Memory recently shipped an updated web editor, improved semantic search,
+conversation import from ChatGPT and Claude, and per-project cloud routing —
+individual projects can route through the cloud while others stay local. Coming
+soon is a **teams product**: organizations where each user keeps their own
+bucket but shares an organization-level bucket for common knowledge. New team
+members can fork the shared bucket and start with a base set of notes instantly.
 
 Regional bucket placement is on the roadmap too. One open-source user is the
 CISO of an EU bank using Basic Memory to manage bank infrastructure processes,
