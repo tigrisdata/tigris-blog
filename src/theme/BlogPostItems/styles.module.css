@@ -98,8 +98,8 @@
   margin-bottom: 1rem;
   border-radius: 0.65rem;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.26);
-  aspect-ratio: 1514 / 998;
-  background-color: #0b181e;
+  aspect-ratio: 16 / 9;
+  background-color: #000;
   border: 1px solid rgba(78, 217, 178, 0.2);
 }
 
