@@ -174,16 +174,17 @@ scaling linearly with users.
 That architecture only works if per-tenant bucket creation is cheap, fast, and
 programmatic. The
 [Tigris Partner Integration API](https://www.tigrisdata.com/docs/partners/) does
-that. A user signs up, Stripe fires a webhook to Basic Memory, and within 5 to
-20 seconds the tenant is fully provisioned: Tigris bucket, Neon Postgres
-database, scoped credentials, and all internal configuration. Users see a brief
-spinner on a welcome screen, and the platform is ready.
+that. A user signs up, [Polar](https://polar.sh) fires a webhook to Basic
+Memory, and within 5 to 20 seconds the tenant is fully provisioned: Tigris
+bucket, Neon Postgres database, scoped credentials, and all internal
+configuration. Users see a brief spinner on a welcome screen, and the platform
+is ready.
 
-<MermaidFrame title="Tenant provisioning, end to end. From Stripe webhook to a usable workspace in 5–20 seconds.">
+<MermaidFrame title="Tenant provisioning, end to end. From Polar webhook to a usable workspace in 5–20 seconds.">
 
 ```mermaid
 graph LR
-  A["Signup"] --> B["Stripe webhook"]
+  A["Signup"] --> B["Polar webhook"]
   B --> C["Tigris Partner API<br/>bucket + scoped credentials"]
   B --> D["Neon Postgres<br/>tenant database"]
   C --> E["Welcome screen ready<br/>5–20 seconds"]
@@ -206,6 +207,65 @@ Each tenant gets their own bucket with credentials that can only reach that
 tenant's data. Projects within a knowledge base are organized as prefixes inside
 the bucket. There is no shared "tenants" bucket, no row-level security to get
 wrong, no custom isolation layer to maintain.
+
+At runtime, the gateway proxy resolves the tenant from the request, attaches the
+right credentials and database URL as headers, and the shared API pool reads and
+writes against that tenant's bucket and Postgres only. The rclone sync path
+skips the API entirely and talks straight to the tenant's bucket with its own
+scoped credentials.
+
+<MermaidFrame title="Shared compute, per-tenant storage. The gateway proxy resolves tenancy; the bucket is the isolation boundary.">
+
+```mermaid
+flowchart TB
+    subgraph Clients["Client Layer"]
+        web["Web Editor"]
+        mcp["MCP Clients<br/>(Claude, Cursor, VS Code)"]
+        sync["rclone bisync"]
+    end
+
+    subgraph Shared["Shared Compute"]
+        gateway["Gateway Proxy<br/>Auth + Tenant Resolution"]
+        api["Cloud API Pool<br/>(multi-tenant)"]
+    end
+
+    gateway -->|"X-BM-Tenant-ID<br/>X-BM-Database-URL<br/>X-BM-Bucket-Name"| api
+
+    subgraph TenantA["Tenant A — Isolated"]
+        bucketA[("Tigris Bucket A<br/>scoped credentials")]
+        dbA[("Neon Postgres A")]
+    end
+
+    subgraph TenantB["Tenant B — Isolated"]
+        bucketB[("Tigris Bucket B<br/>scoped credentials")]
+        dbB[("Neon Postgres B")]
+    end
+
+    subgraph TenantC["Tenant C — Isolated"]
+        bucketC[("Tigris Bucket C<br/>scoped credentials")]
+        dbC[("Neon Postgres C")]
+    end
+
+    web & mcp --> gateway
+    sync -->|"direct S3"| bucketA
+    sync -->|"direct S3"| bucketB
+
+    api --> bucketA & dbA
+    api --> bucketB & dbB
+    api --> bucketC & dbC
+
+    classDef client fill:#142229,stroke:#38ac8c,color:#62feb5;
+    classDef compute fill:#277862,stroke:#38ac8c,color:#ffffff;
+    classDef bucket fill:#62feb5,stroke:#38ac8c,color:#142229;
+    classDef db fill:#38ac8c,stroke:#277862,color:#ffffff;
+
+    class web,mcp,sync client;
+    class gateway,api compute;
+    class bucketA,bucketB,bucketC bucket;
+    class dbA,dbB,dbC db;
+```
+
+</MermaidFrame>
 
 <BreakoutQuote
   username="Paul Hernandez"
@@ -307,6 +367,86 @@ individual files from an old snapshot and revert them one at a time — no
 all-or-nothing rollback required. Because the knowledge graph and search index
 are derived from the files, restoring a snapshot brings back the whole graph
 after a re-index.
+
+<MermaidFrame title="Snapshots converge from three sources into a timeline, then fan out into per-file or full restore.">
+
+```mermaid
+flowchart TB
+    subgraph Create["Snapshot Creation"]
+        daily["Daily Auto-Snapshot<br/>3:00 AM UTC"]
+        manual["User-Triggered<br/>via CLI or Web UI"]
+        writes["Every Write<br/>persisted automatically"]
+    end
+
+    daily & manual & writes --> bucket[("Tigris Bucket<br/>tenant-xyz")]
+
+    bucket --> snapshots["Snapshot Timeline"]
+
+    subgraph snapshots["Snapshot Timeline"]
+        direction LR
+        s1["···"]
+        s2["Snapshot N-2"]
+        s3["Snapshot N-1<br/>(manual)"]
+        s4["Snapshot N"]
+        s1 --> s2 --> s3 --> s4
+    end
+
+    subgraph Restore["Restore Options"]
+        browse["Browse snapshot<br/>see all files at that point"]
+        selective["Selective restore<br/>pick individual files"]
+        full["Full restore<br/>roll back everything"]
+    end
+
+    snapshots --> browse --> selective
+    snapshots --> full
+
+    selective --> reindex["Re-index<br/>knowledge graph rebuilt"]
+    full --> reindex
+
+    classDef create fill:#142229,stroke:#38ac8c,color:#62feb5;
+    classDef storage fill:#277862,stroke:#38ac8c,color:#ffffff;
+    classDef timeline fill:#38ac8c,stroke:#277862,color:#ffffff;
+    classDef restore fill:#62feb5,stroke:#38ac8c,color:#142229;
+
+    class daily,manual,writes create;
+    class bucket,reindex storage;
+    class s1,s2,s3,s4 timeline;
+    class browse,selective,full restore;
+```
+
+</MermaidFrame>
+
+### File-level history, for free
+
+Bucket-level snapshots cover the catastrophic case: full restore, whole-bucket
+rollback. But because every write to a Tigris bucket carries a version SHA,
+Basic Memory was able to build something more granular on the same primitive.
+Their upcoming web editor includes per-file revision history: a
+`ListObjectVersions` call returns every version of a single Markdown file,
+loaded side-by-side in a CodeMirror MergeView with a picker for applying
+changes.
+
+<video controls width="100%">
+  <source
+    src="/blog/img/blog/case-study-basic-memory/basic-memory-file-versions.mp4"
+    type="video/mp4"
+  />
+  Download the <a href="/blog/img/blog/case-study-basic-memory/basic-memory-file-versions.mp4">
+    MP4
+  </a> version.
+</video>
+
+<BreakoutQuote
+  username="Paul Hernandez"
+  title="Founder, Basic Memory"
+  imageUrl="https://avatars.githubusercontent.com/u/60959?v=4"
+>
+  Each revision in a bucket has a SHA, and we were able to make a diff/merge for
+  file-level revisions really easily. I had experimented with integrating Git
+  for this and it was such a chore. This pairs really nicely with our
+  bucket-level snapshot feature — a user can use snapshots to manage versions
+  for large numbers of files, or use the file history for a single file.
+</BreakoutQuote>
 
 ## What Tigris solved that other clouds didn't
 
