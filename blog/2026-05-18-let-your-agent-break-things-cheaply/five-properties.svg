@@ -1,0 +1,108 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 700 360"
+  width="700"
+  height="360"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .prop {
+      font-size: 13px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .desc {
+      font-size: 11px;
+      fill: #bac1be;
+    }
+    .api {
+      font-size: 12px;
+      fill: #62feb5;
+      font-weight: 600;
+      font-family: "Fira Code VF", ui-monospace, SFMono-Regular, Menlo, Monaco,
+        Consolas, monospace;
+    }
+    .row {
+      rx: 8;
+      ry: 8;
+      fill: #142229;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .row-accent {
+      rx: 8;
+      ry: 8;
+      fill: rgba(98, 254, 181, 0.06);
+      stroke: rgba(98, 254, 181, 0.25);
+      stroke-width: 1;
+    }
+    .arrow {
+      stroke: #4a5c54;
+      stroke-width: 1.5;
+      fill: none;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="ah-prop"
+      markerWidth="6"
+      markerHeight="5"
+      refX="6"
+      refY="2.5"
+      orient="auto"
+    >
+      <polygon points="0 0, 6 2.5, 0 5" fill="#4a5c54" />
+    </marker>
+  </defs>
+
+  <text x="350" y="26" text-anchor="middle" class="title">
+    Five properties, five API calls
+  </text>
+  <text x="350" y="46" text-anchor="middle" class="sub">
+    each property maps to one Tigris Agent Kit primitive
+  </text>
+
+  <rect x="24" y="68" width="652" height="52" class="row-accent" />
+  <text x="44" y="92" class="prop">Isolated</text>
+  <text x="44" y="108" class="desc">bucket + key scoped to one agent</text>
+  <path d="M300 94 L420 94" class="arrow" marker-end="url(#ah-prop)" />
+  <text x="440" y="100" class="api">createWorkspace()</text>
+
+  <rect x="24" y="128" width="652" height="52" class="row" />
+  <text x="44" y="152" class="prop">Recoverable</text>
+  <text x="44" y="168" class="desc">snapshot before risk, restore to fresh fork</text>
+  <path d="M300 154 L420 154" class="arrow" marker-end="url(#ah-prop)" />
+  <text x="440" y="154" class="api">checkpoint() + restore()</text>
+
+  <rect x="24" y="188" width="652" height="52" class="row" />
+  <text x="44" y="212" class="prop">Disposable</text>
+  <text x="44" y="228" class="desc">revoke key, delete bucket, one call</text>
+  <path d="M300 214 L420 214" class="arrow" marker-end="url(#ah-prop)" />
+  <text x="440" y="214" class="api">teardownWorkspace()</text>
+
+  <rect x="24" y="248" width="652" height="52" class="row" />
+  <text x="44" y="272" class="prop">Bounded</text>
+  <text x="44" y="288" class="desc">TTL on contents, finite worst-case cost</text>
+  <path d="M300 274 L420 274" class="arrow" marker-end="url(#ah-prop)" />
+  <text x="440" y="274" class="api">ttl + scoped credentials</text>
+
+  <rect x="24" y="308" width="652" height="52" class="row" />
+  <text x="44" y="332" class="prop">Observable</text>
+  <text x="44" y="348" class="desc">list one bucket, not reconstruct from logs</text>
+  <path d="M300 334 L420 334" class="arrow" marker-end="url(#ah-prop)" />
+  <text x="440" y="334" class="api">setupCoordination()</text>
+</svg>

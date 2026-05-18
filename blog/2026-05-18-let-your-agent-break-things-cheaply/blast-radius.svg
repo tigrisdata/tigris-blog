@@ -1,0 +1,151 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 700 300"
+  width="700"
+  height="300"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .panel-title {
+      font-size: 13px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .label {
+      font-size: 12px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 11px;
+      fill: #bac1be;
+    }
+    .outcome-bad {
+      font-size: 12px;
+      fill: #fbbf24;
+      font-weight: 600;
+    }
+    .outcome-good {
+      font-size: 12px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .box {
+      rx: 8;
+      ry: 8;
+      fill: #142229;
+      stroke: #2a3731;
+      stroke-width: 1.5;
+    }
+    .accent-box {
+      rx: 8;
+      ry: 8;
+      fill: #142229;
+      stroke: #62feb5;
+      stroke-opacity: 0.5;
+      stroke-width: 1.5;
+    }
+    .bad-box {
+      rx: 8;
+      ry: 8;
+      fill: rgba(251, 191, 36, 0.08);
+      stroke: rgba(251, 191, 36, 0.45);
+      stroke-width: 1.5;
+    }
+    .good-box {
+      rx: 8;
+      ry: 8;
+      fill: rgba(98, 254, 181, 0.1);
+      stroke: rgba(98, 254, 181, 0.5);
+      stroke-width: 1.5;
+    }
+    .divider {
+      stroke: #2a3731;
+      stroke-width: 1;
+      stroke-dasharray: 4 4;
+    }
+    .arrow {
+      stroke: #94a3b8;
+      stroke-width: 1.5;
+      fill: none;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="ah-blast"
+      markerWidth="7"
+      markerHeight="6"
+      refX="7"
+      refY="3"
+      orient="auto"
+    >
+      <polygon points="0 0, 7 3, 0 6" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <text x="350" y="26" text-anchor="middle" class="title">
+    The question that determines whether you ship
+  </text>
+  <text x="350" y="46" text-anchor="middle" class="sub">
+    runtime permissions vs. storage blast radius
+  </text>
+
+  <line x1="350" y1="62" x2="350" y2="268" class="divider" />
+
+  <text x="175" y="72" text-anchor="middle" class="panel-title">
+    What can the agent do?
+  </text>
+  <text x="525" y="72" text-anchor="middle" class="panel-title" fill="#62feb5">
+    What can actions break?
+  </text>
+
+  <rect x="28" y="92" width="294" height="48" class="box" />
+  <text x="175" y="114" text-anchor="middle" class="label">Sandbox + tool restrictions</text>
+  <text x="175" y="130" text-anchor="middle" class="small">approval steps, permitted curl</text>
+
+  <path d="M175 140 L175 158" class="arrow" marker-end="url(#ah-blast)" />
+
+  <rect x="28" y="158" width="294" height="48" class="box" />
+  <text x="175" y="180" text-anchor="middle" class="label">Prod-write credentials</text>
+  <text x="175" y="196" text-anchor="middle" class="small">keys that open everything</text>
+
+  <path d="M175 206 L175 224" class="arrow" marker-end="url(#ah-blast)" />
+
+  <rect x="28" y="224" width="294" height="44" class="bad-box" />
+  <text x="175" y="252" text-anchor="middle" class="outcome-bad">
+    still ruins your week
+  </text>
+
+  <rect x="378" y="92" width="294" height="48" class="box" />
+  <text x="525" y="114" text-anchor="middle" class="label">Sloppy runtime is fine</text>
+  <text x="525" y="130" text-anchor="middle" class="small">jailbroken agent, bad prompts</text>
+
+  <path d="M525 140 L525 158" class="arrow" marker-end="url(#ah-blast)" />
+
+  <rect x="378" y="158" width="294" height="48" class="accent-box" />
+  <text x="525" y="180" text-anchor="middle" class="label" fill="#62feb5">
+    Disposable workspace bucket
+  </text>
+  <text x="525" y="196" text-anchor="middle" class="small">scoped key, TTL on contents</text>
+
+  <path d="M525 206 L525 224" class="arrow" marker-end="url(#ah-blast)" />
+
+  <rect x="378" y="224" width="294" height="44" class="good-box" />
+  <text x="525" y="252" text-anchor="middle" class="outcome-good">
+    throw it away, go back to bed
+  </text>
+</svg>

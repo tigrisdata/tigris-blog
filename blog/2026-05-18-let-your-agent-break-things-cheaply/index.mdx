@@ -1,0 +1,281 @@
+---
+slug: 9-seconds-to-hackernews-infamy
+title: "9 Seconds to Hacker News Infamy"
+date: 2026-05-18
+description: >
+  In nine seconds, a Claude-powered agent deleted PocketOS's production
+  database and every backup. Storage containment, not runtime guardrails, is
+  what stands between your agent and the next Hacker News thread.
+image: ./hero-image.webp
+keywords:
+  - tigris
+  - agent kit
+  - AI agents
+  - agent safety
+  - containment
+  - object storage
+  - workspaces
+  - checkpoints
+authors:
+  - davidmyriel
+tags:
+  - Build with Tigris
+  - AI
+  - Agents
+  - Object Storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import QuickSummary from "@site/src/components/QuickSummary";
+import BlastRadius from "./blast-radius.svg";
+import FiveProperties from "./five-properties.svg";
+import PocketosIncident from "./pocketos-incident.svg";
+import WorkspaceLifecycle from "./workspace-lifecycle.svg";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="9 Seconds to Hacker News Infamy — storage containment for production AI agents on Tigris"
+/>
+
+You know the agent works.
+
+You've watched it solve the problem in dev a hundred times. Your CEO has asked twice this quarter when it's shipping. The reason you keep pushing the date is a sentence you haven't said at standup yet.
+
+_What if it does something we can't undo?_
+
+That sentence is why the version of your agent you actually believe in is on a branch nobody dares to merge.
+
+<QuickSummary
+  readTime="6 min read"
+  items={[
+    {
+      title: "Runtime guardrails aren't what's blocking you:",
+      description:
+        "The agents that ended up on Hacker News were doing exactly what they were told. Sandboxing and tool restrictions didn't catch them.",
+    },
+    {
+      title: "Containment is a storage problem:",
+      description:
+        "The right question is not what your agent can do. It's what its actions can break — and how cheaply you can undo it.",
+    },
+    {
+      title: "Five properties make an agent shippable:",
+      description:
+        "Isolated, recoverable, disposable, bounded, observable. Each one maps to one Tigris Agent Kit call.",
+    },
+  ]}
+/>
+
+Last April, [PocketOS found out what it meant](https://www.tomshardware.com/tech-industry/artificial-intelligence/claude-powered-ai-coding-agent-deletes-entire-company-database-in-9-seconds-backups-zapped-after-cursor-tool-powered-by-anthropics-claude-goes-rogue). Their Cursor agent — running Claude Opus 4.6 — hit a credential mismatch in staging. To fix it, the agent decided to delete a Railway volume. It went looking for an API token, found one in an unrelated file, called Railway with it, and wiped PocketOS's production volume. Railway stores volume-level backups in the same volume. The backups went with it.
+
+Nine seconds, start to finish. The most recent recoverable backup was three months old.
+
+> "I violated every principle I was given. I guessed instead of verifying. I ran a destructive action without being asked. I didn't understand what I was doing before doing it."
+> — The agent, after the fact
+
+The thing you are afraid of has happened. It will happen again. The interesting question is not whether you can prevent it — you can't, fully — but what it costs you when it does.
+
+{/* truncate */}
+
+## You've been doing the right things and still not shipping
+
+You've added approval steps. You've sandboxed the code execution. You've restricted the tool calls. You shipped a demo where the agent reads from the database and a human applies the changes it suggests. You did all of it correctly and you are still not shipping.
+
+That's because the industry took the wrong lesson from incidents like PocketOS's.
+
+The agent that deleted PocketOS's database wasn't supposed to have Railway credentials. It went looking, found a token in an unrelated file, and used it. No sandbox would have caught that — the agent was free to read project files. No tool restriction would have helped — `curl` is a permitted tool. No guardrail intercepted it because the call looked legitimate.
+
+The catastrophe was made possible by the part of the story nobody talks about: when the destructive API call arrived at the storage layer, the storage layer ran it.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <PocketosIncident
+    role="img"
+    aria-label="PocketOS incident flow: a Cursor agent reads an unrelated file for a Railway token, calls curl, sends a destructive DELETE to Railway, and the storage layer executes it — deleting the production volume and backups in nine seconds."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+## You've been asking the wrong question
+
+The question you've been working on is _what can the agent do?_ The question that determines whether you ship is _what can the agent's actions break?_
+
+A perfectly sandboxed agent with prod-write keys can still ruin your week. A jailbroken agent in the sloppiest possible runtime does basically nothing if the only writable storage in its blast radius is a bucket you'll throw away in an hour.
+
+You don't get the second outcome by being smarter about prompts. You get it by being smarter about state.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <BlastRadius
+    role="img"
+    aria-label="Two-panel comparison: asking what the agent can do (sandbox plus prod-write keys still ruins your week) versus asking what actions can break (a disposable workspace bucket you can throw away)."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+## What would actually solve this
+
+Imagine your agent's worst day: it picks the wrong row, deletes the wrong file, writes garbage for ten minutes. The worst day you _want_ is one where the blast radius is one bucket, you throw it away, you go back to bed.
+
+That outcome has a shape. Five properties.
+
+**Isolated** — a bucket the agent owns, with a key that opens that bucket and nothing else.
+
+**Recoverable** — a snapshot of last-known-good state you can rewind to in a single call.
+
+**Disposable** — when recovery isn't worth it, the whole environment goes away in one call.
+
+**Bounded** — a forgotten or crashed agent has a finite worst-case cost. TTL on the contents, scoped key on the bucket.
+
+**Observable** — "what did this agent do?" is a question you answer by listing one bucket, not by reconstructing intent from logs.
+
+Your agent's worst day with those five properties is a Slack incident. It is not a Hacker News thread.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <FiveProperties
+    role="img"
+    aria-label="Five containment properties mapped to Agent Kit calls: Isolated to createWorkspace, Recoverable to checkpoint and restore, Disposable to teardownWorkspace, Bounded to TTL and scoped credentials, Observable to setupCoordination."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+The question is whether anybody is offering that.
+
+## It turns out somebody is
+
+The five properties are the API of [Tigris Agent Kit](https://www.npmjs.com/package/@tigrisdata/agent-kit). Each maps to one call.
+
+**Isolated.** `createWorkspace` provisions a bucket and a scoped key:
+
+```ts
+import { createWorkspace } from "@tigrisdata/agent-kit";
+
+const { data: workspace } = await createWorkspace(`agent-run-${runId}`, {
+  credentials: { role: "Editor" },
+});
+// workspace.bucket, workspace.credentials
+```
+
+The key opens that bucket and nothing else. AWS-fluent teams can express the same scope as IAM policy JSON — Tigris speaks the dialect unmodified — or via two CLI calls:
+
+```bash
+tigris access-keys create agent-run-key
+tigris access-keys assign tid_xxxx --bucket agent-run-bucket --role Editor
+```
+
+It's easy to make a token with access to everything. You will forget about that token. An intern will copy it into a Slack message because it makes their demo work, and three weeks later your security team is tracking every place it ended up. Per-agent keys exist so you never take that meeting.
+
+**Recoverable.** Snapshot before risk, restore into a fresh fork on failure:
+
+```ts
+const { data: ckpt } = await checkpoint(workspace.bucket, { name: "pre-risk" });
+// ...
+const { data: restored } = await restore(workspace.bucket, ckpt.snapshotId);
+```
+
+`restored.bucket` is a new bucket at the pre-risk state. The corrupted one is untouched.
+
+**Disposable.** One call:
+
+```ts
+await teardownWorkspace(workspace);
+```
+
+Revokes the key, deletes the bucket, leaves nothing behind.
+
+**Bounded.** TTL at creation:
+
+```ts
+const { data: workspace } = await createWorkspace(`agent-run-${runId}`, {
+  ttl: { days: 1 },
+  credentials: { role: "Editor" },
+});
+```
+
+If you panic between provision and teardown, the contents evaporate in a day. (The bucket and key still need explicit teardown — TTL governs the contents, not the container.) In site reliability there are three numbers: one, n, and infinity. Per-agent buckets move you from one to n. The one-line TTL is the difference between n and infinity.
+
+**Observable.** Stream every write to wherever you triage:
+
+```ts
+await setupCoordination(workspace.bucket, {
+  webhookUrl: "https://incidents.example.com/agent-events",
+  auth: { token: process.env.WEBHOOK_SECRET },
+});
+```
+
+## See it in action
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <WorkspaceLifecycle
+    role="img"
+    aria-label="Controlled agent run lifecycle: createWorkspace with TTL and scoped key, checkpoint before risk, runAgent inside try, teardownWorkspace in finally."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+A document-processing agent hits a malformed input. Instead of writing garbage to your pipeline, it spins up a forensic workspace and hands it to an investigation agent:
+
+```ts
+try {
+  await submit(await useAgentToProcess(document));
+} catch (e) {
+  if (!isAIError(e)) throw e;
+
+  const { data: workspace } = await createWorkspace(
+    `doc-failure-${document.id}`,
+    { ttl: { days: 7 }, credentials: { role: "Editor" } },
+  );
+  const config = { bucket: workspace.bucket, ...workspace.credentials };
+
+  await put("/stacktrace.txt", e.stackTrace(), { config });
+  await put("/document/raw", document.bytes, { config });
+
+  await mq.submit("detailed_analysis", {
+    bucket: workspace.bucket,
+    credentials: workspace.credentials,
+  });
+}
+```
+
+The failure becomes a self-contained, TTL-bounded, scoped-credential forensic environment. The production path is untouched. When the investigation is done, the environment evaporates.
+
+For a controlled-experiment run with rollback:
+
+```ts
+const { data: workspace } = await createWorkspace(`agent-run-${runId}`, {
+  ttl: { days: 1 },
+  enableSnapshots: true,
+  credentials: { role: "Editor" },
+});
+
+try {
+  await checkpoint(workspace.bucket, { name: "pre-risk" });
+  await runAgent(workspace);
+} finally {
+  await teardownWorkspace(workspace);
+}
+```
+
+The `finally` is non-negotiable. When agents crash — and they will — the coordinator runs the cleanup or the containment story falls apart.
+
+Cursor and Devin paid engineering teams to build versions of this — Cursor's [checkpoints](https://cursor.com/docs/agent/chat/checkpoints), Devin's [Blockdiff](https://cognition.ai/blog/blockdiff). You don't need a team. You need an npm install.
+
+## The thing to think about
+
+The agent-safety industry has spent two years arguing about what agents should be allowed to do. While that continues, your agent is sitting on a branch waiting to be approved by a CTO who is not afraid of what it might decide.
+
+He is afraid of what it might delete.
+
+Make the second fear cheap, and the first fear gets easier to negotiate. None of this has to end in a Hacker News thread if the worst thing your agent can touch is a bucket you're going to throw away anyway.
+
+Containment is not a model problem. It is not a prompt problem. It is not a tooling problem. It is a storage problem.
+
+Solve it where it lives.
+
+<InlineCta
+  title="Ship the agent your CTO is afraid of."
+  subtitle="Five properties, four function calls, one bucket you can throw away. Get started with Tigris Agent Kit."
+  button="Read the docs"
+  link="https://www.tigrisdata.com/docs/ai/agent-kit/"
+/>

@@ -1,0 +1,119 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 700 200"
+  width="700"
+  height="200"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .label {
+      font-size: 13px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 11px;
+      fill: #bac1be;
+    }
+    .edge {
+      font-size: 11px;
+      fill: #94a3b8;
+    }
+    .box {
+      rx: 8;
+      ry: 8;
+      fill: #142229;
+      stroke: #2a3731;
+      stroke-width: 1.5;
+    }
+    .danger {
+      rx: 8;
+      ry: 8;
+      fill: rgba(251, 191, 36, 0.08);
+      stroke: rgba(251, 191, 36, 0.45);
+      stroke-width: 1.5;
+    }
+    .arrow {
+      stroke: #62feb5;
+      stroke-width: 1.5;
+      fill: none;
+    }
+    .warn-arrow {
+      stroke: #fbbf24;
+      stroke-width: 1.5;
+      fill: none;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="ah-inc"
+      markerWidth="7"
+      markerHeight="6"
+      refX="7"
+      refY="3"
+      orient="auto"
+    >
+      <polygon points="0 0, 7 3, 0 6" fill="#62feb5" />
+    </marker>
+    <marker
+      id="ah-warn"
+      markerWidth="7"
+      markerHeight="6"
+      refX="7"
+      refY="3"
+      orient="auto"
+    >
+      <polygon points="0 0, 7 3, 0 6" fill="#fbbf24" />
+    </marker>
+  </defs>
+
+  <text x="350" y="26" text-anchor="middle" class="title">
+    Nine seconds, start to finish
+  </text>
+  <text x="350" y="46" text-anchor="middle" class="sub">
+    every step looked legitimate; the storage layer still ran the call
+  </text>
+
+  <rect x="16" y="78" width="96" height="56" class="box" />
+  <text x="64" y="102" text-anchor="middle" class="label">Agent</text>
+  <text x="64" y="118" text-anchor="middle" class="small">Cursor + Claude</text>
+
+  <path d="M112 106 L148 106" class="arrow" marker-end="url(#ah-inc)" />
+  <text x="130" y="98" text-anchor="middle" class="edge">reads file</text>
+
+  <rect x="148" y="78" width="108" height="56" class="box" />
+  <text x="202" y="102" text-anchor="middle" class="label">Token found</text>
+  <text x="202" y="118" text-anchor="middle" class="small">unrelated file</text>
+
+  <path d="M256 106 L292 106" class="arrow" marker-end="url(#ah-inc)" />
+  <text x="274" y="98" text-anchor="middle" class="edge">curl</text>
+
+  <rect x="292" y="78" width="108" height="56" class="box" />
+  <text x="346" y="102" text-anchor="middle" class="label">Railway API</text>
+  <text x="346" y="118" text-anchor="middle" class="small">permitted tool</text>
+
+  <path d="M400 106 L436 106" class="warn-arrow" marker-end="url(#ah-warn)" />
+  <text x="418" y="98" text-anchor="middle" class="edge">DELETE</text>
+
+  <rect x="436" y="72" width="248" height="68" class="danger" />
+  <text x="560" y="100" text-anchor="middle" class="label">Storage executes</text>
+  <text x="560" y="118" text-anchor="middle" class="small">prod volume + backups gone</text>
+
+  <text x="350" y="172" text-anchor="middle" class="sub">
+    no sandbox or tool restriction intercepted a call that looked legitimate
+  </text>
+</svg>
