@@ -136,16 +136,6 @@ available across devices, browsers, and AI platforms. The cloud product needed
 multi-tenant storage with strict isolation: each user's Markdown files,
 organized by project, in a bucket no other user can reach.
 
-<BreakoutQuote
-  username="Paul Hernandez"
-  title="Founder, Basic Memory"
-  imageUrl="https://avatars.githubusercontent.com/u/60959?v=4"
->
-  We're really liking Tigris so far as an alternative to AWS S3. We have each of
-  our tenants provisioned with their own bucket for data isolation. And tenant
-  provisioning takes seconds.
-</BreakoutQuote>
-
 Their first build-out was a direct port of the local one. Each tenant got a
 dedicated Fly.io server, with their SQLite database and Markdown files on a
 per-tenant Fly volume. It worked on day one. It didn't scale. As Paul put it: "a
@@ -179,29 +169,6 @@ Memory, and within 5 to 20 seconds the tenant is fully provisioned: Tigris
 bucket, Neon Postgres database, scoped credentials, and all internal
 configuration. Users see a brief spinner on a welcome screen, and the platform
 is ready.
-
-<MermaidFrame title="Tenant provisioning, end to end. From Polar webhook to a usable workspace in 5–20 seconds.">
-
-```mermaid
-graph LR
-  A["Signup"] --> B["Polar webhook"]
-  B --> C["Tigris Partner API<br/>bucket + scoped credentials"]
-  B --> D["Neon Postgres<br/>tenant database"]
-  C --> E["Welcome screen ready<br/>5–20 seconds"]
-  D --> E
-
-  classDef signup fill:#142229,stroke:#38ac8c,color:#62feb5;
-  classDef webhook fill:#277862,stroke:#38ac8c,color:#ffffff;
-  classDef provision fill:#38ac8c,stroke:#277862,color:#ffffff;
-  classDef ready fill:#62feb5,stroke:#38ac8c,color:#142229;
-
-  class A signup;
-  class B webhook;
-  class C,D provision;
-  class E ready;
-```
-
-</MermaidFrame>
 
 Each tenant gets their own bucket with credentials that can only reach that
 tenant's data. Projects within a knowledge base are organized as prefixes inside
@@ -266,16 +233,6 @@ flowchart TB
 ```
 
 </MermaidFrame>
-
-<BreakoutQuote
-  username="Paul Hernandez"
-  title="Founder, Basic Memory"
-  imageUrl="https://avatars.githubusercontent.com/u/60959?v=4"
->
-  Using buckets has become flexible and easy. We create and destroy buckets
-  systematically even during unit tests. It lets our small team iterate and
-  build faster.
-</BreakoutQuote>
 
 ## Sync that pays for itself
 
@@ -348,83 +305,25 @@ customer at a price they'll pay.
   mandate that makes the platform work.
 </BreakoutQuote>
 
-## A time machine for your knowledge base
+## File-level history, for free
 
-Months of AI conversations build up massive context. Losing it because you
-switched tools is the worst-case scenario for memory like this. Basic Memory
-uses
+Basic Memory uses
 [Tigris bucket snapshots](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/)
-to give every user point-in-time restore, and exposes the whole thing through
-the CLI: create, list, browse, delete, and restore from any snapshot.
+so users can recover to a point-in-time, whether or not they manually take a
+snapshot. But the cool part is how Basic Memory used bucket snapshots to build a
+more granular feature: file-level diff/merge.
 
-Snapshots are built for convenience. People don't reach for a Git-style
-three-way merge. They want yesterday's version back.
+Because every change to the bucket is persisted with a snapshot ID — similar to
+a version SHA — Basic Memory can fetch every version of a Markdown file and load
+the changes side-by-side in a CodeMirror MergeView. A `ListObjectVersions` call
+returns every version of a single Markdown file, making it easy to inspect and
+compare revisions. The user picks which changes to keep, much like resolving a
+merge conflict in Git.
 
-Though all writes to Tigris are persisted as snapshots, Basic Memory also runs
-automated daily snapshots per tenant for easy fallback, and users can create
-manual snapshots whenever they want. The restore flow lets them select
-individual files from an old snapshot and revert them one at a time — no
-all-or-nothing rollback required. Because the knowledge graph and search index
-are derived from the files, restoring a snapshot brings back the whole graph
-after a re-index.
-
-<MermaidFrame title="Snapshots converge from three sources into a timeline, then fan out into per-file or full restore.">
-
-```mermaid
-flowchart TB
-    subgraph Create["Snapshot Creation"]
-        daily["Daily Auto-Snapshot<br/>3:00 AM UTC"]
-        manual["User-Triggered<br/>via CLI or Web UI"]
-        writes["Every Write<br/>persisted automatically"]
-    end
-
-    daily & manual & writes --> bucket[("Tigris Bucket<br/>tenant-xyz")]
-
-    bucket --> snapshots
-
-    subgraph snapshots["Snapshot Timeline"]
-        direction LR
-        s1["···"]
-        s2["Snapshot N-2"]
-        s3["Snapshot N-1<br/>(manual)"]
-        s4["Snapshot N"]
-        s1 --> s2 --> s3 --> s4
-    end
-
-    subgraph Restore["Restore Options"]
-        browse["Browse snapshot<br/>see all files at that point"]
-        selective["Selective restore<br/>pick individual files"]
-        full["Full restore<br/>roll back everything"]
-    end
-
-    snapshots --> browse --> selective
-    snapshots --> full
-
-    selective --> reindex["Re-index<br/>knowledge graph rebuilt"]
-    full --> reindex
-
-    classDef create fill:#142229,stroke:#38ac8c,color:#62feb5;
-    classDef storage fill:#277862,stroke:#38ac8c,color:#ffffff;
-    classDef timeline fill:#38ac8c,stroke:#277862,color:#ffffff;
-    classDef restore fill:#62feb5,stroke:#38ac8c,color:#142229;
-
-    class daily,manual,writes create;
-    class bucket,reindex storage;
-    class s1,s2,s3,s4 timeline;
-    class browse,selective,full restore;
-```
-
-</MermaidFrame>
-
-### File-level history, for free
-
-Bucket-level snapshots cover the catastrophic case: full restore, whole-bucket
-rollback. But because every write to a Tigris bucket carries a version SHA,
-Basic Memory was able to build something more granular on the same primitive.
-Their upcoming web editor includes per-file revision history: a
-`ListObjectVersions` call returns every version of a single Markdown file,
-loaded side-by-side in a CodeMirror MergeView with a picker for applying
-changes.
+As Paul describes, "I had experimented with integrating Git for this and it was
+such a chore. This pairs really nicely with our bucket-level snapshot feature —
+a user can use snapshots to manage versions for large numbers of files, or use
+the file history for a single file."
 
 <video controls width="100%">
   <source
@@ -435,18 +334,6 @@ changes.
     MP4
   </a> version.
 </video>
-
-<BreakoutQuote
-  username="Paul Hernandez"
-  title="Founder, Basic Memory"
-  imageUrl="https://avatars.githubusercontent.com/u/60959?v=4"
->
-  Each revision in a bucket has a SHA, and we were able to make a diff/merge for
-  file-level revisions really easily. I had experimented with integrating Git
-  for this and it was such a chore. This pairs really nicely with our
-  bucket-level snapshot feature — a user can use snapshots to manage versions
-  for large numbers of files, or use the file history for a single file.
-</BreakoutQuote>
 
 ## What Tigris solved that other clouds didn't
 
@@ -468,15 +355,10 @@ tax of egress fees if you ever wanted to run compute on another provider.
   can pass those savings and that trust directly down to our users.
 </BreakoutQuote>
 
-He wanted to build differently. Tigris fit:
-
-| What Tigris provides           | Why it matters for Basic Memory                                                                         |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| **Partner Integration API**    | Per-tenant org, bucket, and scoped credentials in 5–20 seconds — no custom isolation layer to maintain. |
-| **Globally distributed reads** | Users syncing from many devices and locations get low-latency reads from the nearest Tigris region.     |
-| **Bucket event webhooks**      | The indexer reacts to file changes instead of polling. Both write paths converge cleanly at the index.  |
-| **Bucket snapshots**           | Point-in-time restore as an API call. Daily automatic, plus user-triggered, plus per-file restore.      |
-| **Zero egress fees**           | Bidirectional per-user sync stays economically viable. Agents can re-read the knowledge base freely.    |
+He wanted to build differently. Tigris fit. Per-tenant buckets, zero egress,
+globally distributed reads, bucket-event webhooks, snapshots: each one already
+existed as a primitive, not a feature request. The architecture didn't have to
+bend around the storage layer.
 
 Basic Memory is a four-person team building a product they want to run
 themselves at a price their customers will pay. Big-cloud sales motions — yearly
