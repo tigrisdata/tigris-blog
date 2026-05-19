@@ -20,7 +20,7 @@ const rb2bHeadTag =
           tagName: "script",
           attributes: {},
           innerHTML:
-            '(function(){var m=document.cookie.match(/(?:^|; )tigris_geo=([^;]*)/);var c=m?decodeURIComponent(m[1]):"";if(c!=="US"&&c!=="CA")return;if(window.reb2b)return;window.reb2b={loaded:true};var s=document.createElement("script");s.async=true;s.src="/_tigris/insights/Z6PVLHQKD16R/Z6PVLHQKD16R.js.gz";var f=document.getElementsByTagName("script")[0];f.parentNode.insertBefore(s,f);})();',
+            '(function(){var m=document.cookie.match(/(?:^|; )tigris_geo=([^;]*)/);var c=m?decodeURIComponent(m[1]):"";if(c!=="US"&&c!=="CA")return;if(window.reb2b)return;window.reb2b={loaded:true};var s=document.createElement("script");s.async=true;s.src="https://ddwl4m2hdecbv.cloudfront.net/b/Z6PVLHQKD16R/Z6PVLHQKD16R.js.gz";var f=document.getElementsByTagName("script")[0];f.parentNode.insertBefore(s,f);})();',
         },
       ]
     : [];
