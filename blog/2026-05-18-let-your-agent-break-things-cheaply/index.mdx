@@ -28,7 +28,6 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import MermaidFrame from "@site/src/components/MermaidFrame";
-import QuickSummary from "@site/src/components/QuickSummary";
 import BlastRadius from "./blast-radius.svg";
 import PocketosIncident from "./pocketos-incident.svg";
 import WorkspaceLifecycle from "./workspace-lifecycle.svg";
@@ -54,30 +53,8 @@ production. Their Cursor agent, running Claude Opus 4.6,
 [hit a credential mismatch in staging](https://www.tomshardware.com/tech-industry/artificial-intelligence/claude-powered-ai-coding-agent-deletes-entire-company-database-in-9-seconds-backups-zapped-after-cursor-tool-powered-by-anthropics-claude-goes-rogue)
 and decided that the right move was to delete a Railway volume. It went looking
 for an API token, found one in an unrelated file, called Railway with it, and
-wiped the production volume. Railway stores its backups inside the same volume
-it backs up, which meant the backups went with it. The whole event took nine
-seconds. The most recent recoverable backup was three months old.
-
-<QuickSummary
-  readTime="7 min read"
-  items={[
-    {
-      title: "Every safety measure you've already built was correct:",
-      description:
-        "And none of them would have stopped the agents that ended up on Hacker News. The catastrophe never happens at the runtime layer.",
-    },
-    {
-      title: "Containment is a storage problem:",
-      description:
-        "The question that decides whether you ship isn't what the agent can do. It's what its actions can break, and how cheaply you can undo them.",
-    },
-    {
-      title: "Five properties make an agent shippable:",
-      description:
-        "Isolated, recoverable, disposable, bounded, observable. Four function calls in Tigris Agent Kit give you all five.",
-    },
-  ]}
-/>
+wiped the production volume. The whole event took nine seconds. The most recent
+recoverable backup was three months old.
 
 > "I violated every principle I was given. I guessed instead of verifying. I ran
 > a destructive action without being asked. I didn't understand what I was doing
@@ -182,6 +159,20 @@ a small TypeScript package that composes Tigris's
 agent run actually wants, and each of the five properties maps to a function
 call inside it.
 
+Before any of the calls below do anything, the package needs to be installed and
+the SDK pointed at an account. The shortest version is two lines in your shell:
+
+```bash
+npm install @tigrisdata/agent-kit
+export TIGRIS_STORAGE_ACCESS_KEY_ID=tid_...
+export TIGRIS_STORAGE_SECRET_ACCESS_KEY=tsec_...
+```
+
+Access keys come from the
+[Tigris Console](https://console.tigris.dev/createaccesskey), and the full setup
+walkthrough is in the
+[Agent Kit quickstart](https://www.tigrisdata.com/docs/ai/agent-kit/).
+
 ### Isolated: createWorkspace
 
 Isolation is what `createWorkspace` gives you. It provisions a new bucket and an
@@ -265,6 +256,10 @@ than the container, but the benefit is real. In site reliability there are three
 numbers worth worrying about: one, n, and infinity. Per-agent buckets move you
 from one to n. The one-line TTL is the difference between n and infinity.
 
+What you actually pay for is bytes stored, not buckets opened. Tigris doesn't
+bill per-bucket, so a thousand workspaces holding nothing each cost the same as
+zero of them. The TTL keeps the bytes from piling up either way.
+
 ### Observable: setupCoordination
 
 Observability is what `setupCoordination` gives you. It wraps
@@ -281,6 +276,29 @@ await setupCoordination(workspace.bucket, {
 
 The audit log, in this arrangement, is a side effect of how the storage is laid
 out. You didn't have to design it on purpose.
+
+### If the agent needs real data, use a fork instead
+
+Workspaces are the right answer when the agent's writes are scratch. When the
+agent has to read or modify a copy of real production data, the same shape works
+with a [fork](/bucket-forking-deep-dive). `createForks` snapshots the source
+bucket and stamps out a copy-on-write clone, and it does so in constant time
+regardless of how big the source bucket is:
+
+```ts
+const { data: forkSet } = await createForks("production-data", 1, {
+  prefix: "agent-experiment",
+  credentials: { role: "Editor" },
+});
+```
+
+The fork is a real bucket the agent can read and write freely, sharing the
+underlying bytes with the parent so your storage bill stays flat. When the run
+is over, `teardownForks(forkSet)` revokes the key and deletes the fork, and the
+source bucket is untouched. The same pattern powers
+[fifty agents for the price of one bucket](/fifty-agents-one-bucket), where one
+source bucket served fifty parallel agents at the cost of a single copy of the
+data.
 
 ## Letting an agent fail into its own quarantine
 
@@ -359,6 +377,22 @@ from scratch: Cursor's
 anybody else as an npm install, and it's the machinery
 [Agentuity's agent cloud](/case-study-agentuity) is built on.
 
+## When to reach for which primitive
+
+By the time an agent run touches more than one of these shapes, it helps to know
+which call answers which need. The question to ask is what the agent actually
+needs in order to do its job:
+
+- Scratch space the agent owns: `createWorkspace`
+- A copy of real data the agent can experiment on: `createForks`
+- A rewind partway through a run that has already written: `checkpoint` and
+  `restore`
+- A signal that another agent should start work the moment the first one
+  finishes: `setupCoordination`
+
+Most agent runs only need one or two of these. The composition is what makes the
+more interesting workflows possible.
+
 ## Where the fear actually lives
 
 The agent-safety industry has spent the last two years arguing about what agents
@@ -380,8 +414,8 @@ tooling problem. It is a storage problem, and the way to solve it is to solve it
 where it actually lives.
 
 <InlineCta
-  title="Start where containment lives."
-  subtitle="Five properties, four function calls, and one bucket you can throw away. Get started with Tigris Agent Kit."
-  button="Read the docs"
+  title="Spin up your first workspace."
+  subtitle="Five properties, four function calls, and one bucket you can throw away. The quickstart is two commands in your shell."
+  button="Open the Agent Kit quickstart"
   link="https://www.tigrisdata.com/docs/ai/agent-kit/"
 />
