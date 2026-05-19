@@ -13,6 +13,30 @@ const lightCodeTheme = require("prism-react-renderer").themes.github;
 const darkCodeTheme = require("prism-react-renderer").themes.dracula;
 const simplePlantUML = require("@akebifiky/remark-simple-plantuml");
 
+const isProduction = process.env.VERCEL_ENV === "production";
+
+const posthogHeadTag = isProduction
+  ? [
+      {
+        tagName: "script",
+        attributes: {},
+        innerHTML:
+          "!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split('.');2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement('script')).type='text/javascript',p.crossOrigin='anonymous',p.async=!0,p.src=s.api_host.replace('.i.posthog.com','-assets.i.posthog.com')+'/static/array.js',(r=t.getElementsByTagName('script')[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a='posthog',u.people=u.people||[],u.toString=function(t){var e='posthog';return'posthog'!=a&&(e+='.'+a),t||(e+=' (stub)'),e},u.people.toString=function(){return u.toString(1)+'.people (stub)'},o='init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId captureTraceFeedback captureTraceMetric'.split(' '),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);posthog.init('phc_6a2zd9w9hGzIqYl527bL4dXk3Wz8J9pEHyXTwP1hHq4',{api_host:'https://ph.tigrisdata.com',capture_pageview:false,capture_pageleave:true});",
+      },
+    ]
+  : [];
+
+const rb2bHeadTag = isProduction
+  ? [
+      {
+        tagName: "script",
+        attributes: {},
+        innerHTML:
+          '(function(){var m=document.cookie.match(/(?:^|; )tigris_geo=([^;]*)/);var c=m?decodeURIComponent(m[1]):"";if(c!=="US"&&c!=="CA")return;if(window.reb2b)return;window.reb2b={loaded:true};var s=document.createElement("script");s.async=true;s.src="/_tigris/insights/Z6PVLHQKD16R/Z6PVLHQKD16R.js.gz";var f=document.getElementsByTagName("script")[0];f.parentNode.insertBefore(s,f);})();',
+      },
+    ]
+  : [];
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "Tigris Object Storage",
@@ -31,8 +55,11 @@ const config = {
   },
   themes: ["@docusaurus/theme-mermaid"],
 
+  headTags: [...posthogHeadTag, ...rb2bHeadTag],
+
   clientModules: [
     require.resolve("./src/util/ensureGtag.js"),
+    require.resolve("./src/util/posthog.js"),
     require.resolve("./src/util/augmentConsoleLinks.js"),
     require.resolve("./src/util/hideNavbarInBlogPost.js"),
   ],
