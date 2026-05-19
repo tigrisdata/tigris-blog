@@ -16,30 +16,35 @@ export function onRouteDidUpdate({ location, previousLocation }) {
         return;
       }
 
+      const pid = posthog.get_distinct_id();
+      const sid = posthog.get_session_id();
+      if (!pid || !sid) return;
+
       // Get all anchors that contain the console URL
       const allSignupLinks = document.querySelectorAll(
         `a[href*="${tigrisConfig.consoleUrl}`
       );
 
-      const existingPid = location.searchParams?.get("pid");
-      const existingSid = location.searchParams?.get("sid");
-      const pid = existingPid || posthog.get_distinct_id();
-      const sid = existingSid || posthog.get_session_id();
+      // Always overwrite pid/sid so links re-stamped on an earlier route
+      // change pick up the current PostHog identity (e.g., after the rb2b
+      // bridge calls posthog.identify and the distinct_id switches from
+      // the anonymous UUID to rb2b_<uid>).
       allSignupLinks.forEach((el) => {
+        // eslint-disable-next-line no-undef
         const href = new URL(el.getAttribute("href"));
-
-        if (href.searchParams.has("pid") === false) {
+        if (href.searchParams.get("pid") !== pid) {
           href.searchParams.set("pid", pid);
-          el.setAttribute("href", href.toString());
         }
-
-        if (href.searchParams.has("sid") === false) {
+        if (href.searchParams.get("sid") !== sid) {
           href.searchParams.set("sid", sid);
-          el.setAttribute("href", href.toString());
         }
+        el.setAttribute("href", href.toString());
       });
     }
   } catch (e) {
-    console.warn("Error augmenting Tigris Console links with pid query param");
+    console.warn(
+      "Error augmenting Tigris Console links with pid query param",
+      e
+    );
   }
 }
