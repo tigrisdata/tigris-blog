@@ -58,6 +58,16 @@ export function onRouteDidUpdate({ location, previousLocation }) {
       posthog.capture("$pageleave", { $current_url: lastPageviewUrl });
     }
     lastPageviewUrl = window.location.href;
+
+    // rb2b's CDN bundle auto-captures the initial pageview but not
+    // subsequent SPA navigations. Without this call, every visitor looks
+    // like a single-pageview visit in rb2b's pipeline, which throttles
+    // their identification volume. Skip the initial render (handled by
+    // rb2b's own bootstrap).
+    const reb2b = window.reb2b;
+    if (previousLocation && reb2b && typeof reb2b.collect === "function") {
+      reb2b.collect();
+    }
   }
 
   startRb2bPostHogBridge();
