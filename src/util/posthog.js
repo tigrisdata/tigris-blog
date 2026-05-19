@@ -1,7 +1,7 @@
 function getCookie(name) {
   if (typeof document === "undefined") return null;
   const match = document.cookie.match(
-    new RegExp("(?:^|; )" + name + "=([^;]*)"),
+    new RegExp("(?:^|; )" + name + "=([^;]*)")
   );
   return match ? decodeURIComponent(match[1]) : null;
 }
