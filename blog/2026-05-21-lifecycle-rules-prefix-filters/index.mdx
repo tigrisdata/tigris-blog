@@ -118,10 +118,10 @@ The rule moves anything under `logs/` to Infrequent Access after 30 days, then
 deletes it after 540. Logs older than a month live in cheaper storage. Logs
 older than 18 months don't live anywhere.
 
-Exactly what [the previous post](/blog/lifecycle-rules) promised: slowly
-punting things down the tier list before they're eventually deleted. Same
-savings shape too — older logs at IA cost a fraction of fresh logs at
-Standard, and at day 540 they cost nothing.
+Exactly what [the previous post](/blog/lifecycle-rules) promised: slowly punting
+things down the tier list before they're eventually deleted. Same savings shape
+too — older logs at IA cost a fraction of fresh logs at Standard, and at day 540
+they cost nothing.
 
 ## Sorting room 2: One bucket, three workloads
 
@@ -211,27 +211,27 @@ thawing it back out costs you. On Tigris, it's storage that costs less.
 
 [Pt 1's savings example](/blog/lifecycle-rules): a 120 TB bucket dropped from
 $2,450 to $833 a month after 92 TB moved to Archive. About two thirds off the
-original bill. Raw datasets dwarf checkpoints and intermediate artifacts in
-most training pipelines, so the bulk of the savings on Tigris comes from the
+original bill. Raw datasets dwarf checkpoints and intermediate artifacts in most
+training pipelines, so the bulk of the savings on Tigris comes from the
 `GLACIER` transition on `datasets/raw/` — the corpus that drives most of the
 storage bill in training workloads.
 
 ## How rules are evaluated
 
-Multi-rule lifecycle on Tigris doesn't have a coordination layer in front of
-the workers. Each rule runs on its own worker, walking the bucket
-oldest-first. If two rules match the same object, whichever worker picks it
-up first does the work.
+Multi-rule lifecycle on Tigris doesn't have a coordination layer in front of the
+workers. Each rule runs on its own worker, walking the bucket oldest-first. If
+two rules match the same object, whichever worker picks it up first does the
+work.
 
-You can't transition from a colder tier to a warmer one. Once an object
-lands in `GLACIER`, no rule can pull it back to `STANDARD_IA`. When two
-transitions race, the one that fires first is the only one that matters —
-the other has nothing to do by the time it arrives.
+You can't transition from a colder tier to a warmer one. Once an object lands in
+`GLACIER`, no rule can pull it back to `STANDARD_IA`. When two transitions race,
+the one that fires first is the only one that matters — the other has nothing to
+do by the time it arrives.
 
-When a transition and an expiration fire on the same object at roughly the
-same moment, [pt 1's global replication](/blog/lifecycle-rules) settles it
-the same way it settles any other concurrent metadata update: by timestamp.
-Multi-rule reuses the architecture pt 1 walked through.
+When a transition and an expiration fire on the same object at roughly the same
+moment, [pt 1's global replication](/blog/lifecycle-rules) settles it the same
+way it settles any other concurrent metadata update: by timestamp. Multi-rule
+reuses the architecture pt 1 walked through.
 
 ![A state diagram showing three storage tiers (Standard, Infrequent Access, Glacier) in a row, with green forward transition arrows between them. Orange expiration arrows from each tier converge on a Deleted node below. A dashed red arc curves over the tier row from Glacier back toward Standard, struck through with an X and labeled "NO PATH BACK," showing that backwards transitions are blocked.](./tier-flow.svg)
 
@@ -257,13 +257,12 @@ aws s3api put-bucket-lifecycle-configuration \
 ```
 
 If your bucket already has data in it, the new rules apply on the next scan,
-oldest-first — no backfill flag, no migration. Expect the first action
-within a few minutes, or up to fifteen or twenty if the scheduler just
-finished a sweep.
+oldest-first — no backfill flag, no migration. Expect the first action within a
+few minutes, or up to fifteen or twenty if the scheduler just finished a sweep.
 
 If you'd rather click than write JSON, the
-[Tigris Dashboard](https://console.storage.dev/) has the same controls. The
-full configuration reference is in the docs:
+[Tigris Dashboard](https://console.storage.dev/) has the same controls. The full
+configuration reference is in the docs:
 [Object Lifecycle Rules](https://www.tigrisdata.com/docs/buckets/object-lifecycle-rules/)
 covers transitions,
 [Object Expiration](https://www.tigrisdata.com/docs/buckets/objects-expiration/)
