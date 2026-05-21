@@ -1,0 +1,196 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 720 280"
+  width="720"
+  height="280"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .label {
+      font-size: 12px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 11px;
+      fill: #bac1be;
+    }
+    .row-label {
+      font-size: 11px;
+      fill: #94a3b8;
+      font-weight: 600;
+    }
+    .pass-text {
+      font-size: 11px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .fail-text {
+      font-size: 11px;
+      fill: #fbbf24;
+      font-weight: 600;
+    }
+    .box {
+      rx: 5;
+      ry: 5;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .pass-box {
+      rx: 5;
+      ry: 5;
+      fill: rgba(98, 254, 181, 0.1);
+      stroke: rgba(98, 254, 181, 0.5);
+      stroke-width: 1;
+    }
+    .fail-box {
+      rx: 5;
+      ry: 5;
+      fill: rgba(251, 191, 36, 0.08);
+      stroke: rgba(251, 191, 36, 0.45);
+      stroke-width: 1;
+    }
+    .arrow {
+      stroke: #94a3b8;
+      stroke-width: 1.5;
+      fill: none;
+    }
+    .pass-arrow {
+      stroke: #62feb5;
+      stroke-width: 1.5;
+      fill: none;
+    }
+    .kicker {
+      font-size: 12px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .caption {
+      font-size: 11px;
+      fill: #bac1be;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="rh-arrow"
+      viewBox="0 0 10 10"
+      refX="8"
+      refY="5"
+      markerWidth="6"
+      markerHeight="6"
+      orient="auto"
+    >
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8" />
+    </marker>
+    <marker
+      id="rh-arrow-pass"
+      viewBox="0 0 10 10"
+      refX="8"
+      refY="5"
+      markerWidth="6"
+      markerHeight="6"
+      orient="auto"
+    >
+      <path d="M0,0 L10,5 L0,10 z" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="360" y="25" text-anchor="middle" class="title">
+    Agentic RAG with corpus updates
+  </text>
+  <text x="360" y="45" text-anchor="middle" class="sub">
+    a bad write either compounds across runs or stops at the first fork
+  </text>
+
+  <!-- Top row: without forks -->
+  <text x="20" y="100" class="row-label">without forks:</text>
+
+  <rect x="125" y="80" width="80" height="34" class="box" />
+  <text x="165" y="102" text-anchor="middle" class="small">bad note</text>
+
+  <line x1="205" y1="97" x2="235" y2="97" class="arrow" marker-end="url(#rh-arrow)" />
+
+  <rect x="235" y="80" width="90" height="34" class="box" />
+  <text x="280" y="102" text-anchor="middle" class="small">next agent</text>
+
+  <line x1="325" y1="97" x2="355" y2="97" class="arrow" marker-end="url(#rh-arrow)" />
+
+  <rect x="355" y="80" width="100" height="34" class="box" />
+  <text x="405" y="102" text-anchor="middle" class="small">wrong fact</text>
+
+  <line x1="455" y1="97" x2="485" y2="97" class="arrow" marker-end="url(#rh-arrow)" />
+
+  <rect x="485" y="80" width="110" height="34" class="box" />
+  <text x="540" y="102" text-anchor="middle" class="small">more bad notes</text>
+
+  <line x1="595" y1="97" x2="625" y2="97" class="arrow" marker-end="url(#rh-arrow)" />
+
+  <rect x="625" y="80" width="90" height="34" class="fail-box" />
+  <text x="670" y="102" text-anchor="middle" class="fail-text">corpus rots</text>
+
+  <!-- Bottom row: with forks -->
+  <text x="20" y="170" class="row-label">with forks:</text>
+
+  <rect x="125" y="150" width="80" height="34" class="box" />
+  <text x="165" y="172" text-anchor="middle" class="small">bad note</text>
+
+  <line
+    x1="205"
+    y1="167"
+    x2="235"
+    y2="167"
+    class="pass-arrow"
+    marker-end="url(#rh-arrow-pass)"
+  />
+
+  <rect x="235" y="150" width="140" height="34" class="box" />
+  <text x="305" y="172" text-anchor="middle" class="small">validator catches</text>
+
+  <line
+    x1="375"
+    y1="167"
+    x2="405"
+    y2="167"
+    class="pass-arrow"
+    marker-end="url(#rh-arrow-pass)"
+  />
+
+  <rect x="405" y="150" width="100" height="34" class="pass-box" />
+  <text x="455" y="172" text-anchor="middle" class="pass-text">quarantine</text>
+
+  <line
+    x1="505"
+    y1="167"
+    x2="535"
+    y2="167"
+    class="pass-arrow"
+    marker-end="url(#rh-arrow-pass)"
+  />
+
+  <rect x="535" y="150" width="170" height="34" class="pass-box" />
+  <text x="620" y="172" text-anchor="middle" class="pass-text">source untouched</text>
+
+  <!-- Kicker caption -->
+  <text x="360" y="225" text-anchor="middle" class="kicker">
+    Forks break the chain at the first link.
+  </text>
+  <text x="360" y="245" text-anchor="middle" class="caption">
+    Every write goes to an isolated copy, validates, and either lands in production or doesn't.
+  </text>
+</svg>
