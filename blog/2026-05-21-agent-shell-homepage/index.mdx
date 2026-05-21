@@ -1,0 +1,245 @@
+---
+slug: agent-shell-homepage
+title: How small can we make an interface to Tigris?
+description: |
+  We embedded agent-shell on the Tigris homepage so you can ls, cat, and cd through your buckets like a normal filesystem. Here's how it works.
+image: ./hero-image.webp
+keywords:
+  - tigris
+  - agent-shell
+  - just-bash
+  - object storage
+  - bash
+  - shell
+  - sandbox
+  - AI agents
+  - bucket fork
+authors:
+  - xe
+tags:
+  - Engineering
+  - Updates
+  - AI
+  - Agents
+  - Object Storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="An oil-painted scene of a server rack with blinking lights and tangled cables, installed deep inside a timber-framed mine tunnel."
+/>
+
+I keep wondering how small the interface to object storage can be. Why should
+storing files in Tigris have to feel any different than storing them on your
+local filesystem? How can we make it as easy to use Tigris as it is to use a
+shell?
+
+So obviously, we used
+[@tigrisdata/agent-shell](https://www.npmjs.com/package/@tigrisdata/agent-shell)
+to embed a live demo of Tigris as a filesystem inside your browser and put it
+right on the homepage. Interrupt the demo by pressing enter in it, run `login`,
+go through the OAuth flow, and then all your buckets are _right there_. Use
+`ls`, `cat`, and `cd` to poke around in them as if they were normal files on
+your laptop, phone, tablet, or Steam Deck.
+
+<video
+  controls
+  width="100%"
+  autoPlay
+  playsInline
+  loop
+  muted
+  style={{ marginBottom: "1rem" }}
+>
+  <source
+    src={require("./tigris-agent-shell-homepage-demo.mp4").default}
+    type="video/mp4"
+  />
+</video>
+
+Okay, we don't seriously think that this will become the main way people manage
+their buckets. For one the window is a bit too small for a lot of serious
+operations, but it makes for a really cool demo. Even though this shell is
+limited in terms of what it can do (no python, no compilers, no package
+management, etc.), you can do a surprising amount of stuff with it. This kind of
+environment is also great for AI agents so that you can constrain their chaos
+and prevent them from being able to delete important files in any way that
+practically matters.
+
+## So why did you do this?
+
+Well, why not? It's cool as heck.
+
+It also acts as a great statement of intent: Tigris makes object storage feel
+natural. You shouldn't have to learn a totally separate interface to use object
+storage. You already know bash, why should object storage be any different?
+
+This also is a great environment for your agents to operate in. Put your agents
+inside [a bucket fork](https://www.tigrisdata.com/docs/ai/agent-kit/#workspaces)
+and then they can't hurt anything but themselves no matter how much they want
+to. Everything will be isolated to that bucket fork which you can destroy at the
+end of its run. Your sins are cleansed.
+
+## How is this secure?
+
+At first glance, this demo seems like it'd be fundamentally insecure or
+expensive. Surely we aren't running a `bash` pod on the server per user
+connection with [tigrisfs](https://www.tigrisdata.com/docs/training/tigrisfs/)
+or something mounting your buckets on the fly, right?
+
+We aren't doing that, it's not a real shell, everything's written in TypeScript
+and isolated away from actual filesystems and OS system calls, but in order to
+understand the depth of this let's cover the problems involved with isolating
+bash sessions from each other.
+
+### A young agent's illustrated primer to isolation
+
+The best way to isolate two bash sessions from each other with a high degree of
+certainty that nothing they can do will wreck the other is to put them on
+physically separate machines. Then you take those machines and bury them 40 feet
+under the ground. Make sure they have no contact with the outside world, not
+even power cables because any device authorized by the FCC must accept any
+interference that may cause unintended operation.
+
+For obvious reasons, this is unworkable. Not being able to `ssh` into those
+machines means they can't really run shell sessions all that well. Computers
+also need power to run and battery backups can only last so long. This is why we
+have compromises like virtual machines, microvms, containers, and Linux
+namespaces. These bridge the gap between theoretical perfect isolation and
+practical concerns about infrastructure spend/complexity.
+
+### It's a faaaaake
+
+However, this still assumes that we're using "real" shells with GNU Bash or
+similar on the server side. We don't do that. We use
+[just-bash](https://github.com/vercel-labs/just-bash), a TypeScript package that
+emulates the functionality of a shell without actually needing to execute
+commands or touch real filesystems. In practice this is "bash enough" that both
+human muscle memory and agent rote recall can use it well enough that the
+differences don't matter too much in the real world.
+
+Pedantically, some utilities are missing, others don't have every single flag
+that GNU Coreutils does, but it's the same kind of functionality gap you
+normally see when using an Alpine Linux container instead of an Ubuntu
+container. The important parts are there, and that's all that really matters for
+the most part.
+
+Because just-bash is written in TypeScript and uses its own "fake" coreutils
+implementation, this means that we can control the universe for our agent shell
+a _lot_ more easily than it would be if we implemented this with `bash` pods on
+some server cluster somewhere.
+
+### APIs are the lies we tell ourselves so we can sleep at night
+
+A terrible way to think about OS kernels and their system calls is that running
+a process is fundamentally dependency injection. This means that when you start
+a `bash` command on your laptop, the OS kernel is injecting filesystem access,
+network access, and other IO actions into your process.
+
+When you start a process in a container, the OS kernel is just injecting
+different layers for filesystem and network access. After it does this, it
+follows all the same rules that it would for a process outside of a container,
+it's just routing them to different places under the hood.
+
+This probably makes a bit more intuitive sense if you've worked with programming
+languages like Haskell where you have to explicitly mark when functions have
+access to the filesystem, network, or console.
+
+With
+[@tigrisdata/agent-shell](https://www.npmjs.com/package/@tigrisdata/agent-shell),
+we control the "system call" layer. When `cat` reads from a file in agent-shell,
+it reads from the just-bash representation of a filesystem, which is backed by
+Tigris. This results in `cat` reading a file from the bucket and printing it to
+the console. All the guarantees about how everything in the stack works are
+maintained and everything quacks enough like it should that the difference in
+implementation doesn't matter. The dependencies were injected and everything
+works as it should.
+
+As a result, when you use the shell on our homepage, you're not using a "real"
+shell in the same way that GNU Bash is a "real" shell, it's a hypothetical
+representation of a shell that behaves enough like GNU Bash and GNU Coreutils
+that the difference doesn't matter.
+
+Some of you may be asking "Is this really a 'shell' if it's a mocked version
+with 'fake' coreutils, a locked down filesystem, and limited network access?"
+There are several ways to think about this.
+
+The purist view is that this isn't a "shell" because a "shell" needs to be a
+read-eval-print-loop that takes input, breaks it into commands, finds the first
+argument of the command on the disk, creates a subprocess for that command,
+passes the arguments, waits until it's done, and prints the result to the
+screen. That view also says it's not a "shell" because the implementation of
+`ls` and `cat` aren't stored as program binaries in a bin. I'd ask these purists
+if busybox's shell is a shell because it packages its coreutils into the same
+binary as the shell, meaning that you can run an entire Linux system with two
+files: the kernel and busybox.
+
+The rebel view is that this is a shell because you can type `ls`, hit enter, and
+see the contents of the folder. It doesn't matter that the thing processing the
+command isn't a unix program. It doesn't matter that the filesystem is an object
+storage bucket. It works enough that your muscle memory is unaffected and you
+can just use it normally. Pipes work too, so you can `ls | grep whatever` and
+get a response you can live with.
+
+The nihilist view is that there are no shells anywhere and we just deal with
+categories of abstractions that are "shell shaped" enough that we don't notice
+the difference between implementations. This view also doesn't believe that APIs
+exist because if you bridge the gap well enough, nobody cares because they can
+[play Windows games on a Linux Steam Deck](https://www.digitaltrends.com/computing/nier-automata-steam-deck/).
+On top of that, filesystems don't exist because they are just theoretical
+representations of on-disk data structures that pretend to be "filesystem
+enough" that you don't care.
+
+Personally, I think that agent-shell is a shell enough. It's also in a package
+called
+[@tigrisdata/agent-shell](https://www.npmjs.com/package/@tigrisdata/agent-shell),
+so I'd hope it's a shell or we're not being ontologically accurate here. But
+really, in my experience it works close enough to being a shell that I'm
+comfortable with calling it a shell.
+
+As long as your implementation of APIs matches the stated/unstated behavior of
+other implementations of APIs, nobody notices the man behind the curtain. This
+principle is responsible for at least 65% of the global economy.
+
+## The window is too tiny, how do I make it bigger?
+
+If you want a full screen agent shell experience, head to
+[https://tigris.sh](https://tigris.sh) and log in there. You can also run
+agent-shell on your computer:
+
+```
+npx @tigrisdata/agent-shell
+```
+
+## Conclusion
+
+Sometimes a sandbox is too heavy for an agent that only wants a shell, not to
+mention a browser. But there are tradeoffs that give you better access to
+durable storage and details about how the isolation works.
+
+Why can't we have it all though? Why can't we have something that's lightweight,
+isolated, has durable storage, and also safe enough to leave unattended. That's
+[@tigrisdata/agent-shell](https://www.npmjs.com/package/@tigrisdata/agent-shell)'s
+bread and butter.
+
+In order for AI agents to expand out in the future, everything needs to be tiny
+and lightweight. That's why shells, even experiments like this one, are
+important. The question of "how small can we make the interface" isn't just an
+existential exercise of UX code golfing, it's a step towards imagining what this
+new agentic architecture looks like where every agent is just a small part of a
+much larger system composed of thousands or millions of agents.
+
+At that volume we _need_ lightweight and thin tools but can't pay the cost of
+losing persistence or capability. This is the niche we hope agent-shell will
+fill in your stack and we want to see what you can invent with it.
+
+<InlineCta
+  title="Run the shell yourself"
+  subtitle="Skip the homepage window — agent-shell runs locally with one command, against your real buckets."
+  button="NPM 📦"
+  link="https://www.npmjs.com/package/@tigrisdata/agent-shell"
+/>
