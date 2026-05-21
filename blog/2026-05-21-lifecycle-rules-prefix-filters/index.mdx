@@ -24,8 +24,6 @@ tags:
 import InlineCta from "@site/src/components/InlineCta";
 import heroImage from "./hero-image.webp";
 
-{/* TODO @garren: replace this hero with the Minecraft sorting-room concept (Ty in front of hoppers feeding chests labeled Standard / IA / Glacier). Save as hero-image.webp in this folder. */}
-
 <img
   src={heroImage}
   className="hero-image"
@@ -60,7 +58,7 @@ Archive," but not much more.
 
 Now:
 
-- A bucket can have **multiple lifecycle rules**.
+- A bucket can have **multiple lifecycle rules** — up to ten.
 - Each rule can be scoped to a key prefix using `Filter.Prefix`. Omit the filter
   (or pass `Filter: {}`) to apply the rule to every object in the bucket.
 - Transition and expiration rules can be mixed in the same bucket however you
@@ -69,6 +67,11 @@ Now:
 - A single rule can include both a transition and an expiration, but only one of
   each. So `Standard → IA → expire` fits in one rule, while chaining
   `Standard → IA → Glacier` takes two.
+
+Full reference lives in the docs:
+[Object Lifecycle Rules](https://www.tigrisdata.com/docs/buckets/object-lifecycle-rules/)
+and
+[Object Expiration](https://www.tigrisdata.com/docs/buckets/objects-expiration/).
 
 Here's the new shape of a single rule:
 
@@ -210,10 +213,8 @@ thawing it back out costs you. On Tigris, it's storage that costs less.
 $2,450 to $833 a month after 92 TB moved to Archive. About two thirds off the
 original bill. Raw datasets dwarf checkpoints and intermediate artifacts in
 most training pipelines, so the bulk of the savings on Tigris comes from the
-`GLACIER` transition on `datasets/raw/`. Teams running training workloads on
-Tigris, including [Beam](https://www.beam.cloud), see most of their storage
-cost in the raw corpus — exactly what this rule shape addresses.
-{/* TODO @garren: confirm Beam attribution is OK; they're publicly named as a Tigris customer but I don't have direct confirmation that they use lifecycle rules this way. Swap to another training customer or remove the name if it's not the right call. */}
+`GLACIER` transition on `datasets/raw/` — the corpus that drives most of the
+storage bill in training workloads.
 
 ## How rules are evaluated
 
@@ -240,8 +241,9 @@ Filtering is by key prefix only. Not by object tags. If you've used S3 lifecycle
 rules in anger, you've probably reached for tag-based filters at some point.
 "Expire everything tagged `temp`." "Transition objects tagged `cold`." We don't
 have that yet. Prefix filtering covers most of what people reach for, but if tag
-filtering is the missing piece for you, let us know. That feedback shapes what
-we build next.
+filtering is the missing piece for you, tell us in
+[our Discord](https://community.tigrisdata.com/). That feedback shapes what we
+build next.
 
 ## How to turn it on
 
@@ -258,6 +260,16 @@ If your bucket already has data in it, the new rules apply on the next scan,
 oldest-first — no backfill flag, no migration. Expect the first action
 within a few minutes, or up to fifteen or twenty if the scheduler just
 finished a sweep.
+
+If you'd rather click than write JSON, the
+[Tigris Dashboard](https://console.storage.dev/) has the same controls. The
+full configuration reference is in the docs:
+[Object Lifecycle Rules](https://www.tigrisdata.com/docs/buckets/object-lifecycle-rules/)
+covers transitions,
+[Object Expiration](https://www.tigrisdata.com/docs/buckets/objects-expiration/)
+covers deletion, and
+[Storage Tiers](https://www.tigrisdata.com/docs/objects/tiers/) explains what
+`STANDARD_IA`, `GLACIER`, and `GLACIER_IA` actually mean.
 
 ## Wrapping up
 
