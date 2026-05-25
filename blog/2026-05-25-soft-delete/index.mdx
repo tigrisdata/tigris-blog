@@ -1,0 +1,277 @@
+---
+slug: soft-delete
+title: Introducing Soft Delete for Tigris Buckets and Objects
+date: 2026-05-25
+description: >
+  Tigris now supports soft delete for buckets and objects. Enable it once, and
+  every delete becomes recoverable for up to 90 days before it's permanently
+  removed.
+image: ./hero-image.webp
+keywords:
+  - Tigris
+  - soft delete
+  - data protection
+  - object storage
+  - data recovery
+  - S3
+authors:
+  - himank
+  - davidmyriel
+tags:
+  - Updates
+  - Soft Delete
+  - Data Management
+  - Object Storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import QuickSummary from "@site/src/components/QuickSummary";
+import MermaidFrame from "@site/src/components/MermaidFrame";
+
+import heroImage from "./hero-image.webp";
+import softDeleteIllustration from "./soft-delete.webp";
+import deletedBucketsTab from "./deleted-buckets-tab.png";
+import versionHistory from "./version-history.png";
+import Lifecycle from "./lifecycle.svg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Ty the tiger braced on the broken edge of an ancient stone bridge, hauling a glowing golden relic out of a swirling vortex of dissolving artifacts with a luminous rope, the recovered relics resting on stone pedestals behind him and the Tigris kingdom in the misty distance"
+/>
+
+<QuickSummary
+  readTime="3 min read"
+  items={[
+    {
+      title: (
+        <a href="#what-soft-delete-does">Recoverable by default.</a>
+      ),
+      description:
+        "Deleting a bucket or object moves it to a soft-deleted state for a retention window you choose (7–90 days, default 7) instead of removing the data right away.",
+    },
+    {
+      title: (
+        <a href="#per-version-restore">Per-version restore.</a>
+      ),
+      description:
+        "Every delete on a key produces its own soft-deleted version stamped with a timestamp, so the same key can have multiple independently restorable versions stacked up.",
+    },
+    {
+      title: (
+        <a href="#enabling-soft-delete">Dashboard or S3 API.</a>
+      ),
+      description:
+        "Turn it on in Bucket Settings → Data Management, at bucket creation time, or via the X-Tigris-Soft-Delete header on CreateBucket.",
+    },
+    {
+      title: (
+        <a href="#pricing">No extra charge.</a>
+      ),
+      description:
+        "Soft-deleted data is billed at the same per-GB rate as live data during the retention window. Once the window expires, the storage is reclaimed automatically.",
+    },
+  ]}
+/>
+
+Today, we're rolling out
+[soft delete](https://www.tigrisdata.com/docs/buckets/soft-delete/) for Tigris
+buckets and objects. When it's enabled on a bucket, any delete — of an object,
+of a version, or of the bucket itself — moves into a recoverable state for a
+retention window you control, instead of being permanent. After the window
+passes, Tigris cleans the data up automatically.
+
+It's the kind of feature you don't think about until you need it, and then it's
+the only feature you care about.
+
+## What soft delete replaces
+
+Tigris already had a delete-protection flag —
+`--enable-delete-protection` on `tigris buckets set`. It worked as a hard
+wall: flip it on, and deletes against the bucket were blocked until you
+flipped it off again. That's useful, but it's only ever one of two answers
+to the same question, and the question gets harder the closer you look at
+it:
+
+- You can't delete _anything_ in the bucket while protection is on, even
+  when you want to. Promoting a staging bucket to a different name, cleaning
+  up an old prefix, rotating environments — all of it requires turning the
+  wall down first.
+- And once it's down, you're back to the same problem: any delete that goes
+  through is irrevocable.
+
+A wall is the right answer when the goal is "nobody should ever delete this."
+Most of the time, though, the actual goal is "if someone deletes this, I want
+to be able to get it back" — and those aren't the same goal.
+
+Soft delete is the second tool. It assumes deletes will happen — intentional
+ones, accidental ones, automated ones — and makes them recoverable on a clock
+you set. If you're familiar with how GCS handles soft delete, the model is
+intentionally close.
+
+<img
+  src={softDeleteIllustration}
+  className="hero-image"
+  alt="Ty the tiger inside an ancient cliffside vault chamber, surveying rows of stone pedestals that hold glowing soft-deleted scroll-artifacts inscribed with timestamped runes, the deepest pedestals fading into dark mist as their retention expires, with the verdant Tigris kingdom visible through the cave mouth"
+/>
+
+## What soft delete does {#what-soft-delete-does}
+
+Enable soft delete on a bucket and the lifecycle of every delete changes:
+
+<MermaidFrame style={{ maxWidth: "44rem", margin: "1.5rem auto" }}>
+  <Lifecycle
+    role="img"
+    aria-label="Soft delete lifecycle: a delete moves a Live bucket or object into a Soft-deleted state, where it stays recoverable for a retention window of 7 to 90 days. A restore returns it to Live; if the retention window expires, it moves to Permanently removed and the storage is reclaimed."
+  />
+</MermaidFrame>
+
+The retention window is configurable per bucket — anywhere from **7 to 90
+days**, defaulting to **7 days** when you first turn it on. Within that
+window, the soft-deleted bucket or object stays restorable. After it expires,
+the storage is reclaimed automatically.
+
+A few specifics worth knowing:
+
+- **Buckets and objects, same model.** Deleting a bucket with soft delete
+  enabled moves the bucket itself into a soft-deleted state. The bucket and
+  every object it held at the time of deletion stay restorable for the
+  retention window. While a bucket is in that state, its name stays reserved
+  — you can't create a new bucket with the same name until it's restored or
+  permanently removed.
+- **Disable doesn't purge.** Turning soft delete off on a bucket doesn't
+  remove data that's already soft-deleted. It continues to age out on its
+  original retention schedule.
+- **Retention changes are forward-only.** Changing the retention window
+  affects new soft deletes from that point on. Already soft-deleted data
+  keeps the retention it was created with.
+
+## Per-version restore {#per-version-restore}
+
+Every delete on a key produces its own soft-deleted version, stamped with the
+time it was deleted. The same key can have many soft-deleted versions stacked
+up if it's been written and deleted more than once. Write `a`, delete `a`,
+write a fresh `a`, delete it, repeat — the key now has three soft-deleted
+versions, all independently restorable until their retention windows expire.
+
+In the **Deleted files** segment of a bucket, selecting a deleted object opens
+its **Version history** panel on the right, which lists each soft-deleted
+version of that key with its timestamp, version ID, size, and ETag. Pick the
+version you want and click **Restore this version** — it becomes live
+immediately and is visible to all subsequent reads.
+
+_Figure 1: The Version history panel for a soft-deleted object, listing each
+soft-deleted version with its timestamp, version ID, size, and ETag — each
+independently restorable._
+
+<img
+  src={versionHistory}
+  alt="The Version history panel in the Tigris dashboard, listing soft-deleted versions of an object with timestamps, version IDs, sizes, and ETags"
+/>
+
+This matters more than it first appears. With a single restore button, you
+have to pick between "the latest delete" and "everything" — and neither is
+usually what you actually want. Per-version restore lets you reach back past
+intermediate writes and pull a specific moment of an object's history forward.
+
+## Enabling soft delete {#enabling-soft-delete}
+
+Soft delete is configured per bucket. There are three places to turn it on.
+
+**At bucket creation.** Toggle **Enable Soft Delete** in the Create Bucket
+dialog and pick a retention window.
+
+**On an existing bucket.** Open **Bucket Settings → Data Management** and
+toggle **Enable Soft Delete**.
+
+**Via the S3 API.** Set the `X-Tigris-Soft-Delete` header on `CreateBucket` —
+`true` for the default 7-day retention, or a number between `7` and `90` for a
+custom window:
+
+```go
+func createBucketWithSoftDelete(ctx context.Context, client *s3.Client, bucketName string) error {
+	_, err := client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: aws.String(bucketName)}, func(options *s3.Options) {
+		options.APIOptions = append(options.APIOptions, http.AddHeaderValue("X-Tigris-Soft-Delete", "30"))
+	})
+	return err
+}
+```
+
+That's the whole API surface for enablement — one header on bucket creation,
+matched 1:1 with the dashboard toggle. Existing S3 clients keep working
+unchanged.
+
+## Restoring a delete
+
+In the dashboard, the buckets page has a segmented control above the list with
+**All buckets**, **Owned by me**, and **Deleted buckets**. Every soft-deleted
+bucket that's still within its retention window shows up under **Deleted
+buckets**. Restore it from the row's overflow menu — once the restore
+completes, the bucket is back in the regular list and every object it held at
+the time of deletion is live and readable again, exactly as it was.
+
+_Figure 2: The Deleted buckets segment in the Tigris dashboard, with a
+soft-deleted bucket's overflow menu opened to reveal the Restore action._
+
+<img
+  src={deletedBucketsTab}
+  alt="The Deleted buckets tab in the Tigris dashboard, showing a soft-deleted bucket with the overflow menu open and a Restore option available"
+/>
+
+Inside a soft-delete-enabled bucket, the files browser splits the same way:
+**All files** is the regular live view, **Deleted files** is where
+soft-deleted objects live until their retention window expires. Restoring
+works the same way as restoring a bucket — pick the version, click restore,
+it's live.
+
+## Snapshot buckets
+
+For snapshot-enabled buckets, deleting a specific version moves that version
+into the soft-deleted state, where it appears in the **Deleted files** tab and
+can be restored the same way. A plain delete on a snapshot-enabled bucket
+behaves as it always has — it records a delete marker and leaves earlier
+versions live.
+
+## Pricing {#pricing}
+
+Soft-deleted data is billed at the same per-GB rate as live data while it's
+inside the retention window. There's no separate retention-storage tier, no
+add-on fee for enabling the feature, and no per-bucket charge for keeping the
+toggle on. Once the retention window expires and Tigris removes the data, the
+storage is reclaimed and the bill drops accordingly.
+
+So the cost model is exactly what you'd guess from the docs: you pay for the
+data while it exists, whether it's live or soft-deleted, and you stop paying
+for it the moment it's gone.
+
+## When to turn it on
+
+Soft delete is the right default for any bucket where a wrong delete would
+ruin your week:
+
+- Production data that lives in object storage as a system of record —
+  user uploads, training datasets, model weights, customer-generated content.
+- Buckets touched by CI/CD pipelines, where a stale config or a bad merge can
+  trigger destructive operations under automation.
+- Anything that an LLM or agent has write access to. The bigger the automation
+  surface, the more the recoverability matters.
+
+For ephemeral or regenerable data — caches, build artifacts you can rebuild,
+scratch space — soft delete is fine to leave off. The retention storage
+charge is real, and there's nothing to recover that you couldn't reproduce
+from source.
+
+Read the full
+[soft delete documentation](https://www.tigrisdata.com/docs/buckets/soft-delete/)
+for the complete dashboard walkthrough, including screenshots of the
+**Deleted buckets** and **Deleted files** segments and the **Version
+history** panel.
+
+<InlineCta
+  title="Enable soft delete on your buckets today"
+  subtitle={
+    "Sign in to the Tigris console and toggle Soft Delete in Bucket Settings → Data Management. Your first 5 GB are free."
+  }
+  button="Open the Tigris console"
+  link="https://console.storage.dev/signin"
+/>
