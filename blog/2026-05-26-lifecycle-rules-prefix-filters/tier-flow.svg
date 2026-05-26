@@ -1,0 +1,238 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 900 460"
+  width="900"
+  height="460"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family:
+        "Hanken Grotesk",
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Helvetica,
+        Arial,
+        sans-serif;
+    }
+    .title {
+      font-size: 18px;
+      fill: #c8d6de;
+      font-weight: 700;
+    }
+    .subtitle {
+      font-size: 12px;
+      fill: #8fa3b0;
+    }
+    .tier-name {
+      font-size: 15px;
+      font-weight: 700;
+      fill: #c8d6de;
+    }
+    .tier-code {
+      font-family: "Fira Code VF", ui-monospace, monospace;
+      font-size: 11px;
+      fill: #8fa3b0;
+    }
+    .arrow-label {
+      font-size: 10px;
+      fill: #62feb5;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .expire-label {
+      font-size: 10px;
+      fill: #cf8e5b;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .blocked-label {
+      font-size: 11px;
+      fill: #cf5b5b;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+    .footer {
+      font-size: 11px;
+      fill: #8fa3b0;
+    }
+    .tier-standard {
+      rx: 10;
+      ry: 10;
+      fill: rgba(207, 142, 91, 0.12);
+      stroke: #cf8e5b;
+      stroke-width: 1.5;
+    }
+    .tier-ia {
+      rx: 10;
+      ry: 10;
+      fill: rgba(91, 164, 207, 0.12);
+      stroke: #5ba4cf;
+      stroke-width: 1.5;
+    }
+    .tier-glacier {
+      rx: 10;
+      ry: 10;
+      fill: rgba(75, 110, 145, 0.2);
+      stroke: #6d96bd;
+      stroke-width: 1.5;
+    }
+    .tier-deleted {
+      rx: 10;
+      ry: 10;
+      fill: transparent;
+      stroke: #4a5560;
+      stroke-width: 1.5;
+      stroke-dasharray: 5 4;
+    }
+    .arrow-forward {
+      stroke: #62feb5;
+      stroke-width: 2.5;
+      fill: none;
+    }
+    .arrow-expire {
+      stroke: #cf8e5b;
+      stroke-width: 2;
+      fill: none;
+      stroke-opacity: 0.75;
+    }
+    .arc-blocked {
+      stroke: #cf5b5b;
+      stroke-width: 2.5;
+      fill: none;
+      stroke-dasharray: 7 5;
+      stroke-opacity: 0.85;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="ah-fwd"
+      markerWidth="9"
+      markerHeight="7"
+      refX="9"
+      refY="3.5"
+      orient="auto"
+    >
+      <polygon points="0 0, 9 3.5, 0 7" fill="#62feb5" />
+    </marker>
+    <marker
+      id="ah-exp"
+      markerWidth="8"
+      markerHeight="6"
+      refX="8"
+      refY="3"
+      orient="auto"
+    >
+      <polygon points="0 0, 8 3, 0 6" fill="#cf8e5b" fill-opacity="0.9" />
+    </marker>
+  </defs>
+
+  <text x="450" y="28" text-anchor="middle" class="title">
+    Where objects can move
+  </text>
+  <text x="450" y="48" text-anchor="middle" class="subtitle">
+    Transitions push objects to colder tiers. Expirations delete them.
+    Backwards is blocked.
+  </text>
+
+  <!-- Blocked arc — curves above the tier row from Glacier back to Standard -->
+  <path
+    d="M 650 185 C 600 50, 300 50, 250 185"
+    class="arc-blocked"
+  />
+  <!-- Strike-through X at the peak of the arc -->
+  <line
+    x1="438"
+    y1="76"
+    x2="462"
+    y2="100"
+    stroke="#cf5b5b"
+    stroke-width="3"
+  />
+  <line
+    x1="462"
+    y1="76"
+    x2="438"
+    y2="100"
+    stroke="#cf5b5b"
+    stroke-width="3"
+  />
+  <text x="450" y="128" text-anchor="middle" class="blocked-label">
+    NO PATH BACK
+  </text>
+
+  <!-- Tier rectangles -->
+  <rect x="40" y="185" width="210" height="82" class="tier-standard" />
+  <text x="145" y="216" text-anchor="middle" class="tier-name">Standard</text>
+  <text x="145" y="238" text-anchor="middle" class="tier-code">
+    (default tier)
+  </text>
+
+  <rect x="345" y="185" width="210" height="82" class="tier-ia" />
+  <text x="450" y="216" text-anchor="middle" class="tier-name">
+    Infrequent Access
+  </text>
+  <text x="450" y="238" text-anchor="middle" class="tier-code">
+    StorageClass: STANDARD_IA
+  </text>
+
+  <rect x="650" y="185" width="210" height="82" class="tier-glacier" />
+  <text x="755" y="216" text-anchor="middle" class="tier-name">Glacier</text>
+  <text x="755" y="238" text-anchor="middle" class="tier-code">
+    StorageClass: GLACIER
+  </text>
+
+  <!-- Forward transition arrows (end short of tier edges to leave breathing room) -->
+  <path
+    d="M 256 226 L 339 226"
+    class="arrow-forward"
+    marker-end="url(#ah-fwd)"
+  />
+  <text x="297" y="216" text-anchor="middle" class="arrow-label">
+    TRANSITION
+  </text>
+
+  <path
+    d="M 561 226 L 644 226"
+    class="arrow-forward"
+    marker-end="url(#ah-fwd)"
+  />
+  <text x="602" y="216" text-anchor="middle" class="arrow-label">
+    TRANSITION
+  </text>
+
+  <!-- Expiration arrows from each tier going down to Deleted -->
+  <path
+    d="M 145 273 C 145 315, 410 325, 430 350"
+    class="arrow-expire"
+    marker-end="url(#ah-exp)"
+  />
+  <path
+    d="M 450 273 L 450 350"
+    class="arrow-expire"
+    marker-end="url(#ah-exp)"
+  />
+  <path
+    d="M 755 273 C 755 315, 490 325, 470 350"
+    class="arrow-expire"
+    marker-end="url(#ah-exp)"
+  />
+  <text x="514" y="320" class="expire-label">EXPIRATION</text>
+
+  <!-- Deleted node -->
+  <rect x="370" y="356" width="160" height="56" class="tier-deleted" />
+  <text x="450" y="381" text-anchor="middle" class="tier-name" fill="#8fa3b0">
+    Deleted
+  </text>
+  <text x="450" y="400" text-anchor="middle" class="tier-code">
+    (gone)
+  </text>
+
+  <!-- Footer -->
+  <text x="450" y="442" text-anchor="middle" class="footer">
+    Each rule defines one transition (one green arrow) plus one expiration
+    (one orange arrow).
+  </text>
+</svg>
