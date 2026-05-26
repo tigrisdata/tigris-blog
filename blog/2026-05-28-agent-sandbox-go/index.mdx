@@ -257,9 +257,12 @@ For extra fun, try running `snapshot --help`!
 
 Under the hood it uses a flow like this:
 
-import sophiaDiagram from "./sophia.svg";
+import SophiaDiagram from "./sophia.svg";
 
-<img src={sophiaDiagram} />
+<SophiaDiagram
+  role="img"
+  aria-label="Sophia SSH session flow: connect, mint a UUIDv7 session ID, fork the configured bucket, mount the fork as the session filesystem, then force-delete the fork on disconnect."
+/>
 
 When you ssh in, Sophia mints a UUIDv7 for your session and forks the bucket
 named in `$BUCKET_NAME`. That fork becomes your world. Every `ls`, `cat`, and
