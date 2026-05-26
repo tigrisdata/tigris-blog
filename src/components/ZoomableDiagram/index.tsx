@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import styles from "./styles.module.css";
 
 interface ZoomableDiagramProps {
   children: React.ReactNode;
@@ -10,19 +11,16 @@ export default function ZoomableDiagram({
   ariaLabel = "Diagram. Click to enlarge.",
 }: ZoomableDiagramProps): JSX.Element {
   const [open, setOpen] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (open && !dialog.open) {
+      dialog.showModal();
+    } else if (!open && dialog.open) {
+      dialog.close();
+    }
   }, [open]);
 
   return (
@@ -31,50 +29,22 @@ export default function ZoomableDiagram({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={ariaLabel}
-        style={{
-          display: "block",
-          width: "100%",
-          maxWidth: "42rem",
-          margin: "1.5rem auto",
-          padding: 0,
-          background: "none",
-          border: "none",
-          cursor: "zoom-in",
-        }}
+        aria-haspopup="dialog"
+        className={styles.trigger}
       >
-        {children}
+        {!open && children}
       </button>
-      {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Enlarged diagram"
-          onClick={() => setOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.8)",
-            zIndex: 1000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "2rem",
-            cursor: "zoom-out",
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: "min(95vw, 1400px)",
-              maxHeight: "90vh",
-              overflow: "auto",
-              cursor: "default",
-            }}
-          >
-            {children}
-          </div>
-        </div>
-      )}
+      <dialog
+        ref={dialogRef}
+        onClose={() => setOpen(false)}
+        onClick={(e) => {
+          if (e.target === dialogRef.current) setOpen(false);
+        }}
+        className={styles.dialog}
+        aria-label="Enlarged diagram"
+      >
+        {open && <div className={styles.content}>{children}</div>}
+      </dialog>
     </>
   );
 }
