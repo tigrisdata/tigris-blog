@@ -28,6 +28,7 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import ZoomableDiagram from "@site/src/components/ZoomableDiagram";
 import heroImage from "./hero-image.webp";
 
 <img
@@ -237,7 +238,19 @@ I managed to create an SSH server sandboxed in Kefka so that any users
 automatically get put into their own bucket fork. `ssh` in and do _whatever you
 want_, you can’t hurt any of the data. Here’s a demo:
 
-<video controls autoPlay loop muted playsInline width="100%">
+<video
+  controls
+  autoPlay
+  loop
+  muted
+  playsInline
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    display: "block",
+    margin: "0 auto",
+  }}
+>
   <source
     src="/blog/img/blog/agent-sandbox-go/sophia-demo.mp4"
     type="video/mp4"
@@ -259,10 +272,13 @@ Under the hood it uses a flow like this:
 
 import SophiaDiagram from "./sophia.svg";
 
-<SophiaDiagram
-  role="img"
-  aria-label="Sophia SSH session flow: connect, mint a UUIDv7 session ID, fork the configured bucket, mount the fork as the session filesystem, then force-delete the fork on disconnect."
-/>
+<ZoomableDiagram ariaLabel="Sophia SSH session flow diagram. Click to enlarge.">
+  <SophiaDiagram
+    role="img"
+    aria-label="Sophia SSH session flow: connect, mint a UUIDv7 session ID, fork the configured bucket, mount the fork as the session filesystem, then force-delete the fork on disconnect."
+    style={{ width: "100%", height: "auto", display: "block" }}
+  />
+</ZoomableDiagram>
 
 When you ssh in, Sophia mints a UUIDv7 for your session and forks the bucket
 named in `$BUCKET_NAME`. That fork becomes your world. Every `ls`, `cat`, and
