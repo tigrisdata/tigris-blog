@@ -38,7 +38,15 @@ export default function ZoomableDiagram({
         ref={dialogRef}
         onClose={() => setOpen(false)}
         onClick={(e) => {
-          if (e.target === dialogRef.current) setOpen(false);
+          const dialog = dialogRef.current;
+          if (!dialog) return;
+          const rect = dialog.getBoundingClientRect();
+          const insideDialog =
+            e.clientX >= rect.left &&
+            e.clientX <= rect.right &&
+            e.clientY >= rect.top &&
+            e.clientY <= rect.bottom;
+          if (!insideDialog) setOpen(false);
         }}
         className={styles.dialog}
         aria-label="Enlarged diagram"
