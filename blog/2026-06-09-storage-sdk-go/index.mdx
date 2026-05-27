@@ -1,0 +1,223 @@
+---
+slug: storage-sdk-go
+title: "Giving your Go apps Tigris superpowers"
+description: |
+  The Go Storage SDK adds first-class methods for bucket forking, snapshots, and object renaming — plus a simpler high-level client for everyday storage code.
+image: ./hero-image.webp
+keywords:
+  - Go
+  - storage-go
+  - Go SDK
+  - object storage
+  - S3-compatible
+  - bucket forking
+  - snapshots
+authors:
+  - xe
+tags:
+  - Updates
+  - Engineering
+  - Build with Tigris
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A neon blue tiger walks down a city street at dusk, with skyscrapers and a crescent moon in the background"
+/>
+
+If you use Go for your web services and want to take advantage of Tigris'
+advanced features like [bucket forking](https://www.tigrisdata.com/docs/forks/),
+[snapshots](https://www.tigrisdata.com/docs/snapshots/), and
+[object renaming](https://www.tigrisdata.com/docs/objects/object-rename/),
+normally your code has to look like this:
+
+```go
+func WithRename() func(*s3.Options) {
+	return func(options *s3.Options) {
+		options.APIOptions = append(options.APIOptions, http.AddHeaderValue("X-Tigris-Rename", "true"))
+	}
+}
+
+// rename the object in the bucket
+_, err = client.CopyObject(ctx, &s3.CopyObjectInput{
+  Bucket:     aws.String(bucketName),
+  CopySource: aws.String(bucketName + "/" + keyName),
+  Key:        aws.String(targetName),
+}, WithRename())
+if err != nil {
+  log.Fatalf("Unable to rename object. Here's why: %v", err)
+}
+```
+
+With the new SDK, it looks like this:
+
+```go
+_, err := client.RenameObject(ctx, &s3.CopyObjectInput{
+	Bucket:     aws.String(bucketName),
+	CopySource: aws.String(bucketName + "/" + keyName),
+	Key:        aws.String(targetName),
+})
+if err != nil {
+	log.Fatalf("Unable to rename object. Here's why: %v", err)
+}
+```
+
+The [Go Storage SDK](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0)
+fixes this. It gives you dedicated methods for Tigris features, in two modes:
+
+- [package storage](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0):
+  Helper methods wrapping the AWS S3 client you already use.
+- [package simplestorage](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0/simplestorage):
+  A reimagined high-level object storage client for Go applications.
+
+If you want to get started with it today, `go get` it:
+
+```
+go get github.com/tigrisdata/storage-go@latest
+```
+
+## An SDK so nice we did it twice
+
+One of the best ways to think about Tigris is that it's like S3, but more.
+Tigris handles global replication for you. Tigris handles
+[migrating your data for you](https://www.tigrisdata.com/docs/migration/).
+Tigris also lets you snapshot, fork, and
+[download bundles of objects all at once](https://www.tigrisdata.com/docs/objects/bundle/).
+These operations extend S3, so the SDK extends the S3 client. Here's what you
+get:
+
+- [BundleObjects](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0#Client.BundleObjects):
+  fetch [a bundle of objects](https://www.tigrisdata.com/docs/objects/bundle/)
+  all at once.
+- [CreateBucketFork](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0#Client.CreateBucketFork):
+  fork a bucket [into a new bucket](https://www.tigrisdata.com/docs/forks/) so
+  your agents have their own sandboxes.
+- [CreateBucketSnapshot](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0#Client.CreateBucketSnapshot):
+  create a new
+  [point-in-time snapshot](https://www.tigrisdata.com/docs/snapshots/) for your
+  buckets so you can save your data from digital destruction.
+- [CreateSnapshotEnabledBucket](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0#Client.CreateSnapshotEnabledBucket):
+  create a new bucket with [forking](https://www.tigrisdata.com/docs/forks/) and
+  [snapshots](https://www.tigrisdata.com/docs/snapshots/) enabled.
+- [HeadBucketForkOrSnapshot](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0#Client.HeadBucketForkOrSnapshot):
+  fetches the fork/snapshot metadata for a bucket.
+- [ListBucketSnapshots](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0#Client.ListBucketSnapshots):
+  list all the snapshots for a bucket so you can create forks from those
+  snapshots.
+- [RenameObject](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0#Client.RenameObject):
+  [rename (move)](https://www.tigrisdata.com/docs/objects/object-rename/) an
+  object from one place in your bucket to another.
+
+As Tigris gets more features, we plan to just add more methods.
+
+This mode is designed to be a _drop-in replacement_ for your existing S3 client
+to make migration trivial. When I moved some of my own projects over from the
+AWS S3 library to package storage, it took about 30 seconds at most. Everything
+compiled normally, everything worked as expected, and I got access to the extra
+features I needed. Win/win/win!
+
+### But wait, there's more
+
+Honestly, we could have stopped there, but we didn't. Alongside this I also
+added
+[package simplestorage](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0/simplestorage):
+a brand new interface to object storage. Most of the time your apps end up using
+a single bucket. Why should you have to pass the bucket name every time you do
+anything? Take a gander at how easy it is to copy a file from Tigris to your
+local filesystem:
+
+```go
+client, err := simplestorage.New(ctx)
+if err != nil { panic(err) }
+
+obj, err := client.Get(ctx, "my/key")
+if err != nil { panic(err) }
+defer obj.Body.Close()
+
+slog.Info(
+  "object metadata",
+  "key", "my/key",
+  "size", obj.Size,
+  "content-type", obj.ContentType,
+)
+
+fout, err := os.Create("./var/object-data")
+if err != nil { panic(err) }
+defer fout.Close()
+
+io.Copy(fout, obj.Body)
+```
+
+The bucket name and credentials were inferred from environment variables:
+
+- `TIGRIS_STORAGE_BUCKET`: The default bucket to operate on.
+- `TIGRIS_STORAGE_ACCESS_KEY_ID`: The access key ID for your app's
+  [keypair](https://www.tigrisdata.com/docs/iam/manage-access-key/).
+- `TIGRIS_STORAGE_SECRET_ACCESS_KEY`: The secret access key for your app's
+  [keypair](https://www.tigrisdata.com/docs/iam/manage-access-key/).
+
+If you don't want to change the environment variable names, simplestorage will
+use the standard
+[AWS configuration resolution flow](https://docs.aws.amazon.com/sdkref/latest/guide/creds-config-files.html)
+you're already used to.
+
+Forked buckets work with the
+[`For`](https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0/simplestorage#Client.For)
+method:
+
+```go
+newBucket, err := client.ForkBucket("my-bucket", "my-agents-bucket")
+if err != nil { panic(err) }
+
+newBucketClient := client.For(newBucket.Name)
+
+// do whatever you want here
+```
+
+The main innovation here is reducing cognitive load so that you can focus on
+what you're doing with your buckets instead of plumbing the minutiae of your
+object storage API being automatically generated from Java classes. There's also
+nothing stopping you from using this with AWS S3 or another object storage
+provider like
+[Hetzner object storage](https://www.hetzner.com/storage/object-storage/):
+
+```go
+s3Client, err := simplestorage.New(ctx,
+  simplestorage.WithRegion("fsn1"),
+  simplestorage.WithEndpoint("https://fsn1.your-objectstorage.com"),
+  simplestorage.WithAccessKeypair(accessKeyID, secretAccessKey),
+)
+if err != nil { panic(err) }
+```
+
+Advanced Tigris features like bucket forking will not work (Hetzner doesn't
+implement our extensions to the S3 API), but basic object manipulation will work
+just fine.
+
+Note that any _object_ manipulation functions will use the client's default
+bucket, but any _bucket_ manipulation functions require you to spell out the
+bucket's name just to be sure you're operating on the right bucket.
+
+## Get `go`-ing today
+
+If you want to try this out, install it in your Go project with `go get`:
+
+```
+go get github.com/tigrisdata/storage-go@latest
+```
+
+Please give us feedback
+[in the storage-go repo](https://github.com/tigrisdata/storage-go). We want to
+make this the best way to use Tigris for Go developers and your feedback can
+only make it better.
+
+<InlineCta
+  title="Ready to supercharge your Go apps?"
+  subtitle="The Go Storage SDK gives you first-class access to bucket forking, snapshots, and more — with less boilerplate than raw S3 calls."
+  button="Read the SDK docs"
+  link="https://pkg.go.dev/github.com/tigrisdata/storage-go@v0.6.0"
+/>
