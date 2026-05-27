@@ -27,6 +27,7 @@ tags:
   - Object Storage
 ---
 
+import QuickSummary from "@site/src/components/QuickSummary";
 import InlineCta from "@site/src/components/InlineCta";
 import ZoomableDiagram from "@site/src/components/ZoomableDiagram";
 import heroImage from "./hero-image.webp";
@@ -35,6 +36,32 @@ import heroImage from "./hero-image.webp";
   src={heroImage}
   className="hero-image"
   alt="A mad god surrounded by robotic minions, evoking Kefka from Final Fantasy VI commanding a horde of AI agents."
+/>
+
+<QuickSummary
+  readTime="6 min read"
+  items={[
+    {
+      title: "Userspace sandbox in Go.",
+      description:
+        "A real shell interpreter (mvdan.cc/sh) plus ported coreutils entirely in userspace, so you can multiplex hundreds of agent sessions on one server without containers, VMs, or extra kernel overhead.",
+    },
+    {
+      title: "A bucket fork per agent.",
+      description:
+        "Every session gets its own copy-on-write Tigris bucket fork as its filesystem. Whatever the agent does stays in the fork, and the fork is force-deleted the moment it disconnects.",
+    },
+    {
+      title: "Python, jq, and ripgrep via WebAssembly.",
+      description:
+        "Compiling these tools to WebAssembly lets Kefka inject the agent's workspace as the filesystem, so agents run whatever scripts they want without touching the host.",
+    },
+    {
+      title: "POSIX-checked compatibility.",
+      description:
+        "The ported commands were scanned against the POSIX 2018 spec to generate a conformance report that shows exactly where the gaps are.",
+    },
+  ]}
 />
 
 Agents need disposable environments because the blast radius of things going
@@ -147,18 +174,24 @@ This ended up being surprisingly little code:
 // from https://tangled.org/xeiaso.net/kefka/blob/main/command/internal/python3/python3.go
 
 func (Impl) Exec(ctx context.Context, ec *command.ExecContext, args []string) error {
-	fsConfig := wazero.NewFSConfig().(sysfs.FSConfig).
+	fsConfig := wazero.NewFSConfig().
+		(sysfs.FSConfig).
 		WithSysFSMount(billyfs.New(ec.FS), "/")
 
 	config := wazero.NewModuleConfig().
+		// Pipe ExecContext stdio
 		WithStdin(ec.Stdin).WithStdout(ec.Stdout).WithStderr(ec.Stderr).
+		// Pipe argv
 		WithArgs(append([]string{"python3"}, args...)...).
 		WithName("python3").
+		// Pipe filesystem
 		WithFSConfig(fsConfig).
+		// Pipe system time
 		WithSysNanosleep().WithSysNanotime().WithSysWalltime()
 
 	mod, err := runtime.InstantiateModule(ctx, compiled, config)
 	if err != nil {
+    // Fit the square peg into the round hole
 		if exitErr, ok := errors.AsType[*wsys.ExitError](err); ok {
 			if code := exitErr.ExitCode(); code != 0 {
 				return interp.ExitStatus(uint8(code))
