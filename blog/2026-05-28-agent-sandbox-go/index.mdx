@@ -46,10 +46,14 @@ easily sphere-packed into existing infrastructure. One of the big problems is
 that in practice agents really need access to a tool named `bash` that lets them
 run arbitrary shell commands.
 
+You also want to sandbox your agent's storage so it can't wreck the system it's
+running on. That's doable with conventional tooling, but it means handing your
+agent executor more permissions than it needs. It gets worse with modern stacks
+where a single agent loop spans multiple machines. How do you keep that agent's
+storage consistent across all of them?
+
 How do you secure a server with a `bash` tool against an agent that has no
-innate sense for if running `rm -rf /` is really a good idea or not? Sometimes
-it feels like trying to alphabetically sort a river or other equally absurd
-things.
+innate sense for if running `rm -rf /` is really a good idea or not?
 
 ## Well, the thing is you don’t
 
@@ -89,11 +93,8 @@ because those files only exist in that fork.
 Sure, agent workspaces give your agents their own storage, but what can they do
 with it? Tigris is a very storage-shaped product but agents are almost entirely
 compute-shaped. To use this productively, you need something compute-shaped to
-point at the workspace.
-
-What if you just had some kind of userspace sandboxed shell that acted like
-bash? Because it’s in userspace the storage layer would be easy to swap out for
-an agent workspace.
+point at the workspace. What if you had a userspace sandboxed shell that acted
+like bash with its storage backed by Tigris?
 
 This already exists if you are in the JavaScript ecosystem with the shell
 powered by [just-bash](https://justbash.dev/) and
@@ -103,8 +104,18 @@ single binary deployments, and is much more memory and processor efficient than
 JavaScript, making it a lot easier to sphere pack dozens upon dozens of agents
 into the same server instance.
 
-To spread this user-space sandboxing power to the Go ecosystem, I made my own
-version of just-bash called [Kefka](https://tangled.org/xeiaso.net/kefka).
+I also wanted to push the limits of what is possible with a pure userspace shell
+and coreutils implementation. This is an abstraction that I've wanted in the
+past but never had the time to sit down and implement before now. To spread this
+user-space sandboxing power to the Go ecosystem, I made my own version of
+just-bash called [Kefka](https://tangled.org/xeiaso.net/kefka).
+
+### Why a shell?
+
+Agent infrastructure works best when you shape it to the innate tendencies of
+the models you're using. Models are overwhelmingly trained on the syntax and
+minutiae of bash. Give an agent a "real enough" shell and all that rote memory
+just works, no friction.
 
 ## Dancing mad with sandboxes
 
