@@ -24,13 +24,57 @@ tags:
   - Object Storage
 ---
 
+import { useState } from "react";
 import InlineCta from "@site/src/components/InlineCta";
 import QuickSummary from "@site/src/components/QuickSummary";
 import MermaidFrame from "@site/src/components/MermaidFrame";
 
+export const ZoomImage = ({ src, alt, style }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <img
+        src={src}
+        alt={alt}
+        onClick={() => setOpen(true)}
+        style={{ cursor: "zoom-in", ...style }}
+      />
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            cursor: "zoom-out",
+            padding: "2rem",
+          }}
+        >
+          <img
+            src={src}
+            alt={alt}
+            style={{
+              maxWidth: "95vw",
+              maxHeight: "95vh",
+              objectFit: "contain",
+              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.5)",
+            }}
+          />
+        </div>
+      )}
+    </>
+  );
+};
+
 import heroImage from "./hero-image.webp";
 import softDeleteIllustration from "./soft-delete.webp";
 import agenticWorkflows from "./agentic-workflows.webp";
+import bucketCreate from "./bucket-create.webp";
+import bucketUpdate from "./bucket-update.webp";
 import deletedBucketsTab from "./deleted-buckets-tab.webp";
 import versionHistory from "./version-history.webp";
 import Lifecycle from "./lifecycle.svg";
@@ -113,7 +157,7 @@ _Figure 1. The Version history panel for a soft-deleted object, listing each
 version with its timestamp, version ID, size, and ETag. Each one is restorable
 on its own._
 
-<img
+<ZoomImage
   src={versionHistory}
   alt="The Version history panel in the Tigris dashboard, listing soft-deleted versions of an object with timestamps, version IDs, sizes, and ETags"
   style={{
@@ -128,9 +172,71 @@ on its own._
 
 In the dashboard, you can toggle **Enable Soft Delete** when you create a
 bucket, or open **Bucket Settings → Data Management** on a bucket you already
-have. From the S3 API, set the `X-Tigris-Soft-Delete` header on `CreateBucket`.
-Use `true` for the default retention of 7 days, or pass a number between 7 and
-90 for a custom window.
+have.
+
+<div
+  style={{
+    display: "flex",
+    gap: "1rem",
+    maxWidth: "42rem",
+    margin: "1.5rem auto",
+    flexWrap: "wrap",
+    alignItems: "flex-start",
+  }}
+>
+  <div style={{ flex: "1 1 0", minWidth: "240px" }}>
+    <p
+      style={{
+        fontSize: "0.85rem",
+        fontStyle: "italic",
+        textAlign: "center",
+        marginBottom: "0.5rem",
+      }}
+    >
+      Figure 2. Enabling soft delete in the Create Bucket dialog.
+    </p>
+    <ZoomImage
+      src={bucketCreate}
+      alt="The Create Bucket dialog in the Tigris dashboard with the Enable Soft Delete toggle switched on and a retention window of 7 days set"
+      style={{
+        width: "100%",
+        height: "320px",
+        objectFit: "contain",
+        display: "block",
+        background: "var(--ifm-background-surface-color, #fafafa)",
+        borderRadius: "0.25rem",
+      }}
+    />
+  </div>
+  <div style={{ flex: "1 1 0", minWidth: "240px" }}>
+    <p
+      style={{
+        fontSize: "0.85rem",
+        fontStyle: "italic",
+        textAlign: "center",
+        marginBottom: "0.5rem",
+      }}
+    >
+      Figure 3. Enabling soft delete from Bucket Settings → Data Management.
+    </p>
+    <ZoomImage
+      src={bucketUpdate}
+      alt="The Bucket Settings → Data Management tab in the Tigris dashboard with the Enable Soft Delete toggle switched on for an existing bucket"
+      style={{
+        width: "100%",
+        height: "320px",
+        objectFit: "contain",
+        display: "block",
+        background: "var(--ifm-background-surface-color, #fafafa)",
+        borderRadius: "0.25rem",
+      }}
+    />
+  </div>
+</div>
+
+From the S3 API, set the `X-Tigris-Soft-Delete` header on `CreateBucket`. Use
+`true` for the default retention of 7 days, or pass a number between 7 and 90
+for a custom window.
 
 ```go
 func createBucketWithSoftDelete(ctx context.Context, client *s3.Client, bucketName string) error {
@@ -148,10 +254,10 @@ bucket that's still inside its retention window. Open the row's menu and click
 restore. The bucket reappears in the regular list. Every object it held when you
 deleted it is live and readable again.
 
-_Figure 2. The Deleted buckets segment in the Tigris dashboard, with a
+_Figure 4. The Deleted buckets segment in the Tigris dashboard, with a
 soft-deleted bucket's menu opened to the Restore action._
 
-<img
+<ZoomImage
   src={deletedBucketsTab}
   alt="The Deleted buckets tab in the Tigris dashboard, showing a soft-deleted bucket with the overflow menu open and a Restore option available"
   style={{
@@ -193,8 +299,8 @@ shows up in the **Deleted files** segment, where you can restore it the same way
 as any other soft-deleted object. A plain delete still records a delete marker
 and leaves earlier versions live, the same as before.
 
-For the full dashboard walkthrough and the API reference, see the
-soft delete documentation.
+For the full dashboard walkthrough and the API reference, see the soft delete
+documentation.
 
 <img
   src={softDeleteIllustration}
