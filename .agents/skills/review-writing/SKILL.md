@@ -29,6 +29,9 @@ Apply each of the following skills to the post, noting these overrides:
   if missing.
 - `seo-aeo-best-practices` — Focus on frontmatter and structure, not in-body
   keyword density.
+- `detect-ai-writing` - Check that an article doesn't display obvious signs of
+  AI writing.
+- `hold-the-reader` - Audit the blogpost for engagement and reader pull.
 
 Favor specific, opinionated writing with concrete examples over generic claims.
 
