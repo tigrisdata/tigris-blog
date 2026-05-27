@@ -39,18 +39,14 @@ import heroImage from "./hero-image.webp";
 
 Agents need disposable environments because the blast radius of things going
 wrong is way too big. Nobody wants "what if our expense-submission agent yeets
-all the receipts out of the bucket?" showing up on a threat model.
+all the receipts out of the bucket?" showing up on a threat model. But how do
+you safely give these agents access to shells?
 
-So we need disposable environments that start up in milliseconds and can be more
-easily sphere-packed into existing infrastructure. One of the big problems is
-that in practice agents really need access to a tool named `bash` that lets them
-run arbitrary shell commands.
-
-You also want to sandbox your agent's storage so it can't wreck the system it's
-running on. That's doable with conventional tooling, but it means handing your
-agent executor more permissions than it needs. It gets worse with modern stacks
-where a single agent loop spans multiple machines. How do you keep that agent's
-storage consistent across all of them?
+You'd need to sandbox the agents so that they can only affect their own little
+storage world. This is doable with conventional tooling, but that usually
+requires giving your executors way more permissions than they need. It gets
+worse with modern stacks where a single agent loop spans multiple machines. How
+do you keep that agent's storage consistent across all of them?
 
 How do you secure a server with a `bash` tool against an agent that has no
 innate sense for if running `rm -rf /` is really a good idea or not?
@@ -63,73 +59,42 @@ number of agents. The way things are going means that we’re going to have
 dynamic amounts of agents that can and will be more than your container engine,
 VM software, or even kernel overhead will let you handle properly. To keep up,
 we need infrastructure that can safely multiplex tens or hundreds of
-simultaneous agent sessions onto the same server.
+simultaneous agent sessions onto the same server. All of them also need to be
+sandboxed from the other so that they don't step on eachother's toes.
 
-I made a library named [Kefka](https://tangled.org/xeiaso.net/kefka) that can
-help you create this new generation of infrastructure by making a sandbox purely
-in userspace using Go and Tigris
-[bucket forks](https://www.tigrisdata.com/docs/forks/) so that every agent has
-its own bucket with its own data. Any commands the agent runs stay safely in the
-sandbox. If it needs, the agent can even shell out to python to do any kind of
-complicated data analysis it needs. This is built off of the foundation of
-[agent workspaces](https://www.tigrisdata.com/blog/agent-kit/) from agent-kit,
-but cranked up.
-
-## Agent workspaces and you
-
-An agent workspace is a bucket and access keypair that is scoped to a single
-agent flow. A lot of the time you'll want your agents to start from a clean
-workspace, but sometimes you want them to use an existing bucket.
-
-Tigris [bucket forks](https://www.tigrisdata.com/docs/snapshots-and-forks/) let
-you take an existing bucket and make a copy-on-write fork of it. When you scope
-a bucket fork to an AI agent invocation, your agent can do _whatever it wants_
-to the data in that bucket and any changes are isolated to that fork. If your
-agent creates files you don’t want in the main bucket, you don’t have to worry
-because those files only exist in that fork.
-
-### Okay, but what do you do with them?
-
-Sure, agent workspaces give your agents their own storage, but what can they do
-with it? Tigris is a very storage-shaped product but agents are almost entirely
-compute-shaped. To use this productively, you need something compute-shaped to
-point at the workspace. What if you had a userspace sandboxed shell that acted
-like bash with its storage backed by Tigris?
-
-This already exists if you are in the JavaScript ecosystem with the shell
-powered by [just-bash](https://justbash.dev/) and
-[agent-shell](https://www.tigrisdata.com/docs/ai/agent-shell/) to connect it up
-to Tigris, however I’m mainly in the Go ecosystem. Go is lightweight, produces
-single binary deployments, and is much more memory and processor efficient than
-JavaScript, making it a lot easier to sphere pack dozens upon dozens of agents
-into the same server instance.
-
-I also wanted to push the limits of what is possible with a pure userspace shell
-and coreutils implementation. This is an abstraction that I've wanted in the
-past but never had the time to sit down and implement before now. To spread this
-user-space sandboxing power to the Go ecosystem, I made my own version of
-just-bash called [Kefka](https://tangled.org/xeiaso.net/kefka).
-
-### Why a shell?
-
-Agent infrastructure works best when you shape it to the innate tendencies of
-the models you're using. Models are overwhelmingly trained on the syntax and
-minutiae of bash. Give an agent a "real enough" shell and all that rote memory
-just works, no friction.
+For context, this kind of sandboxing already exists if you're in the
+JavaScript/TypeScript ecosystem with
+[@tigrisdata/agent-shell](https://www.tigrisdata.com/docs/ai/agent-shell/)
+powered by [just-bash](https://justbash.dev/). If you are looking for something
+production-capable, you should probably start there.
 
 ## Dancing mad with sandboxes
+
+However, I'm not mainly in the JavaScript/TypeScript ecosystem, I'm a Go
+developer and Go developers make agents too. In order to play with these ideas
+in a language I'm more comfortable in, I made a library named
+[Kefka](https://tangled.org/xeiaso.net/kefka) that can help you create this new
+generation of infrastructure by making a sandbox purely in userspace using Go
+and Tigris [bucket forks](https://www.tigrisdata.com/docs/forks/) so that every
+agent has its own bucket with its own data. Any commands the agent runs stay
+safely in the sandbox. If it needs, the agent can even shell out to python to do
+any kind of complicated data analysis it needs. This is built off of the
+foundation of [agent workspaces](https://www.tigrisdata.com/blog/agent-kit/)
+from agent-kit, but using forks instead of empty buckets because I found forks a
+bit more useful for my testing.
 
 When I wrote Kefka, I started with a few components and just put them into a
 blender:
 
-- [**mvdan.cc/sh/v3**](https://pkg.go.dev/mvdan.cc/sh/v3): a compatible shell
+- [**mvdan.cc/sh**](https://pkg.go.dev/mvdan.cc/sh/v3): a compatible shell
   interpreter written in Go. This makes this agent-native shell use _a real
   shell interpreter_ instead of making up logic that may not be compatible with
   what agents are trained on.
 - [**billy**](https://pkg.go.dev/github.com/go-git/go-billy/v5): a more complete
   filesystem abstraction layer for Go applications. Go ships
   [a filesystem interface in the standard library](https://pkg.go.dev/io/fs#FS),
-  but it’s not complete enough to handle the nuance required for agents.
+  but it’s not complete enough to handle the nuance required for agents. Or file
+  writes. That's a separate topic.
 - [**the source code of just-bash**](https://github.com/vercel-labs/just-bash/tree/main/packages/just-bash):
   everything in just-bash works enough already and I have a Claude Max 20x
   subscription, surely I can just have Claude do most of the grunt work porting
@@ -147,10 +112,10 @@ translation-shaped tasks. What is porting stuff from JavaScript to Go other than
 translation? After that I took that context window and converted it into
 [a claude skill](https://tangled.org/xeiaso.net/kefka/blob/main/.claude/skills/just-bash-port/SKILL.md)
 that I ran in parallel. With 5 agents going at once, I managed to cover the
-critical set of coreutils (`cat`, `ls`, et.al) and some of the extended commands
-that you end up using in practice (`sha256sum`, `nl`, `du`, et.al). After
-hooking up a simple interactive shell REPL as a test, I tried using it as normal
-and it was compliant with my muscle memory.
+critical set of coreutils (`cat`, `ls`, etc) and some of the extended commands
+that you end up using in practice (`sha256sum`, `nl`, `du`, etc). After hooking
+up a simple interactive shell REPL as a test, I tried using it as normal and it
+was compliant with my muscle memory.
 
 The porting process was mostly autonomous with each of the agents fighting for
 supremacy in a single git checkout. It took most of a workday to get everything
@@ -161,12 +126,12 @@ Max 20x rate limit windows and ended up with
 
 ## Running Python
 
-At this point I had a filesystem, I had commands, all I was really missing was a
-couple real-world applications to run in this environment. Language models are
-really good at writing Python scripts, so I figured it wouldn’t be that hard to
-get Python ported over. I didn’t want to rewrite Python in Go or do some kind of
-source-based translation from C to Go, so I picked something more fun:
-[WebAssembly](https://webassembly.org/).
+At this point I had a filesystem, I had mostly-compatible commands, all I was
+really missing was a couple real-world applications to run in this environment.
+Language models are really good at writing Python scripts, so I figured it
+wouldn’t be that hard to get Python ported over. I didn’t want to rewrite Python
+in Go or do some kind of source-based translation from C to Go, so I picked
+something more fun: [WebAssembly](https://webassembly.org/).
 
 WebAssembly is a vendor-neutral bytecode format, and that makes it great for
 agent sandboxes. When you compile an application to WebAssembly, you have to
@@ -218,7 +183,7 @@ dive into forks and shred the contents apart for buckety goodness.
 Muscle memory is a kind of test, but it's not a substitute for actually
 conforming to the
 [POSIX specification](https://pubs.opengroup.org/onlinepubs/9699919799.2018edition/).
-POSIX (the Portable Operating Systems Interface) is the formal set of
+POSIX (the Portable Operating System Interface) is the formal set of
 specifications that every shell and set of core utilities is implemented
 against. Agents are also good at turning a spec into code. I wanted to see how
 far I could get by feeding the POSIX spec to Claude Code.
@@ -293,24 +258,16 @@ import SophiaDiagram from "./sophia.svg";
 
 When you ssh in, Sophia mints a UUIDv7 for your session and forks the bucket
 named in `$BUCKET_NAME`. That fork becomes your world. Every `ls`, `cat`, and
-`python3` script points at an s3fs rooted in the session bucket. The moment you
-disconnect, Sophia hits that bucket with a force-delete and a one-minute
-timeout. Whatever you did is gone.
+`python3` script points at an filesystem rooted in the session bucket. The
+moment you disconnect, Sophia hits that bucket with a force-delete and a
+one-minute timeout. Whatever you did is gone.
 
 Any username works at the login prompt because Sophia doesn’t authenticate
 anyone. There’s nothing to protect; every session is its own pocket universe
 with no shared state and no path back to the host filesystem. The only
-persistent thing on disk is the SSH host key in `./var/ssh_host_ed25519_key`,
-which keeps reconnects from triggering the dreaded
-`REMOTE HOST IDENTIFICATION HAS CHANGED` warning.
-
-Getting it running is two commands. Generate a host key with
-`ssh-keygen -t ed25519 -N '' -f ./var/ssh_host_ed25519_key`, then point
-`BUCKET_NAME` at the bucket you want forked and run
-`go build ./cmd/sophia && ./sophia`. There’s a container image at
-`atcr.io/xeiaso.net/kefka/sophia:latest` if you’d rather skip the build. Mount
-`/var` somewhere persistent and you have a multi-tenant agent shell on a port of
-your choosing. My production setup puts the SSH keys in a Kubernetes secret, but
+persistent thing on disk is the SSH host key, which keeps reconnects from
+triggering the dreaded `REMOTE HOST IDENTIFICATION HAS CHANGED` warning in your
+SSH client. My production setup puts the SSH keys in a Kubernetes secret, but
 there's plenty of ways to do this.
 
 ## Like, comment, subscribe
@@ -330,5 +287,5 @@ It’s the same bat-action just on a different bat-channel.
   title="Want to give your agents their own little reality to break?"
   subtitle="Tigris bucket forks give every agent invocation an isolated, copy-on-write workspace. The agent does what it does; the source bucket stays clean."
   button="Read the Bucket Forking Docs"
-  link="https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/"
+  link="https://www.tigrisdata.com/docs/ai/agent-shell/"
 />
