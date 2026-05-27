@@ -69,9 +69,9 @@ still paying per-object request overhead thousands of times per batch.
 Here's the napkin math. Say a round trip to the bucket is 30 ms. Do those 4,000
 `GET`s strictly one after another and you've spent 120 seconds just waiting on
 latency, before counting a single byte of actual image data. Crank concurrency
-up to 64 in flight and you're down to roughly 1.9 seconds of pure
-latency overhead per batch. That's better, but it's 1.9 seconds your GPUs spent
-doing nothing, every batch, forever.
+up to 64 in flight and you're down to roughly 1.9 seconds of pure latency
+overhead per batch. That's better, but it's 1.9 seconds your GPUs spent doing
+nothing, every batch, forever.
 
 A bundle collapses all of that into one request. One round trip, one response,
 one stream of bytes that contains every object you asked for.
@@ -347,12 +347,8 @@ the object browser: select the objects you want, hit download, and you get back
 the same tar stream the API hands you.
 
 <video controls autoPlay loop muted playsInline width="100%">
-  <source
-    src="/blog/img/blog/bundle-api/bundle-demo.mp4"
-    type="video/mp4"
-  />
-  Download the{" "}
-  <a href="/blog/img/blog/bundle-api/bundle-demo.mp4">MP4</a> version.
+  <source src="/blog/img/blog/bundle-api/bundle-demo.mp4" type="video/mp4" />
+  Download the <a href="/blog/img/blog/bundle-api/bundle-demo.mp4">MP4</a> version.
 </video>
 
 ## Go forth and bundle
