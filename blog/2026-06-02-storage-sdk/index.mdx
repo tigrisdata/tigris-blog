@@ -1,0 +1,199 @@
+---
+slug: storage-sdk
+title: "TODO: replace me"
+description: |
+  Storage SDK is a provider-agnostic storage API for Node.js: one interface
+  across S3, R2, Azure, GCS, Tigris, and more, with snapshots and forks built in.
+image: ./hero-image.webp
+keywords:
+  - storage sdk
+  - object storage
+  - node.js
+  - provider-agnostic storage
+  - s3-compatible
+  - bucket forking
+  - snapshots
+  - multi-cloud storage
+  - vendor lock-in
+  - tigris
+authors:
+  - ks
+  - xe
+  - abdullah
+tags:
+  - Updates
+  - Engineering
+  - Object Storage
+  - Node.js
+  - S3
+---
+
+import QuickSummary from "@site/src/components/QuickSummary";
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="TODO: describe the image here"
+/>
+
+<QuickSummary
+  readTime="5 min read"
+  items={[
+    {
+      title: "One interface, many backends.",
+      description:
+        "Storage SDK is a provider-agnostic storage API for Node.js apps. Write your code once against get, put, list, delete, copy, and presign instead of shaping it around how one vendor's S3 client works.",
+    },
+    {
+      title: "Portable, but actually portable.",
+      description:
+        "Adapters ship for S3, Azure, R2, Fly.io, GitHub, Google Cloud Storage, the local filesystem, MinIO, Railway, Tigris, and Vercel Blob. Swapping providers is a one-line change to your adapter config, and your build step tree-shakes away the ones you don't use.",
+    },
+    {
+      title: "Snapshots and forks as first-class primitives.",
+      description:
+        "Point-in-time snapshots and bucket forking work everywhere, not just on Tigris. On providers without native support, Storage SDK uses CopyObject against sibling buckets to make it Just Work™.",
+    },
+    {
+      title: "An escape hatch when you need it.",
+      description:
+        "Need a vendor-specific feature? storage.raw hands you the underlying client, fully typed to the adapter you chose, so you're never locked out of the backend you picked.",
+    },
+  ]}
+/>
+
+When you write your applications, they tend to end up looking like the libraries
+you use. The request/response patterns end up psychically bleeding over into
+your API design, assumptions about usage, and \<thing\>. In an ideal world,
+everything would be done with a design similar to
+[Hexagonal architecture](<https://en.wikipedia.org/wiki/Hexagonal_architecture_(software)>)
+where there's nice ports and adapters; but raise your hand if you've ever seen
+this happen in the real world the first go around.
+
+Realistically, you end up introducing layers like hexagonal architecture when
+you go and rip out your storage backend to move to another provider. This ends
+up being a multi-month saga of discovery as you unearth assumptions and design
+patterns that become annoying to fit the square peg into the round hole.
+
+What if it didn't have to be that way? What if you had your storage stay
+agnostic from the beginning, without oversimplifying the api surface? As
+developers, we've had to do that multi-month saga of discovery and never want to
+do it again, so we've built something that just gives you the clean hexagonal
+architecture experience out of the gate: Storage SDK.
+
+Storage SDK is a provider-agnostic storage API for [Node.JS](http://Node.JS)
+applications. One interface, many backends. Don't write your app around how the
+S3 client works, write it with Storage SDK.
+
+Embed example video here
+
+## One interface. Many backends.
+
+Storage SDK gives you one interface across basic operations that are portable
+across every storage provider: get, put, list, delete, copy, and make a URL.
+Changing backends is trivial:
+
+Tabbed view showing how to set up each provider with defaults so people can swap
+between them and see for themselves
+
+The rest of your code doesn't need to see the man behind the curtain. It just
+stores and reads files. You don't need to worry about the cognitive overload
+involved to set up storage with other libraries. Put that effort into your real
+life's mission: changing the world in the form of business to business software
+as a service applications.
+
+This kind of simplicity also helps your agents adapt to the changing needs of
+your storage architecture because they don't have to care about how storage
+works as long as it does.
+
+## Portable, but actually this time
+
+Here's all the providers we support out of the gate:
+
+- [**Amazon S3**](https://storagesdk.dev/adapters/s3/) - Normal S3 just in case
+  you actually need it.
+- [**Azure Blob Storage**](https://storagesdk.dev/adapters/azure/) - We don't
+  want to deal with Azure's API either.
+- [**Cloudflare R2**](https://storagesdk.dev/adapters/r2/) - Store your files in
+  Cloudflare's global storage network.
+- [**Fly.io**](https://storagesdk.dev/adapters/fly/) - Your app is already
+  global, why can't your storage also be global?
+- [**GitHub**](https://storagesdk.dev/adapters/github/) - Git stores objects
+  internally, it only makes sense to have an object storage backend powered by
+  GitHub!
+- [**Google Cloud Storage**](https://storagesdk.dev/adapters/gcs/) - Good in
+  case you need to store 1e100 objects in the cloud.
+- [**Local Filesystem**](https://storagesdk.dev/adapters/fs/) - Store your files
+  on your local filesystem for development or if you only have one server and
+  don't plan to expand.
+- [**MinIO AIStor**](https://storagesdk.dev/adapters/minio/) - Object storage
+  you can run on machines you can look at.
+- [**Railway Buckets**](https://storagesdk.dev/adapters/railway/) - All aboard
+  with object storage!
+- [**Tigris**](https://storagesdk.dev/adapters/tigris/) - The innovator of
+  bucket snapshots, forking, and more. We're working on something named
+  Euphrates.
+- [**Vercel Blob Storage**](https://storagesdk.dev/adapters/vercel/) - Useful
+  for getting your next.js app into prod with the same API as development
+- [**Write your own**](https://storagesdk.dev/adapters/write-your-own/) -
+  Missing your favourite set of buzzwords? Here's the square peg you need to
+  adapt to your round hole of choice.
+
+## Bed, Bath, and Beyond
+
+We could have stopped here and it would have been pretty great. This general
+shape of problem and solution really does meet the needs of developers building
+with object storage. You've got the bed, you've got the bath, but what about the
+beyond? What if your storage SDK also gave you the ability to time travel?
+Storage SDK lets you do that, no creepy remote control required.
+
+We made snapshots and bucket forking into a first-class provider-agnostic
+feature:
+
+Code example
+
+Tigris lets you have this out of the box, but what about Google Cloud Storage or
+S3? How do you get that there?
+
+We made this work with sibling buckets using CopyObject to transparently make
+things Just Work™. When you make a snapshot, Storage SDK makes a copy of all of
+the data so that you get your snapshots as normal objects. This is similar to
+what Tigris does under the hood with object metadata instead of the actual
+object data.
+
+### The escape hatch
+
+Need to do something advanced that the Storage SDK doesn't provide? Break out
+into the raw provider object: `storage.raw`. Here's a gander:
+
+Code example
+
+## Future looks bright
+
+You pick a storage backend, you write to its SDK, and six months later your
+application code is shaped like that backend forever. It knows about bucket
+policies, multipart thresholds, error shapes that only one vendor returns.
+Moving off becomes a project.
+
+storagesdk gives you one interface for the operations that are actually portable
+across object storage: put, get, list, delete, copy, presign. Switching from R2
+to S3, or pointing at a local directory in tests, is a one-line change to your
+adapter configuration. The rest of your code does not need to know.
+
+The escape hatch matters. When you need a feature only the underlying SDK
+exposes — a vendor extension, a custom presign, an obscure header — storage.raw
+hands you the underlying client, fully typed to the adapter you chose. You are
+never locked out of the backend you picked.
+
+Snapshots and forks are first-class primitives, not afterthoughts grafted on
+later. Most real workloads eventually need them: pre-migration snapshots,
+isolated experiment branches, point-in-time reads. Building them on top of a
+flat object API every time is the kind of thing that should already be solved.
+
+<InlineCta
+  title="Ready to store your files without vendor lock-in?"
+  subtitle="Storage SDK gives you one provider-agnostic interface, and Tigris gives it a globally distributed, S3-compatible backend with snapshots and forking built in."
+  button="Get started with Tigris"
+/>
