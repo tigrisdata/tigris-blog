@@ -336,24 +336,22 @@ object data.
 ### The escape hatch
 
 Need to do something advanced that the Storage SDK doesn't provide? Break out
-into the raw provider object: `storage.raw`. On the GitHub adapter that's the
-underlying Octokit instance, fully typed, ready for releases, PRs, GraphQL, or
-the Git Data API:
+into the raw provider object: `storage.raw`. On the Tigris adapter, every
+value-namespace export of `@tigrisdata/storage` — functions, constants, the
+`UploadAction` enum — is accessible on `storage.raw` with the adapter's auth,
+endpoint, and bucket already injected. Call them as if you imported them from
+`@tigrisdata/storage` directly:
 
 ```ts
-// storage was set up with the GitHub adapter; storage.raw is Octokit.
-const release = await storage.raw.repos.createRelease({
-  owner: "storagesdk",
-  repo: "agent-artifacts",
-  tag_name: "baseline",
-  name: "baseline snapshot",
+await storage.raw.setBucketLifecycle("my-bucket", {
+  lifecycleRules: [{ expiration: { days: 30 } }],
 });
 ```
 
-Swap the adapter and `storage.raw` becomes the matching native client — an
-`S3Client` on S3 and R2, the `@google-cloud/storage` `Bucket` on GCS, the
-`@tigrisdata/storage` module on Tigris. No casts, no `any`, no losing your
-provider when you go off the paved road.
+Per-call `config` overrides merge on top of the adapter's resolved config (user
+wins, adapter fills the gaps). Swap the adapter and `storage.raw` becomes the
+matching native client for that backend — fully typed, no casts, no `any`, no
+losing your provider when you go off the paved road.
 
 ## Future looks bright
 
