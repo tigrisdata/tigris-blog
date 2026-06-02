@@ -85,11 +85,12 @@ import Lifecycle from "./lifecycle.svg";
   alt="Ty the tiger braced on the broken edge of an ancient stone bridge, hauling a glowing golden relic out of a swirling vortex of dissolving artifacts with a luminous rope, the recovered relics resting on stone pedestals behind him and the Tigris kingdom in the misty distance"
 />
 
-Today we're shipping soft delete for Tigris buckets and objects. When you turn
-it on for a bucket, deletes stop being permanent. They go into a holding state
-for a retention window you set, anywhere from 7 to 90 days. Restore inside that
-window and the bucket or object comes back. Wait the window out and Tigris
-removes the data on its own.
+Today we're shipping
+[soft delete](https://www.tigrisdata.com/docs/buckets/soft-delete/) for Tigris
+buckets and objects. When you turn it on for a bucket, deletes stop being
+permanent. They go into a holding state for a retention window you set, anywhere
+from 7 to 90 days. Restore inside that window and the bucket or object comes
+back. Wait the window out and Tigris removes the data on its own.
 
 A wrong delete is no longer a one-way door. Work that used to need a staging
 environment or a careful permissions audit can happen on the real bucket,
@@ -299,8 +300,8 @@ shows up in the **Deleted files** segment, where you can restore it the same way
 as any other soft-deleted object. A plain delete still records a delete marker
 and leaves earlier versions live, the same as before.
 
-For the full dashboard walkthrough and the API reference, see the soft delete
-documentation.
+For the full dashboard walkthrough and the API reference, see the
+[soft delete documentation](https://www.tigrisdata.com/docs/buckets/soft-delete/).
 
 <img
   src={softDeleteIllustration}
