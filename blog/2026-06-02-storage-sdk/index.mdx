@@ -307,25 +307,16 @@ losing your provider when you go off the paved road.
 
 ## Future looks bright
 
-You pick a storage backend, you write to its SDK, and six months later your
-application code is shaped like that backend forever. It knows about bucket
-policies, multipart thresholds, error shapes that only one vendor returns.
-Moving off becomes a project.
+Most real workloads eventually need snapshots and forks: pre-migration
+snapshots, isolated experiment branches, point-in-time reads, a bucket per agent
+run that you can throw away when the run ends. Building those on top of a flat
+object API every time is the kind of work that should already be solved. Storage
+SDK solves it once, with the same API on every backend it supports — and that
+solution doesn't get uglier when you swap the provider underneath.
 
-storagesdk gives you one interface for the operations that are actually portable
-across object storage: put, get, list, delete, copy, presign. Switching from R2
-to S3, or pointing at a local directory in tests, is a one-line change to your
-adapter configuration. The rest of your code does not need to know.
-
-The escape hatch matters. When you need a feature only the underlying SDK
-exposes — a vendor extension, a custom presign, an obscure header — storage.raw
-hands you the underlying client, fully typed to the adapter you chose. You are
-never locked out of the backend you picked.
-
-Snapshots and forks are first-class primitives, not afterthoughts grafted on
-later. Most real workloads eventually need them: pre-migration snapshots,
-isolated experiment branches, point-in-time reads. Building them on top of a
-flat object API every time is the kind of thing that should already be solved.
+Branch a bucket. Mutate freely. Throw the branch away when you're done, or
+replay it onto a new baseline. The shape should feel obvious to anyone who's
+spent fifteen years on the Git side of the analogy. That's the whole point.
 
 <InlineCta
   title="Ready to store your files without vendor lock-in?"
