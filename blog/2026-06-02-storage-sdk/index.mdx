@@ -2,7 +2,7 @@
 slug: storagesdk
 title: "Introducing storagesdk.dev"
 description: |
-  Storage SDK is a provider-agnostic storage API for Node.js: one interface
+  StorageSDK is a provider-agnostic storage API for Node.js: one interface
   across S3, R2, Azure, GCS, Tigris, and more, with snapshots and forks built in.
 image: ./hero-image.webp
 keywords:
@@ -44,7 +44,7 @@ DELETE, and "good luck." Buckets are the one piece of your stack you can't
 safely fork, can't tag a known-good state on, can't mutate on a side branch
 without a sinking feeling.
 
-[Storage SDK](https://storagesdk.dev) is what happens when you decide that's a
+[StorageSDK](https://storagesdk.dev) is what happens when you decide that's a
 bug. It's a TypeScript SDK for object storage with snapshots and forks as
 first-class primitives: branch a bucket per agent run, mutate safely, replay
 from the same baseline. Same API on top of whichever backend you pick.
@@ -55,7 +55,7 @@ from the same baseline. Same API on top of whichever backend you pick.
 
 [ComputeSDK](https://computesdk.dev) is a vendor-neutral project that gives you
 one consistent API to control sandboxes across every major sandbox provider.
-We've partnered with the ComputeSDK team to launch Storage SDK as the matching
+We've partnered with the ComputeSDK team to launch StorageSDK as the matching
 half — same shape, same goal, but for storage instead of compute. Pick a
 backend, get out of your way.
 
@@ -72,7 +72,7 @@ other backend.
 
 ## One interface. Many backends.
 
-Storage SDK gives you one interface across basic operations that are portable
+StorageSDK gives you one interface across basic operations that are portable
 across every storage provider: get, put, list, delete, copy, and make a URL.
 Changing backends is one import and one adapter config — swap the tab to see for
 yourself:
@@ -249,7 +249,7 @@ We could have stopped here and it would have been pretty great. This general
 shape of problem and solution really does meet the needs of developers building
 with object storage. You've got the bed, you've got the bath, but what about the
 beyond? What if your storage SDK also gave you the ability to time travel?
-Storage SDK lets you do that, no creepy remote control required.
+StorageSDK lets you do that, no creepy remote control required.
 
 We made snapshots and bucket forking into a first-class provider-agnostic
 feature:
@@ -278,14 +278,14 @@ Tigris lets you have this out of the box, but what about Google Cloud Storage or
 S3? How do you get that there?
 
 We made this work with sibling buckets using CopyObject to transparently make
-things Just Work™. When you make a snapshot, Storage SDK makes a copy of all of
+things Just Work™. When you make a snapshot, StorageSDK makes a copy of all of
 the data so that you get your snapshots as normal objects. This is similar to
 what Tigris does under the hood with object metadata instead of the actual
 object data.
 
 ### The escape hatch
 
-Need to do something advanced that the Storage SDK doesn't provide? Break out
+Need to do something advanced that the StorageSDK doesn't provide? Break out
 into the raw provider object: `storage.raw`. On the Tigris adapter, every
 value-namespace export of `@tigrisdata/storage` — functions, constants, the
 `UploadAction` enum — is accessible on `storage.raw` with the adapter's auth,
@@ -318,6 +318,6 @@ spent fifteen years on the Git side of the analogy. That's the whole point.
 
 <InlineCta
   title="Ready to store your files without vendor lock-in?"
-  subtitle="Storage SDK gives you one provider-agnostic interface, and Tigris gives it a globally distributed, S3-compatible backend with snapshots and forking built in."
+  subtitle="StorageSDK gives you one provider-agnostic interface, and Tigris gives it a globally distributed, S3-compatible backend with snapshots and forking built in."
   button="Get started with Tigris"
 />
