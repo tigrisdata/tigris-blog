@@ -38,28 +38,16 @@ import heroImage from "./hero-image.webp";
   alt="Introducing storagesdk.dev — a multi-provider TypeScript SDK with fork and snapshot as primitives, shown connecting to Azure, Google Cloud Storage, Cloudflare R2, Vercel Blob Storage, Tigris, MinIO, and the local filesystem."
 />
 
-When you write your applications, they tend to end up looking like the libraries
-you use. The request/response patterns end up psychically bleeding over into
-your API design, assumptions about usage, and \<thing\>. In an ideal world,
-everything would be done with a design similar to
-[Hexagonal architecture](<https://en.wikipedia.org/wiki/Hexagonal_architecture_(software)>)
-where there's nice ports and adapters; but raise your hand if you've ever seen
-this happen in the real world the first go around.
+You've spent fifteen years branching, tagging, and rebasing your code without
+thinking twice. Then you reach for object storage and the API is PUT, GET, LIST,
+and "good luck." Buckets are the one piece of your stack you can't safely fork,
+can't tag a known-good state on, can't mutate on a side branch without a sinking
+feeling.
 
-Realistically, you end up introducing layers like hexagonal architecture when
-you go and rip out your storage backend to move to another provider. This ends
-up being a multi-month saga of discovery as you unearth assumptions and design
-patterns that become annoying to fit the square peg into the round hole.
-
-What if it didn't have to be that way? What if you had your storage stay
-agnostic from the beginning, without oversimplifying the api surface? As
-developers, we've had to do that multi-month saga of discovery and never want to
-do it again, so we've built something that just gives you the clean hexagonal
-architecture experience out of the gate: Storage SDK.
-
-Storage SDK is a provider-agnostic storage API for [Node.JS](http://Node.JS)
-applications. One interface, many backends. Don't write your app around how the
-S3 client works, write it with Storage SDK.
+Storage SDK is what happens when you decide that's a bug. It's a TypeScript SDK
+for object storage with snapshots and forks as first-class primitives: branch a
+bucket per agent run, mutate safely, replay from the same baseline. Same API on
+top of whichever backend you pick.
 
 <video
   controls
