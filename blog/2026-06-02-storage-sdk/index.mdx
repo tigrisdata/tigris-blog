@@ -27,7 +27,6 @@ tags:
   - S3
 ---
 
-import QuickSummary from "@site/src/components/QuickSummary";
 import InlineCta from "@site/src/components/InlineCta";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
@@ -37,32 +36,6 @@ import heroImage from "./hero-image.webp";
   src={heroImage}
   className="hero-image"
   alt="Introducing storagesdk.dev — a multi-provider TypeScript SDK with fork and snapshot as primitives, shown connecting to Azure, Google Cloud Storage, Cloudflare R2, Vercel Blob Storage, Tigris, MinIO, and the local filesystem."
-/>
-
-<QuickSummary
-  readTime="5 min read"
-  items={[
-    {
-      title: "One interface, many backends.",
-      description:
-        "Storage SDK is a provider-agnostic storage API for Node.js apps. Write your code once against get, put, list, delete, copy, and presign instead of shaping it around how one vendor's S3 client works.",
-    },
-    {
-      title: "Portable, but actually portable.",
-      description:
-        "Adapters ship for S3, Azure, R2, Fly.io, GitHub, Google Cloud Storage, the local filesystem, MinIO, Railway, Tigris, and Vercel Blob. Swapping providers is a one-line change to your adapter config, and your build step tree-shakes away the ones you don't use.",
-    },
-    {
-      title: "Snapshots and forks as first-class primitives.",
-      description:
-        "Point-in-time snapshots and bucket forking work everywhere, not just on Tigris. On providers without native support, Storage SDK uses CopyObject against sibling buckets to make it Just Work™.",
-    },
-    {
-      title: "An escape hatch when you need it.",
-      description:
-        "Need a vendor-specific feature? storage.raw hands you the underlying client, fully typed to the adapter you chose, so you're never locked out of the backend you picked.",
-    },
-  ]}
 />
 
 When you write your applications, they tend to end up looking like the libraries
