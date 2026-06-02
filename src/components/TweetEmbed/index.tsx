@@ -16,7 +16,7 @@ interface TwitterWidgets {
         theme?: "light" | "dark";
         align?: string;
         conversation?: string;
-      },
+      }
     ) => Promise<HTMLElement | undefined>;
   };
   ready: (cb: (twttr: TwitterWidgets) => void) => void;
