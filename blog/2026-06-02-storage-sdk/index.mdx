@@ -102,16 +102,16 @@ S3 client works, write it with Storage SDK.
 
 ## The other half of the picture
 
-Almost a year ago we shipped [ComputeSDK](https://computesdk.dev): one API for
-sandboxed compute that runs across every sandbox provider we could find. Storage
-SDK is the matching half — same shape, same goal, pick a backend and get out of
-your way.
+[ComputeSDK](https://computesdk.dev) is a vendor-neutral project that gives you
+one consistent API to control sandboxes across every major sandbox provider.
+We've partnered with the ComputeSDK team to launch Storage SDK as the matching
+half — same shape, same goal, but for storage instead of compute. Pick a
+backend, get out of your way.
 
-The thesis underneath both is something we kept coming back to: **Git ===
-storage**. Not literally. Conceptually. Buckets need what Git gave us fifteen
-years ago — tags, branches, isolated mutations, replayable state. Once you've
-spent a career with those primitives in your VCS, going back to a flat object
-store feels like editing without undo.
+The thesis underneath both: **Git === storage**. Not literally. Conceptually.
+Buckets need what Git gave us fifteen years ago — tags, branches, isolated
+mutations, replayable state. Once you've spent a career with those primitives in
+your VCS, going back to a flat object store feels like editing without undo.
 
 The GitHub adapter is where the metaphor stops being a metaphor:
 `storage.snapshots.create()` makes a tag, `storage.forks.create()` makes a
