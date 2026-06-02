@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import BrowserOnly from "@docusaurus/BrowserOnly";
 import { useColorMode } from "@docusaurus/theme-common";
 
@@ -62,7 +62,10 @@ function ensureTwitterScript(): void {
 
 function TweetEmbedInner({ url }: TweetEmbedProps) {
   const { colorMode } = useColorMode();
-  const containerRef = useRef<HTMLDivElement>(null);
+  // mountRef is owned exclusively by twttr — React renders no children into it,
+  // so we can mutate its contents freely without fighting React's DOM.
+  const mountRef = useRef<HTMLDivElement>(null);
+  const [rendered, setRendered] = useState(false);
   const id = tweetIdFromUrl(url);
 
   useEffect(() => {
@@ -74,19 +77,46 @@ function TweetEmbedInner({ url }: TweetEmbedProps) {
     ensureTwitterScript();
 
     window.twttr?.ready((twttr) => {
-      const container = containerRef.current;
-      if (cancelled || !container) {
+      const mount = mountRef.current;
+      if (cancelled || !mount) {
         return;
       }
 
-      // createTweet renders a fresh iframe, so clear any prior render (or the
-      // fallback link) first. This is what lets a colorMode toggle re-theme an
-      // already-rendered tweet.
-      container.replaceChildren();
-      twttr.widgets.createTweet(id, container, {
-        theme: colorMode === "dark" ? "dark" : "light",
-        align: "center",
-      });
+      twttr.widgets
+        .createTweet(id, mount, {
+          theme: colorMode === "dark" ? "dark" : "light",
+          align: "center",
+        })
+        .then((el) => {
+          // A newer run (theme toggle, tweet id change, or strict-mode
+          // remount) may have superseded this one while createTweet was in
+          // flight. Remove whatever this stale call injected and leave the DOM
+          // to the current run instead of clobbering it.
+          if (cancelled || mountRef.current !== mount) {
+            el?.remove();
+            return;
+          }
+
+          if (el) {
+            // Success: keep only the freshly rendered embed, dropping any stale
+            // embed left over from a previous theme.
+            mount.replaceChildren(el);
+            setRendered(true);
+          } else if (mount.childElementCount === 0) {
+            // Tweet is deleted, private, or blocked and nothing was rendered:
+            // keep the fallback "View tweet" link visible.
+            setRendered(false);
+          }
+        })
+        .catch(() => {
+          if (
+            !cancelled &&
+            mountRef.current === mount &&
+            mount.childElementCount === 0
+          ) {
+            setRendered(false);
+          }
+        });
     });
 
     return () => {
@@ -96,14 +126,14 @@ function TweetEmbedInner({ url }: TweetEmbedProps) {
 
   return (
     <div
-      ref={containerRef}
       style={{
         display: "flex",
         justifyContent: "center",
         margin: "1.5rem 0",
       }}
     >
-      <a href={url}>View tweet</a>
+      <div ref={mountRef} />
+      {!rendered && <a href={url}>View tweet</a>}
     </div>
   );
 }
