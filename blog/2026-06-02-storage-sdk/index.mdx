@@ -4,6 +4,7 @@ title: "TODO: replace me"
 description: |
   Storage SDK is a provider-agnostic storage API for Node.js: one interface
   across S3, R2, Azure, GCS, Tigris, and more, with snapshots and forks built in.
+image: ./hero-image.webp
 keywords:
   - storage sdk
   - object storage
@@ -29,8 +30,13 @@ tags:
 
 import QuickSummary from "@site/src/components/QuickSummary";
 import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
 
-{/* TODO before publish: add ./hero-image.webp, re-add `image:` to frontmatter, and restore the <img src={heroImage} /> block with the import. */}
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Introducing storagesdk.dev — a multi-provider TypeScript SDK with fork and snapshot as primitives, shown connecting to Azure, Google Cloud Storage, Cloudflare R2, Vercel Blob Storage, Tigris, MinIO, and the local filesystem."
+/>
 
 <QuickSummary
   readTime="5 min read"
