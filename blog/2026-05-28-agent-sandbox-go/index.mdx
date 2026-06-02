@@ -1,0 +1,324 @@
+---
+slug: agent-sandbox-go
+title: Give your agents disposable environments in Go
+description: >
+  Kefka is a userspace shell sandbox in Go that gives every AI agent its own
+  copy-on-write Tigris bucket fork plus Python, jq, and ripgrep via WebAssembly.
+image: ./hero-image.webp
+keywords:
+  - tigris
+  - kefka
+  - go
+  - agent sandbox
+  - bucket forking
+  - webassembly
+  - just-bash
+  - AI agents
+  - posix
+  - virtual filesystem
+authors:
+  - xe
+tags:
+  - Build with Tigris
+  - Engineering
+  - AI
+  - Agents
+  - Python
+  - Object Storage
+---
+
+import QuickSummary from "@site/src/components/QuickSummary";
+import InlineCta from "@site/src/components/InlineCta";
+import ZoomableDiagram from "@site/src/components/ZoomableDiagram";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A mad god surrounded by robotic minions, evoking Kefka from Final Fantasy VI commanding a horde of AI agents."
+/>
+
+<QuickSummary
+  readTime="6 min read"
+  items={[
+    {
+      title: "Userspace sandbox in Go.",
+      description:
+        "A real shell interpreter (mvdan.cc/sh) plus ported coreutils entirely in userspace, so you can multiplex hundreds of agent sessions on one server without containers, VMs, or extra kernel overhead.",
+    },
+    {
+      title: "A bucket fork per agent.",
+      description:
+        "Every session gets its own copy-on-write Tigris bucket fork as its filesystem. Whatever the agent does stays in the fork, and the fork is force-deleted the moment it disconnects.",
+    },
+    {
+      title: "Python, jq, and ripgrep via WebAssembly.",
+      description:
+        "Compiling these tools to WebAssembly lets Kefka inject the agent's workspace as the filesystem, so agents run whatever scripts they want without touching the host.",
+    },
+    {
+      title: "POSIX-checked compatibility.",
+      description:
+        "The ported commands were scanned against the POSIX 2018 spec to generate a conformance report that shows exactly where the gaps are.",
+    },
+  ]}
+/>
+
+Agents need disposable environments because the blast radius of things going
+wrong is way too big. Nobody wants "what if our expense-submission agent yeets
+all the receipts out of the bucket?" showing up on a threat model. But how do
+you safely give these agents access to shells?
+
+You'd need to sandbox the agents so that they can only affect their own little
+storage world. This is doable with conventional tooling, but that usually
+requires giving your executors way more permissions than they need. It gets
+worse with modern stacks where a single agent loop spans multiple machines. How
+do you keep that agent's storage consistent across all of them?
+
+How do you secure a server with a `bash` tool against an agent that has no
+innate sense for if running `rm -rf /` is really a good idea or not?
+
+## Well, the thing is you don’t
+
+Sure, sure, you can just throw in containers, vms, microvms, kata containers, or
+pick your favourite buzzword and it’ll probably be fine if you have a known
+number of agents. The way things are going means that we’re going to have
+dynamic amounts of agents that can and will be more than your container engine,
+VM software, or even kernel overhead will let you handle properly. To keep up,
+we need infrastructure that can safely multiplex tens or hundreds of
+simultaneous agent sessions onto the same server. All of them also need to be
+sandboxed from the other so that they don't step on eachother's toes.
+
+For context, this kind of sandboxing already exists if you're in the
+JavaScript/TypeScript ecosystem with
+[@tigrisdata/agent-shell](https://www.tigrisdata.com/docs/ai/agent-shell/)
+powered by [just-bash](https://justbash.dev/). If you are looking for something
+production-capable, you should probably start there.
+
+## Dancing mad with sandboxes
+
+However, I'm not mainly in the JavaScript/TypeScript ecosystem, I'm a Go
+developer and Go developers make agents too. In order to play with these ideas
+in a language I'm more comfortable in, I made a library named
+[Kefka](https://tangled.org/xeiaso.net/kefka) that can help you create this new
+generation of infrastructure by making a sandbox purely in userspace using Go
+and Tigris [bucket forks](https://www.tigrisdata.com/docs/forks/) so that every
+agent has its own bucket with its own data. Any commands the agent runs stay
+safely in the sandbox. If it needs, the agent can even shell out to python to do
+any kind of complicated data analysis it needs. This is built off of the
+foundation of [agent workspaces](https://www.tigrisdata.com/blog/agent-kit/)
+from agent-kit, but using forks instead of empty buckets because I found forks a
+bit more useful for my testing.
+
+When I wrote Kefka, I started with a few components and just put them into a
+blender:
+
+- [**mvdan.cc/sh**](https://pkg.go.dev/mvdan.cc/sh/v3): a compatible shell
+  interpreter written in Go. This makes this agent-native shell use _a real
+  shell interpreter_ instead of making up logic that may not be compatible with
+  what agents are trained on.
+- [**billy**](https://pkg.go.dev/github.com/go-git/go-billy/v5): a more complete
+  filesystem abstraction layer for Go applications. Go ships
+  [a filesystem interface in the standard library](https://pkg.go.dev/io/fs#FS),
+  but it’s not complete enough to handle the nuance required for agents. Or file
+  writes. That's a separate topic.
+- [**the source code of just-bash**](https://github.com/vercel-labs/just-bash/tree/main/packages/just-bash):
+  everything in just-bash works enough already and I have a Claude Max 20x
+  subscription, surely I can just have Claude do most of the grunt work porting
+  commands over, right?
+
+Once I outlined the basic flow and interfaces, I tried having Claude port over
+the implementation of
+[ls](https://github.com/vercel-labs/just-bash/blob/main/packages/just-bash/src/commands/ls/ls.ts)
+to
+[its home in the Kefka repo](https://tangled.org/xeiaso.net/kefka/blob/main/command/internal/ls/ls.go).
+To my shock, surprise, and horror, it worked perfectly on the first try. This
+makes sense, transformer models were
+[designed by the Google Translate team](https://arxiv.org/abs/1706.03762) for
+translation-shaped tasks. What is porting stuff from JavaScript to Go other than
+translation? After that I took that context window and converted it into
+[a claude skill](https://tangled.org/xeiaso.net/kefka/blob/main/.claude/skills/just-bash-port/SKILL.md)
+that I ran in parallel. With 5 agents going at once, I managed to cover the
+critical set of coreutils (`cat`, `ls`, etc) and some of the extended commands
+that you end up using in practice (`sha256sum`, `nl`, `du`, etc). After hooking
+up a simple interactive shell REPL as a test, I tried using it as normal and it
+was compliant with my muscle memory.
+
+The porting process was mostly autonomous with each of the agents fighting for
+supremacy in a single git checkout. It took most of a workday to get everything
+ported over. Since most of it was async, I didn't have to babysit and could do
+other things in the meantime. During this I ended up blowing through two Claude
+Max 20x rate limit windows and ended up with
+[one of the biggest list of Go subpackages I’ve ever seen](https://tangled.org/xeiaso.net/kefka/tree/main/command/internal).
+
+## Running Python
+
+At this point I had a filesystem, I had mostly-compatible commands, all I was
+really missing was a couple real-world applications to run in this environment.
+Language models are really good at writing Python scripts, so I figured it
+wouldn’t be that hard to get Python ported over. I didn’t want to rewrite Python
+in Go or do some kind of source-based translation from C to Go, so I picked
+something more fun: [WebAssembly](https://webassembly.org/).
+
+WebAssembly is a vendor-neutral bytecode format, and that makes it great for
+agent sandboxes. When you compile an application to WebAssembly, you have to
+_explicitly inject_ dependencies such as the filesystem, network stack, and
+implementation of time. This means that if I had Python compiled to WebAssembly
+I could hook up the agent workspace as a filesystem and rig input/output to the
+AI agent workflow. This would sandbox the agent away so that it could run
+_whatever Python scripts it wanted_ without touching the host filesystem.
+
+This ended up being surprisingly little code:
+
+```go
+// from https://tangled.org/xeiaso.net/kefka/blob/main/command/internal/python3/python3.go
+
+func (Impl) Exec(ctx context.Context, ec *command.ExecContext, args []string) error {
+	fsConfig := wazero.NewFSConfig().
+		(sysfs.FSConfig).
+		WithSysFSMount(billyfs.New(ec.FS), "/")
+
+	config := wazero.NewModuleConfig().
+		// Pipe ExecContext stdio
+		WithStdin(ec.Stdin).WithStdout(ec.Stdout).WithStderr(ec.Stderr).
+		// Pipe argv
+		WithArgs(append([]string{"python3"}, args...)...).
+		WithName("python3").
+		// Pipe filesystem
+		WithFSConfig(fsConfig).
+		// Pipe system time
+		WithSysNanosleep().WithSysNanotime().WithSysWalltime()
+
+	mod, err := runtime.InstantiateModule(ctx, compiled, config)
+	if err != nil {
+    // Fit the square peg into the round hole
+		if exitErr, ok := errors.AsType[*wsys.ExitError](err); ok {
+			if code := exitErr.ExitCode(); code != 0 {
+				return interp.ExitStatus(uint8(code))
+			}
+			return nil
+		}
+		return err
+	}
+	return mod.Close(ctx)
+}
+```
+
+Most of the code is just adapting the WebAssembly runtime types to the types the
+rest of the environment uses. It's dependency injection with extra steps.
+
+This basic flow is how I got `jq`, `ripgrep`, and `quickjs` ported over to this
+environment so that agents (and humans\!) have their choice of familiar tools to
+dive into forks and shred the contents apart for buckety goodness.
+
+## Making sure it’s compatible
+
+Muscle memory is a kind of test, but it's not a substitute for actually
+conforming to the
+[POSIX specification](https://pubs.opengroup.org/onlinepubs/9699919799.2018edition/).
+POSIX (the Portable Operating System Interface) is the formal set of
+specifications that every shell and set of core utilities is implemented
+against. Agents are also good at turning a spec into code. I wanted to see how
+far I could get by feeding the POSIX spec to Claude Code.
+
+To do that I downloaded the POSIX 2018 specifications as a zipfile and had
+[pandoc](https://pandoc.org/) convert the relevant files from HTML to markdown.
+If you’ve never used pandoc before, it’s a swiss army knife of plaintext file
+conversion. You have HTML but you want markdown?
+`pandoc --from html --to markdown`. Bam, job’s done. At a past job it’s how I
+submitted the markdown blog drafts I wrote in Emacs to the marketing team’s use
+of Microsoft Word and Wordpress.
+
+With the spec in hand, I dumped all the relevant files into a
+[posix2018 folder](https://tangled.org/xeiaso.net/kefka/tree/main/docs/posix2018)
+and told Claude to go to town scanning over my implementation vs the specs. It
+also generated
+[a conformance report](https://tangled.org/xeiaso.net/kefka/blob/main/docs/posix2018/CONFORMANCE.md)
+that could be used to guide future development. What I have right now covers the
+muscle-memory commands I actually use, and the report tells me exactly where the
+gaps are when an agent asks for something I haven't implemented yet.
+
+## A demo
+
+One of the neat parts about implementing this in Go is the Go ecosystem’s mass
+of libraries that handle low-level things such as SSH servers. Using
+[gliderlabs’ SSH server package](https://pkg.go.dev/github.com/gliderlabs/ssh),
+I managed to create an SSH server sandboxed in Kefka so that any users
+automatically get put into their own bucket fork. `ssh` in and do _whatever you
+want_, you can’t hurt any of the data. Here’s a demo:
+
+<video
+  controls
+  autoPlay
+  loop
+  muted
+  playsInline
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    display: "block",
+    margin: "0 auto",
+  }}
+>
+  <source
+    src="/blog/img/blog/agent-sandbox-go/sophia-demo.mp4"
+    type="video/mp4"
+  />
+  Download the <a href="/blog/img/blog/agent-sandbox-go/sophia-demo.mp4">
+    MP4
+  </a> version.
+</video>
+
+And if you want to try it for yourself, dive in with your terminal:
+
+```
+ssh sophia.xeiaso.net
+```
+
+For extra fun, try running `snapshot --help`!
+
+Under the hood it uses a flow like this:
+
+import SophiaDiagram from "./sophia.svg";
+
+<ZoomableDiagram ariaLabel="Sophia SSH session flow diagram. Click to enlarge.">
+  <SophiaDiagram
+    role="img"
+    aria-label="Sophia SSH session flow: connect, mint a UUIDv7 session ID, fork the configured bucket, mount the fork as the session filesystem, then force-delete the fork on disconnect."
+    style={{ width: "100%", height: "auto", display: "block" }}
+  />
+</ZoomableDiagram>
+
+When you ssh in, Sophia mints a UUIDv7 for your session and forks the bucket
+named in `$BUCKET_NAME`. That fork becomes your world. Every `ls`, `cat`, and
+`python3` script points at an filesystem rooted in the session bucket. The
+moment you disconnect, Sophia hits that bucket with a force-delete and a
+one-minute timeout. Whatever you did is gone.
+
+Any username works at the login prompt because Sophia doesn’t authenticate
+anyone. There’s nothing to protect; every session is its own pocket universe
+with no shared state and no path back to the host filesystem. The only
+persistent thing on disk is the SSH host key, which keeps reconnects from
+triggering the dreaded `REMOTE HOST IDENTIFICATION HAS CHANGED` warning in your
+SSH client. My production setup puts the SSH keys in a Kubernetes secret, but
+there's plenty of ways to do this.
+
+## Like, comment, subscribe
+
+The version of this post on my blog has much more detail about how Kefka
+actually works under the hood and the tradeoffs I made to get there, you can
+check it out here:
+[Dancing mad with sandboxing](https://xeiaso.net/blog/2026/dancing-mad-sandboxing/).
+It also covers the non-AI reasons you'd want to use something like this too.
+
+Also if you use JavaScript or TypeScript for your agents and want something like
+this, feel free to check out
+[@tigrisdata/agent-shell](https://www.npmjs.com/package/@tigrisdata/agent-shell)!
+It’s the same bat-action just on a different bat-channel.
+
+<InlineCta
+  title="Want to give your agents their own little reality to break?"
+  subtitle="Tigris bucket forks give every agent invocation an isolated, copy-on-write workspace. The agent does what it does; the source bucket stays clean."
+  button="Read the Bucket Forking Docs"
+  link="https://www.tigrisdata.com/docs/ai/agent-shell/"
+/>

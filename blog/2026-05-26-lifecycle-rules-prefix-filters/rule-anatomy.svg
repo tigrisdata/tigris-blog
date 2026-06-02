@@ -1,0 +1,149 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 880 420"
+  width="880"
+  height="420"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family:
+        "Hanken Grotesk",
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Helvetica,
+        Arial,
+        sans-serif;
+    }
+    .title {
+      font-size: 18px;
+      fill: #c8d6de;
+      font-weight: 700;
+    }
+    .subtitle {
+      font-size: 12px;
+      fill: #8fa3b0;
+    }
+    .field-label {
+      font-size: 11px;
+      fill: #8fa3b0;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+    }
+    .value {
+      font-family: "Fira Code VF", ui-monospace, monospace;
+      font-size: 14px;
+      fill: #c8d6de;
+    }
+    .constraint {
+      font-size: 11px;
+      fill: #5a6770;
+      font-style: italic;
+    }
+    .status-on {
+      font-size: 10px;
+      fill: #62feb5;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+    .footer {
+      font-size: 11px;
+      fill: #8fa3b0;
+    }
+    .card {
+      rx: 12;
+      ry: 12;
+      fill: #142229;
+      stroke: #62feb5;
+      stroke-width: 1.5;
+    }
+    .divider {
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .status-dot {
+      fill: #62feb5;
+    }
+  </style>
+
+  <text x="440" y="28" text-anchor="middle" class="title">
+    Anatomy of a rule
+  </text>
+  <text x="440" y="48" text-anchor="middle" class="subtitle">
+    One filter. One transition. One expiration. Up to ten of these per
+    bucket.
+  </text>
+
+  <!-- Card: y=74 to y=394, x=60 to x=820 -->
+  <rect x="60" y="74" width="760" height="320" class="card" />
+
+  <!-- Header row -->
+  <text x="82" y="100" class="field-label">RULE</text>
+  <text x="82" y="124" class="value">"logs-tiered-retention"</text>
+
+  <circle cx="780" cy="100" r="6" class="status-dot" />
+  <text x="766" y="104" text-anchor="end" class="status-on">ENABLED</text>
+
+  <line x1="80" y1="144" x2="800" y2="144" class="divider" />
+
+  <!-- Filter row: 148-216 -->
+  <g transform="translate(82, 162)">
+    <!-- folder icon -->
+    <path
+      d="M 0 4 L 10 4 L 13 0 L 30 0 L 30 22 L 0 22 Z"
+      fill="#5ba4cf"
+      opacity="0.85"
+    />
+  </g>
+  <text x="130" y="172" class="field-label">FILTER</text>
+  <text x="130" y="194" class="value">
+    <tspan fill="#5ba4cf">prefix</tspan>: "logs/"
+  </text>
+  <text x="130" y="212" class="constraint">
+    Omit the filter to apply the rule to every object in the bucket.
+  </text>
+
+  <line x1="80" y1="222" x2="800" y2="222" class="divider" />
+
+  <!-- Transition row: 226-312 -->
+  <g transform="translate(82, 244)">
+    <!-- chevron arrow icon -->
+    <path
+      d="M 0 8 L 20 8 L 20 0 L 34 12 L 20 24 L 20 16 L 0 16 Z"
+      fill="#62feb5"
+      opacity="0.9"
+    />
+  </g>
+  <text x="130" y="254" class="field-label">TRANSITION</text>
+  <text x="130" y="276" class="value">
+    <tspan fill="#62feb5">STANDARD_IA</tspan> at day
+    <tspan fill="#cf8e5b">30</tspan>
+  </text>
+  <text x="130" y="294" class="constraint">
+    One per rule. StorageClass: STANDARD_IA or GLACIER.
+  </text>
+  <text x="130" y="310" class="constraint">
+    Cold tiers don't go back to warm.
+  </text>
+
+  <line x1="80" y1="318" x2="800" y2="318" class="divider" />
+
+  <!-- Expiration row: 322-376 -->
+  <g transform="translate(82, 336)">
+    <!-- crossed circle -->
+    <circle cx="14" cy="14" r="14" fill="none" stroke="#cf8e5b" stroke-width="2" />
+    <line x1="6" y1="6" x2="22" y2="22" stroke="#cf8e5b" stroke-width="2.5" />
+    <line x1="22" y1="6" x2="6" y2="22" stroke="#cf8e5b" stroke-width="2.5" />
+  </g>
+  <text x="130" y="348" class="field-label">EXPIRATION</text>
+  <text x="130" y="370" class="value">
+    delete at day <tspan fill="#cf8e5b">540</tspan>
+  </text>
+
+  <!-- Footer below the card -->
+  <text x="440" y="414" text-anchor="middle" class="footer">
+    Scheduler picks rules up within minutes; first action is on the oldest
+    matching object.
+  </text>
+</svg>
