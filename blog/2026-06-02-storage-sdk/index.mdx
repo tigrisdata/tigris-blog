@@ -29,6 +29,8 @@ tags:
 
 import QuickSummary from "@site/src/components/QuickSummary";
 import InlineCta from "@site/src/components/InlineCta";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 import heroImage from "./hero-image.webp";
 
 <img
@@ -121,10 +123,132 @@ other backend.
 
 Storage SDK gives you one interface across basic operations that are portable
 across every storage provider: get, put, list, delete, copy, and make a URL.
-Changing backends is trivial:
+Changing backends is one import and one adapter config — swap the tab to see for
+yourself:
 
-Tabbed view showing how to set up each provider with defaults so people can swap
-between them and see for themselves
+<Tabs groupId="adapter">
+  <TabItem value="tigris" label="Tigris" default>
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { tigris } from "@storagesdk/adapters/tigris";
+
+const storage = new Storage({
+  adapter: tigris({
+    bucket: "agent-runs",
+    accessKeyId: process.env.TIGRIS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.TIGRIS_SECRET_ACCESS_KEY,
+  }),
+});
+
+await storage.upload("hello.txt", "Hello, storage SDK!", {
+  contentType: "text/plain",
+});
+
+const text = await storage.download("hello.txt", { as: "text" });
+```
+
+  </TabItem>
+  <TabItem value="s3" label="Amazon S3">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { s3 } from "@storagesdk/adapters/s3";
+
+const storage = new Storage({
+  adapter: s3({
+    bucket: "agent-runs",
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  }),
+});
+```
+
+  </TabItem>
+  <TabItem value="r2" label="Cloudflare R2">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { r2 } from "@storagesdk/adapters/r2";
+
+const storage = new Storage({
+  adapter: r2({
+    bucket: "agent-runs",
+    accountId: process.env.R2_ACCOUNT_ID,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  }),
+});
+```
+
+  </TabItem>
+  <TabItem value="gcs" label="Google Cloud Storage">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { gcs } from "@storagesdk/adapters/gcs";
+
+const storage = new Storage({
+  adapter: gcs({
+    bucket: "agent-runs",
+    projectId: process.env.GOOGLE_PROJECT_ID,
+    keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  }),
+});
+```
+
+  </TabItem>
+  <TabItem value="vercel" label="Vercel Blob">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { vercel } from "@storagesdk/adapters/vercel";
+
+const storage = new Storage({
+  adapter: vercel({
+    bucket: "agent-runs",
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  }),
+});
+```
+
+  </TabItem>
+  <TabItem value="github" label="GitHub">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { github } from "@storagesdk/adapters/github";
+
+const storage = new Storage({
+  adapter: github({
+    owner: "storagesdk",
+    repo: "agent-artifacts",
+    // branch defaults to the repo's default branch
+    // token defaults to process.env.GITHUB_TOKEN
+  }),
+});
+```
+
+  </TabItem>
+  <TabItem value="fs" label="Local filesystem">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { fs } from "@storagesdk/adapters/fs";
+
+const storage = new Storage({
+  adapter: fs({ root: "./.storage", folder: "agent-runs" }),
+});
+
+await storage.upload("hello.txt", "Hello, storage SDK!");
+const text = await storage.download("hello.txt", { as: "text" });
+```
+
+  </TabItem>
+</Tabs>
 
 The rest of your code doesn't need to see the man behind the curtain. It just
 stores and reads files. You don't need to worry about the cognitive overload
@@ -212,9 +336,24 @@ object data.
 ### The escape hatch
 
 Need to do something advanced that the Storage SDK doesn't provide? Break out
-into the raw provider object: `storage.raw`. Here's a gander:
+into the raw provider object: `storage.raw`. On the GitHub adapter that's the
+underlying Octokit instance, fully typed, ready for releases, PRs, GraphQL, or
+the Git Data API:
 
-Code example
+```ts
+// storage was set up with the GitHub adapter; storage.raw is Octokit.
+const release = await storage.raw.repos.createRelease({
+  owner: "storagesdk",
+  repo: "agent-artifacts",
+  tag_name: "baseline",
+  name: "baseline snapshot",
+});
+```
+
+Swap the adapter and `storage.raw` becomes the matching native client — an
+`S3Client` on S3 and R2, the `@google-cloud/storage` `Bucket` on GCS, the
+`@tigrisdata/storage` module on Tigris. No casts, no `any`, no losing your
+provider when you go off the paved road.
 
 ## Future looks bright
 
