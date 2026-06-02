@@ -98,6 +98,25 @@ S3 client works, write it with Storage SDK.
   <source src={require("./storagesdk-demo.mp4").default} type="video/mp4" />
 </video>
 
+## The other half of the picture
+
+Almost a year ago we shipped [ComputeSDK](https://computesdk.dev): one API for
+sandboxed compute that runs across every sandbox provider we could find. Storage
+SDK is the matching half — same shape, same goal, pick a backend and get out of
+your way.
+
+The thesis underneath both is something we kept coming back to: **Git ===
+storage**. Not literally. Conceptually. Buckets need what Git gave us fifteen
+years ago — tags, branches, isolated mutations, replayable state. Once you've
+spent a career with those primitives in your VCS, going back to a flat object
+store feels like editing without undo.
+
+The GitHub adapter is where the metaphor stops being a metaphor:
+`storage.snapshots.create()` makes a tag, `storage.forks.create()` makes a
+branch, and `storage.forks.get(name)` hands you a writable storage handle on
+that branch. The rest of this post is about applying the same idea to every
+other backend.
+
 ## One interface. Many backends.
 
 Storage SDK gives you one interface across basic operations that are portable
@@ -161,7 +180,25 @@ Storage SDK lets you do that, no creepy remote control required.
 We made snapshots and bucket forking into a first-class provider-agnostic
 feature:
 
-Code example
+```ts
+const snap = await storage.snapshots.create({ name: "baseline" });
+await storage.forks.create({
+  name: "agent-run-123",
+  fromSnapshot: snap.id,
+});
+const fork = storage.forks.get("agent-run-123");
+await fork.upload("output.json", result);
+```
+
+Branch a bucket per agent run. Mutate safely. Replay from the same baseline. The
+mapping holds across every adapter:
+
+- snapshot = tag
+- fork = branch
+- parent bucket = mainline state
+- forked bucket = writable isolated workspace
+
+It works on GitHub, Tigris, S3, GCS, and more on the way.
 
 Tigris lets you have this out of the box, but what about Google Cloud Storage or
 S3? How do you get that there?
