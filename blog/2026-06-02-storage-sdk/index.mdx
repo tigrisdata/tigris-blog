@@ -1,0 +1,324 @@
+---
+slug: storagesdk
+title: "Introducing storagesdk.dev"
+description: |
+  StorageSDK is a provider-agnostic storage API for Node.js: one interface
+  across S3, R2, Azure, GCS, Tigris, and more, with snapshots and forks built in.
+image: ./hero-image.webp
+keywords:
+  - storage sdk
+  - object storage
+  - node.js
+  - provider-agnostic storage
+  - s3-compatible
+  - bucket forking
+  - snapshots
+  - multi-cloud storage
+  - vendor lock-in
+  - tigris
+authors:
+  - abdullah
+tags:
+  - Updates
+  - Engineering
+  - Object Storage
+  - Node.js
+  - S3
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import TweetEmbed from "@site/src/components/TweetEmbed";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Introducing storagesdk.dev — a multi-provider TypeScript SDK with fork and snapshot as primitives, shown connecting to Azure, Google Cloud Storage, Cloudflare R2, Vercel Blob Storage, Tigris, MinIO, and the local filesystem."
+/>
+
+You've spent fifteen years branching, tagging, and rebasing your code without
+thinking twice. Then you reach for object storage and the API is PUT, GET, LIST,
+DELETE, and "good luck." Buckets are the one piece of your stack you can't
+safely fork, can't tag a known-good state on, can't mutate on a side branch
+without a sinking feeling.
+
+[StorageSDK](https://storagesdk.dev) is what happens when you decide that's a
+bug. It's a TypeScript SDK for object storage with snapshots and forks as
+first-class primitives: branch a bucket per agent run, mutate safely, replay
+from the same baseline. Same API on top of whichever backend you pick.
+
+<TweetEmbed url="https://twitter.com/computesdk/status/2061846079797100927" />
+
+## The other half of the picture
+
+[ComputeSDK](https://computesdk.dev) is a vendor-neutral project that gives you
+one consistent API to control sandboxes across every major sandbox provider.
+We've partnered with the ComputeSDK team to launch StorageSDK as the matching
+half — same shape, same goal, but for storage instead of compute. Pick a
+backend, get out of your way.
+
+The thesis underneath both: **Git === storage**. Not literally. Conceptually.
+Buckets need what Git gave us fifteen years ago — tags, branches, isolated
+mutations, replayable state. Once you've spent a career with those primitives in
+your VCS, going back to a flat object store feels like editing without undo.
+
+The GitHub adapter is where the metaphor stops being a metaphor:
+`storage.snapshots.create()` makes a tag, `storage.forks.create()` makes a
+branch, and `storage.forks.get(name)` hands you a writable storage handle on
+that branch. The rest of this post is about applying the same idea to every
+other backend.
+
+## One interface. Many backends.
+
+StorageSDK gives you one interface across basic operations that are portable
+across every storage provider: get, put, list, delete, copy, and make a URL.
+Changing backends is one import and one adapter config — swap the tab to see for
+yourself:
+
+<Tabs groupId="adapter">
+  <TabItem value="tigris" label="Tigris" default>
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { tigris } from "@storagesdk/adapters/tigris";
+
+const storage = new Storage({
+  adapter: tigris({
+    bucket: "agent-runs",
+    accessKeyId: process.env.TIGRIS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.TIGRIS_SECRET_ACCESS_KEY,
+  }),
+});
+
+await storage.upload("hello.txt", "Hello, storage SDK!", {
+  contentType: "text/plain",
+});
+
+const text = await storage.download("hello.txt", { as: "text" });
+```
+
+  </TabItem>
+  <TabItem value="s3" label="Amazon S3">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { s3 } from "@storagesdk/adapters/s3";
+
+const storage = new Storage({
+  adapter: s3({
+    bucket: "agent-runs",
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  }),
+});
+```
+
+  </TabItem>
+  <TabItem value="r2" label="Cloudflare R2">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { r2 } from "@storagesdk/adapters/r2";
+
+const storage = new Storage({
+  adapter: r2({
+    bucket: "agent-runs",
+    accountId: process.env.R2_ACCOUNT_ID,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  }),
+});
+```
+
+  </TabItem>
+  <TabItem value="gcs" label="Google Cloud Storage">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { gcs } from "@storagesdk/adapters/gcs";
+
+const storage = new Storage({
+  adapter: gcs({
+    bucket: "agent-runs",
+    projectId: process.env.GOOGLE_PROJECT_ID,
+    keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  }),
+});
+```
+
+  </TabItem>
+  <TabItem value="vercel" label="Vercel Blob">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { vercel } from "@storagesdk/adapters/vercel";
+
+const storage = new Storage({
+  adapter: vercel({
+    bucket: "agent-runs",
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  }),
+});
+```
+
+  </TabItem>
+  <TabItem value="github" label="GitHub">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { github } from "@storagesdk/adapters/github";
+
+const storage = new Storage({
+  adapter: github({
+    owner: "storagesdk",
+    repo: "agent-artifacts",
+    // branch defaults to the repo's default branch
+    // token defaults to process.env.GITHUB_TOKEN
+  }),
+});
+```
+
+  </TabItem>
+  <TabItem value="fs" label="Local filesystem">
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { fs } from "@storagesdk/adapters/fs";
+
+const storage = new Storage({
+  adapter: fs({ root: "./.storage", folder: "agent-runs" }),
+});
+
+await storage.upload("hello.txt", "Hello, storage SDK!");
+const text = await storage.download("hello.txt", { as: "text" });
+```
+
+  </TabItem>
+</Tabs>
+
+The rest of your code doesn't need to see the man behind the curtain. It just
+stores and reads files. You don't need to worry about the cognitive overload
+involved to set up storage with other libraries. Put that effort into your real
+life's mission: changing the world in the form of business to business software
+as a service applications.
+
+This kind of simplicity also helps your agents adapt to the changing needs of
+your storage architecture because they don't have to care about how storage
+works as long as it does.
+
+## Portable, but actually this time
+
+Here's all the providers we support out of the gate:
+
+- [**Amazon S3**](https://storagesdk.dev/adapters/s3/) - Normal S3 just in case
+  you actually need it.
+- [**Azure Blob Storage**](https://storagesdk.dev/adapters/azure/) - We don't
+  want to deal with Azure's API either.
+- [**Cloudflare R2**](https://storagesdk.dev/adapters/r2/) - Store your files in
+  Cloudflare's global storage network.
+- [**Fly.io**](https://storagesdk.dev/adapters/fly/) - Your app is already
+  global, why can't your storage also be global?
+- [**GitHub**](https://storagesdk.dev/adapters/github/) - Git stores objects
+  internally, it only makes sense to have an object storage backend powered by
+  GitHub!
+- [**Google Cloud Storage**](https://storagesdk.dev/adapters/gcs/) - Good in
+  case you need to store 1e100 objects in the cloud.
+- [**Local Filesystem**](https://storagesdk.dev/adapters/fs/) - Store your files
+  on your local filesystem for development or if you only have one server and
+  don't plan to expand.
+- [**MinIO AIStor**](https://storagesdk.dev/adapters/minio/) - Object storage
+  you can run on machines you can look at.
+- [**Railway Buckets**](https://storagesdk.dev/adapters/railway/) - All aboard
+  with object storage!
+- [**Tigris**](https://storagesdk.dev/adapters/tigris/) - The innovator of
+  bucket snapshots, forking, and more.
+- [**Vercel Blob Storage**](https://storagesdk.dev/adapters/vercel/) - Useful
+  for getting your next.js app into prod with the same API as development
+- [**Write your own**](https://storagesdk.dev/adapters/write-your-own/) -
+  Missing your favourite set of buzzwords? Here's the square peg you need to
+  adapt to your round hole of choice.
+
+## Bed, Bath, and Beyond
+
+We could have stopped here and it would have been pretty great. This general
+shape of problem and solution really does meet the needs of developers building
+with object storage. You've got the bed, you've got the bath, but what about the
+beyond? What if your storage SDK also gave you the ability to time travel?
+StorageSDK lets you do that, no creepy remote control required.
+
+We made snapshots and bucket forking into a first-class provider-agnostic
+feature:
+
+```ts
+const snap = await storage.snapshots.create({ name: "baseline" });
+await storage.forks.create({
+  name: "agent-run-123",
+  fromSnapshot: snap.id,
+});
+const fork = storage.forks.get("agent-run-123");
+await fork.upload("output.json", result);
+```
+
+Branch a bucket per agent run. Mutate safely. Replay from the same baseline. The
+mapping holds across every adapter:
+
+- snapshot = tag
+- fork = branch
+- parent bucket = mainline state
+- forked bucket = writable isolated workspace
+
+It works on GitHub, Tigris, S3, GCS, and more on the way.
+
+Tigris lets you have this out of the box, but what about Google Cloud Storage or
+S3? How do you get that there?
+
+We made this work with sibling buckets using CopyObject to transparently make
+things Just Work™. When you make a snapshot, StorageSDK makes a copy of all of
+the data so that you get your snapshots as normal objects. This is similar to
+what Tigris does under the hood with object metadata instead of the actual
+object data.
+
+### The escape hatch
+
+Need to do something advanced that the StorageSDK doesn't provide? Break out
+into the raw provider object: `storage.raw`. On the Tigris adapter, every
+value-namespace export of `@tigrisdata/storage` — functions, constants, the
+`UploadAction` enum — is accessible on `storage.raw` with the adapter's auth,
+endpoint, and bucket already injected. Call them as if you imported them from
+`@tigrisdata/storage` directly:
+
+```ts
+await storage.raw.setBucketLifecycle("my-bucket", {
+  lifecycleRules: [{ expiration: { days: 30 } }],
+});
+```
+
+Per-call `config` overrides merge on top of the adapter's resolved config (user
+wins, adapter fills the gaps). Swap the adapter and `storage.raw` becomes the
+matching native client for that backend — fully typed, no casts, no `any`, no
+losing your provider when you go off the paved road.
+
+## The future looks bright
+
+Most real workloads eventually need snapshots and forks: pre-migration
+snapshots, isolated experiment branches, point-in-time reads, a bucket per agent
+run that you can throw away when the run ends. Building those on top of a flat
+object API every time is the kind of work that should already be solved. Storage
+SDK solves it once, with the same API on every backend it supports — and that
+solution doesn't get uglier when you swap the provider underneath.
+
+Branch a bucket. Mutate freely. Throw the branch away when you're done, or
+replay it onto a new baseline. The shape should feel obvious to anyone who's
+spent fifteen years on the Git side of the analogy. That's the whole point.
+
+<InlineCta
+  title="Ready to treat storage like Git?"
+  subtitle="StorageSDK gives you the same primitives developers already rely on: tags, branches, isolated mutations, and replayable state."
+  button="Get started with StorageSDK"
+  link="https://storagesdk.dev"
+/>
