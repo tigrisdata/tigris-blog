@@ -1,7 +1,7 @@
 ---
 slug: soft-delete
 title: Introducing Soft Delete for Tigris Buckets and Objects
-date: 2026-06-02
+date: 2026-06-09
 description: >
   Tigris now supports soft delete for buckets and objects. Enable it once, and
   every delete becomes recoverable for up to 90 days before it's permanently
@@ -15,7 +15,6 @@ keywords:
   - data recovery
   - S3
 authors:
-  - himank
   - davidmyriel
 tags:
   - Updates
@@ -169,7 +168,7 @@ on its own._
   }}
 />
 
-## Enabling it takes one toggle or one header
+## Enabling it takes one toggle, one header, or one command
 
 In the dashboard, you can toggle **Enable Soft Delete** when you create a
 bucket, or open **Bucket Settings → Data Management** on a bucket you already
@@ -248,7 +247,13 @@ func createBucketWithSoftDelete(ctx context.Context, client *s3.Client, bucketNa
 }
 ```
 
-## Restore is one click
+From the CLI, the same setting is a flag on `tigris buckets set`.
+
+```bash
+tigris buckets set my-bucket --soft-delete enable --retention-days 30
+```
+
+## Restore is one click or one command
 
 On the buckets page, a **Deleted buckets** segment lists every soft-deleted
 bucket that's still inside its retention window. Open the row's menu and click
@@ -271,6 +276,18 @@ soft-deleted bucket's menu opened to the Restore action._
 
 Objects work the same way. Open the **Deleted files** segment, pick a version,
 click restore.
+
+From the CLI, list soft-deleted buckets and restore one by name.
+
+```bash
+tigris buckets list --deleted
+tigris buckets restore my-bucket
+```
+
+`tigris buckets delete my-bucket --yes` also respects the bucket's soft delete
+setting. If soft delete is on, the bucket moves into the holding state and shows
+up under `tigris buckets list --deleted` until you restore it or the retention
+window expires.
 
 ## Your cost won't change
 
