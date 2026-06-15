@@ -18,6 +18,8 @@ tags: [build with tigris, engineering, go]
 
 import InlineCta from "@site/src/components/InlineCta";
 
+What happens if I just point a git server at an object storage bucket?
+
 Back when I was porting
 [agent sandboxes to Go](https://www.tigrisdata.com/blog/agent-sandbox-go/), I
 built everything on top of
@@ -34,7 +36,9 @@ implementation of git’s protocols and data formats. It doesn’t rely on the
 `/usr/bin/git` binary existing at all. Every method on billy’s filesystem
 interface exists purely because go-git needs it. This gave me a terrible idea: I
 already have a bucket that can quack like a filesystem and go-git’s native
-language is “filesystem”. What happens if I just point go-git at a bucket?
+language is “filesystem”.
+
+Can this Just Work™? Let's find out.
 
 ## Git was always an object store
 
