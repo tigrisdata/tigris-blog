@@ -152,6 +152,30 @@ curl -X POST "https://t3.storage.dev/my-bucket?bundle" \
 ```
 
   </TabItem>
+  <TabItem value="cli" label="CLI">
+
+The [`tigris` CLI](https://www.tigrisdata.com/docs/cli/bundle/) wraps the same
+request. Point it at a bucket, hand it a list of keys, and it writes the tar
+stream wherever you want:
+
+```bash
+tigris bundle my-bucket \
+  --keys dataset/train/img_00001.jpg,dataset/train/img_00002.jpg \
+  --output batch.tar
+```
+
+The keys can come from a file (one per line) or stdin instead of the flag, and
+you can compress the stream on the way out with `--compression gzip` (or
+`zstd`):
+
+```bash
+cat keys.txt | tigris bundle t3://my-bucket --compression gzip -o batch.tar.gz
+```
+
+Pass `--on-error fail` to make a missing key abort the whole bundle instead of
+getting skipped and logged in `__bundle_errors.json`.
+
+  </TabItem>
   <TabItem value="python" label="Python">
 
 Install the boto3 extension with `pip install tigris-boto3-ext`:
