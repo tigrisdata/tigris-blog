@@ -5,6 +5,7 @@ description: |
   objgit is a single-binary git server that stores repositories directly in
   Tigris — no disk, no git binary, no database. To my shock and horror, it
   worked.
+image: ./hero-image.webp
 keywords:
   - git
   - git server
@@ -17,6 +18,13 @@ tags: [build with tigris, engineering, go]
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A blue tiger adventurer stands on a stone temple ledge in a misty mountain valley, channeling a stream of glowing magic from one hand into a rune-covered stone doorway, with a golden temple glowing in the distance"
+/>
 
 What happens if I just point a git server at an object storage bucket?
 
