@@ -1,0 +1,391 @@
+---
+slug: bundle-api
+title: "Tar saved Unix backups in 1979. Now it saves your dataloader."
+description: |
+  Tigris bundles let you pull thousands of objects in one HTTP request as a streaming tar archive — no more one GET per object. Here's how it works and why.
+image: ./hero-image.webp
+keywords:
+  - bundle api
+  - object storage
+  - tar
+  - machine learning
+  - dataloader
+  - s3
+authors:
+  - xe
+tags:
+  - Build with Tigris
+  - object storage
+  - machine learning
+  - s3
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A blue-striped tiger in a postal worker's jacket stands in a vintage post office, stuffing envelopes, memos, photos, a VHS tape, and polyhedral 3D models into a large canvas sack labeled BUNDLE"
+/>
+
+Back in 1979, the people building Unix had a very physical problem: how do you
+get a directory full of little files onto a magnetic tape so you can back it up?
+Tape is sequential. You can't seek around on it like you can a disk. So they
+invented a format that streams every file's metadata and contents back to back
+into one continuous blob: the tape archive, or `tar`. A tarball is just a header
+describing a file, then that file's bytes, then the next header, then the next
+file's bytes, all the way down until you hit the end.
+
+Fifty-some years later I keep running into the exact same problem, except the
+tape is an object storage bucket and the files are training samples. You've got
+a few million tiny objects sitting in a bucket, and you need to pull thousands
+of them at a time, fast. The old solution turns out to be the new solution.
+Tigris now lets you grab a whole pile of objects in one request with
+[bundles](https://www.tigrisdata.com/docs/objects/bundle/), and the thing it
+hands back is a tar stream.
+
+## The problem: lots of little files
+
+When you're assembling a dataset, you almost always end up with a smattering of
+small objects. Images get ingested one at a time as they're discovered. Audio
+clips, JSON samples, parquet shards, whatever it is; they land in your bucket as
+individual keys because that's how they showed up. You don't get to pick.
+
+Training is the opposite shape of work. A dataloader wants to pull a batch of a
+few thousand samples, do it again for the next batch, and keep your GPUs fed so
+they're not sitting idle burning money. The access pattern wants big sequential
+reads. The data is stored as tiny scattered ones.
+
+Most object storage makes you reconcile that mismatch the hard way: one `GET`
+per object. If your batch is 4,000 images, that's 4,000 separate HTTP requests,
+each with its own request line, its own headers, its own round trip to the
+server and back. Even if your client is smart enough to reuse a connection and
+fire requests concurrently (or lucky enough to get HTTP/2 multiplexing), you're
+still paying per-object request overhead thousands of times per batch.
+
+Here's the napkin math. Say a round trip to the bucket is 30 ms. Do those 4,000
+`GET`s strictly one after another and you've spent 120 seconds just waiting on
+latency, before counting a single byte of actual image data. Crank concurrency
+up to 64 in flight and you're down to roughly 1.9 seconds of pure latency
+overhead per batch. That's better, but it's 1.9 seconds your GPUs spent doing
+nothing, every batch, forever.
+
+A bundle collapses all of that into one request. One round trip, one response,
+one stream of bytes that contains every object you asked for.
+
+## How it works
+
+When you request a bundle, you send a list of object keys to Tigris and the
+format you want to get the bundle in. The server starts writing the archive
+directly to you, then walks down your list of keys and appends each object on
+the end as it goes. Tigris never buffers the whole archive server-side, so the
+first bytes reach you while it's still pulling the last objects off disk.
+
+Your client can read that and then unpack it with any tar library such as
+[the one in Go's standard library](https://pkg.go.dev/archive/tar),
+[Python's stdlib `tarfile` library](https://docs.python.org/3/library/tarfile.html),
+or [`tar-stream` in JavaScript](https://www.npmjs.com/package/tar-stream). Worst
+comes to worst, you can write it to a file and shell out to `tar` by hand, or
+pipe the HTTP response straight into `tar`'s standard input — whatever you (or
+your agent) can write the code for.
+
+Nothing exciting is happening here, which is the point: it's just another
+authenticated request, and the only permission you need is `GetObject`. You can
+even do it with `curl`.
+
+## Why you'd actually want this
+
+Feeding training batches is the obvious win, the case we just did the math on,
+and the one bundles were built for. You need thousands of samples per batch
+without eating thousands of round trips, and that's where the latency savings
+are the most dramatic.
+
+It's not the only place this shows up, though. A few others:
+
+- **GDPR export requests.** Someone exercises their right to get a copy of their
+  data. Their data is spread across a few hundred objects in your bucket.
+  Instead of orchestrating hundreds of downloads and stitching them together,
+  you hand the server one list of keys and get back a single tarball you can
+  stream straight to the user. Their whole pile, one file.
+- **Shipping game assets.** Games are made of seemingly infinite numbers of tiny
+  files. In an MMO with customizable armor across, say, five playable races,
+  adding a single shirt to the game can mean shipping 20-plus different 3D
+  models, textures, and material definitions just to make that one shirt render
+  correctly on everybody. Pulling those as a bundle beats pulling them one at a
+  time while a player stares at a loading bar.
+
+Anywhere you know the exact set of objects you need up front and you need them
+together, a bundle turns N requests into one.
+
+## Using it from the SDKs
+
+Every SDK wraps the same flow: make the request, get a stream back, and read
+members straight out of it without ever touching disk. Here's that call in each
+language:
+
+<Tabs groupId="languages">
+  <TabItem value="curl" label="cURL">
+
+Pipe the response straight into `tar` to list the contents:
+
+```bash
+curl -X POST "https://t3.storage.dev/my-bucket?bundle" \
+  --aws-sigv4 "aws:amz:auto:s3" \
+  --user "$TIGRIS_STORAGE_ACCESS_KEY_ID:$TIGRIS_STORAGE_SECRET_ACCESS_KEY" \
+  -H "x-tigris-bundle-format: tar" \
+  -d '{"keys":["dataset/train/img_00001.jpg","dataset/train/img_00002.jpg"]}' \
+  | tar -tv
+```
+
+Pass `-x` to extract them:
+
+```bash
+curl -X POST "https://t3.storage.dev/my-bucket?bundle" \
+  --aws-sigv4 "aws:amz:auto:s3" \
+  --user "$TIGRIS_STORAGE_ACCESS_KEY_ID:$TIGRIS_STORAGE_SECRET_ACCESS_KEY" \
+  -H "x-tigris-bundle-format: tar" \
+  -d '{"keys":["dataset/train/img_00001.jpg","dataset/train/img_00002.jpg"]}' \
+  | tar -x
+```
+
+  </TabItem>
+  <TabItem value="cli" label="CLI">
+
+The [`tigris` CLI](https://www.tigrisdata.com/docs/cli/bundle/) wraps the same
+request. Point it at a bucket, hand it a list of keys, and it writes the tar
+stream wherever you want:
+
+```bash
+tigris bundle my-bucket \
+  --keys dataset/train/img_00001.jpg,dataset/train/img_00002.jpg \
+  --output batch.tar
+```
+
+The keys can come from a file (one per line) or stdin instead of the flag, and
+you can compress the stream on the way out with `--compression gzip` (or
+`zstd`):
+
+```bash
+cat keys.txt | tigris bundle t3://my-bucket --compression gzip -o batch.tar.gz
+```
+
+Pass `--on-error fail` to make a missing key abort the whole bundle instead of
+getting skipped and logged in `__bundle_errors.json`.
+
+  </TabItem>
+  <TabItem value="python" label="Python">
+
+Install the boto3 extension with `pip install tigris-boto3-ext`:
+
+```python
+import tarfile
+from tigris_boto3_ext import bundle_objects
+
+response = bundle_objects(s3_client, "my-bucket", [
+    "dataset/train/img_001.jpg",
+    "dataset/train/img_002.jpg",
+])
+
+with tarfile.open(fileobj=response, mode="r|") as tar:
+    for member in tar:
+        if member.name == "__bundle_errors.json":
+            # Handle any errors here
+            continue
+        f = tar.extractfile(member)
+        if f is not None:
+            image_bytes = f.read()
+            # do something with image_bytes
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+Install the SDK with `go get github.com/tigrisdata/storage-go`:
+
+```go
+output, err := client.BundleObjects(ctx, &storage.BundleObjectsInput{
+    Bucket: "my-bucket",
+    Keys: []string{
+        "dataset/train/img_001.jpg",
+        "dataset/train/img_002.jpg",
+    },
+})
+if err != nil {
+    log.Fatal(err)
+}
+defer output.Body.Close()
+
+tr := tar.NewReader(output.Body)
+for {
+    hdr, err := tr.Next()
+    if err == io.EOF {
+        break
+    }
+    if err != nil {
+        log.Fatal(err)
+    }
+    if hdr.Name == "__bundle_errors.json" {
+        // handle any errors here
+        continue
+    }
+    data, _ := io.ReadAll(tr)
+    // process hdr.Name, data
+}
+```
+
+  </TabItem>
+  <TabItem value="javascript" label="JavaScript">
+
+Install the SDK with `npm install @tigrisdata/storage tar-stream`:
+
+```javascript
+import { bundle } from "@tigrisdata/storage/server";
+import tar from "tar-stream";
+
+const result = await bundle("my-bucket", [
+  "dataset/train/img_001.jpg",
+  "dataset/train/img_002.jpg",
+]);
+
+if (result.error) {
+  throw result.error;
+}
+
+const extract = tar.extract();
+extract.on("entry", (header, stream, next) => {
+  if (header.name === "__bundle_errors.json") {
+    // handle any errors here
+    stream.resume();
+    next();
+    return;
+  }
+  const chunks = [];
+  stream.on("data", (chunk) => chunks.push(chunk));
+  stream.on("end", () => {
+    const data = Buffer.concat(chunks);
+    console.log(`${header.name}: ${data.length} bytes`);
+    next();
+  });
+  stream.resume();
+});
+
+const { Readable } = await import("stream");
+Readable.fromWeb(result.data.body).pipe(extract);
+```
+
+  </TabItem>
+</Tabs>
+
+Since the dataloader case is the whole reason this exists, here's what it looks
+like wired into a PyTorch `IterableDataset` that prefetches a chunk of batches
+per bundle request:
+
+<details style={{maxWidth: "50rem", marginLeft: "auto", marginRight: "auto"}}>
+<summary>PyTorch dataloader example</summary>
+
+```python
+import random
+import tarfile
+from io import BytesIO
+import torch
+from PIL import Image
+from tigris_boto3_ext import bundle_objects
+
+def build_batches(metadata_path, batch_size):
+    """Load object keys from a metadata file and split them into batches."""
+    ...
+
+class TigrisBundleDataset(torch.utils.data.IterableDataset):
+    def __init__(self, s3_client, metadata_path, bucket, batch_size=32, prefetch=20):
+        self.s3_client = s3_client
+        self.bucket = bucket
+        self.batch_size = batch_size
+        self.prefetch = prefetch
+        self.batches = build_batches(metadata_path, batch_size)
+
+    def __iter__(self):
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:
+            my_batches = self.batches
+        else:
+            my_batches = self.batches[worker_info.id::worker_info.num_workers]
+        random.shuffle(my_batches)
+
+        for i in range(0, len(my_batches), self.prefetch):
+            chunk = my_batches[i : i + self.prefetch]
+            keys = [row["key"] for batch in chunk for row in batch]
+
+            with bundle_objects(self.s3_client, self.bucket, keys) as response:
+                with tarfile.open(fileobj=response, mode="r|") as tar:
+                    for member in tar:
+                        if member.name == "__bundle_errors.json":
+                            # handle any errors here
+                            continue
+                        f = tar.extractfile(member)
+                        if f is None:
+                            continue
+                        image = Image.open(BytesIO(f.read())).convert("RGB")
+                        yield {"image": image}
+```
+
+Swap the `Image.open` decode for whatever your samples are: `json.loads`,
+`torch.load`, a parquet reader, whatever fits.
+
+</details>
+
+## What happens when a key is missing
+
+Remember the `__bundle_errors.json` file every example skips? That's how missing
+keys get reported.
+
+By default, bundles run in **skip** mode: if a key doesn't exist, the server
+leaves it out instead of failing the whole request, and lists what it dropped
+(and why) in `__bundle_errors.json`. It's metadata, not one of your objects, so
+read it if you care which keys went missing and skip it otherwise.
+
+If you'd rather fail loudly, send `x-tigris-bundle-on-error: fail` (the SDKs
+have an equivalent flag). The server then checks every key up front and returns
+a `404` listing what's absent, instead of a partial tarball. Skip mode keeps you
+training through a few gaps; fail mode is for when the bundle has to be
+complete.
+
+There are a handful of limits worth keeping in your back pocket: up to 5,000
+keys per request, up to 50 GB assembled, a 5 MB cap on the request body itself,
+and a 15-minute timeout on the whole thing. If you're pulling more than 5,000
+objects, batch your batches.
+
+One honest tradeoff: a bundle is a sequential stream, not a random-access
+archive. You can't range-request a single member out of the middle of it, and
+one enormous object in the list will stream in its entirety before you get to
+the next one. For the "I know exactly which thousand small files I want"
+workload that's exactly right. For "I want one specific chunk of an 8 GB file,"
+a plain old `GET` is still the better tool.
+
+## The web console does it too
+
+Don't want to write any code? The web console downloads a bundle straight from
+the object browser: select the objects you want, hit download, and you get back
+the same tar stream the API hands you.
+
+<video controls autoPlay loop muted playsInline width="100%">
+  <source src="/blog/img/blog/bundle-api/bundle-demo.mp4" type="video/mp4" />
+  Download the <a href="/blog/img/blog/bundle-api/bundle-demo.mp4">MP4</a> version.
+</video>
+
+## Go forth and bundle
+
+Object storage spent a long time pretending that the only thing you ever want is
+one object at a time. The reality of how people actually use buckets, especially
+for AI training, is that you constantly want a known set of objects together
+right now without paying a latency tax per file. Borrowing the oldest trick in
+the Unix book turns out to be a clean way to give that to you.
+
+<InlineCta
+  title="Feed your GPUs, not your latency budget"
+  subtitle="Pull thousands of objects in a single request as a streaming tar archive. Tigris bundles are built for dataloaders that can't afford to wait."
+  button="Read the bundle docs"
+  link="https://www.tigrisdata.com/docs/objects/bundle/"
+/>

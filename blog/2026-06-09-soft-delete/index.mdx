@@ -1,0 +1,341 @@
+---
+slug: soft-delete
+title: Introducing Soft Delete for Tigris Buckets and Objects
+date: 2026-06-09
+description: >
+  Tigris now supports soft delete for buckets and objects. Enable it once, and
+  every delete becomes recoverable for up to 90 days before it's permanently
+  removed.
+image: ./hero-image.webp
+keywords:
+  - Tigris
+  - soft delete
+  - data protection
+  - object storage
+  - data recovery
+  - S3
+authors:
+  - davidmyriel
+tags:
+  - Updates
+  - Soft Delete
+  - Data Management
+  - Object Storage
+---
+
+import { useState } from "react";
+import InlineCta from "@site/src/components/InlineCta";
+import QuickSummary from "@site/src/components/QuickSummary";
+import MermaidFrame from "@site/src/components/MermaidFrame";
+
+export const ZoomImage = ({ src, alt, style }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <img
+        src={src}
+        alt={alt}
+        onClick={() => setOpen(true)}
+        style={{ cursor: "zoom-in", ...style }}
+      />
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            cursor: "zoom-out",
+            padding: "2rem",
+          }}
+        >
+          <img
+            src={src}
+            alt={alt}
+            style={{
+              maxWidth: "95vw",
+              maxHeight: "95vh",
+              objectFit: "contain",
+              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.5)",
+            }}
+          />
+        </div>
+      )}
+    </>
+  );
+};
+
+import heroImage from "./hero-image.webp";
+import softDeleteIllustration from "./soft-delete.webp";
+import agenticWorkflows from "./agentic-workflows.webp";
+import bucketCreate from "./bucket-create.webp";
+import bucketUpdate from "./bucket-update.webp";
+import deletedBucketsTab from "./deleted-buckets-tab.webp";
+import versionHistory from "./version-history.webp";
+import Lifecycle from "./lifecycle.svg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Ty the tiger braced on the broken edge of an ancient stone bridge, hauling a glowing golden relic out of a swirling vortex of dissolving artifacts with a luminous rope, the recovered relics resting on stone pedestals behind him and the Tigris kingdom in the misty distance"
+/>
+
+Today we're shipping
+[soft delete](https://www.tigrisdata.com/docs/buckets/soft-delete/) for Tigris
+buckets and objects. When you turn it on for a bucket, deletes stop being
+permanent. They go into a holding state for a retention window you set, anywhere
+from 7 to 90 days. Restore inside that window and the bucket or object comes
+back. Wait the window out and Tigris removes the data on its own.
+
+A wrong delete is no longer a one-way door. Work that used to need a staging
+environment or a careful permissions audit can happen on the real bucket,
+because if something goes wrong, you have a few days to fix it.
+
+## Deletes go into a holding state
+
+<MermaidFrame style={{ maxWidth: "44rem", margin: "1.5rem auto" }}>
+  <Lifecycle
+    role="img"
+    aria-label="Soft delete lifecycle: a delete moves a Live bucket or object into a Soft-deleted state, where it stays recoverable for a retention window of 7 to 90 days. A restore returns it to Live; if the retention window expires, it moves to Permanently removed and the storage is reclaimed."
+  />
+</MermaidFrame>
+
+Retention is set per bucket. Turning soft delete off later doesn't purge data
+that's already in the holding state. That data keeps aging out on the schedule
+it was created with. While a bucket itself is in the holding state, its name
+stays reserved. You can't reuse the name until the bucket is restored or fully
+removed.
+
+<img
+  src={agenticWorkflows}
+  alt="Ty the tiger overseeing a vaulted stone scriptorium, where multiple colored enchanted quills work autonomously between reading tables inscribing scrolls. A translucent teal-and-gold layer of magical light hovers chest-high across the chamber, holding fallen scrolls safely suspended above the floor."
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "1.5rem auto",
+    display: "block",
+  }}
+/>
+
+## Your agent writes get a safety net
+
+Tigris already gives you
+[snapshots and forks](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/)
+when you want to isolate an agent's work into a copy of the bucket. Soft delete
+adds another option for the cases where the agent or CI job writes directly to a
+real bucket. Any delete it makes is recoverable inside the retention window. A
+coding agent cleaning up stale prefixes, a pipeline rotating documents in a RAG
+corpus, a CI job resetting test fixtures between runs. All of these can write
+directly, and if something goes wrong, you click restore.
+
+It also changes how you run destructive work against production. A lot of teams
+keep a staging bucket around as an insurance policy for migrations, cleanups,
+and retention sweeps that touch real data. You run the script there first, watch
+what happens, point it at production only after you're sure. With soft delete
+on, the bucket holds its own undo history. You can run the migration directly,
+watch what breaks, and put back whatever you didn't mean to touch.
+
+And it's not always about recovering from the last mistake. Every delete on a
+key gets its own restorable version, stamped with the time it happened. So if a
+bad write goes out and a string of good ones follow, you can still reach back
+past the noise to the exact prior state you wanted. The good writes stay where
+they are.
+
+## Every version is its own restore point
+
+Inside any bucket with soft delete on, the dashboard splits the file list into
+**All files** and **Deleted files**. Pick a deleted object and the **Version
+history** panel opens on the right. It lists every soft-deleted version of that
+key with a timestamp, version ID, size, and ETag. Click restore on the one you
+want and the object is live again.
+
+_Figure 1. The Version history panel for a soft-deleted object, listing each
+version with its timestamp, version ID, size, and ETag. Each one is restorable
+on its own._
+
+<ZoomImage
+  src={versionHistory}
+  alt="The Version history panel in the Tigris dashboard, listing soft-deleted versions of an object with timestamps, version IDs, sizes, and ETags"
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "1.5rem auto",
+    display: "block",
+  }}
+/>
+
+## Enabling it takes one toggle, one header, or one command
+
+In the dashboard, you can toggle **Enable Soft Delete** when you create a
+bucket, or open **Bucket Settings → Data Management** on a bucket you already
+have.
+
+<div
+  style={{
+    display: "flex",
+    gap: "1rem",
+    maxWidth: "42rem",
+    margin: "1.5rem auto",
+    flexWrap: "wrap",
+    alignItems: "flex-start",
+  }}
+>
+  <div style={{ flex: "1 1 0", minWidth: "240px" }}>
+    <p
+      style={{
+        fontSize: "0.85rem",
+        fontStyle: "italic",
+        textAlign: "center",
+        marginBottom: "0.5rem",
+      }}
+    >
+      Figure 2. Enabling soft delete in the Create Bucket dialog.
+    </p>
+    <ZoomImage
+      src={bucketCreate}
+      alt="The Create Bucket dialog in the Tigris dashboard with the Enable Soft Delete toggle switched on and a retention window of 7 days set"
+      style={{
+        width: "100%",
+        height: "320px",
+        objectFit: "contain",
+        display: "block",
+        background: "var(--ifm-background-surface-color, #fafafa)",
+        borderRadius: "0.25rem",
+      }}
+    />
+  </div>
+  <div style={{ flex: "1 1 0", minWidth: "240px" }}>
+    <p
+      style={{
+        fontSize: "0.85rem",
+        fontStyle: "italic",
+        textAlign: "center",
+        marginBottom: "0.5rem",
+      }}
+    >
+      Figure 3. Enabling soft delete from Bucket Settings → Data Management.
+    </p>
+    <ZoomImage
+      src={bucketUpdate}
+      alt="The Bucket Settings → Data Management tab in the Tigris dashboard with the Enable Soft Delete toggle switched on for an existing bucket"
+      style={{
+        width: "100%",
+        height: "320px",
+        objectFit: "contain",
+        display: "block",
+        background: "var(--ifm-background-surface-color, #fafafa)",
+        borderRadius: "0.25rem",
+      }}
+    />
+  </div>
+</div>
+
+From the S3 API, set the `X-Tigris-Soft-Delete` header on `CreateBucket`. Use
+`true` for the default retention of 7 days, or pass a number between 7 and 90
+for a custom window.
+
+```go
+func createBucketWithSoftDelete(ctx context.Context, client *s3.Client, bucketName string) error {
+	_, err := client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: aws.String(bucketName)}, func(options *s3.Options) {
+		options.APIOptions = append(options.APIOptions, http.AddHeaderValue("X-Tigris-Soft-Delete", "30"))
+	})
+	return err
+}
+```
+
+From the CLI, the same setting is a flag on `tigris buckets set`.
+
+```bash
+tigris buckets set my-bucket --soft-delete enable --retention-days 30
+```
+
+## Restore is one click or one command
+
+On the buckets page, a **Deleted buckets** segment lists every soft-deleted
+bucket that's still inside its retention window. Open the row's menu and click
+restore. The bucket reappears in the regular list. Every object it held when you
+deleted it is live and readable again.
+
+_Figure 4. The Deleted buckets segment in the Tigris dashboard, with a
+soft-deleted bucket's menu opened to the Restore action._
+
+<ZoomImage
+  src={deletedBucketsTab}
+  alt="The Deleted buckets tab in the Tigris dashboard, showing a soft-deleted bucket with the overflow menu open and a Restore option available"
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "1.5rem auto",
+    display: "block",
+  }}
+/>
+
+Objects work the same way. Open the **Deleted files** segment, pick a version,
+click restore.
+
+From the CLI, list soft-deleted buckets and restore one by name.
+
+```bash
+tigris buckets list --deleted
+tigris buckets restore my-bucket
+```
+
+`tigris buckets delete my-bucket --yes` also respects the bucket's soft delete
+setting. If soft delete is on, the bucket moves into the holding state and shows
+up under `tigris buckets list --deleted` until you restore it or the retention
+window expires.
+
+## Your cost won't change
+
+Data in the holding state is billed at the same per-GB rate as live data for as
+long as it sits inside the retention window. There's no separate add-on fee for
+turning the feature on. When the window expires and Tigris removes the data, the
+storage is reclaimed and the bill goes down.
+
+## Soft delete is recovery, not backup
+
+Pick a retention window that matches the cycle your team actually operates on.
+The default is 7 days, which is enough time for most teams to notice that
+something went wrong and recover. If your incident review runs on a longer
+cadence, or you want a wider buffer for audits, push the window out to 30 or 60
+days. Already soft-deleted data keeps the retention it was created with, so
+changing the window later only affects new deletes.
+
+Soft delete is recovery, not backup. It protects you against the kind of mistake
+you can catch inside the window you set. It doesn't protect you against a
+long-running corruption that goes unnoticed for months, and it doesn't replace
+whatever you do for long-term retention or disaster recovery. Use it alongside
+those, not instead of them.
+
+If you're on a snapshot-enabled bucket, soft delete sits underneath snapshots.
+Deleting a specific version moves that version into the holding state and it
+shows up in the **Deleted files** segment, where you can restore it the same way
+as any other soft-deleted object. A plain delete still records a delete marker
+and leaves earlier versions live, the same as before.
+
+For the full dashboard walkthrough and the API reference, see the
+[soft delete documentation](https://www.tigrisdata.com/docs/buckets/soft-delete/).
+
+<img
+  src={softDeleteIllustration}
+  alt="Ty the tiger inside an ancient cliffside vault chamber, surveying rows of stone pedestals that hold glowing soft-deleted scroll-artifacts inscribed with timestamped runes, the deepest pedestals fading into dark mist as their retention expires, with the verdant Tigris kingdom visible through the cave mouth"
+  style={{
+    width: "100%",
+    maxWidth: "42rem",
+    margin: "1.5rem auto",
+    display: "block",
+  }}
+/>
+
+<InlineCta
+  title="Enable soft delete on your buckets today"
+  subtitle={
+    "Sign in to the Tigris console and toggle Soft Delete in Bucket Settings → Data Management. Your first 5 GB are free."
+  }
+  button="Open the Tigris console"
+  link="https://console.storage.dev/signin"
+/>
