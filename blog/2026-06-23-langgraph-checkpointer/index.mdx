@@ -1,0 +1,231 @@
+---
+slug: langgraph-checkpointer
+title: "Clone your production agent in one API call"
+date: 2026-06-23
+description: >
+  A LangGraph checkpointer that lives in object storage. Resume, time travel,
+  and human-in-the-loop work like always — plus a zero-copy fork that clones
+  your entire agent, every thread and checkpoint, in O(1) with no data copy.
+image: ./hero-image.webp
+keywords:
+  - langgraph
+  - checkpointer
+  - agents
+  - bucket forking
+  - object storage
+  - tigris
+  - s3
+  - agent memory
+  - time travel
+authors:
+  - davidmyriel
+tags:
+  - Build with Tigris
+  - agents
+  - langgraph
+---
+
+{/* TODO: hero image — agent state forking on Tigris object storage */}
+{/* <img src={heroImage} className="hero-image" alt="Fork your whole agent, not just one thread — LangGraph checkpointing on Tigris" /> */}
+
+import InlineCta from "@site/src/components/InlineCta";
+
+{/* TODO: QuickSummary slot — add 3-item summary once hero/diagram assets are in */}
+
+I run LangGraph agents in production, and the checkpointer is the part I think
+about least until I need it most. It quietly saves every step of every
+conversation so an agent can resume after a crash, pause for a human to approve
+something, or rewind to an earlier state. Postgres does this. SQLite does this.
+The in-memory saver does this until you restart the process.
+
+Then one day I wanted to take a real agent — one with weeks of accumulated
+state across hundreds of threads — and run an experiment against all of it
+without touching production. That is the moment I found the wall.
+
+{/* truncate */}
+
+## What every checkpointer already gives you
+
+Let me be fair to the tools I already had. A LangGraph checkpointer persists
+your graph state as a sequence of checkpoints, keyed by thread. With Postgres,
+SQLite, or the in-memory saver you get the things the
+[LangGraph docs](https://langchain-ai.github.io/langgraph/concepts/persistence/)
+promise:
+
+- **Resume** — an agent picks up exactly where it left off after a failure.
+- **Time travel within a thread** — rewind one conversation to an earlier
+  checkpoint and branch from there.
+- **Human-in-the-loop** — pause mid-run, wait for approval, resume.
+- **Short-term memory** — the thread remembers its own history.
+
+This is enough for a lot of agents. If all you ever do is operate one thread at
+a time, a Postgres checkpointer is a perfectly good answer and you can stop
+reading here.
+
+## The thing I couldn't do
+
+Here is what I actually wanted: take the entire agent — *all* of its threads,
+*all* of their checkpoints, the whole accumulated world — and make an instant,
+isolated copy I could experiment on. Not one conversation rewound to step 12.
+The whole thing.
+
+The reason I wanted it wasn't novelty. It was that the most important question I
+have about any agent is *"will this change make it better or worse?"* — and I
+could never answer it honestly. My evals ran against toy fixtures, three
+hand-written threads that look nothing like the messy, weeks-old state real
+users build up. I'd ship a prompt tweak that passed the fixtures and watch it
+regress in production, because the fixtures were never the real world.
+
+The fix is obvious and, until now, impractical: **eval against a copy of real
+state.** Fork production, point a graph at the fork, run the new prompt against
+the actual accumulated memory of real conversations. Do it fifty times in
+parallel — fifty variants, fifty isolated copies — and pick the winner from
+data that actually resembles what users will hit.
+
+The same move solves the other two things that used to ruin my week:
+
+- **Reproducing a bug exactly.** A customer's agent said something wrong on
+  Tuesday. Fork the bucket at Tuesday's snapshot and you have the *exact* world
+  it saw — every thread, every cross-thread memory — to step through. Not an
+  approximation reconstructed from logs.
+- **Provisioning and risky work.** Start each new tenant from a golden,
+  pre-seeded agent by forking a template. Or let an agent attempt something
+  destructive on a fork — keep it if it worked, throw it away if it didn't.
+
+With a database checkpointer, "copy the whole agent" means `pg_dump` and
+restore, or a `CREATE TABLE AS` that scans every row. The cost scales with how
+much state you've accumulated, which is exactly backwards — the more valuable
+your agent's history is, the more painful it is to branch from. So in practice
+nobody does it, and the eval stays fake.
+
+That gap is the reason I built
+[`langgraph-checkpoint-tigris`](https://pypi.org/project/langgraph-checkpoint-tigris/).
+
+## Checkpoints as objects, not rows
+
+The checkpointer stores LangGraph state directly in a
+[Tigris](https://www.tigrisdata.com/docs/overview/) bucket over the S3 API.
+There's no database server to provision, patch, or scale. Each checkpoint is an
+object; the latest one is found by a strongly-consistent sorted listing, so
+there's no mutable pointer to corrupt and nothing to migrate.
+
+Installing and wiring it in looks like every other checkpointer:
+
+```bash
+pip install -U langgraph-checkpoint-tigris
+```
+
+```python
+from langchain.chat_models import init_chat_model
+from langgraph.graph import StateGraph, MessagesState, START
+from langgraph.checkpoint.tigris import TigrisSaver
+
+model = init_chat_model(model="claude-haiku-4-5-20251001")
+
+with TigrisSaver.from_conn_string("my-agent-state") as checkpointer:
+    checkpointer.setup()
+
+    def call_model(state: MessagesState):
+        return {"messages": model.invoke(state["messages"])}
+
+    builder = StateGraph(MessagesState)
+    builder.add_node(call_model)
+    builder.add_edge(START, "call_model")
+    graph = builder.compile(checkpointer=checkpointer)
+
+    config = {"configurable": {"thread_id": "1"}}
+    graph.invoke({"messages": [{"role": "user", "content": "hi! I'm bob"}]}, config)
+    graph.invoke({"messages": [{"role": "user", "content": "what's my name?"}]}, config)
+```
+
+Resume, time travel, human-in-the-loop — all of it works the same as it does on
+Postgres, because the saver implements the same `BaseCheckpointSaver` contract.
+There's a `TigrisSaver` (boto3) and an `AsyncTigrisSaver` (aioboto3) so it drops
+into sync and async graphs alike. Nothing about your graph code changes.
+
+## Forking the whole agent in one call
+
+This is the capability you can't get from a database checkpointer.
+
+```python
+with TigrisSaver.from_conn_string("prod-agent-state") as checkpointer:
+    # Branch the ENTIRE bucket — every thread, every checkpoint — instantly.
+    experiment = checkpointer.fork("experiment-run-42")
+
+    # `experiment` is an isolated saver. Writes here never touch prod.
+    experiment_graph = builder.compile(checkpointer=experiment)
+```
+
+`fork()` creates a new bucket that shares all of its objects with the source
+*by reference*. Nothing is copied. It takes the same amount of time whether your
+agent has 1 MB of state or 1 TB, because Tigris is built on an append-only log
+where a fork is a pointer, not a duplication. The fork is fully writable, and
+writes to it never affect the source.
+
+That last sentence is the whole game. Fifty forks of a 50 GB agent cost 50 GB of
+storage, not 2.5 TB, because they share the underlying bytes until they diverge.
+The fixture-free eval I wanted is now just a loop: fork, compile a graph against
+the fork, run a variant, score it, throw the fork away.
+
+{/* prettier-ignore-start */}
+
+:::tip[Snapshot-enabled buckets]
+A bucket must be snapshot-enabled to be forkable — create it with the `X-Tigris-Enable-Snapshot: true` header or flip it on in the dashboard. Pass `snapshot_version` to `fork()` to branch from a specific point in time.
+:::
+
+{/* prettier-ignore-end */}
+
+If you only need to branch a single conversation rather than the whole agent,
+there's `copy_thread` (and `acopy_thread`), which server-side-copies one
+thread's full checkpoint lineage to a new `thread_id`. Same idea, narrower
+scope — useful for A/B-ing a single user's trajectory.
+
+## Why this only works on object storage
+
+You can't bolt instant whole-agent forking onto a relational checkpointer,
+because the cost model is wrong. A database has to read rows to copy them.
+Tigris doesn't copy — it shares immutable blocks and layers new writes on top,
+the same machinery behind
+[bucket forking](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/)
+and snapshots. That's a property of the storage engine, not a feature you can
+add at the ORM layer.
+
+It also inherits the rest of what object storage gives you for free. Tigris is
+[globally distributed](https://www.tigrisdata.com/docs/overview/), so your
+agent's state is cached close to wherever the code runs, with
+[no egress fees](https://www.tigrisdata.com/docs/account-management/billing/)
+when it reads context back. It's
+[S3-compatible](https://www.tigrisdata.com/docs/overview/), so `aws s3 cp` works
+and you're never locked in. And there's no database to keep alive between runs —
+the bucket *is* the state.
+
+## What it doesn't do
+
+I'd rather you find this out from me than from a surprise in production.
+
+Use a **Single-region** or **Multi-region** Tigris bucket. Those give the
+strong, globally consistent reads and lists the saver relies on to find the
+latest checkpoint without a mutable pointer. Global and Dual-region buckets give
+only eventual cross-region consistency, which can return stale checkpoints.
+
+And this is object storage, not a query engine. If your agent needs rich SQL
+queries *over* checkpoint contents — "find every thread where the user mentioned
+refunds" — that's a job for indexing the data elsewhere. The checkpointer's job
+is to persist and branch state, and that's what it's good at.
+
+## The short version
+
+If you're already on LangGraph, swapping in the Tigris checkpointer costs you
+one `pip install` and one connection string. You keep resume, time travel, and
+human-in-the-loop exactly as they are. What you gain is the move databases make
+too expensive to bother with: cloning your entire agent — every thread, every
+checkpoint — in constant time with no data copy. Which means you finally get to
+stop evaluating your agent against fixtures and start evaluating it against the
+real thing.
+
+<InlineCta
+  title="Fork your whole agent in one call"
+  subtitle="A LangGraph checkpointer on Tigris object storage. Resume and time travel like always — plus zero-copy forking of every thread at once."
+  button="Read the docs"
+  link="https://pypi.org/project/langgraph-checkpoint-tigris/"
+/>
