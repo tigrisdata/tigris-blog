@@ -25,12 +25,14 @@ tags:
   - langgraph
 ---
 
-{/* TODO: hero image — agent state forking on Tigris object storage */}
-{/* <img src={heroImage} className="hero-image" alt="Fork your whole agent, not just one thread — LangGraph checkpointing on Tigris" /> */}
-
 import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
 
-{/* TODO: QuickSummary slot — add 3-item summary once hero/diagram assets are in */}
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Fork your whole agent, not just one thread — LangGraph checkpointing on Tigris"
+/>
 
 I run LangGraph agents in production, and the checkpointer is the part I think
 about least until I need it most. It quietly saves every step of every
