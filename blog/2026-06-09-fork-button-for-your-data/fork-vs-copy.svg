@@ -1,0 +1,103 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 680 300"
+  width="680"
+  height="300"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .label {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .full {
+      rx: 4;
+      ry: 4;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .shared {
+      rx: 4;
+      ry: 4;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .writes {
+      rx: 4;
+      ry: 4;
+      fill: rgba(98, 254, 181, 0.14);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1;
+    }
+  </style>
+
+  <text x="340" y="28" text-anchor="middle" class="title">
+    Same fifty agents, very different bill
+  </text>
+
+  <!-- separator -->
+  <line
+    x1="340"
+    y1="52"
+    x2="340"
+    y2="276"
+    stroke="#2a3731"
+    stroke-width="1"
+    stroke-dasharray="3 3"
+  />
+
+  <!-- LEFT: copy -->
+  <text x="170" y="74" text-anchor="middle" class="label">Copying</text>
+  <text x="170" y="93" text-anchor="middle" class="sub">
+    every agent gets a full duplicate
+  </text>
+
+  <rect x="70" y="112" width="200" height="20" class="full" />
+  <rect x="70" y="140" width="200" height="20" class="full" />
+  <rect x="70" y="168" width="200" height="20" class="full" />
+  <text x="170" y="208" text-anchor="middle" class="sub">…</text>
+
+  <text x="170" y="240" text-anchor="middle" class="label">50 × 1 TB = 50 TB</text>
+  <text x="170" y="262" text-anchor="middle" class="sub">
+    $500 in COPY requests, minutes idle
+  </text>
+
+  <!-- RIGHT: fork -->
+  <text x="510" y="74" text-anchor="middle" class="label" fill="#62feb5">
+    Forking
+  </text>
+  <text x="510" y="93" text-anchor="middle" class="sub">
+    forks share the bytes, store only writes
+  </text>
+
+  <rect x="410" y="112" width="160" height="20" class="shared" />
+  <rect x="576" y="112" width="14" height="20" class="writes" />
+  <rect x="410" y="140" width="160" height="20" class="shared" />
+  <rect x="576" y="140" width="26" height="20" class="writes" />
+  <rect x="410" y="168" width="160" height="20" class="shared" />
+  <rect x="576" y="168" width="18" height="20" class="writes" />
+  <text x="510" y="208" text-anchor="middle" class="sub">…</text>
+
+  <text x="510" y="240" text-anchor="middle" class="label" fill="#62feb5">
+    1 TB shared + tiny writes
+  </text>
+  <text x="510" y="262" text-anchor="middle" class="sub">
+    no copy bill, created in constant time
+  </text>
+</svg>

@@ -1,0 +1,183 @@
+---
+slug: fork-button-for-your-data
+title: "Your dataset needs a fork button"
+date: 2026-06-09
+description: >
+  Copying a dataset for every AI agent is slow and expensive. storagesdk makes
+  fork and snapshot first-class storage operations across S3, R2, GCS, and
+  Tigris, so you can give fifty agents their own isolated copy in one line.
+image: ./hero-image.webp
+keywords:
+  - storagesdk
+  - bucket forking
+  - object storage
+  - ai agents
+  - tigris
+  - copy-on-write
+authors:
+  - davidmyriel
+tags:
+  - Build with Tigris
+  - agents
+---
+
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+import CopyCost from "./copy-cost.svg";
+import StorageSdkAdapters from "./storagesdk-adapters.svg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Your dataset needs a fork button — fork object storage for fifty AI agents with storagesdk"
+/>
+
+When you want to try something risky in code, you branch the repo with
+`git checkout -b` and start working. The branch is instant, it's isolated, and
+it costs nothing. Your data won't do that.
+
+Picture fifty experiments on one dataset at once: fifty agents, fifty variations
+of a labeling strategy, one big pile of files. You write the loop, start it, and
+hit a wall that has nothing to do with your code. Your storage has no fork
+button.
+
+Each agent needs its own writable copy so it can rewrite the data without
+clobbering the other forty-nine. So you copy. That's where it breaks.
+
+The move git gave your code exists for data now, in a library called
+[`storagesdk`](https://github.com/storagesdk/storagesdk). Start with what
+copying costs you.
+
+{/* truncate */}
+
+## The $500 you pay before any agent starts
+
+Say the dataset is 1 TB across two million files. Giving fifty agents their own
+copy means copying two million objects fifty times, which is a hundred million
+COPY requests. On
+[S3 at $0.005 per thousand](https://aws.amazon.com/s3/pricing/), that's $500 in
+request fees to start one batch, and you pay it again on the next sweep.
+
+The wait hurts more than the bill. Each agent sits idle for minutes while its
+two million files copy, and S3 rate-limits copy requests per prefix, so fifty
+copy jobs end up queued behind each other. Leave the copies around for a week
+and you're storing 50 TB of duplicates.
+
+Most teams give up on copying and point all fifty agents at one shared bucket.
+Then the agents overwrite each other's half-finished files, the last write wins,
+and you can't tell which run produced which result. You saved the $500 and lost
+the experiment.
+
+<MermaidFrame style={{ maxWidth: "40rem", margin: "1.5rem auto" }}>
+  <CopyCost
+    role="img"
+    aria-label="Copying a 1 TB, two-million-file dataset for fifty agents costs 100 million COPY requests (about $500 per batch), minutes of idle time per agent while fifty copies queue, and 50 TB of duplicated storage — and you pay it again on the next sweep."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+## The fork button your storage is missing
+
+A fork is a writable branch of your data. Instead of duplicating the bytes, it
+points at the original and records only what each agent changes. Making one is
+instant whether the dataset is a gigabyte or a petabyte, because at that moment
+nothing has been copied. Fifty agents get fifty isolated copies at the same
+time, with nobody waiting on a clone and no two of them touching the same bytes.
+
+Neon did this for Postgres, and Cloudflare brought it to Git repos with
+Artifacts. `storagesdk` brings it to object storage, where your datasets, model
+weights, and media files actually live.
+
+## Fork it in one line
+
+`storagesdk` makes `fork` and `snapshot` first-class operations, with one API
+across S3, R2, GCS, Azure, Vercel Blob, Tigris, and a dozen more backends. The
+whole loop:
+
+```ts
+import { Storage } from "@storagesdk/core";
+import { tigris } from "@storagesdk/adapters/tigris";
+
+const storage = new Storage({
+  adapter: tigris({ bucket: "datasets" /* keys */ }),
+});
+
+const runs = Array.from({ length: 50 }, (_, i) => `run-${i}`);
+for (const name of runs) await storage.forks.create({ name });
+
+await Promise.all(runs.map((name) => runAgent(storage.forks.get(name))));
+```
+
+`storage.forks.get(name)` hands each agent a full storage client on its own
+branch, with the same API as the parent and complete isolation.
+
+That `forks.create` call runs on every backend, but each one charges differently
+for it. On S3 the adapter copies every object, so you pay the $500 and the wait.
+On [Tigris](https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/) the
+same call is a native copy-on-write fork, created in constant time no matter how
+large the bucket, with no copy bill and nothing duplicated. The code doesn't
+change; you pick the backend where forking is free.
+
+<MermaidFrame style={{ maxWidth: "44rem", margin: "1.75rem auto" }}>
+  <StorageSdkAdapters
+    role="img"
+    aria-label="A single storage.forks.create() call fans out to every backend adapter. On S3, R2, and GCS the adapter copies every object, so you pay per fork. On Tigris the same call is a native copy-on-write fork that is instant and free. The same line of code runs everywhere; the adapter decides the cost."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+## The same git moves, on a terabyte
+
+Run the sweep to the end. Each agent worked in its own fork and wrote a score.
+Now read the scores, keep the winner, and drop the rest:
+
+```ts
+const scores = await Promise.all(
+  runs.map(async (name) =>
+    Number(await storage.forks.get(name).download("score.txt", { as: "text" }))
+  )
+);
+const winner = runs[scores.indexOf(Math.max(...scores))];
+
+// there's no merge — you promote the winner by copying its result out
+const best = storage.forks.get(winner);
+await storage.upload(
+  "labels.json",
+  await best.download("labels.json", { as: "text" })
+);
+await Promise.all(runs.map((name) => storage.forks.delete(name)));
+```
+
+Fifty isolated runs, one promoted, the rest deleted, and you only paid to store
+the few percent each run changed.
+
+The same pattern covers other jobs. Hand an agent a fork instead of the real
+bucket and a bad run can only wreck a throwaway copy, not your production data.
+Or snapshot a bucket before a risky step and restore into a fresh fork if the
+agent goes sideways:
+
+```ts
+const snap = await storage.snapshots.create({ name: "pre-step" });
+// ...the agent runs and breaks something...
+await storage.forks.create({ name: "retry", fromSnapshot: snap.id });
+```
+
+Spin up a branch per tenant or per pull request and delete it when you're done,
+with no copying and no leftover storage to pay for.
+
+## Build your agents with `storagesdk`
+
+Your agents don't need a vault for their data. They need a branch they can fork
+and throw away.
+
+```sh
+npm install @storagesdk/core @storagesdk/adapters
+```
+
+<InlineCta
+  title="Ready to fork your first dataset?"
+  subtitle="Fork and snapshot your data across S3, R2, GCS, and Tigris — instant and free on Tigris. Give every agent its own copy with storagesdk."
+  button="Read the docs"
+  link="https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/"
+/>
