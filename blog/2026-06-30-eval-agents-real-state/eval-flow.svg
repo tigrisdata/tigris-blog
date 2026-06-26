@@ -1,0 +1,130 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 680 372"
+  width="680"
+  height="372"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .label {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 11.5px;
+      fill: #bac1be;
+    }
+    .glabel {
+      font-size: 11px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .prod {
+      rx: 8;
+      ry: 8;
+      fill: #142229;
+      stroke: #62feb5;
+      stroke-opacity: 0.6;
+      stroke-width: 1.5;
+    }
+    .fork {
+      rx: 6;
+      ry: 6;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .judge {
+      rx: 6;
+      ry: 6;
+      fill: #15242b;
+      stroke: #3a4a44;
+      stroke-width: 1;
+    }
+    .verdict {
+      rx: 6;
+      ry: 6;
+      fill: rgba(98, 254, 181, 0.12);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1.2;
+    }
+    .flow {
+      stroke: #3a4a44;
+      stroke-width: 1.5;
+      fill: none;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="arrow"
+      markerWidth="9"
+      markerHeight="9"
+      refX="6"
+      refY="3"
+      orient="auto"
+    >
+      <path d="M0,0 L6,3 L0,6 Z" fill="#3a4a44" />
+    </marker>
+  </defs>
+
+  <text x="340" y="30" text-anchor="middle" class="title">
+    Fork prod, replay, judge, discard
+  </text>
+
+  <!-- prod -->
+  <rect x="250" y="56" width="180" height="44" class="prod" />
+  <text x="340" y="83" text-anchor="middle" class="label">prod bucket</text>
+
+  <!-- fork arrows -->
+  <path d="M300,100 L184,146" class="flow" marker-end="url(#arrow)" />
+  <path d="M380,100 L496,146" class="flow" marker-end="url(#arrow)" />
+  <text x="214" y="122" text-anchor="middle" class="glabel">fork()</text>
+  <text x="466" y="122" text-anchor="middle" class="glabel">fork()</text>
+
+  <!-- baseline fork -->
+  <rect x="90" y="148" width="180" height="46" class="fork" />
+  <text x="180" y="171" text-anchor="middle" class="label">baseline fork</text>
+  <text x="180" y="186" text-anchor="middle" class="small">current prompt</text>
+
+  <!-- candidate fork -->
+  <rect x="410" y="148" width="180" height="46" class="fork" />
+  <text x="500" y="171" text-anchor="middle" class="label">candidate fork</text>
+  <text x="500" y="186" text-anchor="middle" class="small">new prompt</text>
+
+  <!-- replay -->
+  <text x="180" y="216" text-anchor="middle" class="small">
+    replay real threads
+  </text>
+  <text x="500" y="216" text-anchor="middle" class="small">
+    replay real threads
+  </text>
+
+  <!-- converge to judge -->
+  <path d="M180,222 L300,242" class="flow" marker-end="url(#arrow)" />
+  <path d="M500,222 L380,242" class="flow" marker-end="url(#arrow)" />
+
+  <!-- judge -->
+  <rect x="250" y="244" width="180" height="44" class="judge" />
+  <text x="340" y="266" text-anchor="middle" class="label">pairwise judge</text>
+  <text x="340" y="281" text-anchor="middle" class="small">order-swapped</text>
+
+  <!-- to verdict -->
+  <path d="M340,288 L340,312" class="flow" marker-end="url(#arrow)" />
+
+  <!-- verdict -->
+  <rect x="208" y="314" width="264" height="44" class="verdict" />
+  <text x="340" y="341" text-anchor="middle" class="label">
+    VERDICT: ship / hold
+  </text>
+</svg>

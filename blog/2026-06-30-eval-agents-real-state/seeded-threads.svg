@@ -1,0 +1,108 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 600 356"
+  width="600"
+  height="356"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .tid {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .lbl {
+      font-size: 10.5px;
+      fill: #94a3b8;
+    }
+    .val {
+      font-size: 11.5px;
+      fill: #e2e8f0;
+    }
+    .probe {
+      font-size: 11.5px;
+      fill: #bac1be;
+      font-style: italic;
+    }
+    .card {
+      rx: 7;
+      ry: 7;
+      fill: #142229;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .marker {
+      rx: 9;
+      ry: 9;
+      fill: rgba(98, 254, 181, 0.1);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1;
+    }
+    .markertext {
+      font-size: 10.5px;
+      fill: #62feb5;
+    }
+  </style>
+
+  <text x="300" y="26" text-anchor="middle" class="title">
+    Four seeded threads, each hiding one fact
+  </text>
+
+  <!-- card: cust-ana -->
+  <rect x="20" y="44" width="560" height="64" class="card" />
+  <text x="36" y="72" class="tid">cust-ana</text>
+  <text x="36" y="96" class="markertext">marker: vegetarian, nut</text>
+  <text x="180" y="70" class="val">
+    <tspan class="lbl">knows </tspan>vegetarian, severe tree-nut allergy
+  </text>
+  <text x="180" y="94" class="probe">
+    <tspan class="lbl" font-style="normal">asks </tspan>“suggest a dinner from
+    this week's menu”
+  </text>
+
+  <!-- card: cust-ben -->
+  <rect x="20" y="118" width="560" height="64" class="card" />
+  <text x="36" y="146" class="tid">cust-ben</text>
+  <text x="36" y="170" class="markertext">marker: pro</text>
+  <text x="180" y="144" class="val">
+    <tspan class="lbl">knows </tspan>Pro plan, based in Tokyo (JST)
+  </text>
+  <text x="180" y="168" class="probe">
+    <tspan class="lbl" font-style="normal">asks </tspan>“when will I get a first
+    response tonight?”
+  </text>
+
+  <!-- card: cust-cleo -->
+  <rect x="20" y="192" width="560" height="64" class="card" />
+  <text x="36" y="220" class="tid">cust-cleo</text>
+  <text x="36" y="244" class="markertext">marker: step</text>
+  <text x="180" y="218" class="val">
+    <tspan class="lbl">knows </tspan>total beginner, wants no jargon
+  </text>
+  <text x="180" y="242" class="probe">
+    <tspan class="lbl" font-style="normal">asks </tspan>“how do I set up automated
+    backups?”
+  </text>
+
+  <!-- card: cust-dan -->
+  <rect x="20" y="266" width="560" height="64" class="card" />
+  <text x="36" y="294" class="tid">cust-dan</text>
+  <text x="36" y="318" class="markertext">marker: credit</text>
+  <text x="180" y="292" class="val">
+    <tspan class="lbl">knows </tspan>past double-charge fixed with a credit
+  </text>
+  <text x="180" y="316" class="probe">
+    <tspan class="lbl" font-style="normal">asks </tspan>“another charge I don't
+    recognize, what now?”
+  </text>
+</svg>
