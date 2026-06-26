@@ -1,0 +1,337 @@
+---
+slug: eval-agents-real-state
+title: "Every Tenant Has a Past: Eval LangGraph Agents Against Real State"
+date: 2026-06-30
+description: >
+  A build-along for agent platforms: fork a customer's entire LangGraph state,
+  replay real conversations through a candidate change, and judge it
+  head-to-head so a prompt tweak that passes your fixtures can't quietly regress
+  in prod. Why object storage, not a database, is what makes it possible.
+  Runnable code.
+image: ./hero-image.webp
+keywords:
+  - langgraph
+  - agent evaluation
+  - llm eval
+  - checkpointer
+  - bucket forking
+  - object storage
+  - agentic platform
+  - tigris
+  - agents
+authors:
+  - davidmyriel
+tags:
+  - Build with Tigris
+  - agents
+  - langgraph
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import heroImage from "./hero-image.webp";
+import EvalFlow from "./eval-flow.svg";
+import ForkIsolation from "./fork-isolation.svg";
+import ForgottenStateChat from "./forgotten-state-chat.svg";
+import FleetStorage from "./fleet-bucket-vs-db.svg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Fork your whole agent and eval a change against real state, LangGraph checkpointing on Tigris"
+/>
+
+The last time I shipped a "small" prompt change to a production agent, it passed
+every test I had and made the agent worse. It got a little more generic, a
+little more likely to ask a customer something they'd already told it. My tests
+didn't catch it because my tests were three hand-written threads, and three
+hand-written threads have no past. The behavior that mattered only showed up
+against customers with _history_, and history is exactly what a fixture doesn't
+have.
+
+If you run an agent _platform_, that's not your problem once. It's every
+tenant's problem, multiplied. Each agent accumulates state you don't own and
+can't recreate, and your job is to keep all of them in line as you change them.
+The workflow that does that is simple to name: eval each change against the
+real, accumulated world the agent lives in. You can hand it to your users, but
+only if their state lives somewhere you can branch.
+
+This is an exercise in building a small harness that answers one question
+without touching production: will this change make my agent better or worse
+against real users?
+
+{/* truncate */}
+
+## What a state-blind regression looks like
+
+Here's what one of your tenants' customers actually sees after the change ships:
+
+<MermaidFrame style={{ maxWidth: "34rem", margin: "1.5rem auto" }}>
+  <ForgottenStateChat
+    role="img"
+    aria-label="A support chat thread. Earlier in the thread the customer says 'I'm vegetarian, with a severe tree-nut allergy' and the agent replies 'Noted, I'll keep that on your profile.' Today the customer asks 'Suggest a dinner from this week's menu' and the agent replies 'Sure! Any allergies or dietary preferences?' — re-asking a fact the customer already gave. A note reads: the customer already told it, the stored state went unused."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+Ana told the agent weeks ago that she's vegetarian with a severe tree-nut
+allergy, and that fact now lives in her thread. When she asks for "a dinner from
+this week's menu," the old prompt answered straight from memory with "a
+vegetarian, nut-free pick," but my "small" edit made the agent a little more
+generic and it started replying "any allergies or preferences?", re-asking
+something Ana had already told it.
+
+The reason my tests missed it is the whole point. On a blank fixture there is no
+prior turn to recall, so _both_ the old and new prompt ask the same clarifying
+question and look identical. The regression only exists where there's a past to
+forget, and a fixture has none.
+
+## The whole loop on one page
+
+The whole thing is four steps: fork prod into a throwaway bucket, replay real
+threads through the candidate, score it against the baseline, then drop the
+fork. The trick that makes it practical is a call you can only make on object
+storage: `fork()` clones the entire agent, every thread and every checkpoint, by
+reference and instantly.
+
+<MermaidFrame style={{ maxWidth: "40rem", margin: "1.5rem auto" }}>
+  <EvalFlow
+    role="img"
+    aria-label="The prod bucket holds real accumulated state and is never written to. It forks into a baseline fork (current prompt) and a candidate fork (new prompt). Each fork replays the real customer threads in isolation. The two sets of replies go to a pairwise, order-swapped judge, which produces a ship-or-hold verdict plus a memory-recall signal. Both forks are then dropped with no residue."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+Install the checkpointer and let's build each box in that diagram.
+
+```bash
+pip install -U langgraph-checkpoint-tigris
+```
+
+## 1. An agent whose only variable is the change under test
+
+Hold everything fixed except the thing you're evaluating: the graph, the model,
+and the accumulated thread history all stay the same, so any difference in the
+verdict is attributable to your change. Here the change is the system prompt,
+prepended at call time so it never gets baked into the stored thread. That is
+what lets us replay the _same_ real conversation under two different prompts.
+
+```python
+from langchain.chat_models import init_chat_model
+from langgraph.graph import START, MessagesState, StateGraph
+
+BASELINE_PROMPT = (
+    "You are a helpful customer support assistant. Answer the user's question."
+)
+CANDIDATE_PROMPT = (
+    "You are a helpful customer support assistant. Before answering, recall "
+    "everything you already know about THIS customer from the conversation so "
+    "far (their plan, preferences, constraints, and past issues) and tailor "
+    "your answer to it. Never ask them to repeat something they've told you."
+)
+
+def build_agent(system_prompt: str, temperature: float = 0.2) -> StateGraph:
+    model = init_chat_model("claude-haiku-4-5-20251001", temperature=temperature)
+
+    def call_model(state: MessagesState) -> dict:
+        messages = [{"role": "system", "content": system_prompt}, *state["messages"]]
+        return {"messages": model.invoke(messages)}
+
+    builder = StateGraph(MessagesState)
+    builder.add_node("call_model", call_model)
+    builder.add_edge(START, "call_model")
+    return builder
+```
+
+The temperature is low on purpose. We want to measure the prompt's effect, not
+sampling noise. That candidate prompt is the kind of one-liner that looks like
+nothing on a fixture and proves itself only against memory-rich threads.
+
+## 2. The real state you evaluate against
+
+Each thread is one real customer conversation. It carries the memory we seed in
+its history, a held-out probe we score both variants on, and the keywords that
+prove a reply actually used the memory.
+
+```python
+from dataclasses import dataclass, field
+
+@dataclass
+class Thread:
+    thread_id: str
+    history: list[str]                 # prior turns that establish the memory
+    probe: str                         # the held-out question we score on
+    recall_markers: list[str] = field(default_factory=list)  # proof of recall
+```
+
+In the demo we seed four of them, each holding one fact a good answer has to
+use. The marker is a deliberately simple substring check: it is not the score,
+it just makes the lesson concrete.
+
+| Thread      | What its history establishes           | Held-out probe                              | Recall marker   |
+| ----------- | -------------------------------------- | ------------------------------------------- | --------------- |
+| `cust-ana`  | vegetarian, severe tree-nut allergy    | suggest a dinner from this week's menu      | vegetarian, nut |
+| `cust-ben`  | Pro plan, based in Tokyo (JST)         | when will I get a first response tonight?   | pro             |
+| `cust-cleo` | total beginner, wants no jargon        | how do I set up automated backups?          | step            |
+| `cust-dan`  | past double-charge fixed with a credit | another charge I don't recognize, what now? | credit          |
+
+Your real prod bucket already has state like this. On a platform, _every
+tenant's_ bucket already has it. The seeding just gives you something to run
+against out of the box.
+
+## 3. Fork prod and replay (the load-bearing call)
+
+This is the heart of it: each variant gets its own zero-copy fork of prod, runs
+every real thread's probe inside that fork so each answer is produced with the
+customer's actual history in context, and the fork is dropped when we're done.
+
+```python
+def run_variant_on_fork(prod, system_prompt, threads, *, name, run_id, keep=False):
+    fork = prod.fork(f"{prod.bucket}-eval-{name}-{run_id}")
+    graph = build_agent(system_prompt).compile(checkpointer=fork)
+
+    responses = {}
+    for t in threads:
+        out = graph.invoke(
+            {"messages": [{"role": "user", "content": t.probe}]},
+            {"configurable": {"thread_id": t.thread_id}},
+        )
+        responses[t.thread_id] = out["messages"][-1].content
+
+    if not keep:
+        drop_bucket(prod.client, fork.bucket)  # erase the branch, no residue
+    return responses
+```
+
+What makes this safe comes down to two properties. The fork inherits _all_ of
+prod, every thread and every checkpoint, so the replay is not an approximation
+but the real world, and the candidate's responses are written into the fork and
+never into prod, so you can run this on live state without fear. To eval ten
+variants instead of two, you call this in a loop, and each fork is independent
+and costs storage only where it diverges.
+
+<MermaidFrame style={{ maxWidth: "38rem", margin: "1.5rem auto" }}>
+  <ForkIsolation
+    role="img"
+    aria-label="Three rows: prod, baseline fork, and candidate fork. All three share the same wide block of checkpoints by reference. Prod stores no new writes during the eval because it is the source. Each fork stores only a small block of new writes, its own replies. A fork is a pointer, not a copy, so forking is O(1) whether prod holds 1 MB or 1 TB."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+## 4. Judge head-to-head, and cancel the judge's bias
+
+Pairwise LLM-judging is how most teams actually grade agents, and it needs no
+answer key. The one trap is position bias: judges tend to favor whichever reply
+came first. So we ask twice with the order swapped and only count a win when it
+is consistent across both.
+
+```python
+def judge_report(threads, baseline, candidate, judge):
+    results = []
+    for t in threads:
+        a, c = baseline[t.thread_id], candidate[t.thread_id]
+        v1 = judge(t.probe, a, c)   # A=baseline, B=candidate
+        v2 = judge(t.probe, c, a)   # swapped
+        if v1 == "B" and v2 == "A":
+            winner = "candidate"
+        elif v1 == "A" and v2 == "B":
+            winner = "baseline"
+        else:
+            winner = "tie"          # inconsistent: position bias, call it a tie
+        results.append((t.thread_id, winner,
+                        recalled(a, t.recall_markers),
+                        recalled(c, t.recall_markers)))
+    return results
+```
+
+Alongside the verdict we run the cheap recall check from step 2: did each reply
+contain the fact we know lives in that thread's history? Against fixtures that
+number is `0/0` for both variants and the whole comparison is a wash. Against
+real state, the gap is the regression your fixtures were hiding.
+
+## 5. Run it
+
+```text
+thread       winner      baseline recall   candidate recall
+------------ ----------- ----------------- ----------------
+cust-ana     candidate   no                yes
+cust-ben     candidate   no                yes
+cust-cleo    tie         yes               yes
+cust-dan     candidate   no                yes
+
+head-to-head: candidate 3 / baseline 0 / ties 1
+used real memory: candidate 4/4  vs  baseline 1/4
+
+VERDICT: SHIP — candidate beats baseline on real state
+```
+
+Your exact numbers will vary, but the judge runs at temperature 0, so the
+verdict is stable across re-runs. The same change, evaluated against three blank
+fixtures, would have come back a tie, and you'd have shipped it never knowing
+which way it went.
+
+## Why this only works on object storage
+
+You can't bolt instant whole-agent forking onto a relational checkpointer,
+because the cost model is wrong. A database reads rows to copy them, so
+branching costs _more_ the more history you have. That's exactly backwards.
+Tigris shares immutable blocks and layers new writes on top, so a fork is a
+pointer, not a duplication, and dropping it leaves nothing behind.
+
+The shape of the problem changes once you're running a fleet. A database puts
+every tenant behind one primary and a bounded connection pool, so the thing you
+scale is a bottleneck you have to manage. Give each agent its own bucket and the
+bottleneck disappears: the requests are independent, the state scales to zero
+when idle, and any single agent forks in constant time.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <FleetStorage
+    role="img"
+    aria-label="A fleet-scaling comparison. On the left, a relational checkpointer: many agents all funnel through one shared connection pool into a single primary database, a bottleneck shared by every tenant, with WHERE tenant_id on every query. On the right, object storage on Tigris: each agent talks to its own bucket with independent requests, no shared connection ceiling, state that scales to zero, and fork() on any one bucket in O(1)."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+The same storage gives a platform the rest of what it needs. Lined up against a
+database, the differences are not small:
+
+| What a platform needs     | Relational checkpointer                   | Object storage (Tigris)                       |
+| ------------------------- | ----------------------------------------- | --------------------------------------------- |
+| Isolation between tenants | a `WHERE tenant_id` on every query        | a bucket boundary, enforced by IAM            |
+| State per tenant          | a stateful service to run and patch       | a bucket from an API call, scales to zero     |
+| Bursty fleet concurrency  | a bounded connection pool to manage       | independent requests, no connection ceiling   |
+| Global reads              | one primary plus replicas to keep in sync | served near the compute, globally distributed |
+| Branch the whole agent    | `pg_dump` / restore, scales with history  | `fork()`, O(1) by reference                   |
+
+LangGraph already defines the checkpointer seam, and Tigris just fills it, so
+none of your graph code changes. The first four rows make object storage the
+right home for a platform's agent state. The last row makes that home a
+capability you can resell: per-PR eval environments, "clone this agent," instant
+rollback, all the same `fork()` wearing different hats.
+
+## What it doesn't do
+
+Use a **Single-region** or **Multi-region** bucket. Those give the strongly
+consistent reads the saver relies on to find the latest checkpoint, where Global
+and Dual-region buckets can hand back a stale one. Forking makes the _state_
+free, not the _inference_: an N-variant sweep is N times the tokens. And the
+verdict is best read as a confidence signal that informs the decision, rather
+than a hard gate that blocks the merge on its own.
+
+## The short version
+
+If you're on LangGraph, swapping in the Tigris checkpointer is one `pip install`
+and one connection string. You keep resume, time travel, and human-in-the-loop.
+What you gain is the move databases make too expensive to bother with: cloning
+your entire agent in constant time, with no data copy. That's what lets you keep
+an agent in line as you change it, evaluating each tweak against the real thing
+instead of three fixtures. The full runnable example, seeded so it runs end to
+end against your own bucket, is here:
+[`examples/eval-on-real-state`](https://github.com/tigrisdata/tigris-langgraph/tree/main/examples/eval-on-real-state).
+
+<InlineCta
+  title="Eval against the real world, not fixtures"
+  subtitle="A LangGraph checkpointer on Tigris object storage. Fork your whole agent in one call, replay real threads through a change, and judge it before you ship."
+  button="Read the docs"
+  link="https://pypi.org/project/langgraph-checkpoint-tigris/"
+/>
