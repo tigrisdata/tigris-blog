@@ -34,6 +34,7 @@ import EvalFlow from "./eval-flow.svg";
 import ForkIsolation from "./fork-isolation.svg";
 import ForgottenStateChat from "./forgotten-state-chat.svg";
 import FleetStorage from "./fleet-bucket-vs-db.svg";
+import SeededThreads from "./seeded-threads.svg";
 
 <img
   src={heroImage}
@@ -168,12 +169,13 @@ In the demo we seed four of them, each holding one fact a good answer has to
 use. The marker is a deliberately simple substring check: it is not the score,
 it just makes the lesson concrete.
 
-| Thread      | What its history establishes           | Held-out probe                              | Recall marker   |
-| ----------- | -------------------------------------- | ------------------------------------------- | --------------- |
-| `cust-ana`  | vegetarian, severe tree-nut allergy    | suggest a dinner from this week's menu      | vegetarian, nut |
-| `cust-ben`  | Pro plan, based in Tokyo (JST)         | when will I get a first response tonight?   | pro             |
-| `cust-cleo` | total beginner, wants no jargon        | how do I set up automated backups?          | step            |
-| `cust-dan`  | past double-charge fixed with a credit | another charge I don't recognize, what now? | credit          |
+<MermaidFrame style={{ maxWidth: "38rem", margin: "1.5rem auto" }}>
+  <SeededThreads
+    role="img"
+    aria-label="Four seeded threads, each hiding one fact: cust-ana knows vegetarian and a severe tree-nut allergy and asks for a dinner suggestion; cust-ben knows Pro plan and Tokyo time zone and asks about a first response tonight; cust-cleo is a total beginner and asks how to set up automated backups; cust-dan had a past double-charge fixed with a credit and asks about another charge."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
 
 Your real prod bucket already has state like this. On a platform, _every
 tenant's_ bucket already has it. The seeding just gives you something to run

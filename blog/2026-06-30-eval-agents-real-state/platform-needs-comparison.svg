@@ -1,0 +1,91 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 600 360"
+  width="600"
+  height="360"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .legend {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .crit {
+      font-size: 12.5px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .celltext {
+      font-size: 11px;
+      fill: #cdd5d1;
+    }
+    .cell-db {
+      rx: 5;
+      ry: 5;
+      fill: rgba(248, 113, 113, 0.1);
+      stroke: rgba(248, 113, 113, 0.4);
+      stroke-width: 1;
+    }
+    .cell-ti {
+      rx: 5;
+      ry: 5;
+      fill: rgba(98, 254, 181, 0.1);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1;
+    }
+  </style>
+
+  <text x="300" y="28" text-anchor="middle" class="title">
+    What a platform needs: database vs bucket
+  </text>
+
+  <!-- legend -->
+  <circle cx="150" cy="54" r="5" fill="rgba(248,113,113,0.6)" />
+  <text x="162" y="58" class="legend">Relational checkpointer</text>
+  <circle cx="392" cy="54" r="5" fill="rgba(98,254,181,0.7)" />
+  <text x="404" y="58" class="legend">Object storage (Tigris)</text>
+
+  <!-- band 1 -->
+  <text x="22" y="94" class="crit">Tenant isolation</text>
+  <rect x="20" y="102" width="270" height="24" class="cell-db" />
+  <text x="32" y="118" class="celltext">WHERE tenant_id on every query</text>
+  <rect x="310" y="102" width="270" height="24" class="cell-ti" />
+  <text x="322" y="118" class="celltext">a bucket boundary, enforced by IAM</text>
+
+  <!-- band 2 -->
+  <text x="22" y="148" class="crit">State per tenant</text>
+  <rect x="20" y="156" width="270" height="24" class="cell-db" />
+  <text x="32" y="172" class="celltext">a stateful service to run and patch</text>
+  <rect x="310" y="156" width="270" height="24" class="cell-ti" />
+  <text x="322" y="172" class="celltext">a bucket from an API call; scales to zero</text>
+
+  <!-- band 3 -->
+  <text x="22" y="202" class="crit">Bursty concurrency</text>
+  <rect x="20" y="210" width="270" height="24" class="cell-db" />
+  <text x="32" y="226" class="celltext">a bounded connection pool to manage</text>
+  <rect x="310" y="210" width="270" height="24" class="cell-ti" />
+  <text x="322" y="226" class="celltext">independent requests, no ceiling</text>
+
+  <!-- band 4 -->
+  <text x="22" y="256" class="crit">Global reads</text>
+  <rect x="20" y="264" width="270" height="24" class="cell-db" />
+  <text x="32" y="280" class="celltext">one primary + replicas to keep in sync</text>
+  <rect x="310" y="264" width="270" height="24" class="cell-ti" />
+  <text x="322" y="280" class="celltext">served near the compute, distributed</text>
+
+  <!-- band 5 -->
+  <text x="22" y="310" class="crit">Branch the whole agent</text>
+  <rect x="20" y="318" width="270" height="24" class="cell-db" />
+  <text x="32" y="334" class="celltext">pg_dump / restore; scales with history</text>
+  <rect x="310" y="318" width="270" height="24" class="cell-ti" />
+  <text x="322" y="334" class="celltext">fork(), O(1) by reference</text>
+</svg>
