@@ -1,0 +1,122 @@
+---
+slug: t3-migrate-command
+title: "Migrate your data with the Tigris CLI"
+description: |
+  Move an entire bucket to Tigris in one command. The Tigris CLI scans every
+  object and migrates it safely from any S3-compatible provider. Here's how to
+  set it up.
+image: ./robot-parade.webp
+keywords:
+  - object storage
+  - bucket migration
+  - s3
+  - data migration
+  - tigris cli
+authors:
+  - xe
+tags:
+  - Build with Tigris
+  - object storage
+  - s3
+  - migration
+  - cli
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./robot-parade.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A developer sips coffee at a laptop in an SF cafe (Golden Gate Bridge out the window) while a parade of little cube robots carries crates of disks and folders out of two wooden barrels, following colorful trails of data from the screen."
+/>
+
+Networking exists to move data around. You can easily spin up your agents on any
+platform under the sun. But storage is how The Big Cloud™ gets you. When you
+move your operations to a new storage platform like Tigris you have to migrate
+your data to its new home.
+
+Tigris makes it easy with
+[bucket migration](https://www.tigrisdata.com/docs/migration/), but what if you
+want to move over everything all at once? The Tigris CLI has your back:
+
+```
+t3 migrate t3://world-domination-plans/agents/chatlogs
+```
+
+And your laptop will run the migration automatically, scanning over every object
+in your bucket and safely moving them over to Tigris. Here's how you set it up:
+
+{/* truncate */}
+
+## Bucket migration and you
+
+First, grab a Read-only keypair for your bucket in your old storage system. This
+will be the access key that Tigris uses to migrate your data. Use it in the
+`tigris bucket set-migration` command:
+
+```
+tigris buckets set-migration world-domination-plans \
+  --bucket old-bucket-name \
+  --endpoint https://old.provider.domain \
+  --region region-such-as-yow \
+  --access-key <access key id> \
+  --secret-key <secret access key>
+```
+
+If you want the migration to be two-way (so new files added to your Tigris
+bucket get added to your old bucket just in case you don't want to continue your
+migration), make that keypair an Editor and pass the `--write-through` flag:
+
+```
+tigris buckets set-migration world-domination-plans \
+  --bucket old-bucket-name \
+  --endpoint https://old.provider.domain \
+  --region region-such-as-yow \
+  --access-key <access key id> \
+  --secret-key <secret access key> \
+  --write-through
+```
+
+Then you can run `tigris bucket migrate`:
+
+```
+tigris bucket migrate t3://world-domination-plans/
+```
+
+Kick back and relax! The Tigris CLI will keep on chugging until the job is done
+and all your data is safely on Tigris.
+
+## Caveats
+
+Keep in mind this has a few caveats. Namely that this migration isn't free.
+Running the `tigris bucket migrate` command issues a lot of `ListObjectsV2` and
+`HeadObjects` calls, which will cause you to incur Class A request costs
+according to [Tigris' pricing table](https://www.tigrisdata.com/pricing/).
+
+This is also a very long-running operation, so if you run it on your laptop and
+go for a walk to the local cafejo, the migration will be suspended if your
+laptop is closed. Use something like a
+[vibe coding laptop wedge](https://makerworld.com/en/models/957883-the-wedge-and-the-wedge-xl?from=search#profileId-927154)
+to keep it running while you go touch grass. Worst case, spin up a small VPS /
+cloud server to run the command on.
+
+If the migration does get interrupted, don't worry: the next time you run
+`tigris bucket migrate` it picks up where it left off instead of starting from
+scratch. No wasted work, no re-copying objects that already made it over.
+
+## We'll keep innovating for your agents
+
+At Tigris we believe that you(r agents) deserve a better experience with object
+storage. That's why we will keep innovating with
+[bucket migration](https://www.tigrisdata.com/docs/migration/),
+[forks/snapshots](https://www.tigrisdata.com/docs/snapshots-and-forks/),
+[bundles of objects](https://www.tigrisdata.com/docs/objects/bundle/), and more
+as we reinvent object storage based on how you wish it could work.
+
+<InlineCta
+  title="Ready to move your data home?"
+  subtitle="Zero-downtime migration from any S3-compatible provider. Tigris transfers your data lazily, with optional write-through syncing, so you migrate at your own pace without disrupting production."
+  button="Read the migration docs"
+  link="https://www.tigrisdata.com/docs/migration/"
+/>
