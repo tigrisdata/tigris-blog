@@ -1,0 +1,84 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 600 216"
+  width="600"
+  height="216"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .small {
+      font-size: 12px;
+      fill: #bac1be;
+    }
+    .shared {
+      rx: 4;
+      ry: 4;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .writes {
+      rx: 4;
+      ry: 4;
+      fill: rgba(98, 254, 181, 0.14);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1;
+    }
+  </style>
+
+  <text x="300" y="28" text-anchor="middle" class="title">
+    A fork is a pointer, not a copy
+  </text>
+
+  <!-- column headers -->
+  <text x="293" y="60" text-anchor="middle" class="sub">
+    shared checkpoints (every thread)
+  </text>
+  <text x="525" y="60" text-anchor="middle" class="sub" fill="#62feb5">
+    new writes
+  </text>
+
+  <!-- separator -->
+  <line
+    x1="488"
+    y1="68"
+    x2="488"
+    y2="184"
+    stroke="#2a3731"
+    stroke-width="1"
+    stroke-dasharray="3 3"
+  />
+
+  <!-- prod (source) -->
+  <text x="98" y="92" text-anchor="end" class="small">prod</text>
+  <rect x="108" y="74" width="372" height="28" class="shared" />
+  <text x="525" y="92" text-anchor="middle" class="sub">none (source)</text>
+
+  <!-- baseline fork -->
+  <text x="98" y="134" text-anchor="end" class="small">baseline fork</text>
+  <rect x="108" y="116" width="372" height="28" class="shared" />
+  <rect x="494" y="116" width="34" height="28" class="writes" />
+
+  <!-- candidate fork -->
+  <text x="98" y="176" text-anchor="end" class="small">candidate fork</text>
+  <rect x="108" y="158" width="372" height="28" class="shared" />
+  <rect x="494" y="158" width="28" height="28" class="writes" />
+
+  <!-- takeaway -->
+  <text x="300" y="206" text-anchor="middle" class="sub">
+    fork() is O(1): same speed whether prod holds 1 MB or 1 TB
+  </text>
+</svg>

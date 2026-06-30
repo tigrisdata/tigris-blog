@@ -1,0 +1,112 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 600 300"
+  width="600"
+  height="300"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .tag {
+      font-size: 11px;
+      fill: #94a3b8;
+    }
+    .msg {
+      font-size: 12px;
+      fill: #e2e8f0;
+    }
+    .msg-bad {
+      font-size: 12px;
+      fill: #f87171;
+    }
+    .note {
+      font-size: 11px;
+      fill: #f87171;
+    }
+    .av {
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .user-bubble {
+      rx: 9;
+      ry: 9;
+      fill: rgba(98, 254, 181, 0.12);
+      stroke: rgba(98, 254, 181, 0.4);
+      stroke-width: 1;
+    }
+    .agent-bubble {
+      rx: 9;
+      ry: 9;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .agent-bubble-bad {
+      rx: 9;
+      ry: 9;
+      fill: rgba(248, 113, 113, 0.1);
+      stroke: rgba(248, 113, 113, 0.45);
+      stroke-width: 1;
+    }
+    .av-user {
+      fill: #15242b;
+      stroke: rgba(98, 254, 181, 0.4);
+      stroke-width: 1;
+    }
+    .av-agent {
+      fill: #15242b;
+      stroke: #3a4a44;
+      stroke-width: 1;
+    }
+  </style>
+
+  <text x="300" y="28" text-anchor="middle" class="title">
+    One tweak later, the agent forgets the customer
+  </text>
+
+  <!-- earlier divider -->
+  <text x="300" y="54" text-anchor="middle" class="tag">
+    — earlier in the thread —
+  </text>
+
+  <!-- customer msg 1 -->
+  <rect x="290" y="64" width="264" height="34" class="user-bubble" />
+  <text x="302" y="85" class="msg">I'm vegetarian, with a severe tree-nut allergy.</text>
+  <circle cx="574" cy="81" r="11" class="av-user" />
+  <text x="574" y="85" text-anchor="middle" class="av" fill="#62feb5">C</text>
+
+  <!-- agent msg 1 -->
+  <rect x="46" y="108" width="246" height="34" class="agent-bubble" />
+  <text x="58" y="129" class="msg">Noted. I'll keep that on your profile.</text>
+  <circle cx="28" cy="125" r="11" class="av-agent" />
+  <text x="28" y="129" text-anchor="middle" class="av" fill="#bac1be">A</text>
+
+  <!-- today divider -->
+  <text x="300" y="168" text-anchor="middle" class="tag">— today —</text>
+
+  <!-- customer msg 2 -->
+  <rect x="300" y="178" width="254" height="34" class="user-bubble" />
+  <text x="312" y="199" class="msg">Suggest a dinner from this week's menu.</text>
+  <circle cx="574" cy="195" r="11" class="av-user" />
+  <text x="574" y="199" text-anchor="middle" class="av" fill="#62feb5">C</text>
+
+  <!-- agent msg 2 (regression) -->
+  <rect x="46" y="222" width="282" height="34" class="agent-bubble-bad" />
+  <text x="58" y="243" class="msg-bad">
+    Sure! Any allergies or dietary preferences?
+  </text>
+  <circle cx="28" cy="239" r="11" class="av-agent" />
+  <text x="28" y="243" text-anchor="middle" class="av" fill="#bac1be">A</text>
+
+  <text x="58" y="278" class="note">
+    ↳ the customer already told it. the stored state went unused.
+  </text>
+</svg>
