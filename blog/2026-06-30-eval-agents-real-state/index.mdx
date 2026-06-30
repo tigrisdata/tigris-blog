@@ -58,6 +58,9 @@ This is an exercise in building a small harness that answers one question
 without touching production: will this change make my agent better or worse
 against real users?
 
+All the code for this example lives here:
+[`examples/eval-on-real-state`](https://github.com/tigrisdata/tigris-langgraph/tree/main/examples/eval-on-real-state).
+
 {/* truncate */}
 
 ## What a state-blind regression looks like
@@ -101,7 +104,10 @@ by reference, so it lands instantly no matter how much history has accumulated.
   />
 </MermaidFrame>
 
-Install the checkpointer and let's build each box in that diagram.
+The checkpointer is
+[`langgraph-checkpoint-tigris`](https://pypi.org/project/langgraph-checkpoint-tigris/),
+a drop-in `BaseCheckpointSaver` that stores each checkpoint as an object in a
+Tigris bucket. Install it and let's build each box in that diagram.
 
 ```bash
 pip install -U langgraph-checkpoint-tigris
@@ -331,13 +337,19 @@ and one connection string. You keep resume, time travel, and human-in-the-loop.
 What you gain is the move databases make too expensive to bother with: cloning
 your entire agent in constant time, with no data copy. That's what lets you keep
 an agent in line as you change it, evaluating each tweak against the real thing
-instead of three fixtures. The full runnable example, seeded so it runs end to
-end against your own bucket, is here:
+instead of three fixtures.
+
+**The checkpointer:**
+[`langgraph-checkpoint-tigris`](https://pypi.org/project/langgraph-checkpoint-tigris/)
+on PyPI.
+
+**The full runnable example,** seeded so it runs end to end against your own
+bucket:
 [`examples/eval-on-real-state`](https://github.com/tigrisdata/tigris-langgraph/tree/main/examples/eval-on-real-state).
 
 <InlineCta
   title="Eval against the real world, not fixtures"
   subtitle="A LangGraph checkpointer on Tigris object storage. Fork your whole agent in one call, replay real threads through a change, and judge it before you ship."
-  button="Read the docs"
+  button="Get langgraph-checkpoint-tigris"
   link="https://pypi.org/project/langgraph-checkpoint-tigris/"
 />
