@@ -1,13 +1,10 @@
 ---
 slug: eval-agents-real-state
-title: "Every Tenant Has a Past: Eval LangGraph Agents Against Real State"
+title: "Every Tenant Has a Past: Evaluating LangGraph Agents"
 date: 2026-06-30
-description: >
-  A build-along for agent platforms: fork a customer's entire LangGraph state,
-  replay real conversations through a candidate change, and judge it
-  head-to-head so a prompt tweak that passes your fixtures can't quietly regress
-  in prod. Why object storage, not a database, is what makes it possible.
-  Runnable code.
+description: >-
+  Fork a customer's entire LangGraph agent state, replay their conversations
+  through a prompt change, and judge it head-to-head before you ship to prod.
 image: ./hero-image.webp
 keywords:
   - langgraph
@@ -53,9 +50,9 @@ have.
 If you run an agent _platform_, that's not your problem once. It's every
 tenant's problem, multiplied. Each agent accumulates state you don't own and
 can't recreate, and your job is to keep all of them in line as you change them.
-The workflow that does that is simple to name: eval each change against the
-real, accumulated world the agent lives in. You can hand it to your users, but
-only if their state lives somewhere you can branch.
+To know a change actually helps, you have to eval(uate) it against the real,
+accumulated world the agent lives in. Then you can hand that workflow to your
+users, but only if their state lives somewhere you can branch.
 
 This is an exercise in building a small harness that answers one question
 without touching production: will this change make my agent better or worse
@@ -91,9 +88,10 @@ forget, and a fixture has none.
 
 The whole thing is four steps: fork prod into a throwaway bucket, replay real
 threads through the candidate, score it against the baseline, then drop the
-fork. The trick that makes it practical is a call you can only make on object
-storage: `fork()` clones the entire agent, every thread and every checkpoint, by
-reference and instantly.
+fork. The trick that makes it practical is something you can only do on object
+storage: forking the bucket. When you fork a bucket holding agent data, you
+clone the entire agent: every thread, checkpoint, and message. The clone is made
+by reference, so it lands instantly no matter how much history has accumulated.
 
 <MermaidFrame style={{ maxWidth: "40rem", margin: "1.5rem auto" }}>
   <EvalFlow
@@ -109,7 +107,7 @@ Install the checkpointer and let's build each box in that diagram.
 pip install -U langgraph-checkpoint-tigris
 ```
 
-## 1. An agent whose only variable is the change under test
+### 1. An agent whose only variable is the change under test
 
 Hold everything fixed except the thing you're evaluating: the graph, the model,
 and the accumulated thread history all stay the same, so any difference in the
@@ -148,7 +146,7 @@ The temperature is low on purpose. We want to measure the prompt's effect, not
 sampling noise. That candidate prompt is the kind of one-liner that looks like
 nothing on a fixture and proves itself only against memory-rich threads.
 
-## 2. The real state you evaluate against
+### 2. The real state you evaluate against
 
 Each thread is one real customer conversation. It carries the memory we seed in
 its history, a held-out probe we score both variants on, and the keywords that
@@ -181,7 +179,7 @@ Your real prod bucket already has state like this. On a platform, _every
 tenant's_ bucket already has it. The seeding just gives you something to run
 against out of the box.
 
-## 3. Fork prod and replay (the load-bearing call)
+### 3. Fork prod and replay (the load-bearing call)
 
 This is the heart of it: each variant gets its own zero-copy fork of prod, runs
 every real thread's probe inside that fork so each answer is produced with the
@@ -205,12 +203,18 @@ def run_variant_on_fork(prod, system_prompt, threads, *, name, run_id, keep=Fals
     return responses
 ```
 
-What makes this safe comes down to two properties. The fork inherits _all_ of
-prod, every thread and every checkpoint, so the replay is not an approximation
-but the real world, and the candidate's responses are written into the fork and
-never into prod, so you can run this on live state without fear. To eval ten
-variants instead of two, you call this in a loop, and each fork is independent
-and costs storage only where it diverges.
+What makes this safe comes down to two properties.
+
+First, the fork inherits _all_ of prod: every thread, checkpoint, and learned
+fact. Replaying conversations against it runs them against the real world, not a
+mock that won't reflect it.
+
+Second, the fork is a separate copy. The candidate's responses are written into
+the fork and never into prod, so nothing the eval does can touch live data.
+
+Together that lets you iterate on live state without fear. To evaluate ten
+variants instead of two, call this in a loop; each fork is independent and costs
+storage only where it diverges.
 
 <MermaidFrame style={{ maxWidth: "38rem", margin: "1.5rem auto" }}>
   <ForkIsolation
@@ -220,7 +224,7 @@ and costs storage only where it diverges.
   />
 </MermaidFrame>
 
-## 4. Judge head-to-head, and cancel the judge's bias
+### 4. Judge head-to-head, and cancel the judge's bias
 
 Pairwise LLM-judging is how most teams actually grade agents, and it needs no
 answer key. The one trap is position bias: judges tend to favor whichever reply
@@ -251,7 +255,7 @@ contain the fact we know lives in that thread's history? Against fixtures that
 number is `0/0` for both variants and the whole comparison is a wash. Against
 real state, the gap is the regression your fixtures were hiding.
 
-## 5. Run it
+### 5. Run it
 
 ```text
 thread       winner      baseline recall   candidate recall
@@ -311,7 +315,7 @@ right home for a platform's agent state. The last row makes that home a
 capability you can resell: per-PR eval environments, "clone this agent," instant
 rollback, all the same `fork()` wearing different hats.
 
-## What it doesn't do
+### What it doesn't do
 
 Use a **Single-region** or **Multi-region** bucket. Those give the strongly
 consistent reads the saver relies on to find the latest checkpoint, where Global
