@@ -1,0 +1,426 @@
+---
+slug: where-does-the-agent-live
+title: "Where Does the Agent Live?"
+date: 2026-07-07
+description: >-
+  Your agent runs in a disposable sandbox, but it can't live there. A breakdown
+  of everything in the agent's world, and why it should be one forkable bucket.
+keywords:
+  - ai agents
+  - agent state
+  - agent memory
+  - daytona
+  - sandbox
+  - bucket forking
+  - copy-on-write storage
+  - key-value store
+  - tigris
+  - agent infrastructure
+image: ./hero-img.webp
+authors:
+  - davidmyriel
+tags:
+  - Build with Tigris
+  - agents
+  - storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import MermaidFrame from "@site/src/components/MermaidFrame";
+import heroImage from "./hero-img.webp";
+import FourLayers from "./four-layers.svg";
+import FourPlaces from "./four-places.svg";
+import ForkPerRun from "./fork-per-run.svg";
+import FiveSystems from "./five-systems.svg";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Where Does the Agent Live? Title card with the Tigris logo"
+/>
+
+"Where does the agent run?" is a solved question.
+
+It runs in a sandbox: a [Daytona](https://www.daytona.io) microVM that boots in
+milliseconds, executes whatever the model just wrote, and gets torn down without
+ceremony. Disposability is the whole value proposition: the sandbox is supposed
+to die.
+
+It raises a question I didn't think to ask until one of my agents lost three
+days of accumulated context to a sandbox that got recycled on schedule: if the
+place the agent runs is built to be destroyed, where does the agent _live_? And
+if you're building an agent platform rather than an agent, the question doesn't
+come up once; it comes up for every agent in the fleet, on every run,
+concurrently.
+
+The answer isn't the sandbox, and it isn't the harness or the model either,
+because you can kill and rebuild every layer of an agent except one without
+losing anything. The exception is its state: the files, memory, and metadata
+that make Wednesday's agent the same agent as Tuesday's. This post makes one
+claim and follows it all the way down: the state _is_ the agent, and it belongs
+in one namespace with one snapshot boundary, which is to say a bucket you can
+fork. A twenty-line shim is all it takes to wire your sandboxes to it.
+
+{/* truncate */}
+
+## An agent is four things in four places
+
+Be precise about what "an agent" physically is, because it isn't one process on
+one machine. It decomposes into four pieces, hosted in four different places:
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <FourPlaces
+    role="img"
+    aria-label="Diagram titled 'An agent is four things in four places'. Four columns, one per piece of an agent. The model lives at the inference provider, stateless per call. The harness lives at your compute: a server, worker, or queue. The sandbox lives at Daytona as a disposable microVM. The first three are drawn with dashed borders. The fourth, state, is highlighted in green and lives in a Tigris Bucket, forkable object storage. Caption: three are disposable, one is the agent."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+1. **The model** lives at the inference provider: Anthropic, OpenAI, or your own
+   GPUs. It's stateless per request and shared across every customer the
+   provider has. Nothing agent-specific survives there between calls.
+2. **The harness** is the orchestration loop: it holds the conversation,
+   dispatches tool calls, and decides when to stop, from an app server or queue
+   worker on your compute. It's the piece people usually point at and call "the
+   agent," but a well-built harness is stateless: kill it, and any replica picks
+   the loop back up, provided the state it was looping over still exists.
+3. **The execution environment** is the sandbox, where tool calls and generated
+   code run. It is disposable on purpose; that's the feature you're paying for.
+4. **The state** is everything that makes agent A on Wednesday the same agent as
+   agent A on Tuesday.
+
+You can replace three of these four layers at will: the model is shared
+infrastructure, the harness is a stateless loop any replica can resume, and the
+sandbox is designed to evaporate. The fourth is the one you can't regenerate,
+and that is the honest answer to the question in the title. The agent doesn't
+live in the sandbox, the harness, or the model; it lives in its state, and
+everything else is a way of moving that state forward in time.
+
+## The agent's world, frozen mid-task
+
+So what exactly is in that fourth layer? If you froze an agent mid-task and took
+inventory of everything it would need to become itself again, you'd find four
+things:
+
+- **Working files.** The workspace: the repo it's editing, the artifacts it has
+  produced, the half-finished output sitting in a scratch directory. Already
+  bytes, already [belongs in object storage](/fifty-agents-one-bucket).
+- **Memory.** Conversation history, scratchpads, whatever the agent has learned
+  across sessions. The thing that makes session forty-one smarter than session
+  one.
+- **Structured state.** The run metadata, task queue, tool results, config. The
+  reflex is to put this in a database and store a pointer to the blobs, but
+  object storage [is a key-value store](/tigris-kv-store), and namespaced keys
+  like `runs/{id}` and `memory/{agent}/{session}` hold structured state in the
+  same namespace as the blobs it describes. No pointer pattern, no two systems
+  to keep in sync.
+- **Provenance.** What the world looked like before the agent touched it. The
+  layer you don't think about until an agent does something destructive and you
+  need last Tuesday back.
+
+(If you're self-hosting or fine-tuning, weights and adapters are just more bytes
+in the same bucket, but if you're calling a hosted model, they're the provider's
+problem, not yours.)
+
+Notice what this inventory has in common: all four are bytes under keys, which
+means you can hold the agent's entire world, frozen mid-task, in one namespace
+with one snapshot boundary. The bucket at that moment _is_ the agent at that
+moment.
+
+## Today, that world is scattered across five systems
+
+That's the theory. In most real deployments the fourth layer looks nothing like
+one namespace:
+
+| State                | Where it sits today                                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Conversation history | Postgres, in a `messages` table your framework created on first boot                                                |
+| Memory               | Pinecone or pgvector for the embeddings, Redis for the hot cache, maybe Mem0, Zep, or Cognee layered on top         |
+| Checkpoints          | your framework's checkpointer, such as [the LangGraph one we built](/eval-agents-real-state)                        |
+| Working files        | an S3 bucket, copied in and out of the sandbox                                                                      |
+| Run metadata         | wherever the orchestrator keeps it: Temporal's event history, a Celery result backend, a `runs` table you bolted on |
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <FiveSystems
+    role="img"
+    aria-label="Diagram titled 'Five systems, ten seams'. Five circles, one per system: Postgres holding conversation history, Pinecone plus Redis holding memory, LangGraph holding checkpoints, an S3 bucket holding working files, and Temporal holding run metadata. Every pair of circles is connected by a dashed line, ten in total, each one a place where state can drift out of sync. Caption: no moment captures all five in one consistent state."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+Each piece is fine on its own; the problem is the seams, because there is no
+moment at which you can capture all five systems in a consistent state. You
+cannot snapshot the agent, because the agent has no snapshot boundary, and you
+cannot fork it to try two continuations. You cannot replay Tuesday's run
+byte-for-byte either, because Tuesday exists in five places that were never
+consistent with each other in the first place.
+
+Consolidating the world into one bucket is a real trade, and it's worth naming:
+you give up SQL over your run metadata for atomicity over your agent. If your
+access pattern is get, put, and list (and for agent state it almost always is),
+that trade is heavily in your favor. If you need rich queries over metadata,
+keep a queryable index and treat the bucket as the source of truth it's derived
+from.
+
+## "But my sandbox has snapshots"
+
+It does, and the objection deserves a direct answer: Daytona snapshots and
+volumes do persist state across sandbox restarts, and if persistence were the
+whole requirement, you could stop there. This isn't a knock on Daytona either;
+their own docs treat Tigris as a
+[first-class mount target](https://www.daytona.io/docs/mount-external-storage#mount-a-tigris-bucket)
+precisely because the two layers are built to split the work this way: Daytona
+owns the compute, the bucket owns the world.
+
+The requirement is forkability, and the difference is not subtle. A sandbox
+snapshot is a photograph of a machine: it restores exactly one state, it hauls
+the full image around every time, it lives only as long as the provider keeps
+it, and it only ever boots on the provider that took it.
+
+A bucket fork is a branch of a world. On Tigris a fork is
+[copy-on-write](https://www.tigrisdata.com/docs/snapshots/): metadata rather
+than bytes. You can branch a 40 TB world for exactly what a 40 MB one costs, and
+branch it fifty times for the price of once. The fork outlives every sandbox,
+and because it's just a bucket, you can read it from any cloud or provider with
+zero egress. You want the machine frozen approximately never; you want the world
+branched constantly: before every risky action, for every parallel variant, at
+the start of every eval run.
+
+{/* TODO(benchmark): insert measured fork numbers here, e.g. "forking an X TB bucket took Y ms, the same as an X MB one" */}
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <ForkPerRun
+    role="img"
+    aria-label="Diagram titled 'One fork per run'. The agent-world Tigris Bucket forks zero-copy into run-a and run-b. Each fork is mounted by its own fresh, disposable sandbox. Dashed green arrows loop from each run back to the base bucket, labeled 'merge or discard': the winning fork's changes are promoted, the rest are deleted."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+The loop is always the same three moves: fork the world, work against the fork,
+promote the winner.
+
+That loop is where fleets live or die. A platform running a thousand concurrent
+agents takes a thousand forks before lunch, and zero-copy is what makes that a
+non-event: creating a fork doesn't scale with world size, a fork stores only
+what its run actually writes, and deleting a dead one frees exactly those
+deltas. Per-run isolation at fleet scale is an economics problem before it's an
+engineering one, and copy-on-write answers both. We've written before about
+[fifty agents sharing one bucket](/fifty-agents-one-bucket); one fork per run is
+the same idea with the blast radius set to zero.
+
+## The shim: boot the sandbox already bound to its fork
+
+Once the world is one bucket, the lifecycle writes itself: fork before the run,
+mount the fork in the sandbox, merge or discard after. You wire it up with three
+small pieces: a few lines in your harness that fork the world and mint
+credentials scoped to that fork, an entrypoint wrapper around the
+[Tigris CLI](https://www.tigrisdata.com/docs/cli/) that binds the sandbox to its
+fork before your agent's first instruction runs, and the
+[storagesdk](https://github.com/storagesdk/storagesdk) MCP server that lets your
+agent work against the fork without copying it.
+
+The harness piece comes first, and it's where the isolation stops being a
+convention and becomes a guarantee:
+
+```bash
+# In the harness, before the sandbox boots.
+FORK="run-${RUN_ID}"
+
+# 1. Fork the world. Copy-on-write, metadata-only:
+#    constant-time whether the bucket holds megabytes or terabytes.
+tigris buckets create "$FORK" --fork-of agent-world
+
+# 2. Mint a key that can see only the fork. Capture the key ID and
+#    secret from the output; the secret is shown exactly once.
+tigris access-keys create "sandbox-${RUN_ID}"
+tigris access-keys assign "$KEY_ID" -b "$FORK" -r Editor
+```
+
+Pass the fork name and the scoped key into the sandbox's environment when you
+create it. Those are the only credentials the sandbox ever holds, which means
+the base bucket isn't just hidden from your agent, it's unreachable: a prompt
+injection, a buggy tool, or a model on a bad day can name `agent-world` all it
+wants and the API will refuse it. Inside the snapshot, the entrypoint does the
+rest:
+
+```bash
+#!/usr/bin/env bash
+# entrypoint.sh, baked into the Daytona snapshot. The sandbox
+# arrives holding fork-scoped credentials and nothing else.
+set -euo pipefail
+
+# 1. The scoped key arrives as TIGRIS_ACCESS_KEY_ID and
+#    TIGRIS_SECRET_ACCESS_KEY (what storagesdk reads); mirror it
+#    to the AWS names the Tigris CLI reads.
+export AWS_ACCESS_KEY_ID="${TIGRIS_ACCESS_KEY_ID}"
+export AWS_SECRET_ACCESS_KEY="${TIGRIS_SECRET_ACCESS_KEY}"
+
+# 2. Pull the working set only. Memory, run metadata, and artifacts
+#    stay in the fork and are read by key, never copied into the VM.
+tigris cp -r "t3://${FORK}/workspace/" /workspace/
+
+# 3. Bind every storage tool to the fork. The MCP server below and
+#    any `storage` command the agent runs see the fork, not the base.
+export STORAGE_ADAPTER=tigris
+export TIGRIS_BUCKET="${FORK}"
+exec "$@"
+```
+
+Set it as the snapshot's entrypoint and the agent process (`node agent.js`,
+`python -m agent`, whatever you run) inherits a world that is entirely its own.
+The worst run your agent will ever have is scoped to a fork you were always free
+to throw away.
+
+If you'd rather not copy even the working set, Daytona documents
+[mounting a Tigris bucket straight into the sandbox](https://www.daytona.io/docs/mount-external-storage#mount-a-tigris-bucket)
+with `mount-s3` and the `https://t3.storage.dev` endpoint. Bake `mount-s3` into
+your Daytona snapshot, point the mount at the fork, and the whole world shows up
+as a local directory, so your agent's existing file tools work against the fork
+without a byte pulled up front. The fork-scoped key works unchanged, because
+`mount-s3` reads the same `AWS_*` variables the entrypoint already exports.
+
+The second piece is how your agent touches the rest of its world: the memory,
+run metadata, and artifacts the entrypoint deliberately didn't copy, because
+copying a terabyte world into a microVM would throw away the point of a
+zero-copy fork. Instead, your agent reads and writes them by key through
+storagesdk, whose MCP server exposes every storage verb as a tool. Install it
+when you build the Daytona snapshot (`npm install -g @storagesdk/cli`) and add
+one entry to the agent's MCP config:
+
+```json
+{
+  "mcpServers": {
+    "world": { "command": "storage", "args": ["mcp"] }
+  }
+}
+```
+
+Because the entrypoint exported `TIGRIS_BUCKET` as the fork, every tool the
+server offers (`download`, `upload`, `ls`, `snapshot_create`) is already aimed
+at the fork, and the fork-scoped key is what makes the aim binding. Your agent
+can also checkpoint its own world before a risky migration and roll back if the
+result looks wrong, which is a nice trick, but don't build your safety story on
+the model remembering to do it. The guarantees live at the boundaries: the fork
+the entrypoint created, and the snapshot the harness takes before promotion.
+
+When the run ends, you decide what the fork was worth, and you decide it from
+the harness, not the sandbox:
+
+```bash
+# Run passed validation: promote the fork's changes back to the base.
+tigris cp -r "t3://run-${RUN_ID}/workspace/" "t3://agent-world/workspace/"
+
+# Run failed, or was an experiment you're done with: drop the fork.
+# Deleting a fork frees only the deltas the run actually wrote.
+tigris rm "t3://run-${RUN_ID}" -f
+
+# Either way, the run's credentials die with the run.
+tigris access-keys delete "$KEY_ID" --yes
+```
+
+Be honest about the asymmetry here: the fork was free, and promotion isn't.
+Today it's a copy, so promote the prefixes the run actually changed rather than
+the whole fork. Native merge is coming to Tigris, which turns promotion into the
+same metadata-level move as the fork itself; until then, this copy is the one
+step in the loop that costs what it weighs.
+
+If you want provenance on top, enable snapshots on the base bucket and take one
+before each promotion with `tigris snapshots take agent-world`, and "what did
+the world look like before run 4187" stops being a forensics project and becomes
+a read-only timestamp you can fork from.
+
+That's the whole architecture. Every disposable layer sits above the line, and
+the one layer you can't rebuild sits below it, forkable:
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <FourLayers
+    role="img"
+    aria-label="Diagram titled 'Where the agent actually lives'. Top row, drawn with dashed borders because it's rebuildable: the model at the inference provider, the harness (your loop), and the Daytona sandbox (built to be killed). The harness calls the model and dispatches the sandbox. Below the split sits one Tigris Bucket holding working files, memory, structured state, and provenance, labeled 'the world, the only layer you can't rebuild'. The sandbox writes state down into the bucket and mounts a fork back up from it."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
+
+## What the bucket does, and doesn't
+
+One bucket doesn't run anything: you still bring the harness, the model, and the
+sandboxes, and the bucket is the state they orbit rather than a replacement for
+any of them. It doesn't merge divergent forks for you either: deciding which
+run's changes deserve promotion is your validator's job, and the fork only makes
+that decision cheap to act on.
+
+It's also not the first tool to reach for in every deployment. If your agent's
+entire world is a git repo, git is already a forkable, snapshotted store, and if
+the world is a few megabytes, a `runs/{id}/` prefix convention inside one bucket
+buys most of the isolation with none of the new moving parts. The bucket earns
+its keep when the world spans files plus memory plus metadata (git only covers
+the first), when it's big enough that copying is the bottleneck, or when runs
+you don't fully trust are mutating state other runs depend on.
+
+What it does give you is the one property the scattered version can't: a
+snapshot boundary around the whole world. Files, memory, structured state, and
+provenance move as one unit: forked together, promoted together, deleted
+together. Every operation in this post falls out of that single fact.
+
+## Hand this prompt to your agent
+
+If your agent builds itself (and whose doesn't, lately), here's the setup as a
+prompt instead of a runbook. Paste it into Claude Code or the coding agent of
+your choice:
+
+```text
+Set up durable, forkable state for my agent fleet on Tigris.
+Assume the tigris CLI is installed and authenticated, and my
+harness already creates Daytona sandboxes; wire this into it.
+
+1. Create the base bucket:
+   `tigris buckets create agent-world --enable-snapshots`.
+2. Lay out the namespace: `workspace/` for working files,
+   `memory/{agent}/{session}` for memory, `runs/{id}` for run
+   metadata as JSON values under keys (object storage as KV:
+   no separate database, no pointer pattern).
+3. In the harness, before each sandbox boots: fork the base
+   (`tigris buckets create run-${RUN_ID} --fork-of agent-world`),
+   mint a key scoped to the fork (`tigris access-keys create`,
+   capture the printed ID and secret, then
+   `tigris access-keys assign $KEY_ID -b run-${RUN_ID} -r Editor`),
+   and pass the fork name plus the key into the sandbox env as
+   TIGRIS_ACCESS_KEY_ID and TIGRIS_SECRET_ACCESS_KEY, its only
+   credentials.
+4. Write an entrypoint.sh that mirrors those two vars to
+   AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, pulls the
+   working set with `tigris cp -r t3://${FORK}/workspace/
+   /workspace/`, and exports STORAGE_ADAPTER=tigris and
+   TIGRIS_BUCKET set to the fork. Bake it into my Daytona
+   snapshot as the entrypoint, alongside
+   `npm install -g @storagesdk/cli`.
+5. Register `storage mcp` in my agent's MCP config so it reads
+   and writes memory, run metadata, and artifacts by key against
+   the fork instead of copying them.
+6. After each run, in the harness: if validation passes, take
+   `tigris snapshots take agent-world`, then promote with
+   `tigris cp -r t3://run-${RUN_ID}/workspace/
+   t3://agent-world/workspace/`; otherwise drop the fork with
+   `tigris rm t3://run-${RUN_ID} -f`. Either way, delete the
+   run's access key: `tigris access-keys delete $KEY_ID --yes`.
+```
+
+## An agent you can't fork is an agent you can't trust
+
+So, where does the agent live?
+
+Your agent runs in a sandbox, calls a model, and takes orders from a harness,
+and all three can vanish mid-task without costing you anything but a restart.
+The one layer that can't be rebuilt is the bucket. Treat that bucket as the
+agent, and the operations you've been missing fall out for free: snapshot it and
+you can replay any run, fork it and you can try anything, delete a fork and the
+worst run your agent ever had never happened. And the pattern doesn't change
+between one agent and a thousand: a fleet is just more forks of more worlds,
+each one scoped, cheap, and disposable. That's where the agent lives, so make it
+forkable.
+
+<InlineCta
+  title="Forking and snapshots on Tigris"
+  subtitle="Copy-on-write forks of your agent's world: constant-time at any size, zero egress fees across clouds."
+  button="Read the docs"
+  link="https://www.tigrisdata.com/docs/snapshots/"
+/>
