@@ -33,6 +33,7 @@ import FourLayers from "./four-layers.svg";
 import FourPlaces from "./four-places.svg";
 import ForkPerRun from "./fork-per-run.svg";
 import FiveSystems from "./five-systems.svg";
+import BucketAnatomy from "./bucket-anatomy.svg";
 
 <img
   src={heroImage}
@@ -122,6 +123,14 @@ Notice what this inventory has in common: all four are bytes under keys, which
 means you can hold the agent's entire world, frozen mid-task, in one namespace
 with one snapshot boundary. The bucket at that moment _is_ the agent at that
 moment.
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <BucketAnatomy
+    role="img"
+    aria-label="Diagram titled 'One bucket, four kinds of state'. A single bucket named agent-world contains three key prefixes: workspace/ holding working files, memory/{agent}/{session} holding conversation history and scratchpads, and runs/{id} holding structured state like run metadata and tool results. Along the bucket's boundary runs a snapshot timeline with ticks at t0, t1, and t2. Caption: snapshots are the provenance; each tick is the whole world, restorable and forkable."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
 
 ## Today, that world is scattered across five systems
 
@@ -215,6 +224,19 @@ fork before your agent's first instruction runs, and the
 [storagesdk](https://github.com/storagesdk/storagesdk) MCP server that lets your
 agent work against the fork without copying it.
 
+Before the code, a quick sketch of how [Daytona](https://www.daytona.io) works,
+because the shim leans on it. A Daytona sandbox is a full computer with its own
+kernel, filesystem, and network stack, created from a snapshot image you define
+once in code and ready to execute in under 90 milliseconds. The
+[Python and TypeScript SDKs](https://www.daytona.io/docs) drive the whole
+lifecycle from your harness: build the image, create the sandbox, exec the
+process, destroy it. We pair with Daytona because the economics match:
+fork-per-run only pays off if both halves of the loop are cheap, and a zero-copy
+fork plus a sub-100ms sandbox means per-run isolation costs milliseconds on the
+storage axis and on the compute axis alike. One layer makes the computer
+disposable, the other makes the world durable, and neither has to pretend to be
+the other.
+
 The harness piece comes first, and it's where the isolation becomes enforceable:
 
 ```bash
@@ -232,11 +254,30 @@ tigris access-keys assign "$KEY_ID" -b "$FORK" -r Editor
 ```
 
 Pass the fork name and the scoped key into the sandbox's environment when you
-create it, as `FORK`, `TIGRIS_ACCESS_KEY_ID`, and `TIGRIS_SECRET_ACCESS_KEY`.
-Those are the only credentials the sandbox ever holds, which means the base
-bucket isn't hidden from your agent; it's unreachable: a prompt injection, a
-buggy tool, or a model on a bad day can name `agent-world` all it wants and the
-API will refuse it. Inside the snapshot, the entrypoint does the rest:
+create it. In Daytona's Python SDK that's one call:
+
+```python
+# Still in the harness. Daytona() reads DAYTONA_API_KEY; fork,
+# key_id, and key_secret were captured from the tigris commands above.
+from daytona import CreateSandboxFromSnapshotParams, Daytona
+
+sandbox = Daytona().create(
+    CreateSandboxFromSnapshotParams(
+        snapshot="agent-runtime",  # your image, entrypoint baked in
+        env_vars={
+            "FORK": fork,
+            "TIGRIS_ACCESS_KEY_ID": key_id,
+            "TIGRIS_SECRET_ACCESS_KEY": key_secret,
+        },
+    )
+)
+```
+
+Those three variables are the only credentials the sandbox ever holds, which
+means the base bucket isn't hidden from your agent; it's unreachable: a prompt
+injection, a buggy tool, or a model on a bad day can name `agent-world` all it
+wants and the API will refuse it. Inside the snapshot, the entrypoint does the
+rest:
 
 ```bash
 #!/usr/bin/env bash
@@ -317,8 +358,9 @@ tigris rm "t3://run-${RUN_ID}" -f
 tigris access-keys delete "$KEY_ID" --yes
 ```
 
-Be honest about the asymmetry here: the fork was free, and promotion isn't. It's
-a copy, the one step in the loop that costs what it weighs, so promote the
+One `sandbox.delete()` in the same harness retires the compute the same way. Be
+honest about the asymmetry here: the fork was free, and promotion isn't. It's a
+copy, the one step in the loop that costs what it weighs, so promote the
 prefixes the run actually changed rather than the whole fork.
 
 If you want provenance on top, enable snapshots on the base bucket and take one
@@ -379,9 +421,9 @@ harness already creates Daytona sandboxes; wire this into it.
    mint a key scoped to the fork (`tigris access-keys create`,
    capture the printed ID and secret, then
    `tigris access-keys assign $KEY_ID -b run-${RUN_ID} -r Editor`),
-   and pass them into the sandbox env as FORK,
-   TIGRIS_ACCESS_KEY_ID, and TIGRIS_SECRET_ACCESS_KEY, its only
-   credentials.
+   and pass them into the sandbox env (env_vars on the Daytona
+   SDK's create call) as FORK, TIGRIS_ACCESS_KEY_ID, and
+   TIGRIS_SECRET_ACCESS_KEY, its only credentials.
 4. Write an entrypoint.sh that mirrors the two TIGRIS_* vars to
    AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, pulls the
    working set with `tigris cp -r t3://${FORK}/workspace/
