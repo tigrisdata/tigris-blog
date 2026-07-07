@@ -1,0 +1,137 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 640 375"
+  width="640"
+  height="375"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .maintitle {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .maintsub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .title {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 11px;
+      fill: #94a3b8;
+    }
+    .arrowlabel {
+      font-size: 10px;
+      fill: #94a3b8;
+    }
+    .eph {
+      rx: 6;
+      ry: 6;
+      fill: #1a2e35;
+      stroke: #94a3b8;
+      stroke-width: 1;
+      stroke-dasharray: 5 4;
+      stroke-opacity: 0.6;
+    }
+    .good {
+      rx: 6;
+      ry: 6;
+      fill: rgba(98, 254, 181, 0.12);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1.5;
+    }
+    .goodlabel {
+      font-size: 13px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .goodtitle {
+      font-size: 15px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .line {
+      stroke: #94a3b8;
+      stroke-width: 1.2;
+    }
+    .greenline {
+      stroke: #62feb5;
+      stroke-width: 1.2;
+      stroke-dasharray: 5 4;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="arrowGray"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8" />
+    </marker>
+    <marker
+      id="arrowGreen"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path d="M0,0 L10,5 L0,10 z" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <!-- title and subtitle -->
+  <text x="320" y="26" text-anchor="middle" class="maintitle">
+    Where the agent actually lives
+  </text>
+  <text x="320" y="46" text-anchor="middle" class="maintsub">Kill anything in the top row and nothing is lost; the bucket can't be rebuilt</text>
+
+  <rect x="30" y="70" width="150" height="64" class="eph" />
+  <text x="105" y="96" text-anchor="middle" class="title">Model</text>
+  <text x="105" y="116" text-anchor="middle" class="sub">inference provider</text>
+
+  <rect x="245" y="70" width="150" height="64" class="eph" />
+  <text x="320" y="96" text-anchor="middle" class="title">Harness</text>
+  <text x="320" y="116" text-anchor="middle" class="sub">your loop</text>
+
+  <rect x="460" y="70" width="150" height="64" class="eph" />
+  <text x="535" y="96" text-anchor="middle" class="title">Sandbox</text>
+  <text x="535" y="116" text-anchor="middle" class="sub">built to be killed</text>
+
+  <!-- harness -> model / sandbox -->
+  <line x1="243" y1="102" x2="186" y2="102" class="line" marker-end="url(#arrowGray)" />
+  <text x="214" y="93" text-anchor="middle" class="arrowlabel">calls</text>
+  <line x1="397" y1="102" x2="454" y2="102" class="line" marker-end="url(#arrowGray)" />
+  <text x="426" y="93" text-anchor="middle" class="arrowlabel">dispatches</text>
+
+  <!-- sandbox <-> bucket -->
+  <line x1="520" y1="136" x2="425" y2="252" class="line" marker-end="url(#arrowGray)" />
+  <text x="500" y="199" text-anchor="start" class="arrowlabel">writes state</text>
+  <line x1="390" y1="252" x2="487" y2="136" class="greenline" marker-end="url(#arrowGreen)" />
+  <text x="392" y="199" text-anchor="end" class="arrowlabel">mounts a fork</text>
+
+  <!-- the world -->
+  <rect x="145" y="254" width="350" height="70" class="good" />
+  <text x="320" y="282" text-anchor="middle" class="goodtitle">Tigris Bucket</text>
+  <text x="320" y="304" text-anchor="middle" class="sub">
+    working files · memory · structured state · provenance
+  </text>
+
+  <text x="320" y="354" text-anchor="middle" class="goodlabel">
+    The world: the only layer you can't rebuild
+  </text>
+</svg>

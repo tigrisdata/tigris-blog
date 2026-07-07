@@ -1,0 +1,126 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 640 420"
+  width="640"
+  height="420"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .maintitle {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .maintsub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .title {
+      font-size: 13px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 11px;
+      fill: #94a3b8;
+    }
+    .goodtitle {
+      font-size: 14px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .greenlabel {
+      font-size: 10px;
+      fill: #62feb5;
+    }
+    .caption {
+      font-size: 13px;
+      fill: #94a3b8;
+    }
+    .agent {
+      rx: 6;
+      ry: 6;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .good {
+      rx: 10;
+      ry: 10;
+      fill: rgba(98, 254, 181, 0.12);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1.5;
+    }
+    .icon {
+      stroke: #e2e8f0;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+    .greenline {
+      stroke: #62feb5;
+      stroke-width: 1.2;
+      stroke-dasharray: 5 4;
+      fill: none;
+    }
+    .greentick {
+      stroke: #62feb5;
+      stroke-width: 1.5;
+    }
+  </style>
+
+  <!-- title and subtitle -->
+  <text x="320" y="26" text-anchor="middle" class="maintitle">
+    One bucket, four kinds of state
+  </text>
+  <text x="320" y="46" text-anchor="middle" class="maintsub">Everything the agent needs to become itself again, as bytes under keys</text>
+
+  <!-- the bucket -->
+  <rect x="120" y="66" width="400" height="270" class="good" />
+  <text x="320" y="90" text-anchor="middle" class="goodtitle">agent-world</text>
+
+  <!-- row 1: working files -->
+  <rect x="145" y="104" width="350" height="60" class="agent" />
+  <g transform="translate(172,134)" class="icon">
+    <path d="M-10,-7 h7 l3,3 h10 a2,2 0 0 1 2,2 v9 a2,2 0 0 1 -2,2 h-20 a2,2 0 0 1 -2,-2 v-12 a2,2 0 0 1 2,-2 z" />
+  </g>
+  <text x="196" y="130" class="title">workspace/</text>
+  <text x="196" y="150" class="sub">working files: the repo, the artifacts, the half-finished output</text>
+
+  <!-- row 2: memory -->
+  <rect x="145" y="176" width="350" height="60" class="agent" />
+  <g transform="translate(172,206)" class="icon">
+    <path d="M0,-9 C-1.6,-10.6 -4.8,-10.6 -6.4,-9 C-8.8,-9 -10.4,-6.4 -9.6,-4 C-11.2,-3.2 -12,0 -10.4,1.6 C-11.2,4 -9.6,6.4 -7.2,6.4 C-6.4,8.8 -3.2,9.6 0,8 Z" />
+    <path d="M0,-9 C1.6,-10.6 4.8,-10.6 6.4,-9 C8.8,-9 10.4,-6.4 9.6,-4 C11.2,-3.2 12,0 10.4,1.6 C11.2,4 9.6,6.4 7.2,6.4 C6.4,8.8 3.2,9.6 0,8 Z" />
+  </g>
+  <text x="196" y="202" class="title">memory/{agent}/{session}</text>
+  <text x="196" y="222" class="sub">conversation history, scratchpads, everything learned across sessions</text>
+
+  <!-- row 3: structured state -->
+  <rect x="145" y="248" width="350" height="60" class="agent" />
+  <g transform="translate(172,278)" class="icon">
+    <path d="M-4,-10 c-4,0 -3,4 -3,6 c0,3 -4,4 -4,4 c0,0 4,1 4,4 c0,2 -1,6 3,6" />
+    <path d="M4,-10 c4,0 3,4 3,6 c0,3 4,4 4,4 c0,0 -4,1 -4,4 c0,2 1,6 -3,6" />
+  </g>
+  <text x="196" y="274" class="title">runs/{id}</text>
+  <text x="196" y="294" class="sub">structured state: run metadata, task queue, tool results, config</text>
+
+  <!-- snapshot timeline on the bucket boundary -->
+  <line x1="145" y1="362" x2="495" y2="362" class="greenline" />
+  <line x1="200" y1="355" x2="200" y2="369" class="greentick" />
+  <line x1="320" y1="355" x2="320" y2="369" class="greentick" />
+  <line x1="440" y1="355" x2="440" y2="369" class="greentick" />
+  <text x="200" y="384" text-anchor="middle" class="greenlabel">t0</text>
+  <text x="320" y="384" text-anchor="middle" class="greenlabel">t1</text>
+  <text x="440" y="384" text-anchor="middle" class="greenlabel">t2</text>
+
+  <!-- caption -->
+  <text x="320" y="410" text-anchor="middle" class="caption">
+    Snapshots are the provenance: each tick is the whole world, restorable and forkable.
+  </text>
+</svg>

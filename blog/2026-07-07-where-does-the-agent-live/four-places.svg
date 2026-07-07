@@ -1,0 +1,160 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 640 285"
+  width="640"
+  height="285"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .maintitle {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .maintsub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .title {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 10.5px;
+      fill: #94a3b8;
+    }
+    .place {
+      font-size: 12px;
+      fill: #bac1be;
+      font-weight: 600;
+    }
+    .eph {
+      rx: 6;
+      ry: 6;
+      fill: #1a2e35;
+      stroke: #94a3b8;
+      stroke-width: 1;
+      stroke-dasharray: 5 4;
+      stroke-opacity: 0.6;
+    }
+    .plain {
+      rx: 6;
+      ry: 6;
+      fill: #101c20;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .good {
+      rx: 6;
+      ry: 6;
+      fill: rgba(98, 254, 181, 0.12);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1.5;
+    }
+    .goodtitle {
+      font-size: 14px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .goodplace {
+      font-size: 12px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .goodlabel {
+      font-size: 13px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .caption {
+      font-size: 13px;
+      fill: #94a3b8;
+    }
+    .line {
+      stroke: #94a3b8;
+      stroke-width: 1.2;
+    }
+    .greenline {
+      stroke: #62feb5;
+      stroke-width: 1.2;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="pArrowGray"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8" />
+    </marker>
+    <marker
+      id="pArrowGreen"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path d="M0,0 L10,5 L0,10 z" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <!-- title and subtitle -->
+  <text x="320" y="26" text-anchor="middle" class="maintitle">
+    An agent is four things in four places
+  </text>
+  <text x="320" y="46" text-anchor="middle" class="maintsub">
+    Each piece lives somewhere else, and only one of them can't be rebuilt
+  </text>
+
+  <!-- the four things -->
+  <rect x="20" y="70" width="140" height="48" class="eph" />
+  <text x="90" y="99" text-anchor="middle" class="title">Model</text>
+
+  <rect x="175" y="70" width="140" height="48" class="eph" />
+  <text x="245" y="99" text-anchor="middle" class="title">Harness</text>
+
+  <rect x="330" y="70" width="140" height="48" class="eph" />
+  <text x="400" y="99" text-anchor="middle" class="title">Sandbox</text>
+
+  <rect x="485" y="70" width="140" height="48" class="good" />
+  <text x="555" y="99" text-anchor="middle" class="goodtitle">State</text>
+
+  <!-- lives at -->
+  <line x1="90" y1="120" x2="90" y2="172" class="line" marker-end="url(#pArrowGray)" />
+  <line x1="245" y1="120" x2="245" y2="172" class="line" marker-end="url(#pArrowGray)" />
+  <line x1="400" y1="120" x2="400" y2="172" class="line" marker-end="url(#pArrowGray)" />
+  <line x1="555" y1="120" x2="555" y2="172" class="greenline" marker-end="url(#pArrowGreen)" />
+
+  <!-- the four places -->
+  <rect x="20" y="176" width="140" height="56" class="plain" />
+  <text x="90" y="199" text-anchor="middle" class="place">inference provider</text>
+  <text x="90" y="216" text-anchor="middle" class="sub">stateless per call</text>
+
+  <rect x="175" y="176" width="140" height="56" class="plain" />
+  <text x="245" y="199" text-anchor="middle" class="place">your compute</text>
+  <text x="245" y="216" text-anchor="middle" class="sub">server, worker, queue</text>
+
+  <rect x="330" y="176" width="140" height="56" class="plain" />
+  <text x="400" y="199" text-anchor="middle" class="place">Daytona</text>
+  <text x="400" y="216" text-anchor="middle" class="sub">disposable microVM</text>
+
+  <rect x="485" y="176" width="140" height="56" class="good" />
+  <text x="555" y="199" text-anchor="middle" class="goodplace">Tigris Bucket</text>
+  <text x="555" y="216" text-anchor="middle" class="sub">forkable object storage</text>
+
+  <!-- caption -->
+  <text x="314" y="268" text-anchor="end" class="caption">Three are disposable.</text>
+  <text x="326" y="268" text-anchor="start" class="goodlabel">One is the agent.</text>
+</svg>

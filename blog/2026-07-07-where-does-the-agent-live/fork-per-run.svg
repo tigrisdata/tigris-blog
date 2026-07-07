@@ -1,0 +1,151 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 640 348"
+  width="640"
+  height="348"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .maintitle {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .maintsub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .title {
+      font-size: 13px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 11px;
+      fill: #94a3b8;
+    }
+    .arrowlabel {
+      font-size: 10px;
+      fill: #94a3b8;
+    }
+    .greenlabel {
+      font-size: 10px;
+      fill: #62feb5;
+    }
+    .agent {
+      rx: 6;
+      ry: 6;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .eph {
+      rx: 6;
+      ry: 6;
+      fill: #1a2e35;
+      stroke: #94a3b8;
+      stroke-width: 1;
+      stroke-dasharray: 5 4;
+      stroke-opacity: 0.6;
+    }
+    .good {
+      rx: 6;
+      ry: 6;
+      fill: rgba(98, 254, 181, 0.12);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1.5;
+    }
+    .goodtitle {
+      font-size: 14px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .line {
+      stroke: #94a3b8;
+      stroke-width: 1.2;
+      fill: none;
+    }
+    .greenline {
+      stroke: #62feb5;
+      stroke-width: 1.2;
+      stroke-dasharray: 5 4;
+      fill: none;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="fArrowGray"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8" />
+    </marker>
+    <marker
+      id="fArrowGreen"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path d="M0,0 L10,5 L0,10 z" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <!-- title and subtitle -->
+  <text x="320" y="26" text-anchor="middle" class="maintitle">
+    One fork per run
+  </text>
+  <text x="320" y="46" text-anchor="middle" class="maintsub">Every sandbox mounts a private fork; the harness merges or discards it</text>
+
+  <!-- base bucket -->
+  <rect x="30" y="163" width="160" height="70" class="good" />
+  <text x="110" y="193" text-anchor="middle" class="goodtitle">Tigris Bucket</text>
+  <text x="110" y="212" text-anchor="middle" class="sub">agent-world · the base</text>
+
+  <!-- forks -->
+  <rect x="280" y="83" width="120" height="50" class="agent" />
+  <text x="340" y="106" text-anchor="middle" class="title">run-a</text>
+  <text x="340" y="122" text-anchor="middle" class="sub">fork</text>
+
+  <rect x="280" y="263" width="120" height="50" class="agent" />
+  <text x="340" y="286" text-anchor="middle" class="title">run-b</text>
+  <text x="340" y="302" text-anchor="middle" class="sub">fork</text>
+
+  <!-- base -> forks -->
+  <line x1="192" y1="181" x2="278" y2="114" class="line" marker-end="url(#fArrowGray)" />
+  <text x="224" y="136" text-anchor="middle" class="arrowlabel">fork · zero-copy</text>
+  <line x1="192" y1="215" x2="278" y2="282" class="line" marker-end="url(#fArrowGray)" />
+  <text x="224" y="268" text-anchor="middle" class="arrowlabel">fork · zero-copy</text>
+
+  <!-- sandboxes -->
+  <rect x="470" y="83" width="140" height="50" class="eph" />
+  <text x="540" y="106" text-anchor="middle" class="title">fresh sandbox A</text>
+  <text x="540" y="122" text-anchor="middle" class="sub">disposable</text>
+
+  <rect x="470" y="263" width="140" height="50" class="eph" />
+  <text x="540" y="286" text-anchor="middle" class="title">fresh sandbox B</text>
+  <text x="540" y="302" text-anchor="middle" class="sub">disposable</text>
+
+  <!-- forks -> sandboxes -->
+  <line x1="402" y1="108" x2="468" y2="108" class="line" marker-end="url(#fArrowGray)" />
+  <text x="435" y="100" text-anchor="middle" class="arrowlabel">mounts</text>
+  <line x1="402" y1="288" x2="468" y2="288" class="line" marker-end="url(#fArrowGray)" />
+  <text x="435" y="280" text-anchor="middle" class="arrowlabel">mounts</text>
+
+  <!-- merge or discard, back to base -->
+  <path d="M 300 81 C 190 56 78 96 104 160" class="greenline" marker-end="url(#fArrowGreen)" />
+  <text x="170" y="72" text-anchor="middle" class="greenlabel">merge or discard</text>
+  <path d="M 300 315 C 190 340 78 300 104 236" class="greenline" marker-end="url(#fArrowGreen)" />
+  <text x="170" y="336" text-anchor="middle" class="greenlabel">merge or discard</text>
+</svg>
