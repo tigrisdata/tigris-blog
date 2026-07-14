@@ -147,7 +147,10 @@ GET /moby-dick.txt HTTP/1.1
 Host: xe-sophia-base.t3.tigrisfiles.io
 X-Amz-Date: 20260714T043308Z
 X-Amz-Content-Sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-Authorization: AWS4-HMAC-SHA256 Credential=tid_ubYBNEYAmTciLVwszw_QrUXDmtcyQisryryGfxgznDsCnOvNqh/20260714/auto/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=0dcaf4972911527a7582ff36ea457e9760a8efccb6655a178685aaa281637a36
+Authorization: AWS4-HMAC-SHA256
+Credential=tid_ubYBNEYAmTciLVwszw_QrUXDmtcyQisryryGfxgznDsCnOvNqh/20260714/auto/s3/aws4_request
+SignedHeaders=host;x-amz-content-sha256;x-amz-date
+Signature=0dcaf4972911527a7582ff36ea457e9760a8efccb6655a178685aaa281637a36
 ```
 
 Note that this request is not a legal request, it’s an example to illustrate the
