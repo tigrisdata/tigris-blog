@@ -4,10 +4,11 @@ title: "The Most Expensive ClickHouse Query Is the Restore"
 date: 2026-07-16
 description: >
   Self-hosted ClickHouse runs on cheap compute, but its backups and cold tier
-  usually live on AWS S3 — and AWS charges $0.09/GB to read your own data
-  back. Point BACKUP TO S3 and TTL tiering at Tigris instead: same stock
-  ClickHouse features, zero egress fees, and disaster recovery drills that
-  cost nothing to run.
+  usually live on AWS S3 — and AWS charges $0.09/GB to read your own data back.
+  Point BACKUP TO S3 and TTL tiering at Tigris instead: same stock ClickHouse
+  features, zero egress fees, and disaster recovery drills that cost nothing to
+  run.
+image: ./hero-img.webp
 keywords:
   - tigris
   - clickhouse
@@ -26,37 +27,44 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-img.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="The Most Expensive ClickHouse Query Is the Restore"
+/>
 
 If you self-host ClickHouse, you probably run it on Hetzner, OVH, or your own
 hardware. That's the whole appeal: ClickHouse is fast on cheap metal, and
-hyperscaler compute prices are hard to justify when your queries scan
-terabytes for fun.
+hyperscaler compute prices are hard to justify when your queries scan terabytes
+for fun.
 
-But every guide to running ClickHouse in production assumes there's an S3
-bucket nearby. Backups go to object storage. Partitions older than 30 days
-get tiered off to object storage. If you're not on AWS, there is no bucket
-nearby — so most teams point everything at S3 anyway and eat the bandwidth
-charges. AWS bills $0.09/GB to read your own data back.
+But every guide to running ClickHouse in production assumes there's an S3 bucket
+nearby. Backups go to object storage. Partitions older than 30 days get tiered
+off to object storage. If you're not on AWS, there is no bucket nearby — so most
+teams point everything at S3 anyway and eat the bandwidth charges. AWS bills
+$0.09/GB to read your own data back.
 
 ## What that actually costs
 
 Old data doesn't stay untouched. Someone has to dig through it during an
 incident, an auditor asks for it, a backfill re-reads it. Say an incident has
-you scanning 50 TB of old partitions — that's around $4,500 in bandwidth
-before you've learned anything. A full restore of a 500 TB backup? About
-$45,000 at list price.
+you scanning 50 TB of old partitions — that's around $4,500 in bandwidth before
+you've learned anything. A full restore of a 500 TB backup? About $45,000 at
+list price.
 
-The worse problem is the one that doesn't show up on any bill: because
-restores cost real money, nobody tests their backups. You find out whether
-they work during the outage. That's the worst possible moment to learn
-something new about your infrastructure.
+The worse problem is the one that doesn't show up on any bill: because restores
+cost real money, nobody tests their backups. You find out whether they work
+during the outage. That's the worst possible moment to learn something new about
+your infrastructure.
 
 ## The fix is an endpoint URL
 
 [Tigris](https://www.tigrisdata.com) speaks S3 and
-[doesn't charge egress](https://www.tigrisdata.com/pricing/). Nothing about
-your setup has to change — these are the same stock ClickHouse features you'd
-use with any bucket. Backups are the five-minute version:
+[doesn't charge egress](https://www.tigrisdata.com/pricing/). Nothing about your
+setup has to change — these are the same stock ClickHouse features you'd use
+with any bucket. Backups are the five-minute version:
 
 ```sql
 BACKUP TABLE logs
@@ -67,9 +75,9 @@ TO S3(
 );
 ```
 
-That endpoint is the entire integration. If you have retention-heavy tables,
-add a tiered storage policy too. Recent partitions stay on NVMe, and
-everything older moves to Tigris on its own:
+That endpoint is the entire integration. If you have retention-heavy tables, add
+a tiered storage policy too. Recent partitions stay on NVMe, and everything
+older moves to Tigris on its own:
 
 ```sql
 TTL timestamp + INTERVAL 30 DAY TO VOLUME 'cold'
@@ -77,29 +85,29 @@ SETTINGS storage_policy = 'tiered'
 ```
 
 Your queries don't change. Dashboard queries still hit local disk, because
-partition pruning never touches the cold parts, and a cache disk soaks up
-repeat reads of old data. The full disk and policy config is in the
+partition pruning never touches the cold parts, and a cache disk soaks up repeat
+reads of old data. The full disk and policy config is in the
 [ClickHouse guide](https://www.tigrisdata.com/docs/guides/clickhouse/).
 
 ## To be clear about what this is not
 
 Your hot data stays on NVMe. Local disk answers in microseconds and object
-storage answers in milliseconds, and that difference is most of why
-ClickHouse feels fast. Tigris is for your cold tier and your backups, not
-your primary storage. One more thing: don't try zero-copy replication over
-S3 in open-source ClickHouse.
+storage answers in milliseconds, and that difference is most of why ClickHouse
+feels fast. Tigris is for your cold tier and your backups, not your primary
+storage. One more thing: don't try zero-copy replication over S3 in open-source
+ClickHouse.
 [ClickHouse says not to](https://clickhouse.com/docs/operations/storing-data),
 and they're right.
 
 ## What changes when reads are free
 
 More than you'd expect. You can restore a backup just to prove it works —
-monthly, if you like — because it costs nothing. Backfills and audits stop
-being budget conversations. The restore, the number that scared you most,
-drops to zero.
+monthly, if you like — because it costs nothing. Backfills and audits stop being
+budget conversations. The restore, the number that scared you most, drops to
+zero.
 
-Your data was never the expensive part. Getting it back was. Fix that, and
-it's just storage.
+Your data was never the expensive part. Getting it back was. Fix that, and it's
+just storage.
 
 <InlineCta
   title="Point your ClickHouse cold tier at Tigris"
