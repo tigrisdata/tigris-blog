@@ -14,9 +14,9 @@ module.exports = {
 
   // First entry is the main hero card; the rest are side cards.
   featuredPosts: [
-    "/objgit",
     "/storagesdk",
-    "/case-study-basic-memory",
-    "/agent-shell-release",
+    "/clickhouse-zero-egress",
+    "/t3-migrate-command",
+    "/where-does-the-agent-live",
   ],
 };

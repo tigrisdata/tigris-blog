@@ -4,10 +4,10 @@ title: "The Most Expensive ClickHouse Query Is the Restore"
 date: 2026-07-16
 description: >
   Self-hosted ClickHouse runs on cheap compute, but its backups and cold tier
-  usually live on AWS S3 — and AWS charges $0.09/GB to read your own data back.
-  Point BACKUP TO S3 and TTL tiering at Tigris instead: same stock ClickHouse
-  features, zero egress fees, and disaster recovery drills that cost nothing to
-  run.
+  usually live on AWS S3, and AWS charges $0.09/GB to read your own data back.
+  Point BACKUP TO S3 and TTL tiering at Tigris instead. You keep the same stock
+  ClickHouse features, you pay zero egress fees, and disaster recovery drills
+  cost nothing to run.
 image: ./hero-img.webp
 keywords:
   - tigris
@@ -42,17 +42,16 @@ for fun.
 
 But every guide to running ClickHouse in production assumes there's an S3 bucket
 nearby. Backups go to object storage. Partitions older than 30 days get tiered
-off to object storage. If you're not on AWS, there is no bucket nearby — so most
+off to object storage. If you're not on AWS, there is no bucket nearby, so most
 teams point everything at S3 anyway and eat the bandwidth charges. AWS bills
 $0.09/GB to read your own data back.
 
 ## What that actually costs
 
-Old data doesn't stay untouched. Someone has to dig through it during an
-incident, an auditor asks for it, a backfill re-reads it. Say an incident has
-you scanning 50 TB of old partitions — that's around $4,500 in bandwidth before
-you've learned anything. A full restore of a 500 TB backup? About $45,000 at
-list price.
+Old data doesn't stay untouched. Someone digs through it during an incident, an
+auditor asks for it, or a backfill re-reads it. If an incident has you scanning
+50 TB of old partitions, that's around $4,500 in bandwidth before you've learned
+anything. A full restore of a 500 TB backup costs about $45,000 at list price.
 
 The worse problem is the one that doesn't show up on any bill: because restores
 cost real money, nobody tests their backups. You find out whether they work
@@ -63,8 +62,8 @@ your infrastructure.
 
 [Tigris](https://www.tigrisdata.com) speaks S3 and
 [doesn't charge egress](https://www.tigrisdata.com/pricing/). Nothing about your
-setup has to change — these are the same stock ClickHouse features you'd use
-with any bucket. Backups are the five-minute version:
+setup has to change, because these are the same stock ClickHouse features you'd
+use with any bucket. Backups are the five-minute version:
 
 ```sql
 BACKUP TABLE logs
@@ -75,9 +74,12 @@ TO S3(
 );
 ```
 
-That endpoint is the entire integration. If you have retention-heavy tables, add
-a tiered storage policy too. Recent partitions stay on NVMe, and everything
-older moves to Tigris on its own:
+That endpoint is the entire integration. Incremental backups and restore
+rehearsals work the same way, and our
+[ClickHouse guide](https://www.tigrisdata.com/docs/guides/clickhouse/) walks
+through both. If you have retention-heavy tables, add a tiered storage policy
+too. Recent partitions stay on NVMe, and everything older moves to Tigris on its
+own:
 
 ```sql
 TTL timestamp + INTERVAL 30 DAY TO VOLUME 'cold'
@@ -94,24 +96,36 @@ reads of old data. The full disk and policy config is in the
 Your hot data stays on NVMe. Local disk answers in microseconds and object
 storage answers in milliseconds, and that difference is most of why ClickHouse
 feels fast. Tigris is for your cold tier and your backups, not your primary
-storage. One more thing: don't try zero-copy replication over S3 in open-source
-ClickHouse.
-[ClickHouse says not to](https://clickhouse.com/docs/operations/storing-data),
-and they're right.
+storage.
+
+One more thing: don't try zero-copy replication over S3 in open-source
+ClickHouse, tempting as it looks. The design shares one copy of the data between
+replicas, but each replica keeps its own local metadata about which blobs it
+uses, with reference counts coordinated through Keeper. That bookkeeping can
+race when one replica runs a merge while another runs a mutation. A replica can
+delete blobs its siblings still need, or it can strand orphaned blobs in your
+bucket forever. That's why the feature has been
+[disabled by default since 22.8](https://clickhouse.com/docs/operations/storing-data)
+and marked not production-ready. The clearest signal is what ClickHouse did
+about it. Rather than fix the bookkeeping, they built a new engine with shared
+metadata, called SharedMergeTree, and kept it in their cloud. Use Tigris for
+your backups and cold tier, and don't ask replicas to share a disk.
 
 ## What changes when reads are free
 
-More than you'd expect. You can restore a backup just to prove it works —
-monthly, if you like — because it costs nothing. Backfills and audits stop being
-budget conversations. The restore, the number that scared you most, drops to
-zero.
+A lot changes. You can restore a backup just to prove it works, and you can do
+it monthly, because it costs nothing. Backfills and audits stop being budget
+conversations. The restore, the number that scared you most, drops to zero.
 
 Your data was never the expensive part. Getting it back was. Fix that, and it's
-just storage.
+just storage. The
+[ClickHouse guide](https://www.tigrisdata.com/docs/guides/clickhouse/) has
+everything you need to set it up, from the backup command to the full tiering
+config.
 
 <InlineCta
   title="Point your ClickHouse cold tier at Tigris"
-  subtitle="Stock ClickHouse features, zero egress fees, and DR drills that cost nothing to run. Your first 5 GB are free."
+  subtitle="Keep your stock ClickHouse setup, pay no egress fees, and test restores as often as you like. Your first 5 GB are free."
   button="Get started"
   link="https://console.storage.dev"
 />
