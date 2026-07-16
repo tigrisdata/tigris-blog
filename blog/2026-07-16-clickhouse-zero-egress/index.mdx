@@ -86,9 +86,11 @@ TTL timestamp + INTERVAL 30 DAY TO VOLUME 'cold'
 SETTINGS storage_policy = 'tiered'
 ```
 
-Your queries don't change. Dashboard queries still hit local disk, because
-partition pruning never touches the cold parts, and a cache disk soaks up repeat
-reads of old data. The full disk and policy config is in the
+Your queries don't change. A dashboard query that filters to the last few days
+gets pruned down to the hot partitions and never leaves local disk. Queries that
+reach further back read from Tigris at object storage speed, and a cache disk
+soaks up repeat reads of the same old partitions. The full disk and policy
+config is in the
 [ClickHouse guide](https://www.tigrisdata.com/docs/guides/clickhouse/).
 
 ## To be clear about what this is not
