@@ -136,15 +136,15 @@ out of any of these user-facing projects.
 When Abdullah was working on the CLI, he wanted to write a formal specification
 for the CLI and then transform that into the scaffolding for the code. This
 eventually evolved into
-[specs.yaml](https://github.com/tigrisdata/cli/blob/main/src/specs.yaml), which
-we parse with some custom code to generate the scaffolding required to wire
-everything up. This spec file ended up serving two purposes: it drove the RFC
-process by being the canonical source of truth for what the CLI should do, but
-it also was reused to generate the CLI itself. Change the spec, regenerate the
-CLI, everything updates and all is balanced as all things should be.
+[specs.yaml](https://github.com/tigrisdata/storage/blob/main/packages/cli/src/specs.yaml),
+which we parse with some custom code to generate the scaffolding required to
+wire everything up. This spec file ended up serving two purposes: it drove the
+RFC process by being the canonical source of truth for what the CLI should do,
+but it also was reused to generate the CLI itself. Change the spec, regenerate
+the CLI, everything updates and all is balanced as all things should be.
 
 As a neat side effect of this, here's
-[the implementation of the `objects put` command](https://github.com/tigrisdata/cli/blob/main/src/lib/objects/put.ts).
+[the implementation of the `objects put` command](https://github.com/tigrisdata/storage/blob/main/packages/cli/src/lib/objects/put.ts).
 It's in `src/lib/objects/put.ts` and directly maps to `objects put`. This gives
 us filesystem-based command routing the same way that Next.js gives you
 filesystem based web routing.
@@ -265,9 +265,10 @@ out the correct command from `--help` output.
 ## Conclusion
 
 Please try the CLI out! It's
-[open source on GitHub](https://github.com/tigrisdata/cli). We use it internally
-at Tigris. We plan to replace the AWS CLI with our CLI company-wide–there's only
-so many times you can type `aws s3api` before your fingers fall off.
+[open source on GitHub](https://github.com/tigrisdata/storage/tree/main/packages/cli).
+We use it internally at Tigris. We plan to replace the AWS CLI with our CLI
+company-wide–there's only so many times you can type `aws s3api` before your
+fingers fall off.
 
 Install our CLI with `npm`:
 
@@ -281,9 +282,9 @@ seconds.
 
 Try it out! Let us know what you think! We're still balancing familiarity with
 natural design, and real feedback beats internal speculation every time. Open
-[an issue on GitHub](https://github.com/tigrisdata/cli), stop by
-[our Discord](https://community.tigrisdata.com) or reply wherever you found this
-post.
+[an issue on GitHub](https://github.com/tigrisdata/storage/tree/main/packages/cli),
+stop by [our Discord](https://community.tigrisdata.com) or reply wherever you
+found this post.
 
 The shell is waiting.
 
@@ -291,5 +292,5 @@ The shell is waiting.
   title="Ready to control Tigris from your terminal?"
   subtitle="Install the Tigris CLI with npm and manage your object storage without leaving the command line."
   button="Get the CLI"
-  link="https://github.com/tigrisdata/cli"
+  link="https://github.com/tigrisdata/storage/tree/main/packages/cli"
 />
