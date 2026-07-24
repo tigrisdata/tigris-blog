@@ -16,7 +16,6 @@ keywords:
   - s3-compatible
   - ttl
   - tigris
-image: ./hero-img.webp
 authors:
   - davidmyriel
 tags:
@@ -29,7 +28,6 @@ tags:
 import InlineCta from "@site/src/components/InlineCta";
 import MermaidFrame from "@site/src/components/MermaidFrame";
 import DashboardMockup from "./dashboard-mockup.svg";
-import heroImage from "./hero-img.webp";
 import CounterFanout from "./counter-fanout.svg";
 import UnchangedBuckets from "./unchanged-buckets.svg";
 import CachePaths from "./cache-paths.svg";
@@ -38,11 +36,7 @@ import CooldownClock from "./cooldown-clock.svg";
 import RaceTimeline from "./race-timeline.svg";
 import CostChart from "./cost-chart.svg";
 
-<img
-  src={heroImage}
-  className="hero-image"
-  alt="A muscular tiger stands in the dark, gazing up at a towering bucket built from glowing green circuit boards and neon data panels, with the title How Big is This Bucket beside it"
-/>
+{/* TODO: add hero-image.webp and `image:` frontmatter before publishing */}
 
 <MermaidFrame style={{ maxWidth: "40rem", margin: "1.5rem auto" }}>
   <DashboardMockup

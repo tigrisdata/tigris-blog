@@ -71,14 +71,23 @@
 
   <!-- bar, killed, refill, killed, refill -->
   <rect x="40" y="90" width="90" height="22" class="barLive" />
-  <line x1="136" y1="90" x2="148" y2="112" class="cross" />
-  <line x1="148" y1="90" x2="136" y2="112" class="cross" />
+  <g opacity="0.35">
+    <animate attributeName="opacity" values="0.35;0.35;1;0.35" keyTimes="0;0.1;0.16;1" dur="6s" repeatCount="indefinite" />
+    <line x1="136" y1="90" x2="148" y2="112" class="cross" />
+    <line x1="148" y1="90" x2="136" y2="112" class="cross" />
+  </g>
   <rect x="158" y="90" width="90" height="22" class="barLive" />
-  <line x1="254" y1="90" x2="266" y2="112" class="cross" />
-  <line x1="266" y1="90" x2="254" y2="112" class="cross" />
+  <g opacity="0.35">
+    <animate attributeName="opacity" values="0.35;0.35;1;0.35" keyTimes="0;0.4;0.46;1" dur="6s" repeatCount="indefinite" />
+    <line x1="254" y1="90" x2="266" y2="112" class="cross" />
+    <line x1="266" y1="90" x2="254" y2="112" class="cross" />
+  </g>
   <rect x="276" y="90" width="90" height="22" class="barLive" />
-  <line x1="372" y1="90" x2="384" y2="112" class="cross" />
-  <line x1="384" y1="90" x2="372" y2="112" class="cross" />
+  <g opacity="0.35">
+    <animate attributeName="opacity" values="0.35;0.35;1;0.35" keyTimes="0;0.7;0.76;1" dur="6s" repeatCount="indefinite" />
+    <line x1="372" y1="90" x2="384" y2="112" class="cross" />
+    <line x1="384" y1="90" x2="372" y2="112" class="cross" />
+  </g>
 
   <text x="142" y="130" text-anchor="middle" class="tiny">write</text>
   <text x="260" y="130" text-anchor="middle" class="tiny">write</text>
@@ -95,28 +104,58 @@
   </text>
 
   <!-- long live bar until write+15min, then ghost of the unused TTL -->
-  <rect x="40" y="186" width="240" height="22" class="barLive" />
-  <rect x="284" y="186" width="180" height="22" class="barGhost" />
-  <text x="374" y="201" text-anchor="middle" class="tiny">
-    unused days of TTL
-  </text>
+  <rect x="40" y="186" width="424" height="22" class="barLive">
+    <animate attributeName="width" values="424;424;240;240" keyTimes="0;0.12;0.3;1" dur="6s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="1;1;1;0;0" keyTimes="0;0.68;0.72;0.76;1" dur="6s" repeatCount="indefinite" />
+  </rect>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.18;0.26;1" dur="6s" repeatCount="indefinite" />
+    <rect x="284" y="186" width="180" height="22" class="barGhost" />
+    <text x="374" y="201" text-anchor="middle" class="tiny">
+      unused days of TTL
+    </text>
+  </g>
 
   <!-- the write that shortens -->
-  <line x1="190" y1="182" x2="190" y2="212" class="writeMark" />
-  <text x="180" y="232" text-anchor="middle" class="tiny">write: "expire in 15 min"</text>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.1;0.14;1" dur="6s" repeatCount="indefinite" />
+    <line x1="190" y1="182" x2="190" y2="212" stroke="#62feb5" stroke-width="1.5">
+      <animate attributeName="stroke-width" values="1.5;3;1.5" keyTimes="0;0.14;0.3" dur="6s" repeatCount="indefinite" />
+    </line>
+    <text x="180" y="232" text-anchor="middle" class="tiny" fill="#62feb5">write: "expire in 15 min"</text>
+  </g>
 
   <!-- suppressed writes -->
-  <line x1="222" y1="196" x2="222" y2="212" class="writeMark" />
-  <line x1="242" y1="196" x2="242" y2="212" class="writeMark" />
-  <line x1="262" y1="196" x2="262" y2="212" class="writeMark" />
-  <text x="310" y="232" text-anchor="middle" class="tiny">expires</text>
-  <text x="242" y="254" text-anchor="middle" class="tiny">more writes: already dying — free</text>
+  <line x1="222" y1="196" x2="222" y2="212" class="writeMark" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.28;0.3;1" dur="6s" repeatCount="indefinite" />
+  </line>
+  <line x1="242" y1="196" x2="242" y2="212" class="writeMark" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.36;0.38;1" dur="6s" repeatCount="indefinite" />
+  </line>
+  <line x1="262" y1="196" x2="262" y2="212" class="writeMark" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.44;0.46;1" dur="6s" repeatCount="indefinite" />
+  </line>
+  <text x="310" y="232" text-anchor="middle" class="tiny" opacity="0">
+    expires
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.7;0.74;1" dur="6s" repeatCount="indefinite" />
+  </text>
+  <text x="242" y="254" text-anchor="middle" class="tiny" opacity="0">
+    more writes: already dying — free
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.3;0.34;1" dur="6s" repeatCount="indefinite" />
+  </text>
 
   <!-- expiry + refill -->
-  <line x1="284" y1="208" x2="284" y2="220" class="writeMark" />
-  <rect x="484" y="186" width="86" height="22" class="barLive" />
-  <text x="527" y="228" text-anchor="middle" class="tiny">next read refills</text>
-  <text x="527" y="240" text-anchor="middle" class="tiny">with the fresh size</text>
+  <line x1="284" y1="208" x2="284" y2="220" class="writeMark" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.7;0.74;1" dur="6s" repeatCount="indefinite" />
+  </line>
+  <rect x="484" y="186" width="86" height="22" class="barLive" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.8;0.86;1" dur="6s" repeatCount="indefinite" />
+  </rect>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.8;0.86;1" dur="6s" repeatCount="indefinite" />
+    <text x="527" y="228" text-anchor="middle" class="tiny">next read refills</text>
+    <text x="527" y="240" text-anchor="middle" class="tiny">with the fresh size</text>
+  </g>
 
   <!-- takeaway -->
   <text x="300" y="286" text-anchor="middle" class="small">

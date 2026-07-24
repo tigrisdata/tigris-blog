@@ -1,8 +1,8 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 600 280"
+  viewBox="0 0 600 296"
   width="600"
-  height="280"
+  height="296"
   style="background: transparent"
 >
   <style>
@@ -240,9 +240,44 @@
       </g>
     </g>
   </g>
+
+  <!-- scan sweep across the shards -->
+  <clipPath id="cf-grid-clip">
+    <rect x="392" y="72" width="186" height="108" rx="4" ry="4" />
+  </clipPath>
+  <rect y="72" width="34" height="108" fill="rgba(98, 254, 181, 0.34)" clip-path="url(#cf-grid-clip)">
+    <animate attributeName="x" values="380;562" dur="1s" repeatCount="indefinite" />
+  </rect>
   <text x="485" y="198" text-anchor="middle" class="tiny">
     ~10 counters × 128 shards, per bucket
   </text>
+
+
+  <!-- read pulses streaming through the fanout -->
+  <circle cx="172" cy="126" r="4.5" fill="#62feb5" opacity="0">
+    <animate attributeName="cx" values="172;210" dur="0.8s" begin="0s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="0.8s" begin="0s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="172" cy="126" r="4.5" fill="#62feb5" opacity="0">
+    <animate attributeName="cx" values="172;210" dur="0.8s" begin="0.27s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="0.8s" begin="0.27s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="172" cy="126" r="4.5" fill="#62feb5" opacity="0">
+    <animate attributeName="cx" values="172;210" dur="0.8s" begin="0.54s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="0.8s" begin="0.54s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="336" cy="126" r="4.5" fill="#62feb5" opacity="0">
+    <animate attributeName="cx" values="336;376" dur="0.8s" begin="0.13s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="0.8s" begin="0.13s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="336" cy="126" r="4.5" fill="#62feb5" opacity="0">
+    <animate attributeName="cx" values="336;376" dur="0.8s" begin="0.4s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="0.8s" begin="0.4s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="336" cy="126" r="4.5" fill="#62feb5" opacity="0">
+    <animate attributeName="cx" values="336;376" dur="0.8s" begin="0.67s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="0.8s" begin="0.67s" repeatCount="indefinite" />
+  </circle>
 
   <!-- takeaway -->
   <text x="300" y="240" text-anchor="middle" class="sub">

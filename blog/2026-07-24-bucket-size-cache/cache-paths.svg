@@ -73,39 +73,67 @@
   </text>
 
   <!-- backend box (top right) -->
-  <rect x="420" y="72" width="150" height="60" class="box" />
+  <rect x="420" y="72" width="150" height="60" class="box">
+    <animate attributeName="stroke" values="#62feb5;#62feb5;#2a3731;#2a3731;#62feb5;#62feb5" keyTimes="0;0.28;0.33;0.6;0.65;1" dur="7.5s" repeatCount="indefinite" />
+  </rect>
   <text x="495" y="98" text-anchor="middle" class="small">backend</text>
   <text x="495" y="114" text-anchor="middle" class="tiny">
     FoundationDB counters
   </text>
 
   <!-- cache box (bottom right) -->
-  <rect x="420" y="196" width="150" height="60" class="accent" />
+  <rect x="420" y="196" width="150" height="60" class="accent">
+    <animate attributeName="stroke" values="rgba(98,254,181,0.45);rgba(98,254,181,0.45);#62feb5;#62feb5;rgba(98,254,181,0.45);rgba(98,254,181,0.45)" keyTimes="0;0.28;0.33;0.6;0.65;1" dur="7.5s" repeatCount="indefinite" />
+  </rect>
   <text x="495" y="222" text-anchor="middle" class="small">edge cache</text>
   <text x="495" y="238" text-anchor="middle" class="tiny">
     remembered sizes
   </text>
 
   <!-- step 1: gateway -> backend, names only -->
-  <line x1="150" y1="140" x2="416" y2="98" class="arrow" />
-  <path d="M 416 98 l -7 0.5 l 2.5 6.5 z" fill="#94a3b8" />
-  <text x="168" y="98" class="step">1</text>
-  <text x="180" y="98" class="small">get the bucket names — no sizes</text>
-  <text x="180" y="112" class="tiny">one cheap range read for all 500</text>
+  <g>
+    <animate attributeName="opacity" values="1;1;0.22;0.22" keyTimes="0;0.28;0.33;1" dur="7.5s" repeatCount="indefinite" />
+    <line x1="150" y1="140" x2="416" y2="98" class="arrow" />
+    <path d="M 416 98 l -7 0.5 l 2.5 6.5 z" fill="#94a3b8" />
+    <text x="168" y="98" class="step">1</text>
+    <text x="180" y="98" class="small">get the bucket names — no sizes</text>
+    <text x="180" y="112" class="tiny">one cheap range read for all 500</text>
+    <circle cx="150" cy="140" r="5" fill="#62feb5" opacity="0">
+      <animate attributeName="cx" values="155;410;410" keyTimes="0;0.24;1" dur="7.5s" repeatCount="indefinite" />
+      <animate attributeName="cy" values="139;99;99" keyTimes="0;0.24;1" dur="7.5s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.22;0.26;1" dur="7.5s" repeatCount="indefinite" />
+    </circle>
+  </g>
 
   <!-- step 2: gateway -> cache -->
-  <line x1="150" y1="180" x2="416" y2="222" class="arrowAccent" />
-  <path d="M 416 222 l -7 -0.5 l 2.5 -6.5 z" fill="#62feb5" />
-  <text x="168" y="226" class="step">2</text>
-  <text x="180" y="226" class="small">ask the cache for those 500 sizes</text>
-  <text x="180" y="240" class="tiny">~450 already known — done, for free</text>
+  <g opacity="0.22">
+    <animate attributeName="opacity" values="0.22;0.22;1;1;0.22;0.22" keyTimes="0;0.28;0.33;0.6;0.65;1" dur="7.5s" repeatCount="indefinite" />
+    <line x1="150" y1="180" x2="416" y2="222" class="arrowAccent" />
+    <path d="M 416 222 l -7 -0.5 l 2.5 -6.5 z" fill="#62feb5" />
+    <text x="168" y="226" class="step">2</text>
+    <text x="180" y="226" class="small">ask the cache for those 500 sizes</text>
+    <text x="180" y="240" class="tiny">~450 already known — done, for free</text>
+    <circle cx="150" cy="180" r="5" fill="#62feb5" opacity="0">
+      <animate attributeName="cx" values="155;155;410;410" keyTimes="0;0.33;0.56;1" dur="7.5s" repeatCount="indefinite" />
+      <animate attributeName="cy" values="181;181;221;221" keyTimes="0;0.33;0.56;1" dur="7.5s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.33;0.36;0.54;0.58;1" dur="7.5s" repeatCount="indefinite" />
+    </circle>
+  </g>
 
   <!-- step 3: backend <- gateway (only misses) -->
-  <line x1="280" y1="142" x2="416" y2="120" class="arrow" stroke-dasharray="4 3" />
-  <path d="M 416 120 l -7 0.5 l 2.5 6.5 z" fill="#94a3b8" />
-  <text x="240" y="160" class="step">3</text>
-  <text x="252" y="160" class="small">size ONLY the ~50 unknown</text>
-  <text x="252" y="174" class="tiny">one RPC; results go into the cache</text>
+  <g opacity="0.22">
+    <animate attributeName="opacity" values="0.22;0.22;1;1" keyTimes="0;0.6;0.65;1" dur="7.5s" repeatCount="indefinite" />
+    <line x1="280" y1="142" x2="416" y2="120" class="arrow" stroke-dasharray="4 3" />
+    <path d="M 416 120 l -7 0.5 l 2.5 6.5 z" fill="#94a3b8" />
+    <text x="240" y="160" class="step">3</text>
+    <text x="252" y="160" class="small">size ONLY the ~50 unknown</text>
+    <text x="252" y="174" class="tiny">one RPC; results go into the cache</text>
+    <circle cx="280" cy="142" r="5" fill="#62feb5" opacity="0">
+      <animate attributeName="cx" values="284;284;410;410" keyTimes="0;0.65;0.9;1" dur="7.5s" repeatCount="indefinite" />
+      <animate attributeName="cy" values="141;141;121;121" keyTimes="0;0.65;0.9;1" dur="7.5s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.65;0.68;0.88;0.93" dur="7.5s" repeatCount="indefinite" />
+    </circle>
+  </g>
 
   <!-- takeaway -->
   <text x="300" y="292" text-anchor="middle" class="small">
