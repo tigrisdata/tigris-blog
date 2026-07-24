@@ -4,8 +4,8 @@ title: "The Question That Cost Us 640,000 Reads"
 date: 2026-07-24
 description: >-
   One bucket size costs 1,280 FoundationDB reads. How we built an edge cache to
-  take a million size queries down to about a hundred, with two provable
-  staleness bounds.
+  take a million size queries down to about a hundred, and how we can prove the
+  cached answer is never too old.
 keywords:
   - foundationdb
   - sharded counters
@@ -298,8 +298,8 @@ refills it fresh.
 the fill is in flight. The fill returns at T2 and caches the pre-write size,
 under a fresh TTL. We considered generation counters, tombstones, and
 compare-and-swap, and we rejected them all. The window is tens of milliseconds,
-the staleness ceiling is the same TTL we already accept, and the metric is
-approximate by contract. We documented the race and moved on.
+the worst case is the same TTL we already accept, and the metric is approximate
+by contract. We documented the race and moved on.
 
 ## What the spec got wrong
 
@@ -335,10 +335,11 @@ amortized over days of later hits.
   <CostChartDiagram />
 </MermaidFrame>
 
-The chart shows the per-page saving. The fleet-wide target was blunter still:
-take roughly <Neon>a million expensive size queries down to about a
-hundred</Neon>, which is four orders of magnitude, with staleness provably
-bounded at 15 minutes for busy buckets and at the TTL for pathological failures.
+The chart shows the saving for one page. Across the whole fleet, the goal was
+even simpler: take roughly <Neon>a million expensive size queries down to about
+a hundred</Neon>, which is four orders of magnitude. And we can still prove how
+old any number can get: at most 15 minutes for a busy bucket, and never longer
+than the TTL even when things break.
 
 The cache will also outlive its own backend. The counter scan behind the
 miss-fill is slated for replacement by a dedicated analytical store, and when
@@ -368,8 +369,8 @@ not be asked about buckets that have not changed.
   title="The cache is not the engineering. The staleness bounds are."
 >
   Anyone can put Redis in front of a slow query. The safe part is the
-  enumeration: fifteen corner cases, two provable bounds, and one race accepted
-  on purpose, written down where the next engineer can check it.
+  enumeration: fifteen corner cases, two limits you can prove, and one race
+  accepted on purpose, written down where the next engineer can check it.
 </Takeaway>
 
 <InlineCta
