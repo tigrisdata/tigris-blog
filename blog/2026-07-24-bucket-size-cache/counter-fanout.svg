@@ -1,0 +1,254 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 600 280"
+  width="600"
+  height="280"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .small {
+      font-size: 12px;
+      fill: #bac1be;
+    }
+    .tiny {
+      font-size: 10px;
+      fill: #94a3b8;
+    }
+    .box {
+      rx: 4;
+      ry: 4;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .accent {
+      rx: 4;
+      ry: 4;
+      fill: rgba(98, 254, 181, 0.14);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1;
+    }
+    .shard {
+      fill: rgba(98, 254, 181, 0.18);
+      stroke: rgba(98, 254, 181, 0.35);
+      stroke-width: 0.5;
+    }
+    .arrow {
+      stroke: #94a3b8;
+      stroke-width: 1;
+      fill: none;
+    }
+    .mono {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      fill: #bac1be;
+    }
+  </style>
+
+  <text x="300" y="26" text-anchor="middle" class="title">
+    One list call, 640,000 reads
+  </text>
+
+  <!-- the call -->
+  <rect x="20" y="104" width="150" height="44" class="accent" />
+  <text x="95" y="122" text-anchor="middle" class="mono">ListBuckets</text>
+  <text x="95" y="138" text-anchor="middle" class="mono">with_size=true</text>
+
+  <!-- arrow 1 -->
+  <line x1="170" y1="126" x2="212" y2="126" class="arrow" />
+  <path d="M 212 126 l -6 -3.5 v 7 z" fill="#94a3b8" />
+  <text x="191" y="116" text-anchor="middle" class="tiny">× 500</text>
+
+  <!-- buckets stack -->
+  <rect x="224" y="88" width="110" height="30" class="box" />
+  <rect x="220" y="96" width="110" height="30" class="box" />
+  <rect x="216" y="104" width="110" height="30" class="box" />
+  <text x="271" y="124" text-anchor="middle" class="small">bucket 1…500</text>
+  <text x="271" y="152" text-anchor="middle" class="tiny">
+    one page of buckets
+  </text>
+
+  <!-- arrow 2 -->
+  <line x1="334" y1="126" x2="378" y2="126" class="arrow" />
+  <path d="M 378 126 l -6 -3.5 v 7 z" fill="#94a3b8" />
+  <text x="356" y="116" text-anchor="middle" class="tiny">× 1,280</text>
+
+  <!-- shard grid: 16 cols x 8 rows suggesting 10 counters x 128 shards -->
+  <g>
+    <rect x="390" y="70" width="190" height="112" rx="4" ry="4"
+      fill="#1a2e35" stroke="#2a3731" stroke-width="1" />
+    <g>
+      <!-- rows of shard cells -->
+      <g transform="translate(398, 78)">
+        <g>
+          <rect class="shard" x="0" y="0" width="9" height="9" />
+          <rect class="shard" x="11" y="0" width="9" height="9" />
+          <rect class="shard" x="22" y="0" width="9" height="9" />
+          <rect class="shard" x="33" y="0" width="9" height="9" />
+          <rect class="shard" x="44" y="0" width="9" height="9" />
+          <rect class="shard" x="55" y="0" width="9" height="9" />
+          <rect class="shard" x="66" y="0" width="9" height="9" />
+          <rect class="shard" x="77" y="0" width="9" height="9" />
+          <rect class="shard" x="88" y="0" width="9" height="9" />
+          <rect class="shard" x="99" y="0" width="9" height="9" />
+          <rect class="shard" x="110" y="0" width="9" height="9" />
+          <rect class="shard" x="121" y="0" width="9" height="9" />
+          <rect class="shard" x="132" y="0" width="9" height="9" />
+          <rect class="shard" x="143" y="0" width="9" height="9" />
+          <rect class="shard" x="154" y="0" width="9" height="9" />
+          <rect class="shard" x="165" y="0" width="9" height="9" />
+        </g>
+      </g>
+      <g transform="translate(398, 90)">
+        <rect class="shard" x="0" y="0" width="9" height="9" />
+        <rect class="shard" x="11" y="0" width="9" height="9" />
+        <rect class="shard" x="22" y="0" width="9" height="9" />
+        <rect class="shard" x="33" y="0" width="9" height="9" />
+        <rect class="shard" x="44" y="0" width="9" height="9" />
+        <rect class="shard" x="55" y="0" width="9" height="9" />
+        <rect class="shard" x="66" y="0" width="9" height="9" />
+        <rect class="shard" x="77" y="0" width="9" height="9" />
+        <rect class="shard" x="88" y="0" width="9" height="9" />
+        <rect class="shard" x="99" y="0" width="9" height="9" />
+        <rect class="shard" x="110" y="0" width="9" height="9" />
+        <rect class="shard" x="121" y="0" width="9" height="9" />
+        <rect class="shard" x="132" y="0" width="9" height="9" />
+        <rect class="shard" x="143" y="0" width="9" height="9" />
+        <rect class="shard" x="154" y="0" width="9" height="9" />
+        <rect class="shard" x="165" y="0" width="9" height="9" />
+      </g>
+      <g transform="translate(398, 102)">
+        <rect class="shard" x="0" y="0" width="9" height="9" />
+        <rect class="shard" x="11" y="0" width="9" height="9" />
+        <rect class="shard" x="22" y="0" width="9" height="9" />
+        <rect class="shard" x="33" y="0" width="9" height="9" />
+        <rect class="shard" x="44" y="0" width="9" height="9" />
+        <rect class="shard" x="55" y="0" width="9" height="9" />
+        <rect class="shard" x="66" y="0" width="9" height="9" />
+        <rect class="shard" x="77" y="0" width="9" height="9" />
+        <rect class="shard" x="88" y="0" width="9" height="9" />
+        <rect class="shard" x="99" y="0" width="9" height="9" />
+        <rect class="shard" x="110" y="0" width="9" height="9" />
+        <rect class="shard" x="121" y="0" width="9" height="9" />
+        <rect class="shard" x="132" y="0" width="9" height="9" />
+        <rect class="shard" x="143" y="0" width="9" height="9" />
+        <rect class="shard" x="154" y="0" width="9" height="9" />
+        <rect class="shard" x="165" y="0" width="9" height="9" />
+      </g>
+      <g transform="translate(398, 114)">
+        <rect class="shard" x="0" y="0" width="9" height="9" />
+        <rect class="shard" x="11" y="0" width="9" height="9" />
+        <rect class="shard" x="22" y="0" width="9" height="9" />
+        <rect class="shard" x="33" y="0" width="9" height="9" />
+        <rect class="shard" x="44" y="0" width="9" height="9" />
+        <rect class="shard" x="55" y="0" width="9" height="9" />
+        <rect class="shard" x="66" y="0" width="9" height="9" />
+        <rect class="shard" x="77" y="0" width="9" height="9" />
+        <rect class="shard" x="88" y="0" width="9" height="9" />
+        <rect class="shard" x="99" y="0" width="9" height="9" />
+        <rect class="shard" x="110" y="0" width="9" height="9" />
+        <rect class="shard" x="121" y="0" width="9" height="9" />
+        <rect class="shard" x="132" y="0" width="9" height="9" />
+        <rect class="shard" x="143" y="0" width="9" height="9" />
+        <rect class="shard" x="154" y="0" width="9" height="9" />
+        <rect class="shard" x="165" y="0" width="9" height="9" />
+      </g>
+      <g transform="translate(398, 126)">
+        <rect class="shard" x="0" y="0" width="9" height="9" />
+        <rect class="shard" x="11" y="0" width="9" height="9" />
+        <rect class="shard" x="22" y="0" width="9" height="9" />
+        <rect class="shard" x="33" y="0" width="9" height="9" />
+        <rect class="shard" x="44" y="0" width="9" height="9" />
+        <rect class="shard" x="55" y="0" width="9" height="9" />
+        <rect class="shard" x="66" y="0" width="9" height="9" />
+        <rect class="shard" x="77" y="0" width="9" height="9" />
+        <rect class="shard" x="88" y="0" width="9" height="9" />
+        <rect class="shard" x="99" y="0" width="9" height="9" />
+        <rect class="shard" x="110" y="0" width="9" height="9" />
+        <rect class="shard" x="121" y="0" width="9" height="9" />
+        <rect class="shard" x="132" y="0" width="9" height="9" />
+        <rect class="shard" x="143" y="0" width="9" height="9" />
+        <rect class="shard" x="154" y="0" width="9" height="9" />
+        <rect class="shard" x="165" y="0" width="9" height="9" />
+      </g>
+      <g transform="translate(398, 138)">
+        <rect class="shard" x="0" y="0" width="9" height="9" />
+        <rect class="shard" x="11" y="0" width="9" height="9" />
+        <rect class="shard" x="22" y="0" width="9" height="9" />
+        <rect class="shard" x="33" y="0" width="9" height="9" />
+        <rect class="shard" x="44" y="0" width="9" height="9" />
+        <rect class="shard" x="55" y="0" width="9" height="9" />
+        <rect class="shard" x="66" y="0" width="9" height="9" />
+        <rect class="shard" x="77" y="0" width="9" height="9" />
+        <rect class="shard" x="88" y="0" width="9" height="9" />
+        <rect class="shard" x="99" y="0" width="9" height="9" />
+        <rect class="shard" x="110" y="0" width="9" height="9" />
+        <rect class="shard" x="121" y="0" width="9" height="9" />
+        <rect class="shard" x="132" y="0" width="9" height="9" />
+        <rect class="shard" x="143" y="0" width="9" height="9" />
+        <rect class="shard" x="154" y="0" width="9" height="9" />
+        <rect class="shard" x="165" y="0" width="9" height="9" />
+      </g>
+      <g transform="translate(398, 150)">
+        <rect class="shard" x="0" y="0" width="9" height="9" />
+        <rect class="shard" x="11" y="0" width="9" height="9" />
+        <rect class="shard" x="22" y="0" width="9" height="9" />
+        <rect class="shard" x="33" y="0" width="9" height="9" />
+        <rect class="shard" x="44" y="0" width="9" height="9" />
+        <rect class="shard" x="55" y="0" width="9" height="9" />
+        <rect class="shard" x="66" y="0" width="9" height="9" />
+        <rect class="shard" x="77" y="0" width="9" height="9" />
+        <rect class="shard" x="88" y="0" width="9" height="9" />
+        <rect class="shard" x="99" y="0" width="9" height="9" />
+        <rect class="shard" x="110" y="0" width="9" height="9" />
+        <rect class="shard" x="121" y="0" width="9" height="9" />
+        <rect class="shard" x="132" y="0" width="9" height="9" />
+        <rect class="shard" x="143" y="0" width="9" height="9" />
+        <rect class="shard" x="154" y="0" width="9" height="9" />
+        <rect class="shard" x="165" y="0" width="9" height="9" />
+      </g>
+      <g transform="translate(398, 162)">
+        <rect class="shard" x="0" y="0" width="9" height="9" />
+        <rect class="shard" x="11" y="0" width="9" height="9" />
+        <rect class="shard" x="22" y="0" width="9" height="9" />
+        <rect class="shard" x="33" y="0" width="9" height="9" />
+        <rect class="shard" x="44" y="0" width="9" height="9" />
+        <rect class="shard" x="55" y="0" width="9" height="9" />
+        <rect class="shard" x="66" y="0" width="9" height="9" />
+        <rect class="shard" x="77" y="0" width="9" height="9" />
+        <rect class="shard" x="88" y="0" width="9" height="9" />
+        <rect class="shard" x="99" y="0" width="9" height="9" />
+        <rect class="shard" x="110" y="0" width="9" height="9" />
+        <rect class="shard" x="121" y="0" width="9" height="9" />
+        <rect class="shard" x="132" y="0" width="9" height="9" />
+        <rect class="shard" x="143" y="0" width="9" height="9" />
+        <rect class="shard" x="154" y="0" width="9" height="9" />
+        <rect class="shard" x="165" y="0" width="9" height="9" />
+      </g>
+    </g>
+  </g>
+  <text x="485" y="198" text-anchor="middle" class="tiny">
+    ~10 counters × 128 shards, per bucket
+  </text>
+
+  <!-- takeaway -->
+  <text x="300" y="240" text-anchor="middle" class="sub">
+    500 buckets × 10 counters × 128 shards
+  </text>
+  <text x="300" y="260" text-anchor="middle" class="small">
+    ≈ 640,000 reads for one dashboard page
+  </text>
+</svg>

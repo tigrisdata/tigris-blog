@@ -1,0 +1,106 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 600 270"
+  width="600"
+  height="270"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .small {
+      font-size: 12px;
+      fill: #bac1be;
+    }
+    .tiny {
+      font-size: 10px;
+      fill: #94a3b8;
+    }
+    .axis {
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .grid {
+      stroke: #2a3731;
+      stroke-width: 0.5;
+      stroke-dasharray: 2 4;
+    }
+    .bar {
+      rx: 4;
+      ry: 4;
+      fill: rgba(98, 254, 181, 0.14);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1;
+    }
+    .barHot {
+      rx: 4;
+      ry: 4;
+      fill: rgba(98, 254, 181, 0.4);
+      stroke: #62feb5;
+      stroke-width: 1;
+    }
+    .value {
+      font-size: 13px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+  </style>
+
+  <text x="300" y="26" text-anchor="middle" class="title">
+    FoundationDB reads per 500-bucket page
+  </text>
+  <text x="300" y="44" text-anchor="middle" class="tiny">
+    log scale — each gridline is 10×
+  </text>
+
+  <!-- grid: log scale from 10^2 (x=140) to 10^6 (x=540), 100px per decade -->
+  <line x1="140" y1="62" x2="140" y2="196" class="grid" />
+  <line x1="240" y1="62" x2="240" y2="196" class="grid" />
+  <line x1="340" y1="62" x2="340" y2="196" class="grid" />
+  <line x1="440" y1="62" x2="440" y2="196" class="grid" />
+  <line x1="540" y1="62" x2="540" y2="196" class="grid" />
+  <text x="140" y="212" text-anchor="middle" class="tiny">100</text>
+  <text x="240" y="212" text-anchor="middle" class="tiny">1k</text>
+  <text x="340" y="212" text-anchor="middle" class="tiny">10k</text>
+  <text x="440" y="212" text-anchor="middle" class="tiny">100k</text>
+  <text x="540" y="212" text-anchor="middle" class="tiny">1M</text>
+
+  <!-- baseline -->
+  <line x1="140" y1="62" x2="140" y2="196" class="axis" />
+
+  <!-- before: 640,000 → log10 = 5.806 → x = 140 + (5.806-2)*100 = 520.6 -->
+  <text x="132" y="86" text-anchor="end" class="small">before</text>
+  <rect x="140" y="70" width="381" height="24" class="bar" />
+  <text x="527" y="86" text-anchor="start" class="value">640k</text>
+
+  <!-- first page, 90% hit: 64,000 → log10 = 4.806 → width 280.6 -->
+  <text x="132" y="132" text-anchor="end" class="small">cold page</text>
+  <rect x="140" y="116" width="281" height="24" class="bar" />
+  <text x="427" y="132" text-anchor="start" class="value">~64k</text>
+  <text x="132" y="146" text-anchor="end" class="tiny">(90% hit rate)</text>
+
+  <!-- warm: ~500 → log10 = 2.7 → width 70 -->
+  <text x="132" y="178" text-anchor="end" class="small">warm page</text>
+  <rect x="140" y="162" width="70" height="24" class="barHot" />
+  <text x="216" y="178" text-anchor="start" class="value">~500</text>
+  <text x="132" y="192" text-anchor="end" class="tiny">(metadata only)</text>
+
+  <!-- takeaway -->
+  <text x="300" y="240" text-anchor="middle" class="small">
+    a fully warm page pays only the metadata range read
+  </text>
+  <text x="300" y="258" text-anchor="middle" class="sub">
+    ~three orders of magnitude, with staleness bounded at 15 min
+  </text>
+</svg>
