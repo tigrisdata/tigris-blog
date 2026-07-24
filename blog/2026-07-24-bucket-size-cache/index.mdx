@@ -65,11 +65,11 @@ This page costs <Neon>640,000 database reads</Neon>.
 
 For most of Tigris's life, a page like this was the single largest source of
 expensive list traffic in our system. Object reads did not hold that title, and
-neither did multipart uploads. A dashboard did.
+neither did multipart uploads. Instead, a dashboard was the source of trouble.
 
-This post explains why the page cost so much, and it walks through the cache
-that fixed it. The cache itself is boring. The interesting part is proving
-exactly how stale the answer can ever be.
+This post explains why this page cost so much, and it walks through the cache
+that fixed it. The cache itself is a routine fix. However, the interesting part
+is proving exactly how stale the answer can ever be.
 
 {/* truncate */}
 
@@ -83,15 +83,14 @@ transaction</Neon>, and that includes usage accounting. Every PUT, DELETE, and
 multipart completion updates a set of counters for its bucket: row counts, plus
 byte sizes per storage tier.
 
-Here is the catch. If each counter were a single key, every write to a hot
-bucket would fight over the same few keys, and the bucket would serialize on its
-own bookkeeping. So each counter is sharded across 128 keys instead, and a write
-bumps one shard atomically. Writes scale beautifully.
+Here is where things get messy. If each counter were a single key, every write
+to a hot bucket would fight over the same few keys, and the bucket would
+serialize on its own bookkeeping. So each counter is sharded across 128 keys
+instead, and a write bumps one shard atomically.
 
-Reads pay the bill. Reconstructing one bucket's size means reading every shard
-of every counter, which comes to roughly 10 counters × 128 shards ≈
-
-<Neon>1,280 reads</Neon> for one number on one bucket.
+Reads are a different beast. Reconstructing one bucket's size means reading
+every shard of every counter, which comes to roughly 10 counters × 128 shards,
+or <Neon>1,280 reads for one number on one bucket</Neon>.
 
 Now multiply that by the dashboard. A tenant with 500 buckets triggers 500 ×
 1,280 ≈ <Neon>640,000 FoundationDB reads per page load</Neon>. At our partner's
@@ -104,9 +103,9 @@ call volume, this one path dominated list-buckets latency platform-wide.
   <CounterFanoutDiagram />
 </MermaidFrame>
 
-Was all that work necessary? Mostly, it was not. Between two page loads, most
-buckets receive zero writes, so their sizes have not changed. We were
-recomputing identical numbers, at five-figure read cost, over and over.
+Was all that work necessary? Not really. Between two page loads, most buckets
+receive zero writes, so their sizes have not changed. We were recomputing
+identical numbers, at five-figure read cost, over and over.
 
 <MermaidFrame
   style={{ maxWidth: "40rem", margin: "1.5rem auto" }}
@@ -121,29 +120,28 @@ The obvious fixes attack the compute path: make the scan faster, or precompute
 the total into one key. But the compute path is not the problem. The problem is
 recomputing values that have not changed.
 
-What made a cache safe here? The answer is a property the metric already had:
+What made a cache safe here? The metric itself supplied the answer: <Neon>a
+bucket size is an approximation the moment it's computed</Neon>. Writes race the
+counter scan, replication lags, and staged bytes come and go. "Approximately
+right, as of ten minutes ago" is the same promise as "approximately right, as of
+now."
 
-<Neon>a bucket size is an approximation the moment it's computed</Neon>. Writes
-race the counter scan, replication lags, and staged bytes come and go.
-"Approximately right, as of ten minutes ago" is the same promise as
-"approximately right, as of now."
-
-That insight did real design work. An early draft added a `with_cached_size`
-opt-in flag to the list-buckets request, plus a "force fresh" escape hatch.
-Review killed both, because if the number is approximate either way, a knob
-choosing which approximation is API surface without a purpose. So the cache
-became invisible. Callers change nothing, and a per-namespace feature flag turns
-it on.
+That insight was important in designing the solution. An early draft added a
+`with_cached_size` opt-in flag to the list-buckets request, plus a "force fresh"
+escape hatch. Review killed both, because if the number is approximate either
+way, a knob choosing which approximation is API surface without a purpose. So
+the cache became invisible. Callers change nothing, and a per-namespace feature
+flag turns it on.
 
 ## Where does the cache live?
 
-Two services matter here. The gateway is the edge service that terminates every
-S3 and dashboard request, and the backend is the metadata service that owns
-FoundationDB and its counters. The cache lives at the gateway, in front of the
-backend. We already run a regional edge cache there: KVRocks, a RocksDB-backed
-store that speaks the Redis protocol, shared by every gateway instance in the
-region. The bucket-size cache is a new table in an existing store, so it
-required no new infrastructure.
+Let's talk about two services. The gateway is the edge service that terminates
+every S3 and dashboard request, and the backend is the metadata service that
+owns FoundationDB and its counters. The cache lives at the gateway, in front of
+the backend. We already run a regional edge cache there: KVRocks, a
+RocksDB-backed store that speaks the Redis protocol, shared by every gateway
+instance in the region. The bucket-size cache is a new table in an existing
+store, so it required no new infrastructure.
 
 The read path has three steps.
 
@@ -172,7 +170,7 @@ a hit, a helper grafts the cached size fields onto the fresh listing.
 
 ## How do you trust a four-day-old number?
 
-This is the real engineering. How do you promise a number that old is never
+This is an engineering challenge. How do you promise a number that old is never
 _meaningfully_ wrong?
 
 The answer has two layers, and the elegant part is what we didn't build: there
@@ -263,7 +261,7 @@ Every outcome is a metric: fired, skipped, or error. The hit rate, the fallback
 count, and the age of served values each get their own series, so "is the cache
 healthy" is a dashboard rather than a guess.
 
-Together the two layers give you two bounds, and the bounds are the point:
+Together the two layers give you two bounds:
 
 - A busy bucket is at most <Neon>~15 minutes stale</Neon>, and under sustained
   writes it re-converges on that schedule forever.
