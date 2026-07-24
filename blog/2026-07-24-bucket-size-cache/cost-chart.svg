@@ -81,19 +81,34 @@
 
   <!-- before: 640,000 → log10 = 5.806 → x = 140 + (5.806-2)*100 = 520.6 -->
   <text x="132" y="86" text-anchor="end" class="small">before</text>
-  <rect x="140" y="70" width="381" height="24" class="bar" />
-  <text x="527" y="86" text-anchor="start" class="value">640k</text>
+  <rect x="140" y="70" width="381" height="24" class="bar">
+    <animate attributeName="width" values="0;0;381;381" keyTimes="0;0.04;0.14;1" calcMode="spline" keySplines="0 0 1 1; 0.2 0.8 0.2 1; 0 0 1 1" dur="9s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.92;0.97;1" dur="9s" repeatCount="indefinite" />
+  </rect>
+  <text x="527" y="86" text-anchor="start" class="value" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.15;0.18;0.92;0.97;1" dur="9s" repeatCount="indefinite" />
+  640k</text>
 
   <!-- first page, 90% hit: 64,000 → log10 = 4.806 → width 280.6 -->
   <text x="132" y="132" text-anchor="end" class="small">cold page</text>
-  <rect x="140" y="116" width="281" height="24" class="bar" />
-  <text x="427" y="132" text-anchor="start" class="value">~64k</text>
+  <rect x="140" y="116" width="281" height="24" class="bar">
+    <animate attributeName="width" values="0;0;281;281" keyTimes="0;0.24;0.34;1" calcMode="spline" keySplines="0 0 1 1; 0.2 0.8 0.2 1; 0 0 1 1" dur="9s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.92;0.97;1" dur="9s" repeatCount="indefinite" />
+  </rect>
+  <text x="427" y="132" text-anchor="start" class="value" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.35;0.38;0.92;0.97;1" dur="9s" repeatCount="indefinite" />
+  ~64k</text>
   <text x="132" y="146" text-anchor="end" class="tiny">(90% hit rate)</text>
 
   <!-- warm: ~500 → log10 = 2.7 → width 70 -->
   <text x="132" y="178" text-anchor="end" class="small">warm page</text>
-  <rect x="140" y="162" width="70" height="24" class="barHot" />
-  <text x="216" y="178" text-anchor="start" class="value">~500</text>
+  <rect x="140" y="162" width="70" height="24" class="barHot">
+    <animate attributeName="width" values="0;0;70;70" keyTimes="0;0.44;0.54;1" calcMode="spline" keySplines="0 0 1 1; 0.2 0.8 0.2 1; 0 0 1 1" dur="9s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.92;0.97;1" dur="9s" repeatCount="indefinite" />
+  </rect>
+  <text x="216" y="178" text-anchor="start" class="value" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.55;0.5800000000000001;0.92;0.97;1" dur="9s" repeatCount="indefinite" />
+  ~500</text>
   <text x="132" y="192" text-anchor="end" class="tiny">(metadata only)</text>
 
   <!-- takeaway -->

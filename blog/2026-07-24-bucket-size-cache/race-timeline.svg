@@ -43,7 +43,7 @@
   </style>
 
   <text x="300" y="26" text-anchor="middle" class="title">
-    The race we decided to keep
+    A write lands while a cache fill is in flight
   </text>
 
   <!-- timeline -->

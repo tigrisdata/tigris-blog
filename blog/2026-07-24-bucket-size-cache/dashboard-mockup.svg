@@ -80,7 +80,7 @@
   </style>
 
   <text x="300" y="24" text-anchor="middle" class="title">
-    The innocent-looking page
+    A dashboard listing 500 buckets, with sizes
   </text>
 
   <!-- browser window -->
@@ -103,35 +103,45 @@
   <text x="56" y="116" class="mono">media-uploads</text>
   <text x="220" y="116" class="cell">iad</text>
   <text x="300" y="116" class="cell">2.4M</text>
-  <rect x="362" y="104" width="52" height="17" class="pill" />
+  <rect x="362" y="104" width="52" height="17" class="pill">
+    <animate attributeName="opacity" values="1;1;0.25;1;1" keyTimes="0;0.55;0.65;0.75;1" dur="2.8s" begin="0s" repeatCount="indefinite" />
+  </rect>
   <text x="388" y="116" text-anchor="middle" class="pillText">1.2 TB</text>
   <line x1="48" y1="126" x2="416" y2="126" class="rowline" />
 
   <text x="56" y="146" class="mono">logs-prod</text>
   <text x="220" y="146" class="cell">ord</text>
   <text x="300" y="146" class="cell">18.7M</text>
-  <rect x="362" y="134" width="52" height="17" class="pill" />
+  <rect x="362" y="134" width="52" height="17" class="pill">
+    <animate attributeName="opacity" values="1;1;0.25;1;1" keyTimes="0;0.55;0.65;0.75;1" dur="2.8s" begin="0.4s" repeatCount="indefinite" />
+  </rect>
   <text x="388" y="146" text-anchor="middle" class="pillText">840 GB</text>
   <line x1="48" y1="156" x2="416" y2="156" class="rowline" />
 
   <text x="56" y="176" class="mono">ml-checkpoints</text>
   <text x="220" y="176" class="cell">sjc</text>
   <text x="300" y="176" class="cell">41K</text>
-  <rect x="362" y="164" width="52" height="17" class="pill" />
+  <rect x="362" y="164" width="52" height="17" class="pill">
+    <animate attributeName="opacity" values="1;1;0.25;1;1" keyTimes="0;0.55;0.65;0.75;1" dur="2.8s" begin="0.8s" repeatCount="indefinite" />
+  </rect>
   <text x="388" y="176" text-anchor="middle" class="pillText">3.4 TB</text>
   <line x1="48" y1="186" x2="416" y2="186" class="rowline" />
 
   <text x="56" y="206" class="mono">backups-daily</text>
   <text x="220" y="206" class="cell">iad</text>
   <text x="300" y="206" class="cell">312K</text>
-  <rect x="362" y="194" width="52" height="17" class="pill" />
+  <rect x="362" y="194" width="52" height="17" class="pill">
+    <animate attributeName="opacity" values="1;1;0.25;1;1" keyTimes="0;0.55;0.65;0.75;1" dur="2.8s" begin="1.2s" repeatCount="indefinite" />
+  </rect>
   <text x="388" y="206" text-anchor="middle" class="pillText">620 GB</text>
   <line x1="48" y1="216" x2="416" y2="216" class="rowline" />
 
   <text x="56" y="236" class="mono">cache-eu</text>
   <text x="220" y="236" class="cell">fra</text>
   <text x="300" y="236" class="cell">1.1M</text>
-  <rect x="362" y="224" width="52" height="17" class="pill" />
+  <rect x="362" y="224" width="52" height="17" class="pill">
+    <animate attributeName="opacity" values="1;1;0.25;1;1" keyTimes="0;0.55;0.65;0.75;1" dur="2.8s" begin="1.6s" repeatCount="indefinite" />
+  </rect>
   <text x="388" y="236" text-anchor="middle" class="pillText">96 GB</text>
   <line x1="48" y1="246" x2="416" y2="246" class="rowline" />
 
@@ -141,7 +151,9 @@
   </text>
 
   <!-- callout to the size column -->
-  <rect x="356" y="98" width="64" height="150" rx="6" ry="6" class="callout" />
+  <rect x="356" y="98" width="64" height="150" rx="6" ry="6" class="callout">
+    <animate attributeName="stroke-dashoffset" values="12;0" dur="1s" repeatCount="indefinite" />
+  </rect>
   <line x1="420" y1="172" x2="452" y2="172" class="callout" />
 
   <!-- annotation -->
