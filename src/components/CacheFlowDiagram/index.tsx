@@ -36,8 +36,7 @@ const countStyle: React.CSSProperties = {
 
 const HIT_PATH =
   'path("M 150 108 C 195 92, 215 92, 240 108 C 215 126, 195 126, 150 122")';
-const MISS_PATH =
-  'path("M 150 116 L 300 120 L 456 120 L 300 124 L 150 120")';
+const MISS_PATH = 'path("M 150 116 L 300 120 L 456 120 L 300 124 L 150 120")';
 
 export default function CacheFlowDiagram(): JSX.Element {
   const hitDelays = [0, -0.27, -0.53, -0.8, -1.07, -1.33];

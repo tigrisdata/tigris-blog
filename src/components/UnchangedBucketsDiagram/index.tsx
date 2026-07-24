@@ -119,8 +119,8 @@ export default function UnchangedBucketsDiagram(): JSX.Element {
             const background = inSweep
               ? "rgba(98, 254, 181, 0.5)"
               : isHot
-                ? "rgba(98, 254, 181, 0.4)"
-                : "var(--tigris-diagram-node-bg, #1a2e35)";
+              ? "rgba(98, 254, 181, 0.4)"
+              : "var(--tigris-diagram-node-bg, #1a2e35)";
             const border = isHot
               ? "1px solid #62feb5"
               : "1px solid var(--tigris-diagram-node-border, #2a3731)";

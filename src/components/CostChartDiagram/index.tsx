@@ -107,7 +107,8 @@ export default function CostChartDiagram(): JSX.Element {
               top: 44,
               width: 1,
               height: 134,
-              borderLeft: "1px dashed var(--tigris-diagram-node-border, #2a3731)",
+              borderLeft:
+                "1px dashed var(--tigris-diagram-node-border, #2a3731)",
             }}
           />
           <div
@@ -141,7 +142,14 @@ export default function CostChartDiagram(): JSX.Element {
             animation: "cc-b1 9s cubic-bezier(0.2, 0.8, 0.2, 1) infinite",
           }}
         />
-        <div style={{ ...valueStyle, left: 528, top: 55, animation: "cc-v1 9s linear infinite" }}>
+        <div
+          style={{
+            ...valueStyle,
+            left: 528,
+            top: 55,
+            animation: "cc-v1 9s linear infinite",
+          }}
+        >
           640k
         </div>
 
@@ -160,7 +168,14 @@ export default function CostChartDiagram(): JSX.Element {
             animation: "cc-b2 9s cubic-bezier(0.2, 0.8, 0.2, 1) infinite",
           }}
         />
-        <div style={{ ...valueStyle, left: 428, top: 99, animation: "cc-v2 9s linear infinite" }}>
+        <div
+          style={{
+            ...valueStyle,
+            left: 428,
+            top: 99,
+            animation: "cc-v2 9s linear infinite",
+          }}
+        >
           ~64k
         </div>
 
@@ -179,7 +194,14 @@ export default function CostChartDiagram(): JSX.Element {
             animation: "cc-b3 9s cubic-bezier(0.2, 0.8, 0.2, 1) infinite",
           }}
         />
-        <div style={{ ...valueStyle, left: 217, top: 143, animation: "cc-v3 9s linear infinite" }}>
+        <div
+          style={{
+            ...valueStyle,
+            left: 217,
+            top: 143,
+            animation: "cc-v3 9s linear infinite",
+          }}
+        >
           ~500
         </div>
       </div>
