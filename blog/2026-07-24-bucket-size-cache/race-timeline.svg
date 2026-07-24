@@ -1,8 +1,8 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 600 232"
+  viewBox="0 0 600 190"
   width="600"
-  height="232"
+  height="190"
   style="background: transparent"
 >
   <style>
@@ -81,8 +81,4 @@
     write, or by TTL
   </text>
 
-  <!-- takeaway -->
-  <text x="300" y="204" text-anchor="middle" class="sub">
-    CAS and tombstones were overkill for an approximate metric — we documented it and moved on
-  </text>
 </svg>

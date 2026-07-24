@@ -38,7 +38,7 @@ export default function CounterFanoutDiagram(): JSX.Element {
         position: "relative",
         width: "100%",
         maxWidth: 600,
-        height: 232,
+        height: 205,
         margin: "0 auto",
       }}
     >
@@ -107,19 +107,6 @@ export default function CounterFanoutDiagram(): JSX.Element {
           }}
         >
           {count.toLocaleString("en-US")} reads
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: 192,
-            textAlign: "center",
-            fontSize: 11.5,
-            color: "var(--tigris-diagram-subtext, #94a3b8)",
-          }}
-        >
-          500 buckets × 10 counters × 128 shards
         </div>
       </div>
     </div>

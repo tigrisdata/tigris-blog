@@ -1,8 +1,8 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 600 232"
+  viewBox="0 0 600 170"
   width="600"
-  height="232"
+  height="170"
   style="background: transparent"
 >
   <style>
@@ -65,11 +65,4 @@
   <rect class="cell" x="320" y="142" width="12" height="12" />
   <text x="340" y="152" class="tiny">size unchanged</text>
 
-  <!-- takeaway -->
-  <text x="300" y="184" text-anchor="middle" class="small">
-    the old path recomputed every cell, every load —
-  </text>
-  <text x="300" y="202" text-anchor="middle" class="sub">
-    1,280 reads apiece, for numbers that hadn't moved
-  </text>
 </svg>

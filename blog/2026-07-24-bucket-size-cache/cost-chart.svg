@@ -1,8 +1,8 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 600 270"
+  viewBox="0 0 600 224"
   width="600"
-  height="270"
+  height="224"
   style="background: transparent"
 >
   <style>
@@ -111,11 +111,4 @@
   ~500</text>
   <text x="132" y="192" text-anchor="end" class="tiny">(metadata only)</text>
 
-  <!-- takeaway -->
-  <text x="300" y="240" text-anchor="middle" class="small">
-    a fully warm page pays only the metadata range read
-  </text>
-  <text x="300" y="258" text-anchor="middle" class="sub">
-    ~three orders of magnitude, with staleness bounded at 15 min
-  </text>
 </svg>

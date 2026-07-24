@@ -1,8 +1,8 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 600 356"
+  viewBox="0 0 600 318"
   width="600"
-  height="356"
+  height="318"
   style="background: transparent"
 >
   <style>
@@ -154,17 +154,14 @@
   <rect x="356" y="98" width="64" height="150" rx="6" ry="6" class="callout">
     <animate attributeName="stroke-dashoffset" values="12;0" dur="1s" repeatCount="indefinite" />
   </rect>
-  <line x1="420" y1="172" x2="452" y2="172" class="callout" />
+  <line x1="420" y1="172" x2="444" y2="172" class="callout" />
 
-  <!-- annotation -->
-  <text x="458" y="150" class="small" fill="#62feb5">this column</text>
-  <text x="458" y="166" class="tiny">each number =</text>
-  <text x="458" y="178" class="tiny">~10 counters ×</text>
-  <text x="458" y="190" class="tiny">128 shards =</text>
-  <text x="458" y="202" class="tiny">1,280 FDB reads</text>
+  <!-- annotation badge -->
+  <rect x="444" y="142" width="140" height="60" rx="9" ry="9"
+    fill="rgba(98, 254, 181, 0.12)" stroke="rgba(98, 254, 181, 0.7)" stroke-width="1.5">
+    <animate attributeName="stroke" values="rgba(98,254,181,0.7);rgba(98,254,181,1);rgba(98,254,181,0.7)" dur="2.8s" repeatCount="indefinite" />
+  </rect>
+  <text x="514" y="167" text-anchor="middle" font-size="13" font-weight="600" fill="#62feb5">this column:</text>
+  <text x="514" y="188" text-anchor="middle" font-size="14" font-weight="700" fill="#62feb5">1,280 reads each</text>
 
-  <!-- takeaway -->
-  <text x="300" y="330" text-anchor="middle" class="sub">
-    500 rows × 1,280 reads ≈ 640,000 reads, before the cache
-  </text>
 </svg>
