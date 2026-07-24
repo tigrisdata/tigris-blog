@@ -34,7 +34,6 @@ import CostChart from "./cost-chart.svg";
 import UnchangedBuckets from "./unchanged-buckets.svg";
 import DebounceFunnel from "./debounce-funnel.svg";
 import RaceTimeline from "./race-timeline.svg";
-import DashboardMockup from "./dashboard-mockup.svg";
 
 {/* TODO: add hero-image.webp and `image:` frontmatter before publishing */}
 
@@ -46,14 +45,6 @@ expensive list traffic in the system. Not object reads. Not multipart uploads. A
 dashboard page. Here's why that query cost so much, why the obvious fixes were
 wrong, and how we made it cheap with a cache whose interesting engineering isn't
 the cache at all. It's proving exactly how stale the answer can ever be.
-
-<MermaidFrame style={{ maxWidth: "40rem", margin: "1.5rem auto" }}>
-  <DashboardMockup
-    role="img"
-    aria-label="A mock storage dashboard listing buckets with region, object count, and size columns. The size column is called out: each number costs about 10 counters times 128 shards, or 1,280 FoundationDB reads, and with 500 rows recomputed on every page load that is roughly 640,000 reads before the cache."
-    style={{ width: "100%", height: "auto" }}
-  />
-</MermaidFrame>
 
 ## Why a bucket size costs 1,280 reads
 

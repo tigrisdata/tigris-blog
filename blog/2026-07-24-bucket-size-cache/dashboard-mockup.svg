@@ -1,0 +1,158 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 600 356"
+  width="600"
+  height="356"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .small {
+      font-size: 12px;
+      fill: #bac1be;
+    }
+    .tiny {
+      font-size: 10px;
+      fill: #94a3b8;
+    }
+    .window {
+      rx: 6;
+      ry: 6;
+      fill: #101d1a;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .chrome {
+      fill: #1a2e35;
+    }
+    .dot {
+      fill: #2a3731;
+    }
+    .rowline {
+      stroke: #2a3731;
+      stroke-width: 0.5;
+    }
+    .head {
+      font-size: 10px;
+      fill: #94a3b8;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .cell {
+      font-size: 11px;
+      fill: #bac1be;
+    }
+    .mono {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      fill: #bac1be;
+    }
+    .pill {
+      rx: 9;
+      ry: 9;
+      fill: rgba(98, 254, 181, 0.14);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1;
+    }
+    .pillText {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 10px;
+      fill: #62feb5;
+    }
+    .callout {
+      stroke: rgba(98, 254, 181, 0.6);
+      stroke-width: 1;
+      fill: none;
+      stroke-dasharray: 3 3;
+    }
+  </style>
+
+  <text x="300" y="24" text-anchor="middle" class="title">
+    The innocent-looking page
+  </text>
+
+  <!-- browser window -->
+  <rect x="36" y="40" width="392" height="264" class="window" />
+  <rect x="36" y="40" width="392" height="26" rx="6" ry="6" class="chrome" />
+  <rect x="36" y="56" width="392" height="10" class="chrome" />
+  <circle cx="52" cy="53" r="4" class="dot" />
+  <circle cx="66" cy="53" r="4" class="dot" />
+  <circle cx="80" cy="53" r="4" class="dot" />
+  <text x="110" y="57" class="tiny">console.partner.dev / storage / buckets</text>
+
+  <!-- table header -->
+  <text x="56" y="88" class="head">BUCKET</text>
+  <text x="220" y="88" class="head">REGION</text>
+  <text x="300" y="88" class="head">OBJECTS</text>
+  <text x="370" y="88" class="head">SIZE</text>
+  <line x1="48" y1="96" x2="416" y2="96" class="rowline" />
+
+  <!-- rows -->
+  <text x="56" y="116" class="mono">media-uploads</text>
+  <text x="220" y="116" class="cell">iad</text>
+  <text x="300" y="116" class="cell">2.4M</text>
+  <rect x="362" y="104" width="52" height="17" class="pill" />
+  <text x="388" y="116" text-anchor="middle" class="pillText">1.2 TB</text>
+  <line x1="48" y1="126" x2="416" y2="126" class="rowline" />
+
+  <text x="56" y="146" class="mono">logs-prod</text>
+  <text x="220" y="146" class="cell">ord</text>
+  <text x="300" y="146" class="cell">18.7M</text>
+  <rect x="362" y="134" width="52" height="17" class="pill" />
+  <text x="388" y="146" text-anchor="middle" class="pillText">840 GB</text>
+  <line x1="48" y1="156" x2="416" y2="156" class="rowline" />
+
+  <text x="56" y="176" class="mono">ml-checkpoints</text>
+  <text x="220" y="176" class="cell">sjc</text>
+  <text x="300" y="176" class="cell">41K</text>
+  <rect x="362" y="164" width="52" height="17" class="pill" />
+  <text x="388" y="176" text-anchor="middle" class="pillText">3.4 TB</text>
+  <line x1="48" y1="186" x2="416" y2="186" class="rowline" />
+
+  <text x="56" y="206" class="mono">backups-daily</text>
+  <text x="220" y="206" class="cell">iad</text>
+  <text x="300" y="206" class="cell">312K</text>
+  <rect x="362" y="194" width="52" height="17" class="pill" />
+  <text x="388" y="206" text-anchor="middle" class="pillText">620 GB</text>
+  <line x1="48" y1="216" x2="416" y2="216" class="rowline" />
+
+  <text x="56" y="236" class="mono">cache-eu</text>
+  <text x="220" y="236" class="cell">fra</text>
+  <text x="300" y="236" class="cell">1.1M</text>
+  <rect x="362" y="224" width="52" height="17" class="pill" />
+  <text x="388" y="236" text-anchor="middle" class="pillText">96 GB</text>
+  <line x1="48" y1="246" x2="416" y2="246" class="rowline" />
+
+  <text x="56" y="268" class="tiny">… and 495 more buckets</text>
+  <text x="232" y="290" text-anchor="middle" class="tiny">
+    every size recomputed on every page load
+  </text>
+
+  <!-- callout to the size column -->
+  <rect x="356" y="98" width="64" height="150" rx="6" ry="6" class="callout" />
+  <line x1="420" y1="172" x2="452" y2="172" class="callout" />
+
+  <!-- annotation -->
+  <text x="458" y="150" class="small" fill="#62feb5">this column</text>
+  <text x="458" y="166" class="tiny">each number =</text>
+  <text x="458" y="178" class="tiny">~10 counters ×</text>
+  <text x="458" y="190" class="tiny">128 shards =</text>
+  <text x="458" y="202" class="tiny">1,280 FDB reads</text>
+
+  <!-- takeaway -->
+  <text x="300" y="330" text-anchor="middle" class="sub">
+    500 rows × 1,280 reads ≈ 640,000 reads, before the cache
+  </text>
+</svg>
