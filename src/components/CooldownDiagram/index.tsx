@@ -2,8 +2,8 @@ import React from "react";
 
 /**
  * Two beats, 8s loop, narrated by one changing line:
- *   ① a write lands → the life bar snaps to 15 minutes
- *   ② more writes bounce off — already dying, ignored
+ *   ① a write lands: the life bar snaps to 15 minutes
+ *   ② more writes bounce off, the entry is already dying
  */
 
 const subtext = "var(--tigris-diagram-subtext, #94a3b8)";
@@ -14,7 +14,7 @@ const phaseStyle: React.CSSProperties = {
   right: 0,
   top: 26,
   textAlign: "center",
-  fontSize: 12.5,
+  fontSize: 11.5,
   color: subtext,
   opacity: 0,
 };
@@ -61,6 +61,9 @@ export default function CooldownDiagram(): JSX.Element {
           12% { offset-distance: 100%; opacity: 0; }
           100% { offset-distance: 100%; opacity: 0; }
         }
+        @keyframes cdn-t1 { 0%,18% {opacity:1} 23%,100% {opacity:0} }
+        @keyframes cdn-t2 { 0%,20% {opacity:0} 26%,100% {opacity:1} }
+        @keyframes cdn-wlabel { 0%,6% {opacity:0} 9%,20% {opacity:1} 24%,100% {opacity:0} }
         @keyframes cdn-p1 { 0%,8% {opacity:0} 12%,44% {opacity:1} 48%,100% {opacity:0} }
         @keyframes cdn-p2 { 0%,50% {opacity:0} 54%,88% {opacity:1} 92%,100% {opacity:0} }
       `}</style>
@@ -72,7 +75,7 @@ export default function CooldownDiagram(): JSX.Element {
           right: 0,
           top: 0,
           textAlign: "center",
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: 600,
           color: "#62feb5",
         }}
@@ -88,10 +91,10 @@ export default function CooldownDiagram(): JSX.Element {
             animation: "cdn-p1 8s linear infinite",
           }}
         >
-          ① a write lands → 15 minutes to live
+          ① a write lands: 15 minutes to live
         </div>
         <div style={{ ...phaseStyle, animation: "cdn-p2 8s linear infinite" }}>
-          ② more writes — already dying, ignored
+          ② more writes change nothing, the entry is already dying
         </div>
 
         {/* the entry */}
@@ -101,7 +104,7 @@ export default function CooldownDiagram(): JSX.Element {
             left: 120,
             top: 70,
             width: 360,
-            height: 74,
+            height: 84,
             borderRadius: 12,
             background: "var(--tigris-diagram-node-bg, #13221e)",
             border: "1px solid rgba(98, 254, 181, 0.4)",
@@ -112,7 +115,36 @@ export default function CooldownDiagram(): JSX.Element {
             justifyContent: "center",
           }}
         >
-          cached size · 840 GB
+          <div style={{ textAlign: "center" }}>
+            <div>cached size · 840 GB</div>
+            <div style={{ position: "relative", height: 16, marginTop: 2 }}>
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  fontSize: 11.5,
+                  color: "var(--tigris-diagram-subtext, #94a3b8)",
+                  animation: "cdn-t1 8s linear infinite",
+                }}
+              >
+                expires in 4 days
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  fontSize: 11.5,
+                  color: "#62feb5",
+                  opacity: 0,
+                  animation: "cdn-t2 8s linear infinite",
+                }}
+              >
+                expires in 15 minutes
+              </div>
+            </div>
+          </div>
           <div
             style={{
               position: "absolute",
@@ -124,6 +156,17 @@ export default function CooldownDiagram(): JSX.Element {
               animation: "cdn-bar 8s ease-in-out infinite",
             }}
           />
+          <div
+            style={{
+              position: "absolute",
+              left: 19,
+              bottom: 26,
+              fontSize: 9,
+              color: "var(--tigris-diagram-subtext, #94a3b8)",
+            }}
+          >
+            time left
+          </div>
         </div>
 
         {/* impact ring */}
@@ -142,6 +185,19 @@ export default function CooldownDiagram(): JSX.Element {
         />
 
         {/* the write that shortens */}
+        <div
+          style={{
+            position: "absolute",
+            left: 30,
+            top: 28,
+            fontSize: 11.5,
+            color: "#62feb5",
+            opacity: 0,
+            animation: "cdn-wlabel 8s linear infinite",
+          }}
+        >
+          write
+        </div>
         <div
           style={{
             position: "absolute",

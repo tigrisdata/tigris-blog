@@ -1,11 +1,11 @@
 ---
 slug: bucket-size-cache
-title: "The Question That Cost Us 640,000 Reads"
+title: "How Big Is This Bucket?"
 date: 2026-07-24
 description: >-
-  One bucket size costs 1,280 FoundationDB reads. How we built an edge cache to
-  take a million size queries down to about a hundred, with two provable
-  staleness bounds.
+  One bucket size costs 1,280 FoundationDB reads. How we cut a million size
+  queries to about a hundred with an edge cache and two provable staleness
+  bounds.
 keywords:
   - foundationdb
   - sharded counters
@@ -18,7 +18,6 @@ keywords:
   - tigris
 image: ./hero-img.webp
 authors:
-  - adil
   - davidmyriel
 tags:
   - Engineering
@@ -34,7 +33,7 @@ import MermaidFrame from "@site/src/components/MermaidFrame";
 import DashboardMockup from "./dashboard-mockup.svg";
 import heroImage from "./hero-img.webp";
 import CounterFanoutDiagram from "@site/src/components/CounterFanoutDiagram";
-import UnchangedBucketsDiagram from "@site/src/components/UnchangedBucketsDiagram";
+import UnchangedBuckets from "./unchanged-buckets.svg";
 import CacheFlowDiagram from "@site/src/components/CacheFlowDiagram";
 import DebounceDiagram from "@site/src/components/DebounceDiagram";
 import CooldownDiagram from "@site/src/components/CooldownDiagram";
@@ -63,8 +62,8 @@ opens the storage tab:
 
 This page costs <Neon>640,000 database reads</Neon>.
 
-For most of Tigris's life, a page like this was the single largest source of
-expensive list traffic in our system. Object reads did not hold that title, and
+For most of Tigris's life, a page like this was the largest single source of
+expensive traffic in our system. Object reads did not hold that title, and
 neither did multipart uploads. A dashboard did.
 
 This post explains why the page cost so much, and it walks through the cache
@@ -78,10 +77,10 @@ exactly how stale the answer can ever be.
 ## Why does one number cost 1,280 reads?
 
 Tigris keeps all of its metadata in FoundationDB: tenants, buckets, IAM,
-billing, and object rows. <Neon>Every metadata operation is an ACID
-transaction</Neon>, and that includes usage accounting. Every PUT, DELETE, and
-multipart completion updates a set of counters for its bucket: row counts, plus
-byte sizes per storage tier.
+billing, and object rows. Every metadata operation is an ACID transaction, and
+that includes usage accounting. Every PUT, DELETE, and multipart completion
+updates a set of counters for its bucket: row counts, plus byte sizes per
+storage tier.
 
 Here is the catch. If each counter were a single key, every write to a hot
 bucket would fight over the same few keys, and the bucket would serialize on its
@@ -112,7 +111,11 @@ recomputing identical numbers, at five-figure read cost, over and over.
   style={{ maxWidth: "40rem", margin: "1.5rem auto" }}
   caption="Only a handful of buckets changed, but the rest were recomputed anyway at 1,280 reads apiece."
 >
-  <UnchangedBucketsDiagram />
+  <UnchangedBuckets
+    role="img"
+    aria-label="A grid of 100 cells representing one tenant's buckets between two dashboard loads. Only a handful are highlighted as written since the last load; the rest are unchanged. The old path recomputed every cell on every load, 1,280 reads apiece, for numbers that had not moved."
+    style={{ width: "100%", height: "auto" }}
+  />
 </MermaidFrame>
 
 ## So why not just make it faster?

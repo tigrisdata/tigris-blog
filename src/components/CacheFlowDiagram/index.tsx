@@ -22,13 +22,13 @@ const nodeStyle: React.CSSProperties = {
 
 const subStyle: React.CSSProperties = {
   color: "var(--tigris-diagram-subtext, #94a3b8)",
-  fontSize: 10,
+  fontSize: 11.5,
   marginTop: 2,
 };
 
 const countStyle: React.CSSProperties = {
   position: "absolute",
-  fontSize: 10,
+  fontSize: 11.5,
   color: "var(--tigris-diagram-subtext, #94a3b8)",
   width: 170,
   textAlign: "center",
@@ -61,7 +61,7 @@ export default function CacheFlowDiagram(): JSX.Element {
           right: 0,
           top: 0,
           textAlign: "center",
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: 600,
           color: "#62feb5",
         }}

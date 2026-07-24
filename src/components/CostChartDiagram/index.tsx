@@ -12,7 +12,7 @@ const rowLabel: React.CSSProperties = {
   right: 470,
   width: 120,
   textAlign: "right",
-  fontSize: 12,
+  fontSize: 11.5,
   color: "var(--tigris-diagram-text, #bac1be)",
 };
 
@@ -21,7 +21,7 @@ const tiny: React.CSSProperties = {
   right: 470,
   width: 120,
   textAlign: "right",
-  fontSize: 10,
+  fontSize: 11.5,
   color: subtext,
 };
 
@@ -76,7 +76,7 @@ export default function CostChartDiagram(): JSX.Element {
           right: 0,
           top: 0,
           textAlign: "center",
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: 600,
           color: "#62feb5",
         }}
@@ -90,7 +90,7 @@ export default function CostChartDiagram(): JSX.Element {
           right: 0,
           top: 20,
           textAlign: "center",
-          fontSize: 10,
+          fontSize: 11.5,
           color: subtext,
         }}
       >
@@ -117,7 +117,7 @@ export default function CostChartDiagram(): JSX.Element {
               top: 184,
               width: 40,
               textAlign: "center",
-              fontSize: 10,
+              fontSize: 11.5,
               color: subtext,
             }}
           >

@@ -1,18 +1,22 @@
 import React, { useEffect, useRef, useState } from "react";
 
 /**
- * One idea, 6s loop: a wall of read-cells pops in while a counter runs up
- * to 640,000 — the number of FoundationDB reads one page of sizes takes.
+ * One idea, 6s loop: a wall of read-cells fills in while a counter runs up
+ * to 640,000, the number of FoundationDB reads one page of sizes takes.
+ * The counter and the cells share one JS clock, so every loop starts from
+ * a clean, empty screen.
  */
 
 const CYCLE = 6; // seconds
 const COUNT_UP = 3.5; // seconds spent counting
+const FADE_AT = 5.4; // when the scene starts fading out
 const TOTAL = 640_000;
+const CELLS = 128;
 
 const easeOutCubic = (p: number) => 1 - Math.pow(1 - p, 3);
 
 export default function CounterFanoutDiagram(): JSX.Element {
-  const [count, setCount] = useState(0);
+  const [frame, setFrame] = useState({ count: 0, cells: 0, fade: 1 });
   const raf = useRef<number>();
 
   useEffect(() => {
@@ -20,7 +24,14 @@ export default function CounterFanoutDiagram(): JSX.Element {
     const tick = (now: number) => {
       const t = ((now - start) / 1000) % CYCLE;
       const p = Math.min(t / COUNT_UP, 1);
-      setCount(Math.round(TOTAL * easeOutCubic(p)));
+      const e = easeOutCubic(p);
+      const fade =
+        t < FADE_AT ? 1 : Math.max(0, (CYCLE - t) / (CYCLE - FADE_AT));
+      setFrame({
+        count: Math.round(TOTAL * e),
+        cells: Math.round(CELLS * e),
+        fade,
+      });
       raf.current = requestAnimationFrame(tick);
     };
     raf.current = requestAnimationFrame(tick);
@@ -29,11 +40,11 @@ export default function CounterFanoutDiagram(): JSX.Element {
     };
   }, []);
 
-  const cells = Array.from({ length: 128 }, (_, i) => i);
+  const cells = Array.from({ length: CELLS }, (_, i) => i);
   return (
     <div
       role="img"
-      aria-label="A wall of 128 shard cells fills in while a counter runs up to 640,000 — the number of FoundationDB reads one page of 500 bucket sizes takes: 500 buckets times 10 counters times 128 shards."
+      aria-label="A wall of 128 shard cells fills in while a counter runs up to 640,000, the number of FoundationDB reads one page of 500 bucket sizes takes."
       style={{
         position: "relative",
         width: "100%",
@@ -42,18 +53,6 @@ export default function CounterFanoutDiagram(): JSX.Element {
         margin: "0 auto",
       }}
     >
-      <style>{`
-        @keyframes cfo-loop {
-          0%, 92% { opacity: 1; }
-          97%, 100% { opacity: 0; }
-        }
-        @keyframes cfo-cell {
-          0% { transform: scale(0); }
-          2%, 92% { transform: scale(1); }
-          97%, 100% { transform: scale(0); }
-        }
-      `}</style>
-
       {/* title */}
       <div
         style={{
@@ -62,7 +61,7 @@ export default function CounterFanoutDiagram(): JSX.Element {
           right: 0,
           top: 0,
           textAlign: "center",
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: 600,
           color: "#62feb5",
         }}
@@ -70,7 +69,7 @@ export default function CounterFanoutDiagram(): JSX.Element {
         How many reads one page of sizes takes
       </div>
 
-      <div style={{ animation: `cfo-loop ${CYCLE}s linear infinite` }}>
+      <div style={{ opacity: frame.fade }}>
         {/* the reads, happening */}
         <div style={{ position: "absolute", left: 206, top: 38 }}>
           {cells.map((i) => (
@@ -84,9 +83,8 @@ export default function CounterFanoutDiagram(): JSX.Element {
                 height: 9,
                 borderRadius: 2,
                 background: "rgba(98, 254, 181, 0.35)",
-                transform: "scale(0)",
-                animation: `cfo-cell ${CYCLE}s ease-out infinite`,
-                animationDelay: `${0.05 + i * (COUNT_UP / 128)}s`,
+                transform: i < frame.cells ? "scale(1)" : "scale(0)",
+                transition: "transform 0.15s ease-out",
               }}
             />
           ))}
@@ -106,7 +104,7 @@ export default function CounterFanoutDiagram(): JSX.Element {
             fontVariantNumeric: "tabular-nums",
           }}
         >
-          {count.toLocaleString("en-US")} reads
+          {frame.count.toLocaleString("en-US")} reads
         </div>
       </div>
     </div>

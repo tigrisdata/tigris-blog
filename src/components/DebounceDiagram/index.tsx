@@ -63,7 +63,7 @@ export default function DebounceDiagram(): JSX.Element {
           right: 0,
           top: 0,
           textAlign: "center",
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: 600,
           color: "#62feb5",
         }}
@@ -98,7 +98,7 @@ export default function DebounceDiagram(): JSX.Element {
           left: 14,
           top: 128,
           width: 120,
-          fontSize: 11,
+          fontSize: 11.5,
           color: subtext,
         }}
       >
@@ -108,7 +108,7 @@ export default function DebounceDiagram(): JSX.Element {
       {/* debounce gate */}
       <div style={{ ...nodeStyle, left: 226, top: 62, width: 128, height: 54 }}>
         debounce
-        <small style={{ color: subtext, fontSize: 10, marginTop: 2 }}>
+        <small style={{ color: subtext, fontSize: 11.5, marginTop: 2 }}>
           in-memory
         </small>
       </div>
@@ -150,7 +150,7 @@ export default function DebounceDiagram(): JSX.Element {
           left: 430,
           top: 128,
           width: 160,
-          fontSize: 11,
+          fontSize: 11.5,
           color: subtext,
           textAlign: "center",
         }}
