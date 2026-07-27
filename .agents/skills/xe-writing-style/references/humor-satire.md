@@ -37,6 +37,32 @@ Example (from "Anything can be a message queue"):
 - Reflection: What does it mean that cloud APIs are so flexible they enable
   abuse?
 
+Example (from "I taught a bucket to speak git", `assets/objgit.mdx` — the
+canonical Tigris-blog execution):
+
+- Stakes: "This gave me a terrible idea: I already have a bucket that can quack
+  like a filesystem and go-git's native language is 'filesystem'."
+- Walkthrough: a real filesystem shim over a bucket, with working code
+- Horror: a section literally titled "Oh no, it works" and the line "To my
+  absolute astonishment, it worked."
+- Caveats: "If it breaks in half, you get to keep both pieces. Please do not
+  move your company's monorepo onto this and then email me when it catches
+  fire."
+
+### How Posts Fumble the Formula
+
+- **Compressed horror beat.** "To my shock, surprise, and horror, it worked
+  perfectly on the first try" burns the climax in half a line and removes the
+  friction the reader leans on. The horror beat is a scene, not a clause.
+- **Undelivered payoff.** If the post builds toward a result, the result lands
+  on the page — or its absence becomes the explicit caveat. "I plan to do it
+  when I get the time" quietly concedes the premise.
+- **No protagonist.** The arc needs one narrator with the bad idea who gets
+  punished for it. Multi-author smoothing kills it; so does a corporate "we".
+- **Disasters without diagnostics.** Each escalating disaster ends with the
+  number that proves it ("over 8,500 `GetObject` calls before I killed it").
+  Escalation without measurement is just complaining.
+
 ### Friend Reaction Lists
 
 A signature device: bullet-pointed quotes from friends reacting to the absurd
