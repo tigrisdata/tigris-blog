@@ -19,6 +19,12 @@ Self-deprecation builds trust and keeps the raw humanity visible.
 - "This entire situation sucks."
 - "I'm incredibly privileged to be able to work in this industry as it is."
 - "I just feel so replaceable at my dayjob."
+- "Second (and more embarrassing), the listing cache already had an
+  optimization for this... It was completely dead in production."
+
+The strongest vulnerability is a confessed, self-inflicted failure placed at a
+section pivot. One embarrassing sentence buys more credibility than three
+paragraphs of hedged caveats.
 
 ## Opinions with Nuance
 
@@ -124,7 +130,9 @@ lord"
 1. Write for a peer, not a student
 2. Show the journey, not just the outcome
 3. Be honest about uncertainty
-4. Use concrete examples and real numbers
+4. Put real numbers at the point of failure — quantify the cost the claim
+   rests on, not just the effort of building; every "many" or "often" becomes
+   a number or gets cut
 5. Balance expertise with humility
 6. Prefer clarity and context over brevity
 7. Let humor be self-aware and purposeful

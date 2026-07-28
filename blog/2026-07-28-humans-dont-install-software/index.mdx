@@ -1,0 +1,259 @@
+---
+slug: humans-dont-install-software
+title: "Humans don't install software themselves anymore, their agents do"
+description: >-
+  The era of manual install scripts is over. Why agent-native onboarding keeps
+  developers in flow, what tigris init --agent prints, and how to write the
+  prompt.
+image: ./hero-image.webp
+keywords:
+  - AI agents
+  - developer experience
+  - onboarding
+  - tigris init
+  - prompt engineering
+  - agent-native
+  - object storage
+  - Claude Code
+authors:
+  - xe
+tags:
+  - Engineering
+  - AI Agents
+  - Developer Experience
+  - CLI
+  - Prompt Engineering
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="A blue tiger in an orange vest unrolls a scroll of setup instructions at a desk while a small white robot stands next to the keyboard watching the terminal"
+/>
+
+The era of manual installation scripts for Blessed Frameworks™ is over.
+Developers should spend their time shipping things, not fighting their
+environment into getting your product integrated into their development flow.
+It’s the future, the environment should just configure itself for you. We’ve
+shipped this with `tigris init --agent` and we think you should do this too.
+
+{/* truncate */}
+
+## Keep developers in flow
+
+Right now your onboarding flow likely funnels developers into two categories:
+people that use Blessed Frameworks™ and everyone else. This is great for the
+developers that do use those Blessed Frameworks™, but developers like me get
+knocked out of flow and suddenly have to read the docs to figure out what I need
+to do. This friction results in customer churn from people you never hear from
+again. Onboarding is one of the highest risk phases in the customer journey
+because the easiest time to walk out the door is right after you just walked in
+it.
+
+Nobody chooses that outcome on purpose. It’s the residue of the reasonable
+decision around picking something you already know well enough to confidently
+implement an unattended setup process. This could be a 5 minute quickstart, a
+template repo, or the fabled one-click deploy button. Everyone outside that
+blessed path gets the API reference and wished good luck. That’s been me,
+closing the tab and reading reference docs to try and figure out where to start
+the hard way.
+
+With the rise of modern AI agent tools, we don’t have to do this anymore. We can
+use agents to help people get started in ways that help keep developers in the
+development flow. The agent in your users’ editor already knows their stack,
+their conventions, and where their configuration lives. It’s a better onboarding
+engineer for any given project than all of us will ever be.
+
+## Setup scripts are sunk-cost fallacies
+
+A setup script is an easy to describe and easy to validate problem, but the real
+devil is in the details of actually implementing it in a way that’s portable
+enough to be reliable. This is the sweet spot for AI agents. AI agents have all
+of the book smarts in every stack, language, framework, and environment. This
+massive volume of data can help customize the getting started flow without you
+having to do anything.
+
+Consider what the portable version of a setup script actually has to do. It has
+to identify what language the project is in, what tool you use to manage
+dependencies, and more importantly decide which dependency manager is more
+authoritative in a project that uses many of them at the same time. Your script
+also has to be right about knowing Linux, macOS, Windows, devcontainers, CI, and
+somebody’s virtual shell on an iPad. It’s a program that has to be correct about
+a machine it’s never seen and any environment it fails in becomes another
+support ticket.
+
+The agent needs none of that. It doesn’t need to be told which package manager
+the project uses because worst case it can explore and figure out how you build
+and deploy your software.
+
+## We shipped `tigris init --agent`
+
+None of this is hypothetical. We just shipped `tigris init` to help you wire
+Tigris into whatever coding agent you use, and `tigris init --agent` prints a
+setup recipe that your agent can follow along with you.
+
+Our agent setup doesn’t do anything special, it’s just returns a prompt that’s
+formatted like how a user would ask to get started:
+
+```
+Help the user set up their project with Tigris:
+
+1. If `tigris` isn't on $PATH (`command -v tigris`), ask permission, then `npm install -g @tigrisdata/cli --ignore-scripts`.
+2. If `tigris` is on $PATH, ensure it's latest version using `tigris update`.
+3. Check if the user is already authenticated using `tigris whoami`. If not, authenticate using `tigris login oauth`.
+4. Run `tigris orgs list --format json`. If there's more than one org, ask which to use, then make it active with `tigris orgs select <org>` so the following commands target it.
+5. Infer the project name from metadata (package.json, go.mod, pyproject.toml, ...). Check `tigris buckets list --format json` first; if the bucket is absent, `tigris buckets create <name> --format json`. Ask the user whenever anything is ambiguous.
+6. Create the access key into a private temp file (overwrite, never append), then print only the ID:
+   `umask 077; tmpfile=$(mktemp); tigris access-keys create <username>-<project>-devel --format json > "$tmpfile" && jq -r '.id' < "$tmpfile"`
+7. Grant bucket access: `tigris access-keys assign <id> --bucket <bucket> --role Editor --format json`.
+8. Detect whether the code uses the Tigris SDK or the AWS SDK, then have a small script append the right vars to .env, reading `.id`/`.secret` from the temp file. Do NOT read the secret into your context — append it via script. Delete the temp file when done: `rm -f "$tmpfile"`.
+
+   Tigris SDK (@tigrisdata/storage, storage-go):
+     TIGRIS_STORAGE_ACCESS_KEY_ID     = .id
+     TIGRIS_STORAGE_SECRET_ACCESS_KEY = .secret   (secret)
+     TIGRIS_STORAGE_BUCKET            = <bucket>
+
+   AWS SDK:
+     AWS_ACCESS_KEY_ID       = .id
+     AWS_SECRET_ACCESS_KEY   = .secret                   (secret)
+     AWS_ENDPOINT_URL_S3     = https://t3.storage.dev    (required)
+     AWS_ENDPOINT_URL_IAM    = https://iam.storage.dev   (required)
+     AWS_REGION              = auto                      (required)
+
+9. Congratulate the user and point them to:
+   - JS:    https://www.tigrisdata.com/docs/sdks/tigris/
+   - Go:    https://pkg.go.dev/github.com/tigrisdata/storage-go
+   - Docs:  https://www.tigrisdata.com/docs/
+   - Discord: https://community.tigrisdata.com/
+   - Skills: https://www.tigrisdata.com/docs/skills/
+
+   Suggest adding to their agent config:
+     > ## Tigris object storage
+     > This project uses Tigris. For any Tigris questions, consult https://www.tigrisdata.com/llms.txt before acting; look it up rather than relying on memory.
+```
+
+The entire onboarding flow becomes documentation that people can follow by hand
+if they need to. There’s no framework in here, no template, and no operating
+system assumptions. The important parts are that we aggressively delegate any
+decisions to the user instead of having the AI agent guess. This leaves the user
+in charge of their environment even though they got assistance from their AI
+agent.
+
+One of the key things we did here is ship this prompt in the Tigris CLI instead
+of a copy->paste->Claude flow in the docs. This seems weird at first, but this
+prevents the locally installed Tigris CLI from lagging behind the more up to
+date content in the docs. If you have a user with an older version of the CLI,
+telling them to use something only on the new version of the CLI isn't helpful;
+it will just confuse the agent and get it much more likely to go down a
+debugging rabbit hole. Coupling the prompt with the CLI makes things much more
+reliable in practice.
+
+## How do I prompt good?
+
+Wording is where this approach lives or dies, and it’s a different craft from
+writing docs for people. Four things matter more than the rest.
+
+### Ask permission before taking action
+
+Agents can stop and ask, and a prompt that tells them when to do it turns from
+an install flow from something done _to_ your user into something being done
+_with_ them. This is also the part that keeps your flow from tripping over an
+agent’s own safety behaviour because a request for consent to mint credentials
+looks nothing like an agent quietly minting credentials out of its own volition.
+
+### Prefer heuristics instead of mandates
+
+Notice that my example said to infer the project name by exploring with a few
+examples instead of specifying exactly where to find it. Agents know the project
+better than your setup script ever will, so give them the goal and let them use
+what they can see.
+
+Reserve instructions for the things it must not guess such as the account,
+organization, environment, permission scope, and credential storage.
+Instructions should be policy, not details about the mechanism.
+
+### Keep secrets out of the context window
+
+Assume anything in the model context window is one breach, log pipeline, or
+screenshot away from being public information. When your agents provision
+credentials, write them to a file and operate on that file instead of reading
+them into the context window. This also reduces the risk of agents on lesser
+models hallucinating your credentials.
+
+### Phrases things positively
+
+Models follow “ask before creating access keys” better than “don’t create access
+keys silently”. Models act unreliably on prohibitions when it’s buried far
+upstream of the action and competing with other instruction sources. Make sure
+to use active voice when writing your instructions too, it’s good for people and
+agents.
+
+Something to keep in mind is that positive phrasing is a reliability technique,
+not a security mechanism. If a step must never happen, the thing that should
+stop it is a confirmation prompt in your CLI or a scope on the credential, not
+magic adverbs.
+
+## Agents can’t manage their own configuration
+
+One lesson I learned the hard way is that generally speaking agents can’t manage
+their own configuration seamlessly. Tigris ships
+[an agent plugin](https://www.tigrisdata.com/blog/agent-plugins/) and we want to
+have agents set it up by themselves, giving agents object storage superpowers
+out of the gate. I wrote that, tested it, everything installed, and then the
+agent behaved like nothing in particular changed. All the skills were installed
+but none of them were usable.
+
+After thinking about it a bit, I realized that this makes sense. Skills are
+effectively executable code, and the agent has no way of knowing if they're
+added for legitimate reasons (integration with Tigris) or illegitimate reasons
+(cryptocurrency mining, making your agent part of a residential proxy botnet,
+etc).
+
+:::note
+
+If you use Claude Code, you can use `/reload-skills` and `/reload-plugins` to
+forcibly refresh skills and plugin lists. I'm not sure of the equivalents in
+other agent harnesses, but I think that OpenClaw and Hermes refresh them
+automatically.
+
+:::
+
+This is why `tigris init` has two doors: human use and AI agent use. The wizard
+is for humans in the shell where installing things to an agent is safe because
+the agent hasn’t started yet. The `--agent` recipe is in plain text because text
+is the only thing that works reliably from inside an agent session.
+
+Whatever your flow installs into agents belongs outside of the agent.
+
+## Agent-native is the new baseline
+
+In the long run I don’t see shell installers and golden paths for Blessed
+Frameworks™ disappearing, I think that they’re just going to stop being the only
+way to onboard. The onboarding surface is moving to a couple of kilobytes of
+text that your CLI prints and someone else’s agent executes, which means the job
+changes from writing your instructions as code to writing your instructions for
+a collaborator who already knows the codebase better than you ever could.
+
+For anyone building developer tools: what parts of your setup flow are easy to
+describe, easy to verify, but really annoying to implement? This is the hole
+that agents fit into the stack. Put these directions in your tool and then send
+it off to the races. Be sure to test against open weights models such as Kimi K3
+or Qwen 3.5 36b-A3b to be sure you haven't accidentally optimized for a single
+model from a single provider.
+
+As time goes on I can see this getting more and more useful. Models circa last
+year had trouble with two or three step processes and today’s models can easily
+handle 9 step flows without issue. I don’t know how things are going to develop
+in the future, but I do know that the setup flow was written for machines before
+we admitted it and making it with machines in mind is only going to make things
+easier in the future.
+
+<InlineCta
+  title="Let the agent set up your storage"
+  subtitle="Tigris is S3-compatible object storage with a CLI built to be driven by the agent already living in your project. Run tigris init, point it at a bucket, and let it do the boring parts."
+  button="Read the Tigris CLI docs"
+  link="https://www.tigrisdata.com/docs/ai-agents/tigris-cli-quickstart/"
+/>

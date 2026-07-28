@@ -27,6 +27,15 @@ that matches the post's emotional register:
 
 Most posts blend 2-3 of these modes. Read whichever apply.
 
+## What's Load-Bearing
+
+The structural arc and an unbroken register decide whether a post lands; the
+signature devices (dialogue, warning boxes, friend-reaction lists) are garnish.
+A post that runs its full arc with zero devices reads as a Xe post —
+`assets/objgit.mdx` uses no character dialogue and is the strongest example in
+this collection. A post with Xe diction but no architecture does not. Spend
+effort on structure, voice consistency, and evidence before any ornament.
+
 ## Hard Rules
 
 Non-negotiable constraints:
@@ -42,9 +51,20 @@ Non-negotiable constraints:
    human.
 4. **Admit uncertainty.** "I think", "I suspect", "I'm not sure" when genuinely
    uncertain.
-5. **Show tradeoffs.** Never present a solution without its costs.
+5. **Show tradeoffs, on the page.** Never present a solution without its costs,
+   and argue the costs where the claims are — don't defer them to a footnote or
+   another site. The strongest form is a confession: one embarrassing,
+   self-inflicted failure ("It was completely dead in production.") buys more
+   credibility than any disclaimer.
 6. **Context before implementation.** Explain why something matters before
    showing how.
+7. **One narrator.** Narrative beats belong to a single first-person voice;
+   "we" appears only in genuinely collective engineering statements. No
+   customer-logo dumps or "You could be next!" closes.
+8. **Numbers carry the argument.** Quantify the failure the claim rests on
+   ("over 8,500 `GetObject` calls before I killed it"), not just the effort of
+   building. Every "many", "significant", or "often" becomes a real number or
+   gets cut.
 
 ## Voice in Brief
 
@@ -82,12 +102,25 @@ Choose the pattern that fits the material:
 | Satirical warning → dramatic stakes → technical walkthrough → "it works" horror → caveats | Cursed projects     |
 
 For longer posts with a narrative journey (essays, critiques), read
-`references/story-circle.md` for the 8-beat story circle scaffold.
+`references/story-circle.md` for the 8-beat story circle scaffold. For cursed
+projects, read `references/humor-satire.md` — it covers the formula's beats and
+the ways posts fumble them.
+
+## Headings
+
+Read the H2s aloud as a list: they should carry the plot, jokes second. The
+target is a scan that gives the reader the whole shape — premise → "oh no, it
+works" → disaster 1 → disaster 2 → now what. Voicey headings that don't
+sequence read as a table of contents wearing a costume. Question-shaped H3s
+under the voicey H2s cost no voice and help search.
 
 ## Openings
 
 Lead with one of:
 
+- **Question with stakes**: "What happens if I just point a git server at an
+  object storage bucket?" — the question is the experiment the post then runs,
+  not scaffolding.
 - **Personal memory**: "A while ago, I got really frustrated at my Samsung S7."
 - **Historical/cultural analogy**: "Cloth is one of the most important goods a
   society can produce."
@@ -97,12 +130,21 @@ Lead with one of:
   replicants..."
 - **Satirical warning box** followed by dramatic stakes (for cursed content)
 
-Never open with a generic thesis or "In this post, I will..."
+Never open with a generic thesis, "In this post, I will...", a product-brochure
+line ("At Tigris, we make..."), or "Imagine a world where...". The test: if the
+first paragraph could front any other post unchanged, rewrite it.
 
 ## Closings
 
-- Tie back to the opening hook or tension
-- End with forward momentum, an open question, or a sober reality check
+Every ending adds something the reader didn't have; it never recaps.
+
+- **Sections** close on an earned generalization: convert the section's
+  specific disaster into a portable insight ("Serving Git repositories is an
+  accidental filesystem latency benchmark."). Ration these — two or three per
+  post; more reads as aphorism farming.
+- **The post** ends with exactly one of: a new generalization, a next step, or
+  a hand-off, tied back to the opening hook or tension. Never "In conclusion"
+  or a "Key takeaways" list that restates the body.
 - Often followed by `---` then supplementary material (related links, credits,
   stream plugs)
 - Sometimes a final character dialogue as a coda
@@ -110,8 +152,9 @@ Never open with a generic thesis or "In this post, I will..."
 ## Character Dialogue System
 
 Xe's posts use character dialogue components to inject humor, stage internal
-debate, provide asides, and pace long sections. This is one of the most
-distinctive features.
+debate, provide asides, and pace long sections. It is distinctive but optional
+garnish: reach for it when a beat needs it, and skip it freely — the strongest
+posts sometimes use none.
 
 ### Characters
 
@@ -221,6 +264,10 @@ Images: Standard `<img>` with imported files. Admonitions: `:::note ... :::`
 - Links are dense and inline (cite sources, reference prior art, link docs)
 - `<details>` for code blocks that would break reading flow
 - Use `---` horizontal rules for major thematic breaks
+- The payoff the opening promises lands on the page — deliver the result, or
+  make its absence the explicit caveat ("I haven't trained it yet; here's what
+  would tell us it worked"). "I plan to do it when I get the time" quietly
+  concedes the premise.
 
 ## Process
 
@@ -234,5 +281,12 @@ Images: Standard `<img>` with imported files. Admonitions: `:::note ... :::`
    - Humor/satire → `references/humor-satire.md`
    - Spiritual themes → `references/spirituality.md`
 5. Choose a structure pattern and draft
-6. Review: successive-paragraph rule, no corporate tone, voice matches examples
+6. Review against all of:
+   - Successive-paragraph rule holds; no corporate tone; voice matches examples
+   - Opener passes the portability test (couldn't front any other post)
+   - The promised payoff lands on the page
+   - Each load-bearing claim has a failure-cost number
+   - At least one self-inflicted confession or argued tradeoff
+   - H2s read as an arc when scanned as a list
+   - Sections and the closer add insight rather than recap
 7. Show draft to user and iterate
