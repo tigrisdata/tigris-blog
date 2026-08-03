@@ -292,7 +292,6 @@ How long is a lease? It depends on the work, and the durations are hardcoded per
 task type:
 
 ```go
-// List from from worker.go
 LEASE_TIME                       = 6 * time.Minute // the default
 CHANGE_LEASE_TIME                = 30 * time.Second
 MIGRATION_TASK_LEASE_TIME        = 70 * time.Minute
@@ -442,7 +441,6 @@ into it first. FoundationDB's insert fails cleanly on a duplicate key, and when
 it does, the enqueue is skipped:
 
 ```go
-// Inside Enqueue, for unique task types. Trimmed for print.
 if err := tx.Insert(ctx, idKey, tableData); errors.Is(err, kv.ErrDuplicateKey) {
 	return nil // already queued once; that is enough
 }
