@@ -1,0 +1,163 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 820 280"
+  width="820"
+  height="280"
+  preserveAspectRatio="xMidYMid meet"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title { font-size: 20px; fill: #62feb5; font-weight: 600; }
+    .sub { font-size: 15px; fill: #94a3b8; }
+    .label { font-size: 16px; fill: #e2e8f0; font-weight: 600; }
+    .ghost-label { font-size: 16px; fill: #94a3b8; font-weight: 600; }
+    .small { font-size: 14px; fill: #bac1be; }
+    .edge { font-size: 14px; fill: #94a3b8; font-weight: 500; }
+    .pass-edge { font-size: 14px; fill: #62feb5; font-weight: 600; }
+    .fail-edge { font-size: 14px; fill: #fbbf24; font-weight: 600; }
+    .hi-box { rx: 6; ry: 6; fill: rgba(98, 254, 181, 0.08); stroke: rgba(98, 254, 181, 0.45); stroke-width: 1; }
+    .ghost-box { rx: 6; ry: 6; fill: none; stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 5 4; opacity: 0.6; }
+    .axis { stroke: #94a3b8; stroke-width: 1.5; opacity: 0.5; fill: none; }
+    .cursor { stroke: #62feb5; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .pass-arrow { stroke: #62feb5; stroke-width: 1.5; fill: none; }
+    .fail-mark { stroke: #fbbf24; stroke-width: 2.5; }
+    .done-box { rx: 6; ry: 6; fill: rgba(98, 254, 181, 0.18); stroke: #62feb5; stroke-width: 1.5; }
+    .tick { stroke: #62feb5; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* one 11s loop: ready -> dissolve past now -> claimed -> the worker dies ->
+       now catches up -> a new worker completes it and the key is deleted */
+    .anim {
+      animation-duration: 11s;
+      animation-iteration-count: infinite;
+      animation-timing-function: ease-in-out;
+    }
+    .beat1 { animation-name: beat1; }
+    .beat2 { animation-name: beat2; }
+    /* no base opacity:0 here — svgo inlines single-use rules and then drops
+       fully transparent elements. The 0% keyframe hides them instead. */
+    .beat3 { animation-name: beat3; }
+    .beat4 { animation-name: beat4; }
+    .arcfx { animation-name: arcfx; }
+    .diesfx { animation-name: diesfx; }
+    .nowmove { animation-name: nowmove; }
+    .nowfade { animation-name: nowfade; }
+    .tick { animation-name: tick; stroke-dasharray: 44; }
+
+    @keyframes beat1 {
+      0%, 18% { opacity: 1; }
+      25%, 96% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    @keyframes beat2 {
+      0%, 21% { opacity: 0; }
+      28%, 60% { opacity: 1; }
+      66%, 100% { opacity: 0; }
+    }
+    @keyframes beat3 {
+      0%, 60% { opacity: 0; }
+      66%, 76% { opacity: 1; }
+      82%, 100% { opacity: 0; }
+    }
+    @keyframes beat4 {
+      0%, 76% { opacity: 0; }
+      82%, 89% { opacity: 1; }
+      94%, 100% { opacity: 0; }
+    }
+    /* the check draws itself on, then the whole group fades: completed, deleted */
+    @keyframes tick {
+      0%, 78% { stroke-dashoffset: 44; }
+      86%, 100% { stroke-dashoffset: 0; }
+    }
+    @keyframes arcfx {
+      0%, 17% { opacity: 0; }
+      23%, 36% { opacity: 1; }
+      42%, 100% { opacity: 0; }
+    }
+    @keyframes diesfx {
+      0%, 44% { opacity: 0; }
+      50%, 82% { opacity: 1; }
+      88%, 100% { opacity: 0; }
+    }
+    @keyframes nowmove {
+      0%, 50% { transform: translateX(0); }
+      64%, 95% { transform: translateX(330px); }
+      95.01%, 100% { transform: translateX(0); }
+    }
+    @keyframes nowfade {
+      0%, 92% { opacity: 1; }
+      95%, 96% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .anim { animation: none; }
+      .beat3, .beat4, .diesfx { opacity: 0; }
+    }
+  </style>
+
+  <defs>
+    <marker id="ahp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <text x="410" y="34" text-anchor="middle" class="title">One lane of the queue, one task</text>
+  <text x="410" y="58" text-anchor="middle" class="sub">a task&#8217;s state is just its position relative to now</text>
+
+  <line x1="40" y1="162" x2="780" y2="162" class="axis" />
+
+  <!-- the worker dies somewhere along the way, and nothing reacts -->
+  <g class="anim diesfx">
+    <line x1="422" y1="154" x2="438" y2="170" class="fail-mark" />
+    <line x1="438" y1="154" x2="422" y2="170" class="fail-mark" />
+    <text x="430" y="140" text-anchor="middle" class="fail-edge">worker dies</text>
+  </g>
+
+  <!-- beat 1: ready, sitting to the left of now -->
+  <g class="anim beat1">
+    <rect x="150" y="144" width="110" height="36" class="hi-box" />
+    <text x="205" y="167" text-anchor="middle" class="label">task B</text>
+    <text x="205" y="206" text-anchor="middle" class="pass-edge">1 &#183; ready &#183; its time is in the past</text>
+  </g>
+
+  <!-- beat 2: dissolved out of the past, materialized past now -->
+  <g class="anim beat2">
+    <rect x="470" y="144" width="110" height="36" class="ghost-box" />
+    <text x="525" y="167" text-anchor="middle" class="ghost-label">task B</text>
+    <text x="525" y="206" text-anchor="middle" class="edge">2 &#183; claimed &#183; invisible to every reader</text>
+  </g>
+
+  <!-- beat 3: same key, now has caught up to it -->
+  <g class="anim beat3">
+    <rect x="470" y="144" width="110" height="36" class="hi-box" />
+    <text x="525" y="167" text-anchor="middle" class="label">task B</text>
+    <text x="525" y="206" text-anchor="middle" class="pass-edge">3 &#183; ready again &#183; for any worker</text>
+  </g>
+
+  <!-- beat 4: a second worker runs it to completion and deletes the key -->
+  <g class="anim beat4">
+    <rect x="470" y="144" width="110" height="36" class="done-box" />
+    <text x="525" y="167" text-anchor="middle" class="label">task B</text>
+    <path d="M600,163 L609,172 L626,150" class="tick anim" />
+    <text x="525" y="206" text-anchor="middle" class="pass-edge">4 &#183; completed &#183; the key is deleted</text>
+  </g>
+
+  <!-- direction hint, visible only across the dissolve -->
+  <g class="anim arcfx">
+    <path d="M215,138 Q 365,92 515,138" class="pass-arrow" marker-end="url(#ahp)" />
+    <text x="365" y="100" text-anchor="middle" class="pass-edge">claiming = moving it into the future</text>
+  </g>
+
+  <g class="anim nowmove">
+    <g class="anim nowfade">
+      <line x1="360" y1="128" x2="360" y2="202" class="cursor" />
+      <text x="360" y="234" text-anchor="middle" class="pass-edge">now</text>
+    </g>
+  </g>
+
+  <text x="410" y="264" text-anchor="middle" class="small">nothing fires when a task vests: its position relative to now is its entire state</text>
+</svg>

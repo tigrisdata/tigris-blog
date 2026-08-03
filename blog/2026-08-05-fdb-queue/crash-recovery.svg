@@ -1,0 +1,42 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 820 336"
+  width="820"
+  height="336"
+  preserveAspectRatio="xMidYMid meet"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title { font-size: 20px; fill: #62feb5; font-weight: 600; }
+    .sub { font-size: 15px; fill: #94a3b8; }
+    .label { font-size: 16px; fill: #e2e8f0; font-weight: 600; }
+    .small { font-size: 14px; fill: #bac1be; }
+    .edge { font-size: 14px; fill: #94a3b8; font-weight: 500; }
+    .pass-edge { font-size: 14px; fill: #62feb5; font-weight: 600; }
+    .fail-edge { font-size: 14px; fill: #fbbf24; font-weight: 600; }
+    .box { rx: 6; ry: 6; fill: #1a2e35; stroke: #2a3731; stroke-width: 1; }
+    .ghost-box { rx: 6; ry: 6; fill: none; stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 5 4; opacity: 0.7; }
+    .hi-box { rx: 6; ry: 6; fill: rgba(98, 254, 181, 0.08); stroke: rgba(98, 254, 181, 0.45); stroke-width: 1; }
+    .arrow { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
+    .pass-arrow { stroke: #62feb5; stroke-width: 1.5; fill: none; }
+    .fail-arrow { stroke: #fbbf24; stroke-width: 1.5; fill: none; }
+    .cursor { stroke: #62feb5; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .leader { stroke-width: 1; stroke-dasharray: 3 3; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8" />
+    </marker>
+    <marker id="arrowhead-pass" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#62feb5" />
+    </marker>
+    <marker id="arrowhead-fail" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#fbbf24" />
+    </marker>
+  </defs>
+<text x="410" y="30" text-anchor="middle" class="title">A six minute lease, a crash at minute two</text><text x="410" y="56" text-anchor="middle" class="sub">no reaper, no lease table: the row simply drifts back into view</text><g transform="translate(0,30)"><path d="M40,174 L776,174" class="arrow" marker-end="url(#arrowhead)" /><text x="778" y="166" text-anchor="end" class="edge">time</text><line x1="100" y1="169" x2="100" y2="179" class="arrow" /><line x1="270" y1="169" x2="270" y2="179" class="arrow" /><line x1="552" y1="169" x2="552" y2="179" class="arrow" /><text x="100" y="90" text-anchor="middle" class="label">worker A claims</text><text x="100" y="106" text-anchor="middle" class="small">row moved to t0 + 6 min</text><line x1="100" y1="114" x2="100" y2="166" class="arrow leader" /><text x="100" y="194" text-anchor="middle" class="edge">t0</text><line x1="264" y1="169" x2="276" y2="179" class="fail-arrow" stroke-width="2" /><line x1="276" y1="169" x2="264" y2="179" class="fail-arrow" stroke-width="2" /><text x="270" y="194" text-anchor="middle" class="edge">t0 + 2 min</text><line x1="270" y1="202" x2="270" y2="216" class="fail-arrow leader" /><text x="270" y="234" text-anchor="middle" class="fail-edge">worker A dies</text><text x="270" y="250" text-anchor="middle" class="small">no alert fires, no reaper runs</text><line x1="282" y1="128" x2="540" y2="128" class="arrow" /><line x1="282" y1="128" x2="282" y2="136" class="arrow" /><line x1="540" y1="128" x2="540" y2="136" class="arrow" /><text x="411" y="118" text-anchor="middle" class="edge">nothing happens (that is the mechanism)</text><text x="552" y="74" text-anchor="middle" class="pass-edge">the key is in the past again</text><text x="552" y="90" text-anchor="middle" class="small">inside every Peek window</text><line x1="552" y1="98" x2="552" y2="166" class="pass-arrow leader" /><text x="552" y="194" text-anchor="middle" class="edge">t0 + 6 min</text><line x1="690" y1="182" x2="690" y2="216" class="arrow leader" /><text x="690" y="234" text-anchor="middle" class="label">worker B claims it</text><text x="690" y="250" text-anchor="middle" class="small">resumes from the checkpoint</text></g></svg>

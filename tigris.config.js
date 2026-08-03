@@ -15,8 +15,8 @@ module.exports = {
   // First entry is the main hero card; the rest are side cards.
   featuredPosts: [
     "/storagesdk",
+    "/fdb-work-queue",
     "/clickhouse-zero-egress",
     "/t3-migrate-command",
-    "/where-does-the-agent-live",
   ],
 };

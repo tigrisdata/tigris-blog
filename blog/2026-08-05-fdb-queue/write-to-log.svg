@@ -1,0 +1,91 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 820 420"
+  width="820"
+  height="420"
+  preserveAspectRatio="xMidYMid meet"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title { font-size: 20px; fill: #62feb5; font-weight: 600; }
+    .sub { font-size: 15px; fill: #94a3b8; }
+    .label { font-size: 16px; fill: #e2e8f0; font-weight: 600; }
+    .small { font-size: 14px; fill: #bac1be; }
+    .edge { font-size: 14px; fill: #94a3b8; font-weight: 500; }
+    .pass-edge { font-size: 14px; fill: #62feb5; font-weight: 600; }
+    .fail-edge { font-size: 14px; fill: #fbbf24; font-weight: 600; }
+    .panel-head { font-size: 14px; fill: #94a3b8; font-weight: 600; letter-spacing: 0.08em; }
+    .box { rx: 6; ry: 6; fill: #1a2e35; stroke: #2a3731; stroke-width: 1; }
+    .hi-box { rx: 6; ry: 6; fill: rgba(98, 254, 181, 0.08); stroke: rgba(98, 254, 181, 0.45); stroke-width: 1; }
+    .arrow { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
+    .pass-arrow { stroke: #62feb5; stroke-width: 1.5; fill: none; }
+    .divider { stroke: #2a3731; stroke-width: 1; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8" />
+    </marker>
+    <marker id="arrowhead-pass" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <text x="410" y="34" text-anchor="middle" class="title">When one write becomes five</text>
+  <text x="410" y="58" text-anchor="middle" class="sub">the queue&#8217;s real cost at scale was write amplification, so a log grew next to it</text>
+
+  <line x1="410" y1="88" x2="410" y2="392" class="divider" />
+
+  <!-- left: fan-out into task rows -->
+  <text x="212" y="110" text-anchor="middle" class="panel-head">ONE COMMIT, FIVE TASK ROWS</text>
+
+  <rect x="132" y="132" width="160" height="44" class="box" />
+  <text x="212" y="159" text-anchor="middle" class="label">object write</text>
+
+  <path d="M212,176 L212,222" class="arrow" marker-end="url(#arrowhead)" />
+  <text x="228" y="204" class="fail-edge">3&#8211;5 rows per write</text>
+
+  <rect x="92" y="228" width="240" height="26" class="box" />
+  <text x="212" y="246" text-anchor="middle" class="small">replication</text>
+
+  <rect x="92" y="260" width="240" height="26" class="box" />
+  <text x="212" y="278" text-anchor="middle" class="small">notifications</text>
+
+  <rect x="92" y="292" width="240" height="26" class="box" />
+  <text x="212" y="310" text-anchor="middle" class="small">billing</text>
+
+  <rect x="92" y="324" width="240" height="26" class="box" />
+  <text x="212" y="342" text-anchor="middle" class="small">lifecycle</text>
+
+  <rect x="92" y="356" width="240" height="26" class="box" />
+  <text x="212" y="374" text-anchor="middle" class="small">index update</text>
+
+  <!-- right: one log record, consumers at their own offsets -->
+  <text x="608" y="110" text-anchor="middle" class="panel-head">ONE COMMIT, ONE LOG RECORD</text>
+
+  <rect x="528" y="132" width="160" height="44" class="box" />
+  <text x="608" y="159" text-anchor="middle" class="label">object write</text>
+
+  <path d="M608,176 L608,206" class="pass-arrow" marker-end="url(#arrowhead-pass)" />
+
+  <rect x="468" y="212" width="280" height="44" class="hi-box" />
+  <text x="608" y="239" text-anchor="middle" class="label">log record &#183; versionstamp</text>
+
+  <path d="M608,256 L608,286" class="pass-arrow" marker-end="url(#arrowhead-pass)" />
+  <text x="624" y="278" class="pass-edge">read at your own offset</text>
+
+  <rect x="488" y="292" width="240" height="26" class="box" />
+  <text x="608" y="310" text-anchor="middle" class="small">replication &#183; offset 4181</text>
+
+  <rect x="488" y="324" width="240" height="26" class="box" />
+  <text x="608" y="342" text-anchor="middle" class="small">notifications &#183; offset 4177</text>
+
+  <rect x="488" y="356" width="240" height="26" class="box" />
+  <text x="608" y="374" text-anchor="middle" class="small">billing &#183; offset 4102</text>
+
+  <text x="410" y="410" text-anchor="middle" class="edge">marking work as done means moving a cursor forward, not rewriting a row</text>
+</svg>

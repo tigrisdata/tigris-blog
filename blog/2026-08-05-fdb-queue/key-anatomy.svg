@@ -1,0 +1,79 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 820 400"
+  width="820"
+  height="400"
+  preserveAspectRatio="xMidYMid meet"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title { font-size: 20px; fill: #62feb5; font-weight: 600; }
+    .sub { font-size: 15px; fill: #94a3b8; }
+    .key { font-family: "Fira Code VF", ui-monospace, monospace; font-size: 16px; fill: #e2e8f0; font-weight: 600; }
+    .key-hi { font-family: "Fira Code VF", ui-monospace, monospace; font-size: 16px; fill: #62feb5; font-weight: 600; }
+    .small { font-size: 14px; fill: #bac1be; }
+    .edge { font-size: 14px; fill: #94a3b8; font-weight: 500; }
+    .pass-edge { font-size: 14px; fill: #62feb5; font-weight: 600; }
+    .box { rx: 6; ry: 6; fill: #1a2e35; stroke: #2a3731; stroke-width: 1; }
+    .hi-box { rx: 6; ry: 6; fill: rgba(98, 254, 181, 0.08); stroke: rgba(98, 254, 181, 0.45); stroke-width: 1; }
+    .arrow { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <text x="410" y="34" text-anchor="middle" class="title">Anatomy of a queue key</text>
+  <text x="410" y="58" text-anchor="middle" class="sub">one key-value pair per task &#183; the shape of the key is the whole design</text>
+
+  <!-- tuple strip -->
+  <rect x="34" y="100" width="100" height="60" class="box" />
+  <text x="84" y="136" text-anchor="middle" class="key">"queue"</text>
+  <text x="84" y="184" text-anchor="middle" class="small">subspace</text>
+  <text x="84" y="204" text-anchor="middle" class="small">namespace</text>
+
+  <rect x="142" y="100" width="92" height="60" class="box" />
+  <text x="188" y="136" text-anchor="middle" class="key">version</text>
+  <text x="188" y="184" text-anchor="middle" class="small">key version</text>
+  <text x="188" y="204" text-anchor="middle" class="small">layout rev</text>
+
+  <rect x="242" y="100" width="106" height="60" class="box" />
+  <text x="295" y="136" text-anchor="middle" class="key">taskType</text>
+  <text x="295" y="184" text-anchor="middle" class="small">kind of work</text>
+  <text x="295" y="204" text-anchor="middle" class="small">~90 of them</text>
+
+  <rect x="356" y="100" width="112" height="60" class="box" />
+  <text x="412" y="136" text-anchor="middle" class="key">itemSpace</text>
+  <text x="412" y="184" text-anchor="middle" class="small">one of 256</text>
+  <text x="412" y="204" text-anchor="middle" class="small">lanes, hashed</text>
+
+  <rect x="476" y="100" width="126" height="60" class="hi-box" />
+  <text x="539" y="136" text-anchor="middle" class="key-hi">vestingMs</text>
+  <text x="539" y="184" text-anchor="middle" class="pass-edge">when it vests</text>
+  <text x="539" y="204" text-anchor="middle" class="pass-edge">the schedule</text>
+
+  <rect x="610" y="100" width="100" height="60" class="box" />
+  <text x="660" y="136" text-anchor="middle" class="key">priority</text>
+  <text x="660" y="184" text-anchor="middle" class="small">breaks ties</text>
+  <text x="660" y="204" text-anchor="middle" class="small">same ms</text>
+
+  <rect x="718" y="100" width="68" height="60" class="box" />
+  <text x="752" y="136" text-anchor="middle" class="key">id</text>
+  <text x="752" y="184" text-anchor="middle" class="small">unique</text>
+
+  <!-- sort direction -->
+  <path d="M34,240 L786,240" class="arrow" marker-end="url(#arrowhead)" />
+  <text x="410" y="264" text-anchor="middle" class="edge">sorted left to right, so the key order is the work order</text>
+
+  <!-- callout -->
+  <rect x="34" y="288" width="752" height="98" class="hi-box" />
+  <text x="62" y="318" class="pass-edge">vestingMs is the only field that ever moves.</text>
+  <text x="62" y="344" class="small">Claiming a task moves this one number further into the future. Nothing</text>
+  <text x="62" y="366" class="small">fires when it arrives: the timestamp is a coordinate, not a trigger.</text>
+</svg>
