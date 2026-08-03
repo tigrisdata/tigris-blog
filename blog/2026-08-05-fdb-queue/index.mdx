@@ -2,6 +2,7 @@
 slug: fdb-work-queue
 title: "There Is No Scheduler: The Tigris Work Queue on FoundationDB"
 date: 2026-08-05
+image: ./hero-img.webp
 description: >-
   Every piece of background work in Tigris flows through a queue that is nothing
   but a FoundationDB keyspace. A task's key is its schedule, claiming a task
@@ -29,13 +30,19 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import MermaidFrame from "@site/src/components/MermaidFrame";
+import heroImage from "./hero-img.webp";
+import QueueLifecycle from "./queue-lifecycle.svg";
 import KeyAnatomy from "./key-anatomy.svg";
 import LaneVisibility from "./lane-visibility.svg";
 import ClaimMove from "./claim-move.svg";
 import CrashRecovery from "./crash-recovery.svg";
 import WriteToLog from "./write-to-log.svg";
 
-{/* TODO: hero image */}
+<img
+  src={heroImage}
+  className="hero-image"
+  alt="Queuing Work with FoundationDB. Title card with the Tigris logo: a blue tiger blacksmith hammers a glowing key on an anvil while a conveyor belt carries a line of finished keys past a clock."
+/>
 
 When you PUT an object into Tigris, the response comes back long before the work
 is finished. The object still has to be replicated to other regions, counted for
@@ -61,6 +68,21 @@ post: how the queue works, what we took from Apple, and where we deliberately
 went a different way.
 
 {/* truncate */}
+
+The system in this post is the queue that runs every background task in Tigris:
+replication, billing, cleanup, notifications, all of it. The entire queue is one
+keyspace in FoundationDB, where every task is a single key and that key contains
+the time when the task becomes ready. A worker takes a task by moving its key
+into the future, where no one is looking, and a crashed worker's task comes back
+on its own when time catches up with it:
+
+<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
+  <QueueLifecycle
+    role="img"
+    aria-label="An animated loop of one queue lane, drawn as a single timeline with a dashed cursor labeled now. Beat one: task B sits to the left of the cursor, highlighted and labeled ready because its time is in the past. Beat two: the task dissolves from that position and materializes to the right of now, drawn dashed and labeled claimed and invisible to every reader, while an arc labeled claiming equals moving it into the future shows the direction. Beat three: an amber cross marks the worker dying and nothing reacts; the now cursor slides right until it passes the task, which brightens again and is labeled ready again for any worker. Beat four: a check mark draws itself beside the task and the caption reads completed, the key is deleted, after which the task fades from the lane. The loop then restarts. Caption: nothing fires when a task vests, its position relative to now is its entire state."
+    style={{ width: "100%", height: "auto" }}
+  />
+</MermaidFrame>
 
 ## The consequences of a PUT
 
@@ -118,6 +140,24 @@ Reading the tuple left to right:
   the part of the key that everything else depends on.
 - **`priority`** breaks ties between tasks vesting in the same millisecond.
 - **`id`** makes the key unique.
+
+A real key, with the values filled in:
+
+```text
+("queue", 1, 23, 17, 1754400123456, 0, "d3f7…")
+   │      │   │   │        │        │     │
+   │      │   │   │        │        │     └ id
+   │      │   │   │        │        └ priority 0
+   │      │   │   │        └ vesting: 2026-08-05 14:02:03.456 UTC, in ms
+   │      │   │   └ lane 17
+   │      │   └ task type 23
+   │      └ key layout version
+   └ subspace
+```
+
+The integers are encoded so that byte order matches numeric order. That is the
+property the whole design leans on: FoundationDB compares bytes, and the bytes
+compare like times.
 
 FoundationDB keeps keys sorted. That single property, plus this key shape, means
 that within any lane the tasks sit in vesting order, oldest first, without
@@ -188,6 +228,13 @@ with a vesting time four hours out. It sits to the right of every reader's
 window until the windows move past it. Retry with backoff is the same trick with
 smaller numbers.
 
+FoundationDB has watches, which push a notification when a key's value changes,
+and we do not use them here. A watch fires on a write, and the event this queue
+cares about is not a write: a task becomes ready when the clock passes its
+vesting time, and nothing in the database changes at that moment. There is no
+mutation to watch. Polling a range that ends at now is the natural way to
+observe a condition that time creates, and it costs one range read per lane.
+
 ## Claiming a task means moving it into the future
 
 The part we find beautiful is what a claim actually is. When a worker claims a
@@ -214,6 +261,16 @@ every reader's window, so no other worker can see it, let alone claim it. And if
 two workers race to claim the same row, FoundationDB's transaction conflict
 detection guarantees exactly one of the two commits. The loser's transaction
 aborts, it re-peeks, and the row is gone. Mutual exclusion without a mutex.
+
+The same conflict detection has a cost, and it is worth knowing where it went.
+Peek reads the visible range without snapshot isolation, so the claiming
+transaction conflicts with any write that lands inside that window before it
+commits. Two properties keep this rare. The window ends at the scanner's own
+now, and new work is enqueued at or after the producer's now, so fresh tasks
+normally land to the right of the window rather than inside it. And because each
+lane has exactly one scanner, the classic failure mode of queue-on-database
+designs, every consumer conflicting with every other at the head of the queue,
+cannot happen at all.
 
 Ownership checks also work by position. When a worker comes back to renew or
 complete, it verifies that the row still carries its lease id and the vesting
@@ -296,13 +353,10 @@ FoundationDB rather than beside it. The core move is the one you have just read:
 > risking losing it if the consumer fails), we increase the work item's vesting
 > time by the lease duration."
 
-We took a lot from the paper directly, including its vocabulary. One of us had
-worked alongside people from the CloudKit team at an earlier job and knew the
-quality of their systems, so when the paper appeared, we read it closely. The
-first version of our queue had a single narrow job, backfilling secondary
-indexes. It worked well enough that we kept finding new work to put on it, and
-it grew into the general system that now carries everything from replication to
-billing.
+We took a lot from the paper directly, including its vocabulary. The first
+version of our queue had a single narrow job, backfilling secondary indexes. It
+worked well enough that we kept finding new work to put on it, and it grew into
+the general system that now carries everything from replication to billing.
 
 But Tigris is not CloudKit, and the differences taught us as much as the paper
 did.
