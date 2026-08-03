@@ -30,13 +30,13 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import MermaidFrame from "@site/src/components/MermaidFrame";
-import heroImage from "./hero-img.webp";
 import QueueLifecycle from "./queue-lifecycle.svg";
 import KeyAnatomy from "./key-anatomy.svg";
 import LaneVisibility from "./lane-visibility.svg";
 import ClaimMove from "./claim-move.svg";
 import CrashRecovery from "./crash-recovery.svg";
 import WriteToLog from "./write-to-log.svg";
+import heroImage from "./hero-img.webp";
 
 <img
   src={heroImage}
@@ -64,33 +64,32 @@ The design is based on Apple's
 queue that runs inside CloudKit. We
 [briefly mentioned this history](https://www.tigrisdata.com/blog/global-replication/)
 over a year ago and promised ourselves we'd write it up properly. This is that
-post: how the queue works, what we took from Apple, and where we deliberately
-went a different way.
+post.
 
 {/* truncate */}
 
 The system in this post is the queue that runs every background task in Tigris:
-replication, billing, cleanup, notifications, all of it. The entire queue is one
-keyspace in FoundationDB, where every task is a single key and that key contains
-the time when the task becomes ready. A worker takes a task by moving its key
-into the future, where no one is looking, and a crashed worker's task comes back
-on its own when time catches up with it:
+replication, billing, cleanup, notifications. The entire queue is one keyspace
+in FoundationDB, where every task is a single key and that key contains the time
+when the task becomes ready. A worker takes a task by moving its key into the
+future, where no one is looking, and a crashed worker's task comes back on its
+own when time catches up with it:
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <QueueLifecycle
     role="img"
-    aria-label="An animated loop of one queue lane, drawn as a single timeline with a dashed cursor labeled now. Beat one: task B sits to the left of the cursor, highlighted and labeled ready because its time is in the past. Beat two: the task dissolves from that position and materializes to the right of now, drawn dashed and labeled claimed and invisible to every reader, while an arc labeled claiming equals moving it into the future shows the direction. Beat three: an amber cross marks the worker dying and nothing reacts; the now cursor slides right until it passes the task, which brightens again and is labeled ready again for any worker. Beat four: a check mark draws itself beside the task and the caption reads completed, the key is deleted, after which the task fades from the lane. The loop then restarts. Caption: nothing fires when a task vests, its position relative to now is its entire state."
+    aria-label="One lane of the queue drawn as a single timeline. Task B appears twice. On the left it is dashed, at its original position before now, labeled ready because its time is in the past. An arc labeled claiming equals moving it into the future carries it over the dashed now cursor to its second position on the right, labeled claimed and invisible to every reader. A dashed arrow along the axis shows beat three: if the worker dies, nothing happens, now keeps moving and passes the task, which makes it ready again for any worker."
     style={{ width: "100%", height: "auto" }}
   />
 </MermaidFrame>
 
 ## The consequences of a PUT
 
-The problem that decides everything else is simple: when an object write
-commits, the background work it implies must become durable _with it_. If the
-object lands but the replication task is lost, the object silently never reaches
-other regions. If the task lands but the object write aborts, workers search for
-an object that does not exist.
+One problem decides everything else: when an object write commits, the
+background work it implies must become durable _with it_. If the object lands
+but the replication task is lost, the object silently never reaches other
+regions. If the task lands but the object write aborts, workers search for an
+object that does not exist.
 
 With an external queueing system this is the classic dual-write problem, and you
 end up building outbox tables and reconciliation jobs to work around it. Because
@@ -217,11 +216,11 @@ simply ends before reaching it.
   />
 </MermaidFrame>
 
-Two details are worth noticing. First, `minVestingTime` is a hardcoded constant,
-a date in March 2023 before which no queue item can exist. The left edge of
-time, in this system, is a config value. Second, `now` is whatever the _reading_
-machine thinks it is. The queue has no opinion about the present; each reader
-constructs its own and asks for everything before it.
+Two details matter here. First, `minVestingTime` is a hardcoded constant, a date
+in March 2023 before which no queue item can exist. The left edge of time, in
+this system, is a config value. Second, `now` is whatever the _reading_ machine
+thinks it is. The queue has no opinion about the present; each reader constructs
+its own and asks for everything before it.
 
 Delaying work costs nothing extra. Want a task to run in four hours? Enqueue it
 with a vesting time four hours out. It sits to the right of every reader's
@@ -237,9 +236,9 @@ observe a condition that time creates, and it costs one range read per lane.
 
 ## Claiming a task means moving it into the future
 
-The part we find beautiful is what a claim actually is. When a worker claims a
-task, it does not mark the task as claimed, because there is no `status` field,
-no lock, and no ownership table to mark. Instead, the worker deletes the row and
+The part we find beautiful is what a claim is. When a worker claims a task, it
+does not mark the task as claimed, because there is no `status` field, no lock,
+and no ownership table to mark. Instead, the worker deletes the row and
 reinserts it at `now + leaseTime`, with a fresh lease id:
 
 ```go
@@ -262,15 +261,14 @@ two workers race to claim the same row, FoundationDB's transaction conflict
 detection guarantees exactly one of the two commits. The loser's transaction
 aborts, it re-peeks, and the row is gone. Mutual exclusion without a mutex.
 
-The same conflict detection has a cost, and it is worth knowing where it went.
-Peek reads the visible range without snapshot isolation, so the claiming
-transaction conflicts with any write that lands inside that window before it
-commits. Two properties keep this rare. The window ends at the scanner's own
-now, and new work is enqueued at or after the producer's now, so fresh tasks
-normally land to the right of the window rather than inside it. And because each
-lane has exactly one scanner, the classic failure mode of queue-on-database
-designs, every consumer conflicting with every other at the head of the queue,
-cannot happen at all.
+The same conflict detection has a cost. Peek reads the visible range without
+snapshot isolation, so the claiming transaction conflicts with any write that
+lands inside that window before it commits. Two properties keep this rare. The
+window ends at the scanner's own now, and new work is enqueued at or after the
+producer's now, so fresh tasks normally land to the right of the window rather
+than inside it. And because each lane has exactly one scanner, the classic
+failure mode of queue-on-database designs, every consumer conflicting with every
+other at the head of the queue, cannot happen at all.
 
 Ownership checks also work by position. When a worker comes back to renew or
 complete, it verifies that the row still carries its lease id and the vesting
@@ -334,13 +332,13 @@ The reason no recovery machinery exists is that there is nothing to recover.
 and the system cannot tell them apart because there is no difference to tell.
 Failure detection would be code that distinguishes two identical things.
 
-This robustness has a price, and we want to state it clearly. Delivery is
-at-least-once: a task whose worker died mid-run will run again, and a task whose
-worker stalled past its lease can even have side effects committed by two
-workers. Every task in the system is therefore written to be idempotent. That is
-the contract. And worst-case recovery latency equals the remaining lease time,
-which for a migration task can be almost an hour. That is the dial from the
-previous section, set deliberately, task type by task type.
+This robustness has a price. Delivery is at-least-once: a task whose worker died
+mid-run will run again, and a task whose worker stalled past its lease can even
+have side effects committed by two workers. Every task in the system is
+therefore written to be idempotent. That is the contract. And worst-case
+recovery latency equals the remaining lease time, which for a migration task can
+be almost an hour. That is the dial from the previous section, set deliberately,
+task type by task type.
 
 ## The paper we took it from
 
@@ -415,14 +413,14 @@ the same database in the same transaction.
 
 ## The bill
 
-Nothing above is free, and we would rather list the costs ourselves.
+Nothing above is free.
 
 **At-least-once means what it says.** There is no fencing token. A worker that
 stalls past its lease and wakes up confused can still commit side effects after
 a rival has claimed the row. Idempotent task design absorbs this, but "absorbs"
-means the duplicate work happens and is harmless, not that it doesn't happen.
+means the duplicate work happens and is harmless.
 
-**Wall clocks create the coordinates.** Vesting times come from `time.Now()` on
+Wall clocks create the coordinates. Vesting times come from `time.Now()` on
 whichever machine writes the row, so clock skew physically displaces work in the
 keyspace. In several years of production this has never actually caused a
 problem; the same idempotency that absorbs retries also absorbs work that
@@ -430,19 +428,19 @@ arrives slightly early, and NTP keeps the skew small. No need to buy atomic
 clocks just yet.
 
 **FoundationDB transactions last five seconds. Our leases last seventy
-minutes.** This sounds like a contradiction and is actually the design's central
-trick. Transactions only ever perform the _move_: claim, renew, complete, each a
-few milliseconds of reads and writes. The hours of actual work happen outside
-any transaction, and the row's position in the keyspace is the durable record of
-who is doing what until when.
+minutes.** This sounds like a contradiction and is the design's central trick.
+Transactions only ever perform the _move_: claim, renew, complete, each a few
+milliseconds of reads and writes. The hours of actual work happen outside any
+transaction, and the row's position in the keyspace is the durable record of who
+is doing what until when.
 
-**Some questions are expensive to ask.** "How big is the queue?" has no cheap
+Some questions are expensive to ask. "How big is the queue?" has no cheap
 answer. Counting means range-scanning the whole queue space, and the obvious
 fix, an atomic counter incremented on enqueue, would concentrate every
 producer's writes onto one hot key, which is precisely the contention this
 design exists to avoid. We ended up estimating queue depth rather than measuring
 it, and what we do with that estimate, rate-limiting our own workers before they
-hurt the database, is a story with its own lessons and its own post.
+hurt the database, is a story for its own post.
 
 ## When one write becomes five: the log
 
@@ -453,12 +451,12 @@ notifications and billing each getting their own task row inside the commit.
 
 So a log grew next to the queue. An object write now appends one record to a log
 keyspace, and the background consumers each read that log at their own offset
-and fan out from there. Marking work as done means moving a cursor forward, not
-rewriting a row. And the log's keys are built on FoundationDB versionstamps,
-which the database assigns at commit time in commit order, so the log is ordered
-by _when things actually happened_ rather than by what any wall clock claimed.
-The queue plays one more part here: the consumers that read the log are
-themselves queue tasks, of the permanent kind from two sections ago.
+and fan out from there. Marking work as done means moving a cursor forward. And
+the log's keys are built on FoundationDB versionstamps, which the database
+assigns at commit time in commit order, so the log is ordered by _when things
+actually happened_ rather than by what any wall clock claimed. The queue plays
+one more part here: the consumers that read the log are themselves queue tasks,
+of the permanent kind from two sections ago.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <WriteToLog
@@ -468,30 +466,25 @@ themselves queue tasks, of the permanent kind from two sections ago.
   />
 </MermaidFrame>
 
-One honest note: an ordered, immutable stream also turned out to be easier to
-reason about during incidents than a queue whose rows keep moving. The log
-deserves its own post, and it will get one.
+An ordered, immutable stream also turned out to be easier to reason about during
+incidents than a queue whose rows keep moving. The log deserves its own post,
+and it will get one.
 
 ## One database, a long way
 
-Reduced to what mattered most, the story is this: a small team needed background
-processing for an object storage platform and got it from infrastructure it was
-already running, with a guarantee that is hard to find anywhere else. Tasks
-enqueue atomically with the data changes that cause them, because they are
-writes in the same transaction.
+A small team needed background processing for an object storage platform and got
+it from infrastructure it was already running, with a guarantee that is hard to
+find anywhere else. Tasks enqueue atomically with the data changes that cause
+them, because they are writes in the same transaction.
 
-The system that started as an index-backfill tool grew to carry everything, and
-it grew by small adjustments, not by replacement: 64 lanes became 256, a
-hashring divided the readers, a dispatcher kept the task types fair, worker
-groups kept cleanup work away from the hot path, and a log took over the work
-the queue was wrong for.
+The system that started as an index-backfill tool grew to carry everything, one
+small adjustment at a time.
 
-Underneath all of it, the three sentences from the top, which now carry their
-full meaning. A task's key is its schedule, so there is no scheduler. Claiming a
-task means moving it into the future, so there are no locks. And crash recovery
-is what happens when nothing happens, because in a sorted keyspace, a task
-nobody is pushing forward does not need to be rescued. It just needs everyone
-else to catch up to it.
+Underneath all of it sit the three sentences from the top. A task's key is its
+schedule, so there is no scheduler. Claiming a task means moving it into the
+future, so there are no locks. And crash recovery is what happens when nothing
+happens, because in a sorted keyspace, a task nobody is pushing forward does not
+need to be rescued. It just needs everyone else to catch up to it.
 
 <InlineCta
   title="Storage with a transactional brain"
