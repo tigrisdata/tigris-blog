@@ -99,7 +99,7 @@ our queue is a keyspace in the same database as the metadata, the problem does
 not exist. The enqueue is a few more writes inside the same transaction:
 
 ```go
-// Inside the transaction that applies a PUT. Trimmed for print.
+// Inside the transaction that applies a PUT.
 tx.Insert(ctx, objectKey, objectMeta)          // the object's metadata row
 queue.EnqueueObjectTasks(ctx, tx, ...)         // replication, notifications,
                                                // billing, lifecycle
@@ -202,7 +202,9 @@ currentTime := time.Now()
 startKey := q.getKey(minVestingTime, 0, "", taskType.ID(), itemSpace)
 endKey := q.getKey(currentTime, maxPriority, maxId, taskType.ID(), itemSpace)
 
-iter, err := tx.ReadRange(ctx, startKey, endKey, kv.ReadRangeOptions{...})
+iter, err := tx.ReadRange(ctx, startKey, endKey, kv.ReadRangeOptions{
+	Snapshot: false, // a real read: this takes a conflict range
+})
 ```
 
 Everything from the left edge of the lane up to the reader's own `now` is ready
@@ -244,7 +246,7 @@ and no ownership table to mark. Instead, the worker deletes the row and
 reinserts it at `now + leaseTime`, with a fresh lease id:
 
 ```go
-// The core of ObtainLease, trimmed for print.
+// The core of ObtainLease.
 if found.LeaseId != item.LeaseId || !found.Vesting.Equal(item.Vesting) {
 	return nil, ErrClaimed // someone else moved it first
 }
@@ -289,12 +291,16 @@ worker abandons its claim.
 How long is a lease? It depends on the work, and the durations are hardcoded per
 task type:
 
-| Work                                   | Lease      | Why                                           |
-| -------------------------------------- | ---------- | --------------------------------------------- |
-| Small metadata changes                 | 30 seconds | A few reads and writes, finished quickly      |
-| Most background tasks                  | 6 minutes  | The default                                   |
-| Bucket-wide operations                 | 20 minutes | Scans that touch a whole bucket               |
-| Migrations, block transfers, backfills | 70 minutes | Long metadata scans and object data transfers |
+```go
+// List from from worker.go
+LEASE_TIME                       = 6 * time.Minute // the default
+CHANGE_LEASE_TIME                = 30 * time.Second
+MIGRATION_TASK_LEASE_TIME        = 70 * time.Minute
+BUCKET_TASK_LEASE_TIME           = 20 * time.Minute
+BLOCK_TASK_LEASE_TIME            = 70 * time.Minute
+TEST_TASK_LEASE_TIME             = 2 * time.Second
+BUCKET_INDEX_BACKFILL_LEASE_TIME = 70 * time.Minute
+```
 
 Anything that only touches metadata is quick. The long leases exist for work
 that scans large ranges or moves object data between regions. A worker on a long
@@ -386,12 +392,25 @@ lease attempts fail on conflicts, at 0.5 about 64% fail.
 
 We solved it structurally instead, in two steps, both recorded in our commit
 history. First, the queue space was sharded: by task type, then into lanes, with
-items hashed to lanes by key. We started with 64 lanes per task type and later
-widened to 256 when conflicts returned at higher load. Second, worker pods
-coordinate through a hashring that assigns each lane exactly one owner. One
-scanner per lane means the collision rate at the head of a lane is not a tuning
-parameter, it is zero, and the price is paid elsewhere: a brief window of
-contention when pods join or leave and the ring rebalances.
+items hashed to lanes by key. The lane assignment is one small function, trimmed
+for print:
+
+```go
+func GenItemSpace(itemKey string) ItemSpace {
+	hash := fnv.New32a()
+	hash.Write([]byte(itemKey))
+
+	return ItemSpace(hash.Sum32()%uint32(MaxEnqueueItemSpace-MinItemSpace)) + MinItemSpace
+}
+```
+
+Deterministic where Apple's selection is random: the same key always lands in
+the same lane. We started with 64 lanes per task type and later widened to 256
+when conflicts returned at higher load. Second, worker pods coordinate through a
+hashring that assigns each lane exactly one owner. One scanner per lane means
+the collision rate at the head of a lane is not a tuning parameter, it is zero,
+and the price is paid elsewhere: a brief window of contention when pods join or
+leave and the ring rebalances.
 
 The fairness problem also changed for the same reason. QuiCK's water-filling
 exists so that one very busy user cannot starve the rest. Our risk is one very
@@ -406,13 +425,30 @@ the hot path, so that cleanup work can never block urgent work.
 webhooks, and then re-enqueues itself a few minutes into the future. It never
 completes. It is a task that has been in the queue since the feature shipped and
 will remain there until notifications are disabled: a cron job implemented as a
-single row orbiting just ahead of the readers, forever.
+single row orbiting just ahead of the readers, forever. Even `Complete` refuses
+to delete it:
+
+```go
+if IsPersistent(item.TaskType) {
+	_, err := q.RenewLease(ctx, tx, found, PersistentRequeueDelay)
+	return err // re-enqueued a few minutes ahead, not deleted
+}
+```
 
 **Unique tasks.** Some producers naturally enqueue the same logical work twice;
 the lifecycle scanner rediscovers the same bucket every pass. For those task
 types the queue keeps a small side index keyed by task id, and enqueue inserts
 into it first. FoundationDB's insert fails cleanly on a duplicate key, and when
-it does, the enqueue is skipped. At most one live instance per task, enforced by
+it does, the enqueue is skipped:
+
+```go
+// Inside Enqueue, for unique task types. Trimmed for print.
+if err := tx.Insert(ctx, idKey, tableData); errors.Is(err, kv.ErrDuplicateKey) {
+	return nil // already queued once; that is enough
+}
+``` 
+
+At most one live instance per task, enforced by
 the same database in the same transaction.
 
 ## The bill
@@ -506,3 +542,4 @@ need to be rescued. It just needs everyone else to catch up to it.
   button="Get started"
   link="https://storage.new"
 />
+````
