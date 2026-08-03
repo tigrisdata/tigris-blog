@@ -196,7 +196,6 @@ A worker looking for work does not query a status. It reads a stretch of
 keyspace:
 
 ```go
-// Peek, trimmed for print.
 currentTime := time.Now()
 
 startKey := q.getKey(minVestingTime, 0, "", taskType.ID(), itemSpace)
@@ -391,8 +390,7 @@ lease attempts fail on conflicts, at 0.5 about 64% fail.
 
 We solved it structurally instead, in two steps, both recorded in our commit
 history. First, the queue space was sharded: by task type, then into lanes, with
-items hashed to lanes by key. The lane assignment is one small function, trimmed
-for print:
+items hashed to lanes by key. The lane assignment is one small function:
 
 ```go
 func GenItemSpace(itemKey string) ItemSpace {
@@ -444,10 +442,10 @@ it does, the enqueue is skipped:
 if err := tx.Insert(ctx, idKey, tableData); errors.Is(err, kv.ErrDuplicateKey) {
 	return nil // already queued once; that is enough
 }
-``` 
+```
 
-At most one live instance per task, enforced by
-the same database in the same transaction.
+At most one live instance per task, enforced by the same database in the same
+transaction.
 
 ## The bill
 
@@ -540,4 +538,3 @@ need to be rescued. It just needs everyone else to catch up to it.
   button="Get started"
   link="https://storage.new"
 />
-````
