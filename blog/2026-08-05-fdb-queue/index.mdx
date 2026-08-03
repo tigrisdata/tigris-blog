@@ -64,11 +64,11 @@ went a different way.
 
 ## The consequences of a PUT
 
-Here is the problem that decides everything else. When an object write commits,
-the background work it implies must become durable _with it_. If the object
-lands but the replication task is lost, the object silently never reaches other
-regions. If the task lands but the object write aborts, workers search for an
-object that does not exist.
+The problem that decides everything else is simple: when an object write
+commits, the background work it implies must become durable _with it_. If the
+object lands but the replication task is lost, the object silently never reaches
+other regions. If the task lands but the object write aborts, workers search for
+an object that does not exist.
 
 With an external queueing system this is the classic dual-write problem, and you
 end up building outbox tables and reconciliation jobs to work around it. Because
@@ -190,10 +190,10 @@ smaller numbers.
 
 ## Claiming a task means moving it into the future
 
-Here is the part we find beautiful. When a worker claims a task, it does not
-mark the task as claimed. There is no `status` field, no lock, no ownership
-table. The worker deletes the row and reinserts it at `now + leaseTime`, with a
-fresh lease id:
+The part we find beautiful is what a claim actually is. When a worker claims a
+task, it does not mark the task as claimed, because there is no `status` field,
+no lock, and no ownership table to mark. Instead, the worker deletes the row and
+reinserts it at `now + leaseTime`, with a fresh lease id:
 
 ```go
 // The core of ObtainLease, trimmed for print.
@@ -246,7 +246,7 @@ payload as it goes. If a successor ever picks the task up, it resumes from the
 cursor instead of starting over.
 
 The lease duration is really a dial with duplicate work on one side and recovery
-latency on the other. Which brings us to the crash.
+latency on the other, which brings us to the crash.
 
 ## When a worker dies, nothing happens
 
@@ -255,13 +255,14 @@ The oldest comment in the queue's source file says it better than we can:
 > If the worker fails to complete the item, the vesting time will eventually
 > reach the current time and be visible to other workers to claim and work on.
 
-Walk through it. A worker claims a task, moving it six minutes into the future.
-Two minutes in, the pod is OOM-killed. What happens next is nothing. No
-component notices. No alert fires, no reaper sweeps, no lease table is
-reconciled, because none of those things exist. The dead worker simply stops
-pushing the row forward, and the clock keeps doing the only thing clocks do.
-Four minutes later the row's vesting time is in the past, which means it is
-inside every reader's Peek window again, which means it is ready work.
+To see why, follow a single task through a crash. A worker claims it, moving it
+six minutes into the future, and two minutes in, the pod is OOM-killed. What
+happens next is nothing. No component notices. No alert fires, no reaper sweeps,
+no lease table is reconciled, because none of those things exist. The dead
+worker simply stops pushing the row forward, and the clock keeps doing the only
+thing clocks do. Four minutes later the row's vesting time is in the past, which
+means it is inside every reader's Peek window again, which means it is ready
+work.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <CrashRecovery
@@ -419,9 +420,9 @@ deserves its own post, and it will get one.
 
 ## One database, a long way
 
-Reduce the story to what mattered most. A small team needed background
+Reduced to what mattered most, the story is this: a small team needed background
 processing for an object storage platform and got it from infrastructure it was
-already running, with a guarantee that is hard to find anywhere else: tasks
+already running, with a guarantee that is hard to find anywhere else. Tasks
 enqueue atomically with the data changes that cause them, because they are
 writes in the same transaction.
 
