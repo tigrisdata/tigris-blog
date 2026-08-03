@@ -87,5 +87,5 @@
   <rect x="488" y="356" width="240" height="26" class="box" />
   <text x="608" y="374" text-anchor="middle" class="small">billing &#183; offset 4102</text>
 
-  <text x="410" y="410" text-anchor="middle" class="edge">ack is advancing a cursor, not rewriting a row</text>
+  <text x="410" y="410" text-anchor="middle" class="edge">marking work as done means moving a cursor forward, not rewriting a row</text>
 </svg>

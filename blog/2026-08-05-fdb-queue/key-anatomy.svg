@@ -41,7 +41,7 @@
   <rect x="142" y="100" width="92" height="60" class="box" />
   <text x="188" y="136" text-anchor="middle" class="key">version</text>
   <text x="188" y="184" text-anchor="middle" class="small">key version</text>
-  <text x="188" y="204" text-anchor="middle" class="small">epoch</text>
+  <text x="188" y="204" text-anchor="middle" class="small">layout rev</text>
 
   <rect x="242" y="100" width="106" height="60" class="box" />
   <text x="295" y="136" text-anchor="middle" class="key">taskType</text>
@@ -74,6 +74,6 @@
   <!-- callout -->
   <rect x="34" y="288" width="752" height="98" class="hi-box" />
   <text x="62" y="318" class="pass-edge">vestingMs is the only field that ever moves.</text>
-  <text x="62" y="344" class="small">Claiming a task rewrites this one number further into the future. Nothing</text>
+  <text x="62" y="344" class="small">Claiming a task moves this one number further into the future. Nothing</text>
   <text x="62" y="366" class="small">fires when it arrives: the timestamp is a coordinate, not a trigger.</text>
 </svg>
