@@ -12,11 +12,11 @@ module.exports = {
   getStartedUrl: "https://www.tigrisdata.com/docs/get-started/",
   reportAbuseUrl: "mailto:abuse@tigrisdata.com",
 
-  // First entry is the main hero card; the rest are side cards.
+  // Exactly 4 entries: the first is the main hero card, the next three are side cards.
   featuredPosts: [
+    "/sigv4",
     "/storagesdk",
     "/clickhouse-zero-egress",
     "/t3-migrate-command",
-    "/where-does-the-agent-live",
   ],
 };
