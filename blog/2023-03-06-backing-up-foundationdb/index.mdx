@@ -58,11 +58,15 @@ the data and for writing the streamed data to the object store. This blog post
 will focus on the backups being stored on an object store, which I assume most
 of the Tigris users will do.
 
-:::note When using an object storage like S3, versioning should be disabled
+:::note
+
+When using an object storage like S3, versioning should be disabled
 (FoundationDB will do the versioning), and there should not be any automatic
 deletion/archival policy on the bucket. Only fdbbackup has a way to know what
 key range is still needed. Deleting old backups should be done with the expire
-subcommand of fdbbackup. :::
+subcommand of fdbbackup.
+
+:::
 
 Below is an example of `backup_agent` as a kubernetes deployment with 4
 replicas.
