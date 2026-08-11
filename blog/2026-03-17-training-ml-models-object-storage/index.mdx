@@ -33,6 +33,8 @@ service that runs on the training instance. Tigris delivers similar throughput
 to AWS S3 on the same workload; TAG's local NVMe cache reduces warm-epoch
 duration by 5.7x and cuts the workers required to saturate the GPU from 16 to 4.
 
+{/* truncate */}
+
 This post covers the methodology, results, and what they imply for data pipeline
 design. We start with the fundamentals of why data loading becomes a bottleneck
 in object storage workloads, then walk through each benchmark in sequence:
