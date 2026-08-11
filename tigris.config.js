@@ -14,8 +14,8 @@ module.exports = {
 
   // Exactly 4 entries: the first is the main hero card, the next three are side cards.
   featuredPosts: [
+    "/soft-delete-deep-dive",
     "/sigv4",
-    "/storagesdk",
     "/clickhouse-zero-egress",
     "/t3-migrate-command",
   ],

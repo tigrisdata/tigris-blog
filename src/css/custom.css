@@ -51,6 +51,17 @@
   src: url(/fonts/FiraCode-VariableFont_wght.ttf);
 }
 
+/* Excalidraw's handwriting font, used by the inline SVG diagrams. Served as a
+   file rather than inlined per-SVG so a page with ten diagrams doesn't ship ten
+   copies of it. */
+@font-face {
+  font-family: Virgil;
+  font-weight: 400;
+  font-display: block;
+  font-style: normal;
+  src: url(/fonts/Virgil.woff2) format("woff2");
+}
+
 pre,
 code {
   font-variant-ligatures: none;
@@ -1272,6 +1283,27 @@ table td {
   margin-left: auto;
   margin-right: auto;
   width: 100%;
+}
+
+/* Excalidraw diagram frame (see .claude/skills/excalidraw-diagrams) */
+.markdown .mermaid-frame {
+  padding: 0;
+  margin: 1.5rem auto;
+  max-width: 48rem;
+  text-align: center;
+}
+
+.markdown .mermaid-frame svg {
+  margin: 0 auto;
+  display: inline-block;
+  max-height: 460px;
+}
+
+/* This rule is what keeps the Virgil @font-face above in the built CSS: cssnano
+   discards font faces that no CSS rule references, and the diagrams ask for the
+   family through an SVG presentation attribute rather than a stylesheet. */
+.markdown .mermaid-frame svg text {
+  font-family: Virgil, sans-serif;
 }
 
 /* Pagination buttons */
