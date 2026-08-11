@@ -3,8 +3,8 @@ slug: backing-up-foundationdb
 title: Backing up FoundationDB
 description: >
   Tigris is a globally available, S3 compatible object storage service that uses
-  FoundationDB for its metadata storage. This blog post describes how do we
-  perform backups on FoundationDB, and what options exist for that purpose.
+  FoundationDB for its metadata storage. This blog post describes how we perform
+  backups on FoundationDB, and what options exist for that purpose.
 image: ./foundationdb-backups.webp
 keywords:
   - foundationdb
@@ -18,7 +18,7 @@ tags:
 ---
 
 We are running FoundationDB with the
-[official kubernetes operator](https://github.com/FoundationDB/fdb-kubernetes-operator).
+[official Kubernetes operator](https://github.com/FoundationDB/fdb-kubernetes-operator).
 FoundationDB supports logical backups (with `backup_agent`) and disaster
 recovery (with `dr_agent`) through copying the database/streaming changes
 logically. It also supports binary backups through
@@ -42,8 +42,8 @@ deployment will need the following:
 - If the backup destination is S3 or a similar object store, the secrets are
   needed to connect to it. In the example below, it is coming from an external
   secret.
-- If the backup destination is not object store, supply a volume for the backup
-  agents where the backup will be stored.
+- If the backup destination is not an object store, supply a volume for the
+  backup agents where the backup will be stored.
 
 ![Architecture](./fdb-backup-architecture.webp)
 
@@ -64,7 +64,7 @@ deletion/archival policy on the bucket. Only fdbbackup has a way to know what
 key range is still needed. Deleting old backups should be done with the expire
 subcommand of fdbbackup. :::
 
-Below is an example of `backup_agent` as a kubernetes deployment with 4
+Below is an example of `backup_agent` as a Kubernetes deployment with 4
 replicas.
 
 ```shell
@@ -142,28 +142,14 @@ pods) for managing backup jobs. Once the job level manipulation is done, the
 
 Those are quite a lot of parameters, let me explain them.
 
-```shell
--t TAG_NAME
-```
-
-Specifies the tag that the backup will use. By default this is `default`. This
-will appear in the tags part of `status json` output.
-
-```shell
--z
-```
-
-Specifies that the backup is continuous. Without this, the backup is just made
-as a one off. The fdbbackup
-
-```shell
--s 7200
-```
-
-Specifies the snapshot interval, which determines how often a new snapshot
-should be made. Please note that 7200 is way too low for production settings,
-but for the purpose of this blog post, and showing the status output based on
-this, it's perfect.
+- `-t TAG_NAME`: Specifies the tag that the backup will use. By default this is
+  `default`. This will appear in the tags part of `status json` output.
+- `-z`: Specifies that the backup is continuous. Without this, the backup is
+  just made as a one off.
+- `-s 7200`: Specifies the snapshot interval in seconds, which determines how
+  often a new snapshot should be made. Please note that 7200 is way too low for
+  production settings, but for the purpose of this blog post, and showing the
+  status output based on this, it's perfect.
 
 ```shell
 [root@sample-fdb-backup-agent-776ff99c68-5xztw /]# fdbbackup status -C /mnt/fdb-config-volume/cluster-file -t conttest
@@ -187,10 +173,10 @@ time for the previous snapshot was 16:39, the expected consistent timestamp of
 the next snapshot will be 18:40 (so there are 2 hours in between).
 
 Because a continuous backup contains snapshots and mutations, any database
-version can be restored, which is covered. In the example above, this means that
-any transaction can be restored from the first complete snapshot (not in the
-status output) to `2023/02/28.17:32:15+0000`. This means that such a continuous
-backup can protect from accidental data deletion as well.
+version can be restored. In the example above, this means that any transaction
+can be restored from the first complete snapshot (not in the status output) to
+`2023/02/28.17:32:15+0000`. This means that such a continuous backup can protect
+from accidental data deletion as well.
 
 ## Expiring backups
 
@@ -198,8 +184,8 @@ Because a continuous backup has all the changes that ever happened to the
 database, the size of the backup can grow over time. For example, updating a
 value to something different, but the same size (for example updating a
 timestamp or an integer) does not increase the total database size at the
-FoundationDB level, it will increase the size of the continuous backup
-permanently. While being able to restore any transaction is a very powerful,
+FoundationDB level, but it will increase the size of the continuous backup
+permanently. While being able to restore any transaction is very powerful,
 people rarely need to restore data that is for example more than 1 month old.
 
 For this reason, the `fdbbackup` utility that manages the backups has a way to
@@ -220,8 +206,8 @@ Instead of specifying a version, a timestamp can be specified as well.
 In this case, `fdbbackup` will find a version that is close to this, and will
 expire the data before that version.
 
-After expiring, the backup size should reduced. This can be verified with an AWS
-client.
+After expiring, the backup size should be reduced. This can be verified with an
+AWS client.
 
 ```shell
 aws s3 ls s3://sample-bucket/path/to/backup/backup_name/ --recursive --human-readable --summarize
@@ -235,12 +221,12 @@ Total Objects: 5407
 Restorations can be triggered with the `fdbrestore` utility. If no target time
 or version is specified, `fdbrestore` will restore the latest available version.
 
-Exmaple:
+Example:
 
 ```shell
 [root@sample-fdb-backup-agent-776ff99c68-dcpxr /]# fdbrestore start --dest-cluster-file /mnt/fdb-config-volume/cluster-file -r 'blobstore://CREDS:HERE@s3.us-east-2.amazonaws.com:443/path/to/backup/backup_name?bucket=sample-bucket&sc=1' -t conttest --knob_http_request_aws_v4_header=true --log
 No restore target version given, will use maximum restorable version from backup description.
-Ussing target restore version 86927163669
+Using target restore version 86927163669
 Backup Description
 URL: blobstore://CREDS:HERE@s3.us-east-2.amazonaws.com:443/path/to/backup/backup_name?bucket=sample-bucket&sc=1
 Restorable: true
@@ -305,7 +291,7 @@ We had trouble accessing S3 via an IAM role (and with a service account in k8s).
 The `fdbbackup` utility will always get 403 Forbidden as a response. In order to
 use S3, create an IAM user (not an assumed role), which can be tied down to be
 able to access only specific buckets, and give those credentials to the
-`backup_agent` pods. A useful knob to debug these kind of issues is
+`backup_agent` pods. A useful knob to debug these kinds of issues is
 `--knob_http_verbose_level=4`.
 
 Having strong backup and disaster recovery capabilities in a database is crucial
