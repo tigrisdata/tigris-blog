@@ -229,7 +229,7 @@ faster. This makes future GETs much more efficient.
 
 <img
   src={queueNextToMetadata}
-  class="hero-image"
+  className="hero-image"
   alt="The queue lives next to the metadata. One transaction commits both the object change and the work that must follow. That is the reliability boundary for background processing. At least once retries the work until the work completes. Tasks are idempotent. Duplicates are safe. Missed work is not. Atomic with metadata. One commit writes the change and enqueues any async tasks. No 'wrote to DB but failed to enqueue' error path. Durable and crash-safe. If a worker dies mid-task its lease expires and another worker picks it up. No lost work."
 />
 
