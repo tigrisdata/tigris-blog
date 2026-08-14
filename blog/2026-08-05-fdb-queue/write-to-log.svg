@@ -35,8 +35,8 @@
     </marker>
   </defs>
 
-  <text x="410" y="34" text-anchor="middle" class="title">When one write becomes five</text>
-  <text x="410" y="58" text-anchor="middle" class="sub">the queue&#8217;s real cost at scale was write amplification, so a log grew next to it</text>
+  <text x="410" y="34" text-anchor="middle" class="title">Write amplification and the log</text>
+  <text x="410" y="58" text-anchor="middle" class="sub">the queue's cost at scale was write amplification, so we added a log next to it</text>
 
   <line x1="410" y1="88" x2="410" y2="392" class="divider" />
 
@@ -47,7 +47,7 @@
   <text x="212" y="159" text-anchor="middle" class="label">object write</text>
 
   <path d="M212,176 L212,222" class="arrow" marker-end="url(#arrowhead)" />
-  <text x="228" y="204" class="fail-edge">3&#8211;5 rows per write</text>
+  <text x="228" y="204" class="fail-edge">3 to 5 rows per write</text>
 
   <rect x="92" y="228" width="240" height="26" class="box" />
   <text x="212" y="246" text-anchor="middle" class="small">replication</text>
@@ -73,19 +73,19 @@
   <path d="M608,176 L608,206" class="pass-arrow" marker-end="url(#arrowhead-pass)" />
 
   <rect x="468" y="212" width="280" height="44" class="hi-box" />
-  <text x="608" y="239" text-anchor="middle" class="label">log record &#183; versionstamp</text>
+  <text x="608" y="239" text-anchor="middle" class="label">log record, versionstamp</text>
 
   <path d="M608,256 L608,286" class="pass-arrow" marker-end="url(#arrowhead-pass)" />
   <text x="624" y="278" class="pass-edge">read at your own offset</text>
 
   <rect x="488" y="292" width="240" height="26" class="box" />
-  <text x="608" y="310" text-anchor="middle" class="small">replication &#183; offset 4181</text>
+  <text x="608" y="310" text-anchor="middle" class="small">replication, offset 4181</text>
 
   <rect x="488" y="324" width="240" height="26" class="box" />
-  <text x="608" y="342" text-anchor="middle" class="small">notifications &#183; offset 4177</text>
+  <text x="608" y="342" text-anchor="middle" class="small">notifications, offset 4177</text>
 
   <rect x="488" y="356" width="240" height="26" class="box" />
-  <text x="608" y="374" text-anchor="middle" class="small">billing &#183; offset 4102</text>
+  <text x="608" y="374" text-anchor="middle" class="small">billing, offset 4102</text>
 
   <text x="410" y="410" text-anchor="middle" class="edge">marking work as done means moving a cursor forward, not rewriting a row</text>
 </svg>

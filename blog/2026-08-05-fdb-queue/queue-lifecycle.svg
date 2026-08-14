@@ -106,7 +106,7 @@
   </defs>
 
   <text x="410" y="34" text-anchor="middle" class="title">One lane of the queue, one task</text>
-  <text x="410" y="58" text-anchor="middle" class="sub">a task&#8217;s state is just its position relative to now</text>
+  <text x="410" y="58" text-anchor="middle" class="sub">a task's state is its position relative to now</text>
 
   <line x1="40" y1="162" x2="780" y2="162" class="axis" />
 
@@ -121,21 +121,21 @@
   <g class="anim beat1">
     <rect x="150" y="144" width="110" height="36" class="hi-box" />
     <text x="205" y="167" text-anchor="middle" class="label">task B</text>
-    <text x="205" y="206" text-anchor="middle" class="pass-edge">1 &#183; ready &#183; its time is in the past</text>
+    <text x="205" y="206" text-anchor="middle" class="pass-edge">1, ready, its time is in the past</text>
   </g>
 
   <!-- beat 2: dissolved out of the past, materialized past now -->
   <g class="anim beat2">
     <rect x="470" y="144" width="110" height="36" class="ghost-box" />
     <text x="525" y="167" text-anchor="middle" class="ghost-label">task B</text>
-    <text x="525" y="206" text-anchor="middle" class="edge">2 &#183; claimed &#183; invisible to every reader</text>
+    <text x="525" y="206" text-anchor="middle" class="edge">2, claimed, invisible to every reader</text>
   </g>
 
   <!-- beat 3: same key, now has caught up to it -->
   <g class="anim beat3">
     <rect x="470" y="144" width="110" height="36" class="hi-box" />
     <text x="525" y="167" text-anchor="middle" class="label">task B</text>
-    <text x="525" y="206" text-anchor="middle" class="pass-edge">3 &#183; ready again &#183; for any worker</text>
+    <text x="525" y="206" text-anchor="middle" class="pass-edge">3, ready again, for any worker</text>
   </g>
 
   <!-- beat 4: a second worker runs it to completion and deletes the key -->
@@ -143,7 +143,7 @@
     <rect x="470" y="144" width="110" height="36" class="done-box" />
     <text x="525" y="167" text-anchor="middle" class="label">task B</text>
     <path d="M600,163 L609,172 L626,150" class="tick anim" />
-    <text x="525" y="206" text-anchor="middle" class="pass-edge">4 &#183; completed &#183; the key is deleted</text>
+    <text x="525" y="206" text-anchor="middle" class="pass-edge">4, completed, the key is deleted</text>
   </g>
 
   <!-- direction hint, visible only across the dissolve -->
@@ -159,5 +159,5 @@
     </g>
   </g>
 
-  <text x="410" y="264" text-anchor="middle" class="small">nothing fires when a task vests: its position relative to now is its entire state</text>
+  <text x="410" y="264" text-anchor="middle" class="small">nothing fires when a task vests, and its position relative to now is its state</text>
 </svg>

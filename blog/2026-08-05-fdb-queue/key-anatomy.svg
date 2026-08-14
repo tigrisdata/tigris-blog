@@ -30,7 +30,7 @@
   </defs>
 
   <text x="410" y="34" text-anchor="middle" class="title">Anatomy of a queue key</text>
-  <text x="410" y="58" text-anchor="middle" class="sub">one key-value pair per task &#183; the shape of the key is the whole design</text>
+  <text x="410" y="58" text-anchor="middle" class="sub">one key-value pair per task, and the key holds the schedule</text>
 
   <!-- tuple strip -->
   <rect x="34" y="100" width="100" height="60" class="box" />
@@ -74,6 +74,6 @@
   <!-- callout -->
   <rect x="34" y="288" width="752" height="98" class="hi-box" />
   <text x="62" y="318" class="pass-edge">vestingMs is the only field that ever moves.</text>
-  <text x="62" y="344" class="small">Claiming a task moves this one number further into the future. Nothing</text>
-  <text x="62" y="366" class="small">fires when it arrives: the timestamp is a coordinate, not a trigger.</text>
+  <text x="62" y="344" class="small">Claiming a task moves the vesting time further into the future. Nothing</text>
+  <text x="62" y="366" class="small">fires when it arrives. The timestamp is a coordinate, not a trigger.</text>
 </svg>

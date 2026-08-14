@@ -1,13 +1,12 @@
 ---
 slug: fdb-work-queue
-title: "There Is No Scheduler: The Tigris Work Queue on FoundationDB"
+title: "The Tigris work queue is a FoundationDB keyspace"
 date: 2026-08-05
 image: ./hero-img.webp
 description: >-
-  Every piece of background work in Tigris flows through a queue that is nothing
-  but a FoundationDB keyspace. A task's key is its schedule, claiming a task
-  means moving it into the future, and crash recovery is what happens when
-  nothing happens at all.
+  Tigris runs every background task through a queue that is one FoundationDB
+  keyspace, where each task is a key and the key holds the time it becomes
+  ready.
 keywords:
   - foundationdb
   - message queue
@@ -31,13 +30,11 @@ tags:
 import InlineCta from "@site/src/components/InlineCta";
 import MermaidFrame from "@site/src/components/MermaidFrame";
 import Takeaway from "@site/src/components/Takeaway";
-import Neon from "@site/src/components/Neon";
 import QueueLifecycle from "./queue-lifecycle.svg";
 import KeyAnatomy from "./key-anatomy.svg";
 import LaneVisibility from "./lane-visibility.svg";
 import ClaimMove from "./claim-move.svg";
 import CrashRecovery from "./crash-recovery.svg";
-import WriteToLog from "./write-to-log.svg";
 import heroImage from "./hero-img.webp";
 
 <img
@@ -46,57 +43,53 @@ import heroImage from "./hero-img.webp";
   alt="Queuing Work with FoundationDB. Title card with the Tigris logo: a blue tiger blacksmith hammers a glowing key on an anvil while a conveyor belt carries a line of finished keys past a clock."
 />
 
-When you PUT an object into Tigris, the response comes back long before the work
-is finished. The object still has to be replicated to other regions, counted for
+When you PUT an object into Tigris, the response comes back before the work is
+finished. The object still has to be replicated to other regions, counted for
 billing, scheduled for lifecycle transitions, sent to webhooks, and added to
-indexes. None of that should run while a client waits, so all of it goes onto a
-queue.
+indexes. None of the work should run while a client waits, so all of it goes
+onto a queue.
 
-Most companies at this point add a queueing system: Kafka, SQS, Redis, a
-Postgres table with a `status` column. We didn't add anything. The Tigris queue
-is a keyspace inside the same FoundationDB cluster that stores our metadata, and
-the entire design can be explained in three sentences:
-
-- A task's key is its schedule.
-- Claiming a task means moving it into the future.
-- Crash recovery is what happens when nothing happens.
-
-The design is based on Apple's
-[QuiCK paper](https://www.foundationdb.org/files/QuiCK.pdf), which describes the
-queue that runs inside CloudKit. We
-[briefly mentioned this history](https://www.tigrisdata.com/blog/global-replication/)
-over a year ago and promised ourselves we'd write it up properly. This is that
-post.
+Most companies add a queueing system at that point, e.g., Kafka, SQS, Redis, or
+a Postgres table with a `status` column. We didn't add anything. The Tigris
+queue is a keyspace inside the same FoundationDB cluster that stores our
+metadata, and every queued task is a single key that sorts by its vesting time,
+which is the moment the task becomes available to work on.
 
 {/* truncate */}
 
-In this post we'll cover the queue system that runs <Neon>every background task
-in Tigris</Neon>: replication, billing, cleanup, notifications. The entire queue
-is one keyspace in FoundationDB, where every task is a single key and that key
-contains the time when the task becomes ready. A worker takes a task by moving
-its key into the future, where no one is looking, and a crashed worker's task
-comes back on its own when time catches up with it:
+Three properties of the key explain the whole design:
+
+- The key sorts by vesting time, so the keyspace holds the schedule and no
+  scheduler component exists.
+- A worker claims a task by rewriting its key with a later vesting time, so no
+  lock and no status field exist.
+- A task whose worker died becomes ready again once the clock passes its vesting
+  time, so no recovery process exists.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <QueueLifecycle
     role="img"
-    aria-label="One lane of the queue drawn as a single timeline. Task B appears twice. On the left it is dashed, at its original position before now, labeled ready because its time is in the past. An arc labeled claiming equals moving it into the future carries it over the dashed now cursor to its second position on the right, labeled claimed and invisible to every reader. A dashed arrow along the axis shows beat three: if the worker dies, nothing happens, now keeps moving and passes the task, which makes it ready again for any worker."
+    aria-label="One lane of the queue drawn as a single timeline. Task B appears twice. On the left it is dashed, at its original position before now, labeled ready because its time is in the past. An arc labeled claiming means moving it into the future carries it over the dashed now cursor to its second position on the right, labeled claimed and invisible to every reader. A dashed arrow along the axis shows the third step: if the worker dies, nothing happens, now keeps moving and passes the task, which makes it ready again for any worker."
     style={{ width: "100%", height: "auto" }}
   />
 </MermaidFrame>
 
-## The consequences of a PUT
+The design comes from Apple's
+[QuiCK paper](https://www.foundationdb.org/files/QuiCK.pdf), which describes the
+queue that runs inside CloudKit.
 
-One problem decides everything else: when an object write commits, the
-background work it implies must become durable _with it_. If the object lands
-but the replication task is lost, the object silently never reaches other
-regions. If the task lands but the object write aborts, workers search for an
+## Why the enqueue happens inside the object write
+
+When an object write commits, the background work it implies has to become
+durable at the same moment. If the object lands and the replication task is
+lost, the object never reaches other regions and nothing reports the failure. If
+the replication task lands and the object write aborts, workers look for an
 object that does not exist.
 
-With an external queueing system this is the classic dual-write problem, and you
-end up building outbox tables and reconciliation jobs to work around it. Because
-our queue is a keyspace in the same database as the metadata, the problem does
-not exist. The enqueue is a few more writes inside the same transaction:
+A separate queueing system gives you the dual-write problem, where two systems
+can fail independently and you work around it with an outbox table and a
+reconciliation job. Because our queue is a keyspace in the same database as the
+metadata, the enqueue is a few more writes inside the same transaction:
 
 ```go
 // Inside the transaction that applies a PUT.
@@ -106,93 +99,65 @@ queue.EnqueueObjectTasks(ctx, tx, ...)         // replication, notifications,
 // One commit. The object and its consequences land together, or neither does.
 ```
 
-There is no window in which one exists without the other, no reconciliation, no
-second system to keep in sync. The queue doesn't need an outbox pattern because
-the queue is <Neon>the outbox</Neon>. This is QuiCK's core argument against
-external queues, and it works in production.
+The object and its tasks commit together or not at all, so there is no window in
+which one exists without the other, and there is no reconciliation job and no
+second system to keep in sync. QuiCK makes the same argument against external
+queues.
 
 ## The queue is one sorted keyspace
 
-Every queued task is one key-value pair. The shape of the key is the design:
+Every queued task is one key-value pair, and the shape of the key carries the
+design:
 
 ```text
 ("queue", version, taskType, itemSpace, vestingMs, priority, id) → QueueItem
 ```
 
-And the function that builds it is short enough to quote in full:
-
-```go
-func (q *QueueSubspace) getKey(vesting time.Time, priority int64, id string,
-	taskTypeID uint8, itemSpace ItemSpace) keys.Key {
-	return keys.NewKey(q.SubspaceName, q.KeyVersion, int64(taskTypeID),
-		int64(itemSpace), vesting.UnixMilli(), priority, id)
-}
-```
-
 Reading the tuple left to right:
 
-- **`taskType`** partitions the queue by kind of work. There are around ninety
-  task types: replication, TTL expiry, tombstone cleanup, billing rollups,
-  migrations, notifications, and so on.
-- **`itemSpace`** is a lane. Each task type is sharded across 256 lanes, and an
-  item is hashed into a lane by its key. More on why below.
-- **`vestingMs`** is the vesting time in Unix milliseconds: the moment this task
-  becomes available to work on. The word comes from the QuiCK paper, and it is
-  the part of the key that everything else depends on.
-- **`priority`** breaks ties between tasks vesting in the same millisecond.
-- **`id`** makes the key unique.
+- `taskType` partitions the queue by kind of work. There are around ninety task
+  types, e.g., replication, TTL expiry, tombstone cleanup, billing rollups,
+  migrations, and notifications.
+- `itemSpace` is a lane. Each task type is sharded across 256 lanes, and an item
+  is hashed into a lane by its key. More on why below.
+- `vestingMs` is the vesting time in Unix milliseconds, e.g., 1754400123456 for
+  2026-08-05 14:02:03.456 UTC. The word comes from the QuiCK paper, and every
+  other part of the design depends on the field.
+- `priority` breaks ties between tasks that vest in the same millisecond.
+- `id` makes the key unique.
 
-A real key, with the values filled in:
-
-```text
-("queue", 1, 23, 17, 1754400123456, 0, "d3f7…")
-   │      │   │   │        │        │     │
-   │      │   │   │        │        │     └ id
-   │      │   │   │        │        └ priority 0
-   │      │   │   │        └ vesting: 2026-08-05 14:02:03.456 UTC, in ms
-   │      │   │   └ lane 17
-   │      │   └ task type 23
-   │      └ key layout version
-   └ subspace
-```
-
-The integers are encoded so that byte order matches numeric order. That is the
-property the whole design leans on: FoundationDB compares bytes, and the bytes
-compare like times.
-
-FoundationDB keeps keys sorted. That single property, plus this key shape, means
-that within any lane the tasks sit in vesting order, oldest first, without
-anyone sorting anything. <Neon>The keyspace is the schedule.</Neon>
+The integers are encoded so that byte order matches numeric order, and
+FoundationDB keeps keys sorted by byte order. Within any lane the tasks
+therefore sit in vesting order, oldest first, and no process ever sorts them.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <KeyAnatomy
     role="img"
-    aria-label="Anatomy of a queue key. The tuple is drawn as seven segments left to right: the queue subspace, the key version, the task type (about ninety kinds of work), the item space (one of 256 lanes, hashed by key), the vesting time in milliseconds (highlighted), the priority that breaks ties within the same millisecond, and the id that makes the key unique. An arrow beneath runs left to right, labeled sorted left to right so the key order is the work order. A callout reads: vestingMs is the only field that ever moves. Claiming a task moves this one number further into the future. Nothing fires when it arrives: the timestamp is a coordinate, not a trigger."
+    aria-label="Anatomy of a queue key. The tuple is drawn as seven segments left to right: the queue subspace, the key version, the task type (about ninety kinds of work), the item space (one of 256 lanes, hashed by key), the vesting time in milliseconds (highlighted), the priority that breaks ties within the same millisecond, and the id that makes the key unique. An arrow beneath runs left to right, labeled sorted left to right so the key order is the work order. A callout reads: vestingMs is the only field that ever moves. Claiming a task moves the vesting time further into the future. Nothing fires when it arrives, because the timestamp is a coordinate, not a trigger."
     style={{ width: "100%", height: "auto" }}
   />
 </MermaidFrame>
 
-One thing the vesting time is _not_: a trigger. Nothing fires when that moment
-arrives. There is no timer, no cron thread, no scheduler component anywhere in
-the system. The timestamp is a coordinate, and everything else in this post is
-about what you can do with coordinates.
+Nothing fires when a vesting time arrives, because the system has no timer, no
+cron thread, and no scheduler component anywhere in it. The vesting time is a
+coordinate in the keyspace rather than an event.
 
-The full API on top of this key is five verbs:
+The whole API on top of the key is five verbs:
 
-| Verb         | What it actually is                                                  |
-| ------------ | -------------------------------------------------------------------- |
-| Enqueue      | Insert a key at `now + delay`                                        |
-| Peek         | Range-read a lane from the beginning of time up to `now`             |
-| Obtain lease | Delete the key, reinsert it at `now + leaseTime` with a new lease id |
-| Renew lease  | Same move, further forward                                           |
-| Complete     | Delete the key                                                       |
+| Verb         | What it does                                                            |
+| ------------ | ----------------------------------------------------------------------- |
+| Enqueue      | Insert a key at `now + delay`                                           |
+| Peek         | Range-read a lane from the start of the lane up to `now`                |
+| Obtain lease | Delete the key and reinsert it at `now + leaseTime` with a new lease id |
+| Renew lease  | The same delete and reinsert, further forward                           |
+| Complete     | Delete the key                                                          |
 
-Every one of them is ordinary reads and writes inside an ordinary FoundationDB
-transaction. That table is the entire queueing system.
+Every verb is ordinary reads and writes inside an ordinary FoundationDB
+transaction.
 
-## "What is ready?" is a range read
+## Finding ready work with a range read
 
-A worker looking for work does not query a status. It reads a stretch of
+A worker looking for work does not query a status field. It reads a stretch of
 keyspace:
 
 ```go
@@ -206,10 +171,9 @@ iter, err := tx.ReadRange(ctx, startKey, endKey, kv.ReadRangeOptions{
 })
 ```
 
-Everything from the left edge of the lane up to the reader's own `now` is ready
-work, sitting in one contiguous run of keys. Everything to the right of `now` is
-invisible, not because anything filters it out, but because the range read
-simply ends before reaching it.
+Everything from the start of the lane up to the reader's own `now` is ready
+work, and it sits in one contiguous run of keys. Everything after `now` is
+invisible, because the range read ends before reaching it.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <LaneVisibility
@@ -219,30 +183,26 @@ simply ends before reaching it.
   />
 </MermaidFrame>
 
-Two details matter here. First, `minVestingTime` is a hardcoded constant, a date
-in March 2023 before which no queue item can exist. The left edge of time, in
-this system, is a config value. Second, `now` is whatever the _reading_ machine
-thinks it is. The queue has no opinion about the present; each reader constructs
-its own and asks for everything before it.
+The right edge of the range is the reader's own `now`, which is whatever the
+reading machine thinks it is, because the queue holds no opinion about the
+present and each reader constructs its own. Delaying work therefore costs
+nothing extra. For example, to run a task in four hours, enqueue it with a
+vesting time four hours out, and it stays outside every reader's range until the
+ranges move past it. Retry with backoff is the same mechanism with smaller
+delays.
 
-Delaying work costs nothing extra. Want a task to run in four hours? Enqueue it
-with a vesting time four hours out. It sits to the right of every reader's
-window until the windows move past it. Retry with backoff is the same trick with
-smaller numbers.
+We poll rather than subscribe, even though FoundationDB has watches that push a
+notification when a key's value changes. A watch fires on a write, and a task
+becomes ready when the clock passes its vesting time, which is not a write and
+changes nothing in the database. Polling a range that ends at `now` is therefore
+the way to observe a condition created by time, and it costs one range read per
+lane.
 
-FoundationDB has watches, which push a notification when a key's value changes,
-and we do not use them here. A watch fires on a write, and the event this queue
-cares about is not a write: a task becomes ready when the clock passes its
-vesting time, and nothing in the database changes at that moment. There is no
-mutation to watch. Polling a range that ends at now is the natural way to
-observe a condition that time creates, and it costs one range read per lane.
+## Claiming a task by moving its vesting time forward
 
-## Claiming a task means moving it into the future
-
-The part we find beautiful is what a claim is. When a worker claims a task, it
-does not mark the task as claimed, because there is no `status` field, no lock,
-and no ownership table to mark. Instead, the worker deletes the row and
-reinserts it at `now + leaseTime`, with a fresh lease id:
+A worker claims a task by deleting the row and reinserting it at
+`now + leaseTime` with a fresh lease id. There is no status field to set, no
+lock to take, and no ownership table to write to:
 
 ```go
 // The core of ObtainLease.
@@ -258,26 +218,24 @@ item.LeaseId = uuid.NewUUIDAsString()
 return item, q.Enqueue(ctx, tx, item, leaseTime)
 ```
 
-That one move does everything a lock manager would do. The row now sits past
-every reader's window, so no other worker can see it, let alone claim it. And if
-two workers race to claim the same row, FoundationDB's transaction conflict
-detection guarantees exactly one of the two commits. The loser's transaction
-aborts, it re-peeks, and the row is gone. <Neon>Mutual exclusion without a
-mutex.</Neon>
+The claimed row now sits after every reader's range, so no other worker can see
+it or claim it. And if two workers race to claim the same row, FoundationDB's
+transaction conflict detection lets exactly one of them commit, so the loser's
+transaction aborts and the row is gone when it peeks again.
 
 The same conflict detection has a cost. Peek reads the visible range without
 snapshot isolation, so the claiming transaction conflicts with any write that
-lands inside that window before it commits. Two properties keep this rare. The
-window ends at the scanner's own now, and new work is enqueued at or after the
-producer's now, so fresh tasks normally land to the right of the window rather
-than inside it. And because each lane has exactly one scanner, the classic
-failure mode of queue-on-database designs, every consumer conflicting with every
-other at the head of the queue, cannot happen at all.
+lands inside the range before the claim commits. In practice the conflict is
+rare, because the range ends at the scanner's own `now` and new work is enqueued
+at or after the producer's `now`, so fresh tasks normally land after the range
+rather than inside it. Moreover, each lane has exactly one scanner, so consumers
+never conflict with each other at the head of a lane, which is the usual failure
+mode of queue designs built on a database.
 
-Ownership checks also work by position. When a worker comes back to renew or
-complete, it verifies that the row still carries its lease id and the vesting
-time it set. If either has changed, something else has taken the task, and the
-worker abandons its claim.
+Ownership checks work by position too. When a worker comes back to renew or
+complete a task, it checks that the row still carries its lease id and the
+vesting time it set. If either has changed, another worker has taken the task,
+and the first worker abandons its claim.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <ClaimMove
@@ -287,8 +245,7 @@ worker abandons its claim.
   />
 </MermaidFrame>
 
-How long is a lease? It depends on the work, and the durations are hardcoded per
-task type:
+Lease durations depend on the work, and they are hardcoded per task type:
 
 ```go
 LEASE_TIME                       = 6 * time.Minute // the default
@@ -300,97 +257,121 @@ TEST_TASK_LEASE_TIME             = 2 * time.Second
 BUCKET_INDEX_BACKFILL_LEASE_TIME = 70 * time.Minute
 ```
 
-Anything that only touches metadata is quick. The long leases exist for work
+Anything that only touches metadata is quick, and the long leases exist for work
 that scans large ranges or moves object data between regions. A worker on a long
-task renews its lease at a third of the lease interval, each renewal being the
-same delete-and-reinsert move, and checkpoints its progress into the task
-payload as it goes. If a successor ever picks the task up, it resumes from the
-cursor instead of starting over.
+task renews its lease at a third of the lease interval, and each renewal is the
+same delete and reinsert. The worker also checkpoints its progress into the task
+payload, so a later worker that picks the task up resumes from the checkpoint
+instead of starting over.
 
-The lease duration is really a dial with duplicate work on one side and recovery
-latency on the other, which brings us to the crash.
+The lease duration trades duplicate work against recovery latency. A short lease
+brings a crashed worker's task back sooner, and it also makes a slow worker more
+likely to lose its claim while it is still working.
 
-## When a worker dies, nothing happens
+## What happens when a worker dies
 
-The oldest comment in the queue's source file says it better than we can:
-
-> If the worker fails to complete the item, the vesting time will eventually
-> reach the current time and be visible to other workers to claim and work on.
-
-To see why, follow a single task through a crash. A worker claims it, moving it
-six minutes into the future, and two minutes in, the pod is OOM-killed. What
-happens next is <Neon>nothing</Neon>. No component notices. No alert fires, no
-reaper sweeps, no lease table is reconciled, because none of those things exist.
-The dead worker simply stops pushing the row forward, and the clock keeps doing
-the only thing clocks do. Four minutes later the row's vesting time is in the
-past, which means it is inside every reader's Peek window again, which means it
-is ready work.
+A task whose worker died becomes ready again with no intervention, and the
+clearest way to see it is to follow a single task through a crash. First, a
+worker claims the task, which moves its vesting time six minutes ahead. Second,
+two minutes later the pod is OOM-killed, and no component notices, because the
+system has no alert, no reaper, and no lease table to reconcile. Third, the dead
+worker stops renewing the lease, so the vesting time stays where the worker left
+it, and four minutes later the clock passes it. The row is then inside every
+reader's Peek range again, which means any worker can pick it up as ready work.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <CrashRecovery
     role="img"
-    aria-label="A timeline of a six minute lease with a crash at minute two. Worker A claims at t0 and the row moves to t0 plus six minutes. Worker A dies at minute two, no alert fires and no reaper runs, and nothing happens until minute six, when the key is in the past again and inside every Peek window. Worker B then claims it and resumes from the checkpoint."
+    aria-label="A timeline of a six minute lease with a crash at minute two. Worker A claims at t0 and the row moves to t0 plus six minutes. Worker A dies at minute two, no alert fires and no reaper runs, and nothing happens until minute six, when the key is in the past again and inside every Peek range. Worker B then claims it and resumes from the checkpoint."
     style={{ width: "100%", height: "auto" }}
   />
 </MermaidFrame>
 
-The reason no recovery machinery exists is that there is nothing to recover.
-"Abandoned" and "ready" are <Neon>the same state</Neon>, a key sitting to the
-left of `now`, and the system cannot tell them apart because there is no
-difference to tell. Failure detection would be code that distinguishes two
-identical things.
+No recovery machinery exists because there is nothing to recover. Abandoned and
+ready are the same state, which is a key sitting before `now`, and the system
+cannot tell the two apart because there is no difference between them.
 
-This robustness has a price. Delivery is at-least-once: a task whose worker died
-mid-run will run again, and a task whose worker stalled past its lease can even
-have side effects committed by two workers. Every task in the system is
-therefore written to be idempotent. That is the contract. And worst-case
-recovery latency equals the remaining lease time, which for a migration task can
-be almost an hour. That is the dial from the previous section, set deliberately,
-task type by task type.
+The price of the robustness is duplicate work. Delivery is at-least-once, so a
+task whose worker died mid-run will run again, and a task whose worker stalled
+past its lease can have its side effects committed by two workers. Every task in
+the system is therefore written to be idempotent. Worst-case recovery latency
+equals the remaining lease time, which for a migration task can be almost an
+hour, so we set the lease deliberately for each task type.
 
-## The paper we took it from
+## Permanent tasks and unique tasks
+
+Permanent tasks never complete. Our object notification worker reads a change
+log, sends webhooks, and then re-enqueues itself a few minutes into the future.
+One such row has been in the queue since the feature shipped and will stay there
+until notifications are disabled, so it runs as a cron job made of a single row.
+Even `Complete` refuses to delete it:
+
+```go
+if IsPersistent(item.TaskType) {
+	_, err := q.RenewLease(ctx, tx, found, PersistentRequeueDelay)
+	return err // re-enqueued a few minutes ahead, not deleted
+}
+```
+
+Unique tasks exist because some producers naturally enqueue the same logical
+work twice, e.g., the lifecycle scanner rediscovers the same bucket on every
+pass. For those task types the queue keeps a small side index keyed by task id,
+and enqueue inserts into the side index first. FoundationDB's insert fails
+cleanly on a duplicate key, and the enqueue is skipped when it does:
+
+```go
+if err := tx.Insert(ctx, idKey, tableData); errors.Is(err, kv.ErrDuplicateKey) {
+	return nil // already queued once; that is enough
+}
+```
+
+At most one live instance of the task exists, enforced by the same database in
+the same transaction.
+
+## Where our queue differs from the QuiCK paper
 
 In 2021, Apple published
 [QuiCK: A Queuing System in CloudKit](https://www.foundationdb.org/files/QuiCK.pdf),
-describing how iCloud's storage backend queues its own background work inside
-FoundationDB rather than beside it. The core move is the one you have just read:
+which describes how iCloud's storage backend queues its own background work
+inside FoundationDB rather than beside it. The paper describes the same claim
+mechanism:
 
 > "When taking a lease, instead of removing the work item from the queue (and
 > risking losing it if the consumer fails), we increase the work item's vesting
 > time by the lease duration."
 
 We took a lot from the paper directly, including its vocabulary. The first
-version of our queue had a single narrow job, backfilling secondary indexes. It
-worked well enough that we kept finding new work to put on it, and it grew into
-the general system that now carries everything from replication to billing.
+version of our queue had one narrow job, which was backfilling secondary
+indexes, and it worked well enough that we kept finding new work to put on it
+until it carried everything from replication to billing.
 
-But Tigris is not CloudKit, and the differences taught us as much as the paper
-did.
+Our queue diverges from QuiCK in five places:
 
-| Dimension        | QuiCK                                        | Tigris                                 |
-| ---------------- | -------------------------------------------- | -------------------------------------- |
-| Unit of sharding | User × app: tens of billions of queues       | Task type × lane: ~90 × 256            |
-| Structure        | Two levels: queue zones plus a pointer queue | One flat keyspace                      |
-| Finding work     | Consumers sample pointers at random          | A hashring gives each lane one owner   |
-| Fairness         | Per tenant, via water-filling                | Per task type, via a dispatcher        |
-| Storage layer    | Record Layer (indexes maintained for you)    | Raw key-value (every move is explicit) |
+| Dimension        | QuiCK                                         | Tigris                                   |
+| ---------------- | --------------------------------------------- | ---------------------------------------- |
+| Unit of sharding | User × app, so tens of billions of queues     | Task type × lane, so ~90 × 256           |
+| Structure        | Two levels, queue zones plus a pointer queue  | One flat keyspace                        |
+| Finding work     | Consumers sample pointers at random           | A hashring gives each lane one owner     |
+| Fairness         | Per tenant, via water-filling                 | Per task type, via a dispatcher          |
+| Storage layer    | Record Layer, which maintains indexes for you | Raw key-value, so every move is explicit |
 
-The structural difference explains most of the rest. CloudKit gives every user
+The difference in sharding explains most of the rest. CloudKit gives every user
 of every app a logical database, so Apple's queue is really tens of billions of
-tiny queues, and they need a second level, a cluster-wide pointer queue indexing
-which user queues are non-empty, just to find the work. Our tenant is the task
-type, of which there are about ninety, so the queue can stay flat.
+tiny queues, and they need a second level just to find the work in them, which
+is a cluster-wide pointer queue indexing which user queues are non-empty. Our
+tenant is the task type, of which there are about ninety, so our queue can stay
+flat.
 
-The most interesting difference is contention. Both systems face the same
-problem: if every consumer reaches for the head of the same queue, they collide.
-Apple solves it statistically. Their consumers sample a random fraction of
-pointers, and the paper is honest about the cost of getting that fraction wrong:
-at their default of 0.02 things behave, but push it to 0.2 and about 44% of
-lease attempts fail on conflicts, at 0.5 about 64% fail.
+Both systems have to stop consumers from colliding at the head of the same
+queue. Apple solves it statistically, because their consumers sample a random
+fraction of pointers, and the paper is honest about the cost of getting the
+fraction wrong. At their default fraction of 0.02 the conflict rate stays low.
+Raising the fraction to 0.2 makes about 44% of lease attempts fail on conflicts,
+and raising it to 0.5 makes about 64% fail.
 
-We solved it structurally instead, in two steps, both recorded in our commit
-history. First, the queue space was sharded: by task type, then into lanes, with
-items hashed to lanes by key. The lane assignment is one small function:
+We solved it structurally instead, and our commit history records both changes.
+First, we sharded the queue space by task type and then into lanes, with items
+hashed to lanes by key. The lane assignment is one small function:
 
 ```go
 func GenItemSpace(itemKey string) ItemSpace {
@@ -401,136 +382,80 @@ func GenItemSpace(itemKey string) ItemSpace {
 }
 ```
 
-Deterministic where Apple's selection is random: the same key always lands in
-the same lane. We started with 64 lanes per task type and later widened to 256
-when conflicts returned at higher load. Second, worker pods coordinate through a
-hashring that assigns each lane exactly one owner. One scanner per lane means
-the collision rate at the head of a lane is not a tuning parameter, it is zero,
-and the price is paid elsewhere: a brief window of contention when pods join or
-leave and the ring rebalances.
+The hash is deterministic where Apple's selection is random, so the same key
+always lands in the same lane. We started with 64 lanes per task type and later
+widened to 256 when conflicts returned at higher load.
 
-The fairness problem also changed for the same reason. QuiCK's water-filling
-exists so that one very busy user cannot starve the rest. Our risk is one very
-busy _task type_, a tombstone-cleanup backlog starving billing, so a dispatcher
-round-robins across task types when feeding workers, and the workers themselves
-are split into groups, garbage collection separate from slow scans separate from
-the hot path, so that cleanup work can never block urgent work.
+Second, worker pods coordinate through a hashring that assigns each lane exactly
+one owner. One scanner per lane makes the collision rate at the head of a lane
+zero rather than a tuning parameter, and the price is paid elsewhere, in a brief
+period of contention when pods join or leave and the ring rebalances.
 
-## Two things the paper doesn't have
+Fairness changed for the same reason. QuiCK's water-filling exists so that one
+very busy user cannot starve the rest, and our risk is one very busy task type,
+e.g., a backlog of tombstone cleanup starving billing. A dispatcher round-robins
+across task types when it feeds workers, and the workers are split into groups
+so that cleanup work can never block urgent work.
 
-**Permanent tasks.** Our object-notification worker reads a change log, sends
-webhooks, and then re-enqueues itself a few minutes into the future. It never
-completes. It is a task that has been in the queue since the feature shipped and
-will remain there until notifications are disabled: a cron job implemented as a
-single row orbiting just ahead of the readers, forever. Even `Complete` refuses
-to delete it:
+## Costs and limits of the design
 
-```go
-if IsPersistent(item.TaskType) {
-	_, err := q.RenewLease(ctx, tx, found, PersistentRequeueDelay)
-	return err // re-enqueued a few minutes ahead, not deleted
-}
-```
+The design has costs, and each one below has shown up in our production system.
 
-**Unique tasks.** Some producers naturally enqueue the same logical work twice;
-the lifecycle scanner rediscovers the same bucket every pass. For those task
-types the queue keeps a small side index keyed by task id, and enqueue inserts
-into it first. FoundationDB's insert fails cleanly on a duplicate key, and when
-it does, the enqueue is skipped:
-
-```go
-if err := tx.Insert(ctx, idKey, tableData); errors.Is(err, kv.ErrDuplicateKey) {
-	return nil // already queued once; that is enough
-}
-```
-
-At most one live instance per task, enforced by the same database in the same
-transaction.
-
-## The bill
-
-Nothing above is free.
-
-<Takeaway n={1} title="At-least-once means what it says.">
-  There is no fencing token. A worker that stalls past its lease and wakes up
-  confused can still commit side effects after a rival has claimed the row.
-  Idempotent task design absorbs this, but "absorbs" means the duplicate work
-  happens and is harmless.
+<Takeaway n={1} title="At-least-once delivery has no fencing token.">
+  A worker that stalls past its lease can still commit side effects after
+  another worker has claimed the row. Idempotent task design absorbs the
+  duplicate, which means the duplicate work happens and is harmless.
 </Takeaway>
 
 <Takeaway n={2} title="Wall clocks create the coordinates.">
   Vesting times come from `time.Now()` on whichever machine writes the row, so
   clock skew physically displaces work in the keyspace. In several years of
-  production this has never actually caused a problem; the same idempotency that
-  absorbs retries also absorbs work that arrives slightly early, and NTP keeps
-  the skew small. No need to buy atomic clocks just yet.
+  production the skew has never caused a problem, because NTP keeps it small and
+  the same idempotency that absorbs retries also absorbs work that arrives
+  slightly early.
 </Takeaway>
 
 <Takeaway
   n={3}
-  title="FoundationDB transactions last five seconds. Our leases last seventy minutes."
+  title="Transactions last five seconds and leases last seventy minutes."
 >
-  This sounds like a contradiction and is the design's central trick.
-  Transactions only ever perform the _move_: claim, renew, complete, each a few
-  milliseconds of reads and writes. The hours of actual work happen outside any
-  transaction, and the row's position in the keyspace is the durable record of
-  who is doing what until when.
+  The two limits do not conflict, because transactions only ever perform the
+  move. A claim, a renewal, and a completion are each a few milliseconds of
+  reads and writes. The hours of actual work happen outside any transaction, and
+  the row's position in the keyspace is the durable record of who is doing what
+  until when.
 </Takeaway>
 
-<Takeaway n={4} title="Some questions are expensive to ask.">
-  "How big is the queue?" has no cheap answer. Counting means range-scanning the
-  whole queue space, and the obvious fix, an atomic counter incremented on
-  enqueue, would concentrate every producer's writes onto one hot key, which is
-  precisely the contention this design exists to avoid. We ended up estimating
-  queue depth rather than measuring it, and what we do with that estimate,
-  rate-limiting our own workers before they hurt the database, is a story for
-  its own post.
+<Takeaway n={4} title="Measuring queue depth is expensive.">
+  Counting the queue means range-scanning the whole queue space. The obvious
+  fix, an atomic counter incremented on enqueue, would concentrate every
+  producer's writes onto one hot key, which is precisely the contention the
+  design exists to avoid. We ended up estimating queue depth rather than
+  measuring it, and we use the estimate to rate limit our own workers before
+  they hurt the database.
 </Takeaway>
 
-## When one write becomes five: the log
+<Takeaway n={5} title="One object write became three to five queue writes.">
+  Write amplification turned out to be the queue's largest cost at scale,
+  because region distribution, notifications, and billing each got their own
+  task row inside the commit. An object write now appends one record to a log
+  keyspace instead, keyed by FoundationDB versionstamps so the log is ordered by
+  commit order rather than by any wall clock, and each consumer reads the log at
+  its own offset. The log deserves its own post, and it will get one.
+</Takeaway>
 
-The queue's real cost at scale turned out to be none of the above. It was write
-amplification of a simpler kind: a single object write fanned out into three to
-five queue writes, one per downstream concern, region distribution and
-notifications and billing each getting their own task row inside the commit.
+## Summary
 
-So a log grew next to the queue. An object write now appends one record to a log
-keyspace, and the background consumers each read that log at their own offset
-and fan out from there. Marking work as done means moving a cursor forward. And
-the log's keys are built on FoundationDB versionstamps, which the database
-assigns at commit time in commit order, so the log is <Neon>ordered by when
-things actually happened</Neon> rather than by what any wall clock claimed. The
-two systems meet in the object-notification task from two sections ago: a
-permanent queue task whose whole job is reading a change log and pushing
-webhooks.
+Tigris gets its background processing from infrastructure it was already
+running. Tasks enqueue atomically with the data changes that cause them, because
+the tasks are writes in the same transaction. The system started as a tool for
+backfilling indexes and now carries every background task we run.
 
-<MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
-  <WriteToLog
-    role="img"
-    aria-label="Two panels comparing how an object write fans out. On the left, one commit writes five separate task rows, one each for replication, notifications, billing, lifecycle, and index update: three to five queue writes per object write. On the right, one commit appends a single log record keyed by a FoundationDB versionstamp, and the same consumers each read that log at their own offset. Caption: marking work as done means moving a cursor forward, not rewriting a row."
-    style={{ width: "100%", height: "auto" }}
-  />
-</MermaidFrame>
-
-An ordered, immutable stream also turned out to be easier to reason about during
-incidents than a queue whose rows keep moving. The log deserves its own post,
-and it will get one.
-
-## One database, a long way
-
-A small team needed background processing for an object storage platform and got
-it from infrastructure it was already running, with a guarantee that is hard to
-find anywhere else. Tasks enqueue atomically with the data changes that cause
-them, because they are writes in the same transaction.
-
-The system that started as an index-backfill tool grew to carry everything, one
-small adjustment at a time.
-
-Underneath all of it sit the three sentences from the top. A task's key is its
-schedule, so there is no scheduler. Claiming a task means moving it into the
-future, so there are no locks. And crash recovery is what happens when nothing
-happens, because in a sorted keyspace, a task nobody is pushing forward does not
-need to be rescued. It just needs everyone else to catch up to it.
+Underneath all of it sit the three properties from the top. The key sorts by
+vesting time, so there is no scheduler. A worker claims a task by moving its
+vesting time forward, so there are no locks. And a task nobody renews becomes
+ready again when the clock passes its vesting time, so there is no recovery
+process.
 
 <InlineCta
   title="Storage with a transactional brain"
