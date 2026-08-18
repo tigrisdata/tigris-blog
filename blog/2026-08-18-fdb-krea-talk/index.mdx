@@ -134,8 +134,8 @@ from outside. We picked FoundationDB for a few reasons:
 - **Operational safety**: FoundationDB is high availability almost to a fault,
   replicates cleanly without human intervention, and has simulation testing to
   the level that Aphyr didn't even bother to evaluate it.
-- **Battle-tested in production**: FoundationDB is used by small companies like
-  Apple and Snowflake as the foundation of their cloud infrastructure.
+- **Battle-tested in production**: FoundationDB is used by companies like Apple
+  and Snowflake as the foundation of their cloud infrastructure.
 
 At some level, it's best to think about FoundationDB as a distributed filesystem
 that handles the hard parts for you: sharding, consensus, replication, and
@@ -195,7 +195,7 @@ transaction between two systems or add expensive recovery logic to ensure tasks
 don't get lost. Either everything commits or nothing commits, which is one of
 the best parts of FoundationDB.
 
-Once this write commits aed we know that any work items have been added to their
+Once this write commits and we know that any work items have been added to their
 queues, we return to the user and the transaction completes successfully.
 
 ## How do we resolve GETs?
@@ -224,6 +224,15 @@ it from another region. In order to do that it reverse proxies the read to the
 block store in the region where the data actually lives. Since a user requested
 it, we enqueue a block store replication job so that the next GET request is
 faster. This makes future GETs much more efficient.
+
+:::note
+
+This is not the case when you are using a
+[dual-region bucket](https://www.tigrisdata.com/blog/multi-region-dual-region-buckets/),
+which lets you confine objects to a single region for policy or compliance
+reasons.
+
+:::
 
 ## Our queueing system
 
