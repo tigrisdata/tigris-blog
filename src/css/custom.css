@@ -1224,6 +1224,16 @@ table td {
 /* Blog post layout styling */
 /* These styles provide consistent layout for all blog posts */
 
+/* The post column is a flex item of <main class="row">, and a flex item's
+   default min-width: auto refuses to shrink below its content's min-content
+   width. Wide `white-space: pre` content (ASCII-art diagrams, long code lines)
+   therefore stretches the whole column past the viewport on phones, clipping
+   prose, admonitions and images at the right edge. min-width: 0 lets the column
+   shrink so that content scrolls inside its own box instead. */
+.blog-post-page main > article {
+  min-width: 0;
+}
+
 /* Hero image - full width */
 .hero-image {
   margin-bottom: 0.5rem;
