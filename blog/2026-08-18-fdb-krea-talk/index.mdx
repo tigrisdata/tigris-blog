@@ -106,10 +106,10 @@ the components loosely coupled, but have an aggregated architecture where
 storage is decoupled from other components. This would let us scale any of these
 components independently.
 
-For example, in each region we have our gateway, metadata clusters, block
-storage backends, and asynchronous queue workers. All of these services can be
-scaled independently based on our needs, running on metal. The gateway and
-workers are stateless, everything else is where the state lives.
+For example, in each region we have our gateway, caches, metadata clusters,
+block storage backends, and asynchronous queue workers. All of these services
+can be scaled independently based on our needs, running on metal. The gateway
+and workers are stateless, everything else is where the state lives.
 
 So the obvious question at that point is what should we use for our metadata
 storage? Metadata is very important. Tigris is mostly exciting ways to arrange
