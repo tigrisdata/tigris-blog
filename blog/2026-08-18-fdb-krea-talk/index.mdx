@@ -51,7 +51,6 @@ been re-organized for your reading convenience.
 
 <img
   src={heroImage}
-  className="hero-image"
   alt="Title slide: Building a global object storage on FoundationDB, by Himank Chaudhary, CTO and co-founder of Tigris Data. A ring of boxes labeled S3 API, global endpoint, replication, metadata, caching, and queue surrounds a FoundationDB box at the center."
 />
 
@@ -69,7 +68,6 @@ using FoundationDB in our whole stack to power our metadata.
 
 <img
   src={whatIsTigris}
-  className="hero-image"
   alt="What is Tigris? A global storage platform with an S3-compatible API. The S3 API makes Tigris a drop-in replacement for existing AWS SDKs, CLIs, and tools. All semantics are preserved. Tigris is global by default. A bucket can live in one or many regions. Reads are close to users; writes replicate in the background. FoundationDB at the core. Metadata, indices, and queues share one transactional substrate."
 />
 
@@ -97,7 +95,6 @@ all object metadata, users, and buckets in FoundationDB.
 
 <img
   src={readWriteAnyRegion}
-  className="hero-image"
   alt="Read and write in any region. The API gateway is present in each region. Metadata and blocks can be served locally, while replication keeps the global view coherent. Diagram of the global endpoint pointing to three datacentres, each with the API gateway, the metadata cluster, and block storage in US-East, EU-Central, and AP-Southeast"
 />
 
@@ -119,7 +116,6 @@ metadata with boring ways to store data.
 
 <img
   src={whyFoundationDb}
-  className="hero-image"
   alt="Why FoundationDB? Tigris builds metadata storage on top of an ordered key-value store with multi-key transactions. 1. ACID metadata. Mutations are one transaction, meaning there's no split-brain metadata. 2. Ordered keyspace. Versioned keys encode bucket, object, and index order. 3. Serializeable layout. Indices, metadata, and chunks mutate together. 4. Operational safety. High-availability, replication, and simulation-tested behaviour. 5. Battle-tested in production. Used by Apple and Snowflake as a building block for their cloud infrastructure."
 />
 
@@ -170,7 +166,6 @@ FoundationDB.
 
 <img
   src={writePath}
-  className="hero-image"
   alt="A PUT operation is a transaction plus a cascade of jobs. Strictly serializable transactions with ACID semantics across the key space. No performance penalty for cross-shard transactions. Indicies mutate in the same transaction causing strong consistency on index reads."
 />
 
@@ -202,7 +197,6 @@ queues, we return to the user and the transaction completes successfully.
 
 <img
   src={readPath}
-  className="hero-image"
   alt="Local metadata chooses the GET path. A gateway in any region first resolves the object locally and then chooses the cheapest byte source. Metadata reads stay local. Cache hits avoid fetching data remotely. Cache misses stream once and populate caches."
 />
 
@@ -238,7 +232,6 @@ reasons.
 
 <img
   src={queueNextToMetadata}
-  className="hero-image"
   alt="The queue lives next to the metadata. One transaction commits both the object change and the work that must follow. That is the reliability boundary for background processing. At least once retries the work until the work completes. Tasks are idempotent. Duplicates are safe. Missed work is not. Atomic with metadata. One commit writes the change and enqueues any async tasks. No 'wrote to DB but failed to enqueue' error path. Durable and crash-safe. If a worker dies mid-task its lease expires and another worker picks it up. No lost work."
 />
 
