@@ -1254,10 +1254,13 @@ table td {
   }
 }
 
-/* Center non-hero images */
+/* Center non-hero images, and space them from the prose that follows.
+   Hero images are excluded: they keep their tighter 0.5rem so their caption
+   sits close underneath. */
 .markdown img:not(.hero-image) {
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 2rem;
   display: block;
 }
 
