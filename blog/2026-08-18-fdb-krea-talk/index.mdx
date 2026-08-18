@@ -1,0 +1,288 @@
+---
+slug: fdb-krea-talk
+title: "Building a global object store on FoundationDB"
+description: >
+  How Tigris composes ACID metadata, global placement, caching, replication, and
+  background work into a multi-region object store.
+image: ./slides/title.webp
+keywords:
+  - foundationdb
+  - object storage
+  - distributed systems
+  - metadata
+  - global placement
+  - caching
+  - replication
+  - multi-region
+  - Tigris
+authors:
+  - himank
+tags:
+  - Engineering
+  - FoundationDB
+  - Object Storage
+  - distributed systems
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+import heroImage from "./slides/title.webp";
+import whatIsTigris from "./slides/what-is-tigris.webp";
+import whyFoundationDb from "./slides/why-foundationdb.webp";
+import fdbAtTheCore from "./slides/fdb-at-the-core.webp";
+import queueNextToMetadata from "./slides/queue-next-to-metadata.webp";
+import writePath from "./slides/write-path.webp";
+import objectPlacement from "./slides/object-placement.webp";
+import metadataEverywhere from "./slides/metadata-everywhere.webp";
+import readPath from "./slides/read-path.webp";
+import overallArchitecture from "./slides/overall-architecture.webp";
+import readWriteAnyRegion from "./slides/read-write-any-region.webp";
+
+import ControlPlaneWorkers from "./diagrams/ControlPlaneWorkers";
+import FdbRowLayout from "./diagrams/FdbRowLayout";
+import GetResolutionFlow from "./diagrams/GetResolutionFlow";
+
+:::note
+
+This post is an edited transcript of an in-person talk on June 16th. Parts have
+been re-organized for your reading convenience.
+
+:::
+
+<img
+  src={heroImage}
+  alt="Title slide: Building a global object storage on FoundationDB, by Himank Chaudhary, CTO and co-founder of Tigris Data. A ring of boxes labeled S3 API, global endpoint, replication, metadata, caching, and queue surrounds a FoundationDB box at the center."
+/>
+
+Hello everyone! I'm Himank, the CTO and a co-founder of Tigris Data. Tigris is a
+globally distributed object store.
+
+Tonight other speakers talked about the scale of data involved with training
+foundation models. Something has to hold all of that data. That's the part that
+Tigris works on.
+
+My talk will be focusing more on the metadata storage of Tigris, like how we are
+using FoundationDB in our whole stack to power our metadata.
+
+## What is Tigris?
+
+<img
+  src={whatIsTigris}
+  alt="What is Tigris? A global storage platform with an S3-compatible API. The S3 API makes Tigris a drop-in replacement for existing AWS SDKs, CLIs, and tools. All semantics are preserved. Tigris is global by default. A bucket can live in one or many regions. Reads are close to users; writes replicate in the background. FoundationDB at the core. Metadata, indices, and queues share one transactional substrate."
+/>
+
+First, Tigris is a global storage platform that is fully S3 compatible. From a
+user perspective you don't need to do any code changes. It will simple work with
+your existing S3 stack. All you need to do is switch from your existing
+S3-compatible provider to Tigris and it will just work.
+
+Second, we're rethinking the object store from the ground up. Traditionally
+object storage is known for cold caching. We're focusing on reframing object
+storage as global infrastructure. How can we provide an object store as global
+infrastructure? Users should not need to think about replication or caching. We
+want users to get a bucket, upload data, and the data is available everywhere in
+the world.
+
+Finally, we want to make the data globally available and optimize the read
+latency so that it doesn't matter where your compute is located. Tigris makes
+your data follow your compute so you can pick from any compute or GPU provider
+without worrying about your data being slow.
+
+In order to make Tigris global by default, we're using FoundationDB. We store
+all object metadata, users, and buckets in FoundationDB.
+
+## Read and write in any regions
+
+<img
+  src={readWriteAnyRegion}
+  alt="Read and write in any region. The API gateway is present in each region. Metadata and blocks can be served locally, while replication keeps the global view coherent. Diagram of the global endpoint pointing to three datacentres, each with the API gateway, the metadata cluster, and block storage in US-East, EU-Central, and AP-Southeast"
+/>
+
+When we were designing our system, we were thinking a lot about how we can make
+the components loosely coupled, but have an aggregated architecture where
+storage is decoupled from other components. This would let us scale any of these
+components independently.
+
+For example, in each region we have our gateway, caches, metadata clusters,
+block storage backends, and asynchronous queue workers. All of these services
+can be scaled independently based on our needs, running on metal. The gateway
+and workers are stateless, everything else is where the state lives.
+
+So the obvious question at that point is what should we use for our metadata
+storage? Metadata is very important. Tigris is mostly exciting ways to arrange
+metadata with boring ways to store data.
+
+## Why FoundationDB?
+
+<img
+  src={whyFoundationDb}
+  alt="Why FoundationDB? Tigris builds metadata storage on top of an ordered key-value store with multi-key transactions. 1. ACID metadata. Mutations are one transaction, meaning there's no split-brain metadata. 2. Ordered keyspace. Versioned keys encode bucket, object, and index order. 3. Serializeable layout. Indices, metadata, and chunks mutate together. 4. Operational safety. High-availability, replication, and simulation-tested behaviour. 5. Battle-tested in production. Used by Apple and Snowflake as a building block for their cloud infrastructure."
+/>
+
+There were a few options, either we built something on our own or used something
+from outside. We picked FoundationDB for a few reasons:
+
+- **ACID metadata**: In FoundationDB, mutations are one transaction. There is no
+  possibility of having split-brain metadata.
+- **Ordered keyspace**: FoundationDB keys have an inherent order, so versioned
+  keys encode bucket, object, and index order.
+- **Serializeable layout**: Indices, metadata, and chunks mutate together.
+- **Operational safety**: FoundationDB is high availability almost to a fault,
+  replicates cleanly without human intervention, and has simulation testing to
+  the level that Aphyr didn't even bother to evaluate it.
+- **Battle-tested in production**: FoundationDB is used by companies like Apple
+  and Snowflake as the foundation of their cloud infrastructure.
+
+At some level, it's best to think about FoundationDB as a distributed filesystem
+that handles the hard parts for you: sharding, consensus, replication, and
+transactions. You then get to build your own layer on top of it. FoundationDB
+doesn't provide a schema, table layout, or indices. That's in the part you are
+expected to provide.
+
+## FoundationDB at the core
+
+<img
+  src={fdbAtTheCore}
+  className="hero-image"
+  alt="FDB at the core. The hard problem is not storing rows. It is making namespaces, indices, and background work change together. 1. Atomic across rows. Object rows, index rows, and queueing intent commit together in the same transaction. 2. Ordered ranges. Namespace scans, index lookups, and queue peeks are all range reads. 3. Operational substrate. Sharding, replication, and transactions are provided below Tigris."
+/>
+
+Once we committed to FoundationDB we had to make a few changes to how we did
+things. In FoundationDB it's impossible to read or write data without a
+transaction. This sounds like a lot of overhead until you realize what it gives
+us. A single object write usually involves reading the current state, updating
+the new state, and then enqueueing the object for replication and indexing.
+
+We also had to design our row layout, so we designed one that lets us support
+efficient scanning for our users:
+
+<FdbRowLayout />
+
+This lets us serve efficient queries for a single bucket. We don't need to worry
+about sharding or multi-hit transactions. This comes by default with
+FoundationDB.
+
+## What do writes do?
+
+<img
+  src={writePath}
+  alt="A PUT operation is a transaction plus a cascade of jobs. Strictly serializable transactions with ACID semantics across the key space. No performance penalty for cross-shard transactions. Indicies mutate in the same transaction causing strong consistency on index reads."
+/>
+
+So what does a PUT look like? As I mentioned before, we use strictly ACID
+transactions. A single write for us reaches the layer and we break the write
+into the data block and the metadata. We write the block into block storage
+first and then we start a FoundationDB transaction. In this transaction we write
+object metadata and then update our indices along with that metadata. We also
+have a bunch of other work that needs to be done after a write completes, so we
+write to the queue in the same transaction.
+
+What is that other work? Tigris is global, so we have to replicate the data
+globally. We also have caches that need to be updated, so we have asynchronous
+queue workers that can handle all this. But to run that async machinery we need
+to have some kind of task mechanism that we do as part of our write.
+
+Normally you end up having to juggle two transactions: one to your database and
+another to your message queue. We implemented our message queue
+[in FoundationDB](https://www.foundationdb.org/files/QuiCK.pdf) using the fact
+that both FoundationDB and time are ordered. We don't have to run a distributed
+transaction between two systems or add expensive recovery logic to ensure tasks
+don't get lost. Either everything commits or nothing commits, which is one of
+the best parts of FoundationDB.
+
+Once this write commits and we know that any work items have been added to their
+queues, we return to the user and the transaction completes successfully.
+
+## How do we resolve GETs?
+
+<img
+  src={readPath}
+  alt="Local metadata chooses the GET path. A gateway in any region first resolves the object locally and then chooses the cheapest byte source. Metadata reads stay local. Cache hits avoid fetching data remotely. Cache misses stream once and populate caches."
+/>
+
+How do we ensure that objects can be served from any region when the data may be
+stored in any other region?
+
+One way to think about Tigris is that it's a multi-tier cache that has endpoints
+all over the world. When users request objects, a combination of anycast routing
+and geo-DNS make sure that requests go to the closest datacenter. All our
+metadata is eagerly replicated between FoundationDB clusters in each region, and
+that metadata includes where the object actually lives.
+
+<GetResolutionFlow />
+
+If the object is in the local block cache, that gets served directly to the
+client. If the object is in the local block store, that also gets served
+directly to the client. If the data isn't stored locally, Tigris needs to fetch
+it from another region. In order to do that it reverse proxies the read to the
+block store in the region where the data actually lives. Since a user requested
+it, we enqueue a block store replication job so that the next GET request is
+faster. This makes future GETs much more efficient.
+
+:::note
+
+This is not the case when you are using a
+[dual-region bucket](https://www.tigrisdata.com/blog/multi-region-dual-region-buckets/),
+which lets you confine objects to a single region for policy or compliance
+reasons.
+
+:::
+
+## Our queueing system
+
+<img
+  src={queueNextToMetadata}
+  alt="The queue lives next to the metadata. One transaction commits both the object change and the work that must follow. That is the reliability boundary for background processing. At least once retries the work until the work completes. Tasks are idempotent. Duplicates are safe. Missed work is not. Atomic with metadata. One commit writes the change and enqueues any async tasks. No 'wrote to DB but failed to enqueue' error path. Durable and crash-safe. If a worker dies mid-task its lease expires and another worker picks it up. No lost work."
+/>
+
+We built our own queueing system on top of FoundationDB by following what Apple
+did with their
+[QuiCK: A Queueing System in CloudKit](https://www.foundationdb.org/files/QuiCK.pdf)
+paper. The queue is just an ordered FoundationDB keyspace. Workers claim rows
+transactionally. The work itself happens asynchronously outside of a
+transaction, but the coordination layer is FoundationDB.
+
+Building our own queue on top of FoundationDB lets us ensure that we have ACID
+semantics when we add tasks to the queue. This also lets us ensure that we have
+at-least-once semantics for tasks in the queue. We cannot lose tasks because
+they are always present in the FoundationDB queue.
+
+These task writes are atomic with the metadata so either an object writes
+successfully with its tasks and metadata or nothing happens. No in-between
+state. An interesting side effect of this is that our workers can crash all they
+want. Another worker will pick the task up without any human intervention.
+
+<ControlPlaneWorkers />
+
+Our global replication system is built on the back of this queue, meaning that
+you can list objects anywhere in any region and you will get the same view of
+your bucket in every region. This is all driven by our queue.
+
+When a user does a read on an object and there isn't a copy of it locally, this
+async queueing system automatically kicks in to make sure that the data is
+copied over so it's hot and ready for next time. Future reads can just happen
+from the cache on that particular region.
+
+## Conclusion
+
+FoundationDB is more than just our metadata storage layer, it's the _foundation_
+to the Tigris platform. All objects, indices, and tasks use FoundationDB as the
+bedrock for storage. This lets us have data propagate everywhere in the world
+without having to build a multi-region FoundationDB cluster or add an expensive
+second coordination system into our stack. Every region has their own
+FoundationDB clusters that are all kept in sync automatically.
+
+Storing metadata, indices, and task queues in the same database lets us focus
+more of our time on delivering users global object storage and less of our time
+fiddling with the details on how to make Kafka performant. Without FoundationDB
+we would not have the primitives we need to make Tigris happen.
+
+And that's it, thank you!
+
+## Further reading
+
+- [Skipping the boring parts of building a storage platform using FoundationDB](https://www.tigrisdata.com/blog/building-a-database-using-foundationdb/)
+  — why we didn't build our own distributed transaction layer.
+- [Tigris metadata layer on FoundationDB](https://www.tigrisdata.com/blog/data-layer-foundationdb/)
+  — the key encoding, integer ID compression, and value format in detail.
+- [Backing up FoundationDB](https://www.tigrisdata.com/blog/backing-up-foundationdb/)
