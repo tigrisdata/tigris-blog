@@ -19,8 +19,13 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
+  /* !important because the global `.markdown img:not(.hero-image)` rule in
+     src/css/custom.css outspecifies this module class. Without the margin-bottom
+     reset the avatar picks up the prose image spacing and knocks the flex header
+     out of vertical alignment. */
   margin-left: 0 !important;
   margin-right: 1rem !important;
+  margin-bottom: 0 !important;
 }
 
 .userInfo {

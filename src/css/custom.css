@@ -1260,6 +1260,8 @@ table td {
 .markdown img:not(.hero-image) {
   margin-left: auto;
   margin-right: auto;
+  /* In-post component avatars (Conv, PostEmbed, BreakoutQuote) opt out of this
+     spacing with `margin-bottom: 0 !important` in their own CSS modules. */
   margin-bottom: 2rem;
   display: block;
 }
