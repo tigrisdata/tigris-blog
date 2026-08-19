@@ -110,7 +110,7 @@ export default function ControlPlaneWorkers({
           lineHeight: 1.3,
           whiteSpace: "pre",
           color: "#cbd5e1",
-          overflow: "hidden",
+          overflowX: "auto",
         }}
       >
         <div>
