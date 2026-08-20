@@ -1374,3 +1374,14 @@ table td {
 .hero-image {
   display: none;
 }
+
+/* EXPERIMENT — hide images on the blog index / list pages.
+   `a.blog-card-image-link` wraps the card thumbnail on every list card (the
+   element selector just outranks the card CSS module);
+   `.important-side-card > a` is the separate thumbnail link used by the
+   "Important News" side cards. To revert, delete this comment and the rule
+   below. */
+a.blog-card-image-link,
+.important-side-card > a {
+  display: none;
+}
