@@ -1367,3 +1367,10 @@ table td {
   font-size: 1.15em;
   margin-left: 4px;
 }
+
+/* EXPERIMENT — hide in-post hero images.
+   Temporary: we want to see the blog without hero images pushing the prose
+   below the fold. To revert, delete this comment and the rule below. */
+.hero-image {
+  display: none;
+}
