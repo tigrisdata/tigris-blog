@@ -1,0 +1,56 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1280 540"
+  width="1280"
+  height="540"
+>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c171c" />
+      <stop offset="1" stop-color="#0f2027" />
+    </linearGradient>
+    <marker id="ah" markerWidth="9" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="#62feb5" />
+    </marker>
+    <style>
+      .t { font-family: "Hanken Grotesk", system-ui, Arial, sans-serif; }
+      .title { font-size: 64px; font-weight: 700; fill: #e8f0ee; }
+      .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 26px; font-weight: 700; }
+      .cap { font-size: 24px; fill: #94a3b8; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="540" fill="url(#bg)" />
+
+  <!-- title -->
+  <text x="110" y="170" class="t title">Your dataset needs</text>
+  <text x="110" y="248" class="t title">a <tspan fill="#62feb5">fork button</tspan></text>
+  <text x="112" y="298" class="t cap">git checkout -b, for your object storage</text>
+
+  <!-- code branch box -->
+  <rect x="112" y="360" width="380" height="86" rx="12" fill="#142229" stroke="#2a3731" stroke-width="2" />
+  <text x="302" y="412" text-anchor="middle" class="mono" fill="#e8f0ee">git checkout -b</text>
+
+  <!-- arrow -->
+  <path d="M500,403 L612,403" stroke="#62feb5" stroke-width="3" fill="none" marker-end="url(#ah)" />
+
+  <!-- data branch box -->
+  <rect x="620" y="360" width="430" height="86" rx="12" fill="#142229" stroke="#62feb5" stroke-opacity="0.55" stroke-width="2" />
+  <text x="835" y="412" text-anchor="middle" class="mono" fill="#62feb5">storage.forks.create()</text>
+
+  <!-- fork fan, top right -->
+  <rect x="900" y="120" width="150" height="58" rx="10" fill="#142229" stroke="#62feb5" stroke-opacity="0.5" stroke-width="2" />
+  <text x="975" y="155" text-anchor="middle" class="t cap" fill="#e8f0ee">dataset</text>
+  <path d="M1050,149 L1086,149" stroke="#62feb5" stroke-width="2.5" fill="none" marker-end="url(#ah)" />
+  <g fill="#1a2e35" stroke="#2a3731" stroke-width="1">
+    <rect x="1095" y="120" width="9" height="58" rx="2" />
+    <rect x="1108" y="120" width="9" height="58" rx="2" />
+    <rect x="1121" y="120" width="9" height="58" rx="2" />
+    <rect x="1134" y="120" width="9" height="58" rx="2" />
+    <rect x="1147" y="120" width="9" height="58" rx="2" />
+    <rect x="1160" y="120" width="9" height="58" rx="2" />
+    <rect x="1173" y="120" width="9" height="58" rx="2" />
+    <rect x="1186" y="120" width="9" height="58" rx="2" />
+  </g>
+  <text x="1145" y="196" text-anchor="middle" class="t cap" fill="#94a3b8">50 forks, one bill</text>
+</svg>

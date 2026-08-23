@@ -1,0 +1,115 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 700 300"
+  width="700"
+  height="300"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .label {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .mono {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .box {
+      rx: 10;
+      ry: 10;
+      stroke-width: 1.5;
+      fill: #142229;
+      stroke: #2a3731;
+    }
+    .accent {
+      rx: 10;
+      ry: 10;
+      stroke-width: 1.5;
+      fill: #142229;
+      stroke: #62feb5;
+      stroke-opacity: 0.5;
+    }
+    .arrow {
+      stroke: #62feb5;
+      stroke-width: 2;
+      fill: none;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="ahsdk"
+      markerWidth="8"
+      markerHeight="6"
+      refX="8"
+      refY="3"
+      orient="auto"
+    >
+      <polygon points="0 0, 8 3, 0 6" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <text x="350" y="28" text-anchor="middle" class="title">
+    One call, every backend. On Tigris, forking is free.
+  </text>
+
+  <!-- top: your code -->
+  <rect x="235" y="50" width="230" height="58" class="accent" />
+  <text x="350" y="78" text-anchor="middle" class="mono">
+    storage.forks.create()
+  </text>
+  <text x="350" y="98" text-anchor="middle" class="sub">
+    your code — one line, any adapter
+  </text>
+
+  <!-- arrows -->
+  <path d="M320,108 L110,176" class="arrow" marker-end="url(#ahsdk)" />
+  <path d="M338,108 L268,176" class="arrow" marker-end="url(#ahsdk)" />
+  <path d="M362,108 L432,176" class="arrow" marker-end="url(#ahsdk)" />
+  <path d="M380,108 L590,176" class="arrow" marker-end="url(#ahsdk)" />
+
+  <!-- backends -->
+  <rect x="35" y="178" width="150" height="82" class="box" />
+  <text x="110" y="212" text-anchor="middle" class="label">S3</text>
+  <text x="110" y="234" text-anchor="middle" class="sub">copies every object</text>
+  <text x="110" y="251" text-anchor="middle" class="sub">pay per fork</text>
+
+  <rect x="193" y="178" width="150" height="82" class="box" />
+  <text x="268" y="212" text-anchor="middle" class="label">R2</text>
+  <text x="268" y="234" text-anchor="middle" class="sub">copies every object</text>
+  <text x="268" y="251" text-anchor="middle" class="sub">pay per fork</text>
+
+  <rect x="357" y="178" width="150" height="82" class="box" />
+  <text x="432" y="212" text-anchor="middle" class="label">GCS</text>
+  <text x="432" y="234" text-anchor="middle" class="sub">copies every object</text>
+  <text x="432" y="251" text-anchor="middle" class="sub">pay per fork</text>
+
+  <rect x="515" y="178" width="150" height="82" class="accent" />
+  <text x="590" y="212" text-anchor="middle" class="label" fill="#62feb5">
+    Tigris
+  </text>
+  <text x="590" y="234" text-anchor="middle" class="sub">copy-on-write fork</text>
+  <text x="590" y="251" text-anchor="middle" class="sub" fill="#62feb5">
+    instant, free
+  </text>
+
+  <text x="350" y="288" text-anchor="middle" class="sub">
+    The same line of code. The adapter decides the bill.
+  </text>
+</svg>
