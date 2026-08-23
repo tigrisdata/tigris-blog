@@ -1,0 +1,69 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 650 300"
+  width="650"
+  height="300"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 18px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 14px;
+      fill: #94a3b8;
+    }
+    .prop {
+      font-size: 16px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .api {
+      font-size: 15px;
+      fill: #62feb5;
+      font-weight: 600;
+      font-family: "Fira Code VF", ui-monospace, SFMono-Regular, Menlo, Monaco,
+        Consolas, monospace;
+    }
+    .row {
+      rx: 8;
+      ry: 8;
+      fill: #142229;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+  </style>
+
+  <text x="325" y="24" text-anchor="middle" class="title">
+    Five properties, four function calls
+  </text>
+  <text x="325" y="46" text-anchor="middle" class="sub">
+    each property maps to one Agent Kit primitive
+  </text>
+
+  <rect x="20" y="70" width="610" height="40" class="row" />
+  <text x="40" y="96" class="prop">Isolated</text>
+  <text x="610" y="96" text-anchor="end" class="api">createWorkspace()</text>
+
+  <rect x="20" y="114" width="610" height="40" class="row" />
+  <text x="40" y="140" class="prop">Recoverable</text>
+  <text x="610" y="140" text-anchor="end" class="api">checkpoint() + restore()</text>
+
+  <rect x="20" y="158" width="610" height="40" class="row" />
+  <text x="40" y="184" class="prop">Disposable</text>
+  <text x="610" y="184" text-anchor="end" class="api">teardownWorkspace()</text>
+
+  <rect x="20" y="202" width="610" height="40" class="row" />
+  <text x="40" y="228" class="prop">Bounded</text>
+  <text x="610" y="228" text-anchor="end" class="api">ttl on the workspace</text>
+
+  <rect x="20" y="246" width="610" height="40" class="row" />
+  <text x="40" y="272" class="prop">Observable</text>
+  <text x="610" y="272" text-anchor="end" class="api">setupCoordination()</text>
+</svg>
