@@ -1,11 +1,11 @@
 ---
 slug: fdb-work-queue
-title: "The Tigris work queue is a FoundationDB keyspace"
+title: "The Tigris work queue is a range of keys in FoundationDB"
 date: 2026-08-05
 image: ./hero-img.webp
 description: >-
-  Tigris runs every background task through a queue that is one FoundationDB
-  keyspace, where each task is a key and the key holds the time it becomes
+  Tigris runs every background task through a queue built from FoundationDB
+  keys, where each task is a single key and the key holds the time it becomes
   ready.
 keywords:
   - foundationdb
@@ -46,20 +46,32 @@ import heroImage from "./hero-img.webp";
 When you PUT an object into Tigris, the response comes back before the work is
 finished. The object still has to be replicated to other regions, counted for
 billing, scheduled for lifecycle transitions, sent to webhooks, and added to
-indexes. None of the work should run while a client waits, so all of it goes
+indices. None of the work should run while a client waits, so all of it goes
 onto a queue.
 
 Most companies add a queueing system at that point, e.g., Kafka, SQS, Redis, or
 a Postgres table with a `status` column. We didn't add anything. The Tigris
-queue is a keyspace inside the same FoundationDB cluster that stores our
-metadata, and every queued task is a single key that sorts by its vesting time,
-which is the moment the task becomes available to work on.
+queue lives inside the same FoundationDB cluster that stores our metadata, and
+every queued task is a single key that sorts by its vesting time, which is the
+moment the task becomes available to work on.
+
+It can carry that weight because it meets the queue's short list of hard
+requirements. A task must become durable in the same instant as the write that
+caused it. It must survive the death of whatever machine picks it up. And it
+must be schedulable for later, because retries and lifecycle work are just tasks
+with future timestamps.
+
+If you have not worked with FoundationDB before, the mental model is small. It
+is a distributed key-value store with strict ACID transactions that last at most
+five seconds each, and it keeps every key sorted, so all keys form one giant
+ordered keyspace. A _subspace_ is a key prefix that groups related keys
+together, the way a table groups rows. The queue is one such subspace.
 
 {/* truncate */}
 
 Three properties of the key explain the whole design:
 
-- The key sorts by vesting time, so the keyspace holds the schedule and no
+- The key sorts by vesting time, so the subspace holds the schedule and no
   scheduler component exists.
 - A worker claims a task by rewriting its key with a later vesting time, so no
   lock and no status field exist.
@@ -76,7 +88,8 @@ Three properties of the key explain the whole design:
 
 The design comes from Apple's
 [QuiCK paper](https://www.foundationdb.org/files/QuiCK.pdf), which describes the
-queue that runs inside CloudKit.
+queue that runs inside CloudKit. It is the kind of paper you read and wish you
+had an excuse to implement. We had one.
 
 ## Why the enqueue happens inside the object write
 
@@ -86,16 +99,18 @@ lost, the object never reaches other regions and nothing reports the failure. If
 the replication task lands and the object write aborts, workers look for an
 object that does not exist.
 
-A separate queueing system gives you the dual-write problem, where two systems
-can fail independently and you work around it with an outbox table and a
-reconciliation job. Because our queue is a keyspace in the same database as the
-metadata, the enqueue is a few more writes inside the same transaction:
+A separate queueing system gives you the
+[dual-write problem](https://www.confluent.io/blog/dual-write-problem/), where
+two systems can fail independently and you work around it with an outbox table
+and a reconciliation job. Because our queue is a subspace in the same database
+as the metadata, the enqueue is a few more writes inside the same transaction:
 
 ```go
-// Inside the transaction that applies a PUT.
-tx.Insert(ctx, objectKey, objectMeta)          // the object's metadata row
-queue.EnqueueObjectTasks(ctx, tx, ...)         // replication, notifications,
-                                               // billing, lifecycle
+txManager.Tx(ctx, func(ctx context.Context, tx kv.Tx) error {
+	objMetaManager.Insert(ctx, tx, objMeta) // the object's metadata row
+	return queue.EnqueueObjectTasks(ctx, tx, ...) // replication, notifications,
+	                                              // billing, lifecycle
+})
 // One commit. The object and its consequences land together, or neither does.
 ```
 
@@ -104,7 +119,7 @@ which one exists without the other, and there is no reconciliation job and no
 second system to keep in sync. QuiCK makes the same argument against external
 queues.
 
-## The queue is one sorted keyspace
+## The queue is one sorted subspace
 
 Every queued task is one key-value pair, and the shape of the key carries the
 design:
@@ -115,20 +130,23 @@ design:
 
 Reading the tuple left to right:
 
-- `taskType` partitions the queue by kind of work. There are around ninety task
-  types, e.g., replication, TTL expiry, tombstone cleanup, billing rollups,
-  migrations, and notifications.
-- `itemSpace` is a lane. Each task type is sharded across 256 lanes, and an item
-  is hashed into a lane by its key. More on why below.
+- `taskType` names the kind of work, and in effect each task type is its own
+  queue. There are around ninety of them, e.g., replication, TTL expiry,
+  tombstone cleanup, billing rollups, migrations, and notifications.
+- `itemSpace` is a lane: each task type's queue is split into 256 partitions,
+  and an item is hashed into one by its key.
 - `vestingMs` is the vesting time in Unix milliseconds, e.g., 1754400123456 for
   2026-08-05 14:02:03.456 UTC. The word comes from the QuiCK paper, and every
   other part of the design depends on the field.
 - `priority` breaks ties between tasks that vest in the same millisecond.
+  Nothing sets it today, but it lets urgent work sort first when something does.
 - `id` makes the key unique.
 
-The integers are encoded so that byte order matches numeric order, and
-FoundationDB keeps keys sorted by byte order. Within any lane the tasks
-therefore sit in vesting order, oldest first, and no process ever sorts them.
+The key is packed with FoundationDB's tuple encoding, which writes integers
+big-endian so that byte order matches numeric order, and FoundationDB keeps keys
+sorted by byte order. This pairing is why an ordered key-value store fits a
+queue so well: within any lane the tasks sit in vesting order, oldest first, and
+no process ever sorts them.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <KeyAnatomy
@@ -167,13 +185,15 @@ startKey := q.getKey(minVestingTime, 0, "", taskType.ID(), itemSpace)
 endKey := q.getKey(currentTime, maxPriority, maxId, taskType.ID(), itemSpace)
 
 iter, err := tx.ReadRange(ctx, startKey, endKey, kv.ReadRangeOptions{
-	Snapshot: false, // a real read: this takes a conflict range
+	Snapshot: true, // a snapshot read: scanning takes no conflict ranges
 })
 ```
 
-Everything from the start of the lane up to the reader's own `now` is ready
-work, and it sits in one contiguous run of keys. Everything after `now` is
-invisible, because the range read ends before reaching it.
+`minVestingTime` is a constant that predates every task in the system, so the
+range starts at the beginning of the lane. Everything from there up to the
+reader's own `now` is ready work, and it sits in one contiguous run of keys.
+Everything after `now` is invisible, because the range read ends before reaching
+it.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <LaneVisibility
@@ -196,7 +216,8 @@ notification when a key's value changes. A watch fires on a write, and a task
 becomes ready when the clock passes its vesting time, which is not a write and
 changes nothing in the database. Polling a range that ends at `now` is therefore
 the way to observe a condition created by time, and it costs one range read per
-lane.
+lane. It also keeps the mental model simple: there is nothing to subscribe to,
+only a range that grows as time passes.
 
 ## Claiming a task by moving its vesting time forward
 
@@ -218,19 +239,18 @@ item.LeaseId = uuid.NewUUIDAsString()
 return item, q.Enqueue(ctx, tx, item, leaseTime)
 ```
 
-The claimed row now sits after every reader's range, so no other worker can see
-it or claim it. And if two workers race to claim the same row, FoundationDB's
-transaction conflict detection lets exactly one of them commit, so the loser's
-transaction aborts and the row is gone when it peeks again.
+The delete and the reinsert happen inside one transaction, so the row either
+moves or stays put, and a crash mid-claim cannot lose it. The claimed row now
+sits after every reader's range, so no other worker can see it or claim it. And
+if two workers race to claim the same row, FoundationDB's transaction conflict
+detection lets exactly one of them commit, so the loser's transaction aborts and
+the row is gone when it peeks again.
 
-The same conflict detection has a cost. Peek reads the visible range without
-snapshot isolation, so the claiming transaction conflicts with any write that
-lands inside the range before the claim commits. In practice the conflict is
-rare, because the range ends at the scanner's own `now` and new work is enqueued
-at or after the producer's `now`, so fresh tasks normally land after the range
-rather than inside it. Moreover, each lane has exactly one scanner, so consumers
-never conflict with each other at the head of a lane, which is the usual failure
-mode of queue designs built on a database.
+Note where the conflicts live. Peek is a snapshot read, so scanning a lane takes
+no conflict ranges and never collides with producers enqueueing new work. Only
+the claim conflicts, because it re-reads the specific row inside a regular
+transaction before moving it. A task that becomes ready while a scan is in
+flight is simply invisible to that scan and gets picked up on the next pass.
 
 Ownership checks work by position too. When a worker comes back to renew or
 complete a task, it checks that the row still carries its lease id and the
@@ -245,17 +265,18 @@ and the first worker abandons its claim.
   />
 </MermaidFrame>
 
-Lease durations depend on the work, and they are hardcoded per task type:
+Lease durations depend on the work, and they are hardcoded per task type. Most
+work runs on the six-minute default:
 
-```go
-LEASE_TIME                       = 6 * time.Minute // the default
-CHANGE_LEASE_TIME                = 30 * time.Second
-MIGRATION_TASK_LEASE_TIME        = 70 * time.Minute
-BUCKET_TASK_LEASE_TIME           = 20 * time.Minute
-BLOCK_TASK_LEASE_TIME            = 70 * time.Minute
-TEST_TASK_LEASE_TIME             = 2 * time.Second
-BUCKET_INDEX_BACKFILL_LEASE_TIME = 70 * time.Minute
-```
+| Work                  | Lease      |
+| --------------------- | ---------- |
+| Default               | 6 minutes  |
+| Change events         | 30 seconds |
+| Bucket tasks          | 20 minutes |
+| Migrations            | 70 minutes |
+| Block tasks           | 70 minutes |
+| Bucket index backfill | 70 minutes |
+| Tests                 | 2 seconds  |
 
 Anything that only touches metadata is quick, and the long leases exist for work
 that scans large ranges or moves object data between regions. A worker on a long
@@ -264,9 +285,11 @@ same delete and reinsert. The worker also checkpoints its progress into the task
 payload, so a later worker that picks the task up resumes from the checkpoint
 instead of starting over.
 
-The lease duration trades duplicate work against recovery latency. A short lease
-brings a crashed worker's task back sooner, and it also makes a slow worker more
-likely to lose its claim while it is still working.
+The lease duration is the central dial of the design, and it trades duplicate
+work against recovery latency. A short lease brings a crashed worker's task back
+sooner, and it also makes a slow worker more likely to lose its claim while it
+is still working. Delivery stays at-least-once either way; the lease only
+decides how quickly the system converges after a failure.
 
 ## What happens when a worker dies
 
@@ -291,12 +314,17 @@ No recovery machinery exists because there is nothing to recover. Abandoned and
 ready are the same state, which is a key sitting before `now`, and the system
 cannot tell the two apart because there is no difference between them.
 
-The price of the robustness is duplicate work. Delivery is at-least-once, so a
-task whose worker died mid-run will run again, and a task whose worker stalled
-past its lease can have its side effects committed by two workers. Every task in
-the system is therefore written to be idempotent. Worst-case recovery latency
-equals the remaining lease time, which for a migration task can be almost an
-hour, so we set the lease deliberately for each task type.
+For the same reason there is no
+[dead-letter queue](https://aws.amazon.com/what-is/dead-letter-queue/) and no
+task reaper. A task that completes deletes itself, and a task that never
+completes keeps coming back until some worker finishes it.
+
+The trade-off for the robustness is duplicate work. Delivery is at-least-once,
+so a task whose worker died mid-run will run again, and a task whose worker
+stalled past its lease can have its side effects committed by two workers. Every
+task in the system is therefore written to be idempotent. Worst-case recovery
+latency equals the remaining lease time, which for a migration task can be
+almost an hour, so we set the lease deliberately for each task type.
 
 ## Permanent tasks and unique tasks
 
@@ -326,7 +354,8 @@ if err := tx.Insert(ctx, idKey, tableData); errors.Is(err, kv.ErrDuplicateKey) {
 ```
 
 At most one live instance of the task exists, enforced by the same database in
-the same transaction.
+the same transaction. The enqueue-if-absent that other queueing systems offer as
+a feature falls out of a unique key here.
 
 ## Where our queue differs from the QuiCK paper
 
@@ -340,17 +369,17 @@ mechanism:
 > risking losing it if the consumer fails), we increase the work item's vesting
 > time by the lease duration."
 
-We took a lot from the paper directly, including its vocabulary. The first
-version of our queue had one narrow job, which was backfilling secondary
-indexes, and it worked well enough that we kept finding new work to put on it
-until it carried everything from replication to billing.
+We took the API design from the paper directly, along with vocabulary like
+_vesting_. The first version of our queue had one narrow job, and it worked well
+enough that we kept finding new work to put on it until it carried everything
+from replication to billing.
 
 Our queue diverges from QuiCK in five places:
 
 | Dimension        | QuiCK                                         | Tigris                                   |
 | ---------------- | --------------------------------------------- | ---------------------------------------- |
 | Unit of sharding | User × app, so tens of billions of queues     | Task type × lane, so ~90 × 256           |
-| Structure        | Two levels, queue zones plus a pointer queue  | One flat keyspace                        |
+| Structure        | Two levels, queue zones plus a pointer queue  | One flat subspace                        |
 | Finding work     | Consumers sample pointers at random           | A hashring gives each lane one owner     |
 | Fairness         | Per tenant, via water-filling                 | Per task type, via a dispatcher          |
 | Storage layer    | Record Layer, which maintains indexes for you | Raw key-value, so every move is explicit |
@@ -369,9 +398,11 @@ fraction wrong. At their default fraction of 0.02 the conflict rate stays low.
 Raising the fraction to 0.2 makes about 44% of lease attempts fail on conflicts,
 and raising it to 0.5 makes about 64% fail.
 
-We solved it structurally instead, and our commit history records both changes.
-First, we sharded the queue space by task type and then into lanes, with items
-hashed to lanes by key. The lane assignment is one small function:
+We solved it structurally instead, and the commit history records the whole
+move. A hashring for sharding work across worker pods landed in late October
+2023, and five days later the queue space followed: each task type's queue,
+until then one undivided space, was split into 64 lanes, with items hashed to
+lanes by key. The lane assignment is one small function:
 
 ```go
 func GenItemSpace(itemKey string) ItemSpace {
@@ -383,12 +414,16 @@ func GenItemSpace(itemKey string) ItemSpace {
 ```
 
 The hash is deterministic where Apple's selection is random, so the same key
-always lands in the same lane. We started with 64 lanes per task type and later
-widened to 256 when conflicts returned at higher load.
+always lands in the same lane. The lanes kept widening as load grew, and
+widening a live queue turned out to be delicate enough to deserve its own
+tooling: in March 2025 the enqueue and dequeue widths became two separate
+settings, so that we could raise the dequeue side first and measure the CPU cost
+before letting producers spread out across the new lanes. Every task type now
+runs 256 of them.
 
-Second, worker pods coordinate through a hashring that assigns each lane exactly
-one owner. One scanner per lane makes the collision rate at the head of a lane
-zero rather than a tuning parameter, and the price is paid elsewhere, in a brief
+The hashring is the other half of the fix. It assigns each lane exactly one
+owner, and one scanner per lane makes the collision rate at the head of a lane
+zero rather than a tuning parameter. The price is paid elsewhere, in a brief
 period of contention when pods join or leave and the ring rebalances.
 
 Fairness changed for the same reason. QuiCK's water-filling exists so that one
@@ -417,45 +452,52 @@ The design has costs, and each one below has shown up in our production system.
 
 <Takeaway
   n={3}
-  title="Transactions last five seconds and leases last seventy minutes."
+  title="Transactions last five seconds; leases last minutes to hours."
 >
-  The two limits do not conflict, because transactions only ever perform the
-  move. A claim, a renewal, and a completion are each a few milliseconds of
-  reads and writes. The hours of actual work happen outside any transaction, and
-  the row's position in the keyspace is the durable record of who is doing what
-  until when.
+  FoundationDB caps every transaction at five seconds, a limit that shapes any
+  system built on it. It does not conflict with leases, because transactions
+  only ever perform the move. A claim, a renewal, and a completion are each a
+  few milliseconds of reads and writes. The actual work happens outside any
+  transaction, and the row's position in the subspace is the durable record of
+  who is doing what until when.
 </Takeaway>
 
 <Takeaway n={4} title="Measuring queue depth is expensive.">
   Counting the queue means range-scanning the whole queue space. The obvious
   fix, an atomic counter incremented on enqueue, would concentrate every
   producer's writes onto one hot key, which is precisely the contention the
-  design exists to avoid. We ended up estimating queue depth rather than
-  measuring it, and we use the estimate to rate limit our own workers before
-  they hurt the database.
+  design exists to avoid. So we run the full scan on a slow cadence, every
+  couple of minutes, which is enough for alerts and general health questions but
+  far too slow to rate limit workers with.
 </Takeaway>
 
 <Takeaway n={5} title="One object write became three to five queue writes.">
-  Write amplification turned out to be the queue's largest cost at scale,
-  because region distribution, notifications, and billing each got their own
-  task row inside the commit. An object write now appends one record to a log
-  keyspace instead, keyed by FoundationDB versionstamps so the log is ordered by
-  commit order rather than by any wall clock, and each consumer reads the log at
-  its own offset. The log deserves its own post, and it will get one.
+  Write amplification became the queue's largest cost as we grew, because region
+  distribution, notifications, and billing each got their own task row inside
+  every object commit, and the extra writes put real pressure on FoundationDB.
+  The fix was a new component next to the queue: a log, similar in spirit to
+  Kafka but still written inside the object's transaction. An object write now
+  appends one record to a log subspace, keyed by FoundationDB versionstamps so
+  it is ordered by commit order rather than by any wall clock, and each consumer
+  reads the log at its own offset. Only object updates moved to the log;
+  everything else still uses the queue. The log deserves its own post, and it
+  will get one.
 </Takeaway>
 
 ## Summary
 
-Tigris gets its background processing from infrastructure it was already
-running. Tasks enqueue atomically with the data changes that cause them, because
-the tasks are writes in the same transaction. The system started as a tool for
-backfilling indexes and now carries every background task we run.
+We already ran FoundationDB, and it is fast and strongly consistent. So instead
+of adding a second system to operate, we built the queue inside it, reasoning
+that if Apple can run CloudKit's queue this way at their scale, we could run
+ours. Tasks enqueue atomically with the data changes that cause them, because
+the tasks are writes in the same transaction.
 
-Underneath all of it sit the three properties from the top. The key sorts by
-vesting time, so there is no scheduler. A worker claims a task by moving its
-vesting time forward, so there are no locks. And a task nobody renews becomes
-ready again when the clock passes its vesting time, so there is no recovery
-process.
+The mental model stays small. A task is a key whose position is a time. If that
+time is in the future, workers ignore it. If it is in the present or past, a
+worker takes it, and taking it means moving it into the future. A task whose
+worker dies drifts back into the present on its own. There is no scheduler, no
+lock, and no recovery process, because the sort order, the move, and the clock
+already do those jobs.
 
 <InlineCta
   title="Storage with a transactional brain"
