@@ -16,7 +16,6 @@ keywords:
   - Object Storage
   - Tigris
 authors:
-  - garren
   - davidmyriel
 tags:
   - Engineering
@@ -39,25 +38,26 @@ import heroImage from "./hero-img.webp";
   alt="Queuing Work with FoundationDB. Title card with the Tigris logo: a blue tiger blacksmith hammers a glowing key on an anvil while a conveyor belt carries a line of finished keys past a clock."
 />
 
-## Don't use your database as a queue
+## Your work queue shouldn't sit in a database
 
-This is an old rule, and there are good reasons for it. A `tasks` table with a
-`status` column looks simple at first. Then workers start fighting over rows,
-you add a reaper for stuck jobs, then a scheduler for delayed ones, and soon the
-busiest table in the system is the queue.
+There are good reasons why this rule is worth following. For example, a `tasks`
+table with a `status` column may look simple at first. However, as activity
+picks up, workers start fighting over rows. All of a sudden, you add a reaper
+for stuck jobs, then a scheduler for delayed ones, and soon the busiest table in
+the system is the queue.
 
-We broke this rule on purpose. Every background task in Tigris, from replication
-to billing to lifecycle to webhooks, is a single key in FoundationDB, and the
-whole queue is **a sorted range of those keys**. There is no broker, no
-scheduler, and no second system to operate.
+We decided to break this rule on purpose. Our team placed every background task
+in Tigris, from replication to billing to lifecycle to webhooks, is a single key
+in FoundationDB, and the whole queue is **a sorted range of those keys**. Our
+internals do not use a broker or a scheduler as secondary systems.
 
-The rule was written for a different kind of database.
+The rule was written for a different kind of database
 
 {/* truncate */}
 
-The whole design fits in one picture. A task is a key whose position is a time:
-claiming a task moves it into the future, and when its worker dies, the task
-drifts back into view on its own.
+Tigris' entire work queue design fits into one diagram. A task is a key whose
+position is a time: claiming a task moves it into the future, and when its
+worker dies, the task drifts back into view on its own.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <QueueLifecycle
@@ -67,30 +67,32 @@ drifts back into view on its own.
   />
 </MermaidFrame>
 
-Before explaining how this works, it is worth looking at why the rule existed in
-the first place.
+However, before we explain how all of this works in detail, let's look at why
+the rule existed in the first place.
 
 ## Why queues left the database
 
-For a long time, the industry followed the rule. Queues moved out of the
-database, [Kafka](https://kafka.apache.org/documentation/#design) made the log a
-first-class system, [SQS](https://aws.amazon.com/sqs/) made the queue a managed
-service, and keeping work out of your tables became standard practice.
+For a long time, this rule was a mainstay in the industry. Work queues moved out
+of the database, [Kafka](https://kafka.apache.org/documentation/#design) made
+the log a first-class system, [SQS](https://aws.amazon.com/sqs/) made the queue
+a managed service, and keeping work out of your tables became standard practice.
 
-Moving the queue out solves the contention problem, but it creates a new one. A
-queue beside the database is two systems that can fail independently, which is
-the [**dual-write problem**](https://www.confluent.io/blog/dual-write-problem/):
-the object write can succeed while the enqueue is lost, or the task can land
-while the object write aborts. The standard workaround is an outbox table and a
-reconciliation job, extra machinery just to keep the two systems in agreement.
+Although moving the queue out solves the contention problem, a new problem is
+created in its place. When you place a queue beside the database, you are
+maintaining two systems that can fail independently, which is the
+[**dual-write problem**](https://www.confluent.io/blog/dual-write-problem/). In
+this scenario, the object write can succeed while the enqueue is lost, or the
+task can land while the object write aborts. The standard workaround for this is
+an outbox table and a reconciliation job, which are both extra machinery just to
+keep the two systems in agreement.
 
 ## What FoundationDB changes
 
-This is where [FoundationDB](https://www.foundationdb.org/) changes the picture
-for us. We already use it to [store Tigris metadata](/blog/append-only-storage).
-It is a distributed key-value store with strict ACID transactions, and it keeps
-every key sorted in one giant ordered keyspace, carved into _subspaces_ by key
-prefix.
+This is why we decided to use [FoundationDB](https://www.foundationdb.org/) to
+solve the issue. We already use it to
+[store Tigris metadata](/blog/append-only-storage). It is a distributed
+key-value store with strict ACID transactions, and it keeps every key sorted in
+one giant ordered keyspace, carved into _subspaces_ by key prefix.
 
 These two properties matter because the failure modes behind the rule come from
 workers contending on mutable rows. If keys are ordered and transactions are
@@ -100,9 +102,9 @@ strict, nothing needs to be mutated at all.
   The queue can just be a range of keys, and the sort order is the schedule.
 </PullQuote>
 
-The dual-write problem disappears here too. Because the queue lives in the same
-database as the metadata, an object write and the background tasks it creates
-commit in one transaction:
+We used this to eliminate the dual-write problem as well. Because the queue
+lives in the same database as the metadata, an object write and the background
+tasks it creates end up being committed within one transaction only:
 
 ```go
 txManager.Tx(ctx, func(ctx context.Context, tx kv.Tx) error {
@@ -112,12 +114,12 @@ txManager.Tx(ctx, func(ctx context.Context, tx kv.Tx) error {
 })
 ```
 
-The object and its tasks land together, or neither does. There is no outbox and
-no reconciliation job.
+Here you can see how the object and its tasks land together, or neither does.
 
 ## Apple broke the rule first
 
-We are not the first to build a queue this way. In 2021, Apple published
+Tigris is not the first company to build a work queue this way. In 2021, Apple
+published
 [QuiCK: A Queuing System in CloudKit](https://www.foundationdb.org/files/QuiCK.pdf),
 describing how iCloud's storage backend queues its background work inside
 FoundationDB rather than beside it, at the scale of tens of billions of logical
@@ -125,15 +127,18 @@ queues, one per user of every app.
 
 The paper describes how a consumer claims work:
 
-> "[W]hen taking a lease, instead of removing the work item from the queue (and
+> "When taking a lease, instead of removing the work item from the queue (and
 > risking losing it if the consumer fails), we increase the work item's vesting
 > time by the lease duration."
 
-The **vesting time** is the moment a task becomes available. To claim a task, a
-consumer moves its vesting time forward instead of locking or flagging it.
+They use the terms **vesting time** to describe the moment a task becomes
+available. To claim a task, a consumer moves its vesting time forward instead of
+locking or flagging it.
 
 We took the API design directly from the paper, including the vocabulary, and
 adapted the sharding to our tenancy model.
+
+Let's take a look at the specifics.
 
 ## A task is just a key
 
@@ -143,9 +148,11 @@ Every queued task in Tigris is one key-value pair:
 ("queue", version, taskType, itemSpace, vestingMs, priority, id) → QueueItem
 ```
 
-There are about ninety `taskType`s, and each is in effect its own queue, split
-into 256 partitions we call lanes, with items hashed to lanes by key. The whole
-API on top of the key is five verbs:
+There are about ninety different instances of `taskType`. Each is pracitically
+its own queue, which is split into 256 partitions we call lanes, with items
+hashed to lanes by key.
+
+The entire API on top of the key consists of five verbs:
 
 - Each **enqueue** → a new key at `now + delay`
 - Each **peek** → a range read from the start of a lane up to `now`
@@ -155,8 +162,8 @@ API on top of the key is five verbs:
 
 FoundationDB's
 [tuple encoding](https://apple.github.io/foundationdb/data-modeling.html) writes
-integers big-endian, so byte order matches numeric order. That means every lane
-is already sorted by vesting time, and no process ever sorts the queue.
+integers big-endian, so byte order matches numeric order. That means that every
+lane is already sorted by vesting time, and no process ever sorts the queue.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <KeyAnatomy
@@ -166,10 +173,11 @@ is already sorted by vesting time, and no process ever sorts the queue.
   />
 </MermaidFrame>
 
-Nothing fires when a vesting time arrives. The timestamp is a position in the
-keyspace, and a task vested in the future sits past the edge of every reader's
-range until the ranges grow to reach it. Delayed work and retry with backoff
-cost nothing extra; they are keys placed further out.
+When vesting time happens, there is not trigger. The timestamp is a position in
+the keyspace, and a task vested in the future sits past the edge of every
+reader's range until the ranges grow to reach it. Delayed work and retry with
+backoff do not take up more resources, since they are just keys placed further
+out.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <LaneVisibility
@@ -181,8 +189,8 @@ cost nothing extra; they are keys placed further out.
 
 ## How workers claim tasks
 
-The difference is most visible in how a worker claims a task. A status-column
-queue claims a row by flipping its state, and the
+You will see the biggest difference in how our worker claims a task. A
+status-column queue claims a row by flipping its state, and the
 [standard Postgres pattern](https://www.postgresql.org/docs/current/sql-select.html)
 looks something like this:
 
@@ -209,19 +217,23 @@ return item, q.Enqueue(ctx, tx, item, leaseTime)
 ```
 
 The delete and reinsert happen in one strongly consistent transaction, so it
-either works or it doesn't, and no task can go missing. If two workers race for
-the same key, FoundationDB's conflict detection lets exactly one commit. Peek
-itself is a snapshot read, so scanning a lane takes no conflict ranges and never
-collides with producers; only the claim conflicts.
+either works or it doesn't. As a result, tasks can't disappear from the queue.
 
-Failure recovery works the same way. Take a worker that claims a task and gets
-OOM-killed two minutes into a six-minute lease. Nothing reacts: the lease stops
-being renewed, the clock passes the vesting time four minutes later, and the
-task is visible to every reader again, ready for the next worker to pick up.
-**There is no separate recovery path.** Leases run six minutes by default and up
-to 70 for migrations, and long tasks renew at a third of the interval while
-checkpointing progress into the payload, so whoever picks up an abandoned task
-resumes from the last checkpoint.
+If two workers race for the same key, FoundationDB's conflict detection lets
+exactly one commit. The peek process itself is a snapshot read, so scanning a
+lane takes no conflict ranges and never collides with producers.
+
+It's just as simple to recover from failure. For example, consider a worker that
+claims a task and gets OOM-killed two minutes into a six-minute lease. On our
+side, the lease stops being renewed and the clock passes the vesting time four
+minutes later.
+
+The task in question becomes visible to every reader again, ready for the next
+worker to pick up. **There is no separate recovery path.** Leases run six
+minutes by default and up to 70 for migrations, and long tasks renew at a third
+of the interval while checkpointing progress into the payload. Ultimately,
+whichever worker picks up an abandoned task, it resumes from the last
+checkpoint.
 
 <MermaidFrame style={{ maxWidth: "42rem", margin: "1.5rem auto" }}>
   <CrashRecovery
@@ -231,69 +243,36 @@ resumes from the last checkpoint.
   />
 </MermaidFrame>
 
-## What this design simplifies and what it costs
-
-Compared side by side, a status-column queue needs separate machinery for every
-concern, while a sorted range gets all of it from the ordering. Claiming a task
-is a key move rather than a row lock. Delayed work is just a future vesting
-time, so there is no scheduler. Stuck tasks come back on their own when the
-clock passes their vesting time, so there is no reaper. Finding work is one
-range read per lane, and enqueueing happens in the same transaction as the data
-write, so there is no outbox.
-
-This design has costs. Delivery is **at-least-once**, so every task in the
-system is written to be idempotent, and because there is no fencing token, a
-stalled worker can commit duplicate side effects. Counting the queue also means
-scanning it, because an atomic counter would concentrate every producer's writes
-onto one hot key.
-
-Two more limits are worth knowing. FoundationDB caps every transaction at five
-seconds, which works here because transactions only ever move keys; the actual
-work runs outside them, and the key's position is the durable record of who is
-doing what. And vesting times come from wall clocks, so clock skew can displace
-work slightly; NTP keeps the skew small, and the same idempotency that absorbs
-retries absorbs work that arrives a little early.
-
-The largest cost showed up as we grew: write amplification. Region distribution,
-notifications, and billing each added a task row to every object commit, so we
-moved object updates out of the queue and into a log next to it, ordered by
-commit order instead of wall clocks. The log deserves its own post.
-
 ## Where we differ from Apple
 
-[CloudKit](https://developer.apple.com/icloud/cloudkit/)'s tenant is the user,
-so Apple runs billions of tiny queues and finds work by sampling: consumers pick
-a random fraction of pointer entries. The paper reports what tuning that
+This was originally built for Apple's
+[CloudKit](https://developer.apple.com/icloud/cloudkit/), where the system runs
+billions of tiny queues and finds work by sampling. In this case, consumers pick
+a random fraction of pointer entries, and the paper reports what tuning that
 fraction costs. Their experiments ran with a fraction of 0.02; raising it to 0.2
 made about 44% of lease attempts fail, and 0.5 made about 64% fail.
 
-Our tenant is the task type, and there are about ninety. So we keep the queue
-flat and solve collisions structurally: items hash to lanes deterministically,
-and a hashring assigns each lane exactly one owner. With one scanner per lane,
-collisions at the head of a lane simply do not happen, and there is nothing to
-tune. The cost shows up when pods join or leave and the ring briefly rebalances.
+Tigris' tenant is the task type, and there are about ninety. In our case, we
+keep the queue flat and solve collisions structurally: items hash to lanes
+deterministically, and a hashring assigns each lane exactly one owner. With one
+scanner per lane, collisions at the head of a lane simply do not happen, and
+there is nothing to tune. The cost shows up when pods join or leave and the ring
+briefly rebalances.
 
-Fairness works differently too. QuiCK spreads capacity across users with a
-scheme the paper calls water-filling, so one busy user cannot starve the rest.
-Our risk is one busy task type, like a backlog of tombstone cleanup starving
-billing, so a dispatcher round-robins across task types and the workers are
-split into groups that keep cleanup work away from urgent work.
+We handle distribution separately as well. QuiCK spreads capacity across users
+with a scheme the paper calls water-filling, so one busy user cannot starve the
+rest. Our risk is one busy task type, like a backlog of tombstone cleanup
+starving billing, so a dispatcher round-robins across task types and the workers
+are split into groups that keep cleanup work away from urgent work.
 
 ## The rule, rewritten
 
-Each generation answered the same question of where the queue should live. It
-started inside the database, fighting it, in status tables and cron jobs. Then
-it moved out, into SQS and Kafka, and the dual-write problem moved into the gap
-along with the outbox pattern built to bridge it. In 2021, QuiCK put the queue
-back inside the database, aligned with it this time. Tigris keeps it there, as
-nothing more than a range of keys.
-
-The old rule still holds for most databases. But if your database keeps keys
-sorted and transactions strongly consistent, you already have a queue in there.
-It is just a range of keys.
-
-A task is a key whose position is a time, and every operation on it, from
-claiming to retrying to recovering, is that key moving.
+If you take one thing from this post, let it be the question we asked ourselves:
+how much of your queue is real work, and how much is a workaround for a database
+that cannot keep order? FoundationDB keeps its keys sorted and its transactions
+strict, so for us the answer was almost all of it. The broker, the scheduler,
+the reaper, and the outbox all collapsed into one range of keys that moves
+through time.
 
 <InlineCta
   title="Storage with a transactional brain"
