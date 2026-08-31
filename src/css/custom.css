@@ -1367,3 +1367,12 @@ table td {
   font-size: 1.15em;
   margin-left: 4px;
 }
+
+/* Hide the post hero image (and its caption) on narrow screens — it fills the
+   first phone viewport before any prose. List-card thumbnails are unaffected. */
+@media (max-width: 768px) {
+  .blog-post-page .hero-image,
+  .blog-post-page .hero-image + center {
+    display: none;
+  }
+}
