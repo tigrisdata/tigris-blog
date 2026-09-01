@@ -193,15 +193,14 @@ export default function BlogPostItems({
         <div className={styles.controls}>
           <div
             className={styles.categories}
-            role="tablist"
-            aria-label="Categories"
+            role="group"
+            aria-label="Filter posts by category"
           >
             {CATEGORIES.map((c) => (
               <button
                 key={c.label}
                 type="button"
-                role="tab"
-                aria-selected={category === c.tag}
+                aria-pressed={category === c.tag}
                 className={clsx(
                   styles.chip,
                   category === c.tag && styles.chipActive
