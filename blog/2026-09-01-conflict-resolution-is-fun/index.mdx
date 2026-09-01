@@ -28,7 +28,6 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-import heroImage from "./hero-image.webp";
 
 import SingleRegionFlow from "./diagrams/SingleRegionFlow";
 import CompareFlow from "./diagrams/CompareFlow";
@@ -36,17 +35,6 @@ import ClockSkewRace from "./diagrams/ClockSkewRace";
 import MultiRegionWrite from "./diagrams/MultiRegionWrite";
 import PhantomWrite from "./diagrams/PhantomWrite";
 import ReplicasetSharding from "./diagrams/ReplicasetSharding";
-
-<img
-  src={heroImage}
-  className="hero-image"
-  alt="An ascii-art decision tree showing how the compare(previous, new, force)
-  function decides which version of an object wins. If prev or next is unset or
-  the key is brand new, the versions are different objects: drop and log the
-  conflict. If prev is older than the new data, the new version is newer:
-  apply, row replaced. On a tie or older data, a forced change applies and
-  replaces the row; otherwise the change is dropped and the conflict logged."
-/>
 
 One of the hardest problems in distributed systems is conflict resolution, or
 the same basic problem as merge conflicts in Git. Git merge conflicts happen
