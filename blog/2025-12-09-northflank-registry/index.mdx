@@ -20,6 +20,7 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import RegistryPullFlow from "./diagrams/RegistryPullFlow";
 
 import heroimage from "./shipyards.webp";
 import styles from "!!raw-loader!./styles.css";
@@ -97,17 +98,9 @@ In order to get this working, there’s a few moving parts:
 
 This adds up to two Northflank services like this:
 
-```mermaid
-sequenceDiagram
-    User->>+Registry: GET projects/name:tag
-    Registry->>+User: Get a token from /token
-    User->>+Auth: Here's my creds for /token
-    Auth->>+User: Sounds good, here's a token
-    User->>+Registry: Get projects/name:tag with token
-    Registry->>+User: Presigned URLs in Tigris
-    User->>+Tigris: Layers please
-    Tigris->>+User: Image layer tarballs
-```
+<div className="mermaid-frame">
+  <RegistryPullFlow />
+</div>
 
 ## Setting it up
 
