@@ -8,7 +8,6 @@ import Link from "@docusaurus/Link";
 import type { Props } from "@theme/BlogPostItems";
 import clsx from "clsx";
 import { useLocation } from "@docusaurus/router";
-import tigrisConfig from "@site/tigris.config";
 import styles from "./styles.module.css";
 
 type BlogListItem = Props["items"][number];
@@ -26,13 +25,6 @@ const SORTS: { value: string; label: string }[] = [
   { value: "oldest", label: "Oldest" },
   { value: "longest", label: "Longest read" },
 ];
-
-function findItemBySlug(
-  items: BlogListItem[],
-  slug: string
-): BlogListItem | undefined {
-  return items.find(({ content }) => content.metadata.permalink.endsWith(slug));
-}
 
 function matchesCategory(item: BlogListItem, tag: string | null): boolean {
   if (!tag) return true;
@@ -137,11 +129,8 @@ export default function BlogPostItems({
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("newest");
 
-  const featuredSlugs: string[] = tigrisConfig.featuredPosts ?? [];
   const featuredItem = isHomePage
-    ? featuredSlugs
-        .map((slug) => findItemBySlug(items, slug))
-        .find((item): item is BlogListItem => item != null) ?? null
+    ? sortItems(items, "newest")[0] ?? null
     : null;
 
   const renderRow = ({ content: BlogPostContent }: BlogListItem) => (
