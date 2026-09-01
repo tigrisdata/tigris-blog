@@ -28,6 +28,7 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import MermaidFrame from "@site/src/components/MermaidFrame";
 import heroImage from "./hero-image.webp";
 
 <img
@@ -74,6 +75,8 @@ you can still access your data come hell, high water, or Giant Meteors.
 
 The conflict resolution flow is like this:
 
+<MermaidFrame style={{ maxWidth: "26rem", margin: "1.5rem auto" }}>
+
 ```mermaid
 flowchart TD
     C["Client<br/>PutObject"] --> GW["Nearest Tigris gateway"]
@@ -86,6 +89,8 @@ flowchart TD
     FDB -.->|reads queue| W["Replication worker"]
     W --> OTHER["Every other region gets<br/>a read-only copy"]
 ```
+
+</MermaidFrame>
 
 The main tradeoff with a single-region bucket is that you trade _strict
 consistency_ (because there is only one possible writer) with _higher latency_
