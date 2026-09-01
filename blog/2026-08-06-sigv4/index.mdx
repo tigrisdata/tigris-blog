@@ -200,7 +200,7 @@ of scope for now.
 If you want to learn more, give your favourite AI agent the following prompt:
 
 ```text
-I'm reading the blogpost at <link> and Xe mentioned AWS SigV4's
+I'm reading the blogpost at https://www.tigrisdata.com/blog/sigv4.md and Xe mentioned AWS SigV4's
 STREAMING-AWS4-HMAC-SHA256-PAYLOAD method. I would like to learn more about how
 this works. Please research how this works and give me code and request body
 samples.
@@ -333,6 +333,8 @@ client and TAG both prove their identity to Tigris. Once that proof is sent,
 then TAG gets the intermediate derived signing key and uses that for locally
 validating requests, kinda like this:
 
+<center>
+
 ```mermaid
 sequenceDiagram
    participant Client
@@ -350,6 +352,8 @@ sequenceDiagram
    Note right of TAG: verify locally,<br/>cache hit
    TAG-->>Client: 200 OK
 ```
+
+</center>
 
 The
 [actual implementation in TAG](https://github.com/tigrisdata/tag/blob/baca0287073290af5dbba04e5046d8b292abc3a6/proxy/forwarder_transparent.go)
