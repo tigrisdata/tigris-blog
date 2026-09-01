@@ -28,7 +28,6 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-import MermaidFrame from "@site/src/components/MermaidFrame";
 import heroImage from "./hero-image.webp";
 
 <img
@@ -75,22 +74,31 @@ you can still access your data come hell, high water, or Giant Meteors.
 
 The conflict resolution flow is like this:
 
-<MermaidFrame style={{ maxWidth: "26rem", margin: "1.5rem auto" }}>
-
 ```mermaid
-flowchart TD
-    C["Client<br/>PutObject"] --> GW["Nearest Tigris gateway"]
-    GW --> Q{"Which region owns<br/>this bucket?"}
-    Q --> BLK["Upload the bytes to the owning<br/>region's block store"]
-    BLK --> META["Commit the metadata over gRPC to the<br/>owning region's FoundationDB cluster"]
-    META --> FDB[("FoundationDB<br/>owning region")]
-    FDB --> OK["Return success"]
+flowchart TB
+    subgraph row1 [" "]
+        direction LR
+        C["Client<br/>PutObject"] --> GW["Nearest Tigris gateway"]
+        GW --> Q{"Which region owns<br/>this bucket?"}
+    end
+    subgraph row2 [" "]
+        direction LR
+        BLK["Upload the bytes to the owning<br/>region's block store"] --> META["Commit the metadata over gRPC to the<br/>owning region's FoundationDB cluster"]
+        META --> FDB[("FoundationDB<br/>owning region")]
+        FDB --> OK["Return success"]
+    end
+    subgraph row3 [" "]
+        direction LR
+        W["Replication worker"] --> OTHER["Every other region gets<br/>a read-only copy"]
+    end
 
-    FDB -.->|reads queue| W["Replication worker"]
-    W --> OTHER["Every other region gets<br/>a read-only copy"]
+    row1 --> row2
+    row2 -.->|reads queue| row3
+
+    style row1 fill:none,stroke:none
+    style row2 fill:none,stroke:none
+    style row3 fill:none,stroke:none
 ```
-
-</MermaidFrame>
 
 The main tradeoff with a single-region bucket is that you trade _strict
 consistency_ (because there is only one possible writer) with _higher latency_
