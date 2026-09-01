@@ -43,7 +43,29 @@ const config = {
   },
   themes: ["@docusaurus/theme-mermaid"],
 
-  headTags: [...rb2bHeadTag],
+  headTags: [
+    {
+      tagName: "link",
+      attributes: { rel: "preconnect", href: "https://fonts.googleapis.com" },
+    },
+    {
+      tagName: "link",
+      attributes: {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossorigin: "anonymous",
+      },
+    },
+    ...rb2bHeadTag,
+  ],
+
+  // Match the marketing homepage fonts (Geist / Geist Mono / Hanken Grotesk).
+  stylesheets: [
+    {
+      href: "https://fonts.googleapis.com/css2?family=Geist:wght@300..900&family=Geist+Mono:wght@300..700&family=Hanken+Grotesk:wght@400..800&display=swap",
+      rel: "stylesheet",
+    },
+  ],
 
   clientModules: [
     require.resolve("./src/util/ensureGtag.js"),
@@ -64,9 +86,10 @@ const config = {
         docs: false,
         blog: {
           routeBasePath: "/",
-          postsPerPage: 12,
-          blogTitle: "Tigris Blog",
-          blogDescription: "A blog dedicated to all things storage!",
+          postsPerPage: "ALL",
+          blogTitle: "Engineering blog",
+          blogDescription:
+            "Posts from the Tigris engineering team about how we build global object storage for any cloud — low-latency access anywhere, millions of buckets, and 99.99% availability you can rely on.",
           blogSidebarTitle: "All our posts",
           blogSidebarCount: 0,
           showReadingTime: true,
@@ -88,6 +111,7 @@ const config = {
   ],
 
   plugins: [
+    require.resolve("./plugins/blog-stats.js"),
     [
       "@signalwire/docusaurus-plugin-llms-txt",
       {

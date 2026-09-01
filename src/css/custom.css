@@ -70,13 +70,18 @@ code {
 :root {
   --ifm-spacing-horizontal: 1.5rem;
 
-  --ifm-font-family-base: "Hanken Grotesk", system-ui, -apple-system, Segoe UI,
-    Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont,
-    "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol";
+  /* Match the marketing homepage (tigrisdata.com): Geist for body text,
+     Hanken Grotesk for headings, Geist Mono for code. */
+  --ifm-font-family-base: "Geist", system-ui, -apple-system, "Segoe UI", Roboto,
+    Ubuntu, Cantarell, "Noto Sans", BlinkMacSystemFont, Helvetica, Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 
-  --ifm-font-family-monospace: "Fira Code VF", SFMono-Regular, Menlo, Monaco,
-    Consolas, "Liberation Mono", "Courier New", monospace;
+  /* Headings use Geist too (like the homepage hero) so titles and body read as
+     one typeface, with weight for hierarchy. Hanken is reserved for CTA buttons. */
+  --ifm-heading-font-family: var(--ifm-font-family-base);
+
+  --ifm-font-family-monospace: "Geist Mono", "Fira Code VF", SFMono-Regular,
+    Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   --ifm-font-weight-bold: 900;
 
@@ -99,6 +104,7 @@ code {
   --ifm-leading: calc(var(--ifm-leading-desktop) * 1rem);
 
   --ifm-navbar-shadow: none;
+  --ifm-navbar-height: 64px;
   --ifm-toc-border-color: #dedede;
 
   --ifm-table-border-color: var(--docs-color-border);
@@ -1234,17 +1240,31 @@ table td {
   min-width: 0;
 }
 
-/* Hero image - full width */
-.hero-image {
-  margin-bottom: 0.5rem;
+/* Hero image - constrained to the prose column width so it reads as part of the
+   article rather than a full-bleed banner. The `.markdown img.hero-image`
+   specificity (and !important on max-width) is needed to override the per-post
+   `styles.css` files (copied from blog/_base-styles.css) that set the hero image
+   to `max-width: 100%` and are injected after this stylesheet. */
+.markdown img.hero-image {
+  display: block;
+  margin: 0 auto 0.5rem;
   width: 100%;
+  max-width: 42rem !important;
   height: auto;
-  max-width: 100%;
 }
 
 /* Hero image caption - add bottom margin for spacing before prose */
 .hero-image + center {
   margin-bottom: 2rem;
+}
+
+/* On narrow screens, drop the hero image (and its caption) so posts open
+   straight into the text. */
+@media (max-width: 768px) {
+  .markdown img.hero-image,
+  .markdown img.hero-image + center {
+    display: none !important;
+  }
 }
 
 /* Constrain non-hero images on large screens */
