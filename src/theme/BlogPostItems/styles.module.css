@@ -95,12 +95,18 @@
 }
 
 /* ── Controls bar ────────────────────────────────────────────── */
+/* Locks to the top (just under the sticky navbar) while scrolling the list. */
 .controls {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0 1rem;
+  padding: 0.75rem 0;
+  position: sticky;
+  top: var(--ifm-navbar-height);
+  z-index: 50;
+  background: var(--ifm-background-color);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
 }
 
 .categories {
@@ -205,7 +211,6 @@
 .postList {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--ifm-color-emphasis-200);
 }
 
 .empty {
