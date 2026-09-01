@@ -30,6 +30,10 @@ tags:
 import InlineCta from "@site/src/components/InlineCta";
 import heroImage from "./hero-image.webp";
 
+import SingleRegionFlow from "./diagrams/SingleRegionFlow";
+import CompareFlow from "./diagrams/CompareFlow";
+import ReplicasetSharding from "./diagrams/ReplicasetSharding";
+
 <img
   src={heroImage}
   className="hero-image"
@@ -74,31 +78,9 @@ you can still access your data come hell, high water, or Giant Meteors.
 
 The conflict resolution flow is like this:
 
-```mermaid
-flowchart TB
-    subgraph row1 [" "]
-        direction LR
-        C["Client<br/>PutObject"] --> GW["Nearest Tigris gateway"]
-        GW --> Q{"Which region owns<br/>this bucket?"}
-    end
-    subgraph row2 [" "]
-        direction LR
-        BLK["Upload the bytes to the owning<br/>region's block store"] --> META["Commit the metadata over gRPC to the<br/>owning region's FoundationDB cluster"]
-        META --> FDB[("FoundationDB<br/>owning region")]
-        FDB --> OK["Return success"]
-    end
-    subgraph row3 [" "]
-        direction LR
-        W["Replication worker"] --> OTHER["Every other region gets<br/>a read-only copy"]
-    end
-
-    row1 --> row2
-    row2 -.->|reads queue| row3
-
-    style row1 fill:none,stroke:none
-    style row2 fill:none,stroke:none
-    style row3 fill:none,stroke:none
-```
+<div className="mermaid-frame">
+  <SingleRegionFlow />
+</div>
 
 The main tradeoff with a single-region bucket is that you trade _strict
 consistency_ (because there is only one possible writer) with _higher latency_
@@ -145,26 +127,9 @@ a small miracle that any of this works in practice.
 Here’s a paraphrased and reformatted version of our conflict resolution
 function:
 
-```mermaid
-flowchart TD
-    Proto["compare(previous,<br/>new, force)"]
-    IsNewDeleted{"Is prev or<br/>next unset<br/>or a new<br/>key in FDB?"}
-    IsPrevOlderThanNew{"Is prev older<br/>than the new<br/>data?"}
-    IsTiebreaker{"Is this a<br/>forced change?"}
-    T["return true<br/>(Apply, row replaced)"]
-    F["return false<br/>(Drop, log the conflict)"]
-
-    Proto --> IsNewDeleted
-    IsNewDeleted -->| Yes: different objects | F
-    IsNewDeleted -->| No: same key | IsPrevOlderThanNew
-    IsPrevOlderThanNew --> | No: new is older | IsTiebreaker
-    IsPrevOlderThanNew --> | Yes: new version is newer | T
-    IsTiebreaker --> | Yes: tie forcibly broken | T
-    IsTiebreaker --> | No: new version is older<br/>or tie without force | F
-
-    style T fill:#d4edda,stroke:#28a745,color:#0f5132
-    style F fill:#f8d7da,stroke:#dc3545,color:#842029
-```
+<div className="mermaid-frame">
+  <CompareFlow />
+</div>
 
 Or: we prioritize the most recent entry when possible, accounting for deletions
 and the like such that a newer delete wins over an older update. This combined
@@ -398,38 +363,9 @@ there we will scale out depending on customer request pressure. If you’re a
 large enough tenant, you may end up getting your own dedicated FoundationDB
 cluster!
 
-```mermaid
-flowchart TD
-    REQ["S3 request"] --> GW["Gateway"]
-    GW -->|"which replicaset<br/>holds this tenant?"| SM[("Shard mapping<br/>cluster")]
-    SM -.->|"replicaset 2"| GW
-
-    GW ==> RS2
-
-    subgraph RS1["Replicaset 1"]
-        C1[("2-3 FoundationDB clusters")]
-        W1["Worker pool"]
-        C1 --- W1
-    end
-
-    subgraph RS2["Replicaset 2"]
-        C2[("2-3 FoundationDB clusters")]
-        W2["Worker pool"]
-        C2 --- W2
-    end
-
-    subgraph RS3["Replicaset 3"]
-        C3[("2-3 FoundationDB clusters")]
-        W3["Worker pool"]
-        C3 --- W3
-    end
-
-    C1 --> GT["Global Pointer<br/>table"]
-    C2 --> GT
-    C3 --> GT
-
-    style GT fill:#f8d7da,stroke:#dc3545,color:#842029
-```
+<div className="mermaid-frame">
+  <ReplicasetSharding />
+</div>
 
 :::note
 
