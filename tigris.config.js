@@ -11,12 +11,4 @@ module.exports = {
   statusPageUrl: "https://status.tigrisdata.com/",
   getStartedUrl: "https://www.tigrisdata.com/docs/get-started/",
   reportAbuseUrl: "mailto:abuse@tigrisdata.com",
-
-  // Exactly 4 entries: the first is the main hero card, the next three are side cards.
-  featuredPosts: [
-    "/soft-delete-deep-dive",
-    "/sigv4",
-    "/clickhouse-zero-egress",
-    "/t3-migrate-command",
-  ],
 };
