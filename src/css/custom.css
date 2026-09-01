@@ -104,7 +104,9 @@ code {
   --ifm-leading: calc(var(--ifm-leading-desktop) * 1rem);
 
   --ifm-navbar-shadow: none;
-  --ifm-navbar-height: 64px;
+  /* Matches the real height of the custom navbar (logo + Sign in / Get started
+     buttons). Used for anchor scroll offsets and the sticky filter bar's top. */
+  --ifm-navbar-height: 78px;
   --ifm-toc-border-color: #dedede;
 
   --ifm-table-border-color: var(--docs-color-border);
@@ -177,6 +179,15 @@ pre.prism-code {
 
 nav.navbar {
   border-bottom: 1px solid var(--ifm-toc-border-color);
+}
+
+/* Navbar is shorter on mobile (the Sign in / Get started buttons are hidden).
+   Uses 799.98px so this doesn't overlap the navbar's own `min-width: 800px`
+   desktop breakpoint at exactly 800px. */
+@media (max-width: 799.98px) {
+  :root {
+    --ifm-navbar-height: 64px;
+  }
 }
 
 .navbar__logo {
