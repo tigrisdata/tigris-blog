@@ -32,6 +32,9 @@ import heroImage from "./hero-image.webp";
 
 import SingleRegionFlow from "./diagrams/SingleRegionFlow";
 import CompareFlow from "./diagrams/CompareFlow";
+import ClockSkewRace from "./diagrams/ClockSkewRace";
+import MultiRegionWrite from "./diagrams/MultiRegionWrite";
+import PhantomWrite from "./diagrams/PhantomWrite";
 import ReplicasetSharding from "./diagrams/ReplicasetSharding";
 
 <img
@@ -166,31 +169,9 @@ According to all the rules of the game, every region but Chicago sees that the
 DELETE is slightly older than the current data, so it ignores that DELETE and
 continues as if that PUT is the right state of the world.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant C as Client
-    participant CHI as Chicago (bucket owner)
-    participant SIN as Singapore
-
-    C->>CHI: PUT thing.txt
-    Note over CHI: stamped 12:00:00.000200<br/>(slightly ahead of the local clock)
-    CHI->>SIN: replicate the row @ .000200
-    Note over SIN: live copy @ .000200
-
-    C->>CHI: DELETE thing.txt
-    Note over CHI: clock still reads .000100, so the<br/>tombstone is stamped BEHIND<br/>the row it is deleting
-    CHI-->>C: 204 No Content
-
-    CHI->>SIN: replicate the tombstone @ .000100
-    Note over SIN: .000100 is not newer than .000200<br/>so the tombstone is dropped
-    Note over SIN: the live copy survives
-
-    C->>SIN: GET thing.txt
-    SIN-->>C: 200 OK, the deleted object is back
-    C->>CHI: PUT If-None-Match: *
-    CHI-->>C: 412 Precondition Failed
-```
+<div className="mermaid-frame">
+  <ClockSkewRace />
+</div>
 
 This is the kind of race condition you can only really see in distributed
 systems at our scale or larger. Nothing that happens in this situation is a
@@ -240,39 +221,9 @@ them like a global bucket. This means that the regions in the group get the data
 faster than they would otherwise and commits to the leader mean that the data is
 committed to all members of the group. It’s kinda like this:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant C as Client
-    participant GW as Gateway
-    participant L as Leader region
-    participant F1 as Follower 1
-    participant F2 as Follower 2
-
-    C->>GW: PUT object
-    GW->>L: upload the bytes to the leader's block store
-    GW->>L: commit the metadata
-    Note over L: ONE FoundationDB transaction writes the row<br/>and enqueues the ordinary replication tasks
-    L-->>GW: committed, here is the timestamp
-
-    par push to every follower at once
-        GW->>F1: apply this right now
-        GW->>F2: apply this right now
-    end
-
-    F1-->>GW: ok
-    F2-->>GW: error
-
-    Note over GW: one follower is enough
-    GW-->>C: 200 OK
-
-    Note over L,F2: seconds later, the queue delivers<br/>the same change all over again
-
-    L->>F1: queued copy
-    Note over F1: same timestamp, not newer, dropped
-    L->>F2: queued copy
-    Note over F2: nothing here yet, so it applies.<br/>Follower 2 catches up.
-```
+<div className="mermaid-frame">
+  <MultiRegionWrite />
+</div>
 
 When a client writes to a multi-region bucket, Tigris forwards the write to the
 leader and blocks there. If the leader can’t take it, the write errors out and
@@ -290,31 +241,9 @@ or git commit syncing. If the current data in the database is newer or the same
 as the data being pushed out, the change is ignored and the cluster moves on
 with life:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant C as Client
-    participant GW as Gateway
-    participant L as Leader region
-    participant F as Every follower
-
-    C->>GW: PUT object
-    GW->>L: commit the metadata
-    Note over L: the row is written and durable.<br/>There is no undo from here.
-    L-->>GW: committed
-
-    GW->>F: apply this right now
-    F-->>GW: error
-
-    Note over GW: no follower succeeded
-    GW-->>C: 5xx, your write failed
-
-    Note over L,F: but the queued copy was already durable,<br/>committed in the same transaction as the row
-
-    L->>F: queued copy
-    Note over F: applies normally
-    Note over C,F: the write you were told failed is now<br/>readable in every region
-```
+<div className="mermaid-frame">
+  <PhantomWrite />
+</div>
 
 At some level you can think about multi-region buckets as a latency optimization
 for the regions in the multi-region group. The replication queue is what
