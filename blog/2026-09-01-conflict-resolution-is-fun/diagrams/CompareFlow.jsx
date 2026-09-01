@@ -1,7 +1,7 @@
 // Fig 02 — compare() decides which version of an object wins
 // Standalone React component. Inline styles only, React is the only dependency.
 
-import { AsciiFigure } from "./AsciiFigure";
+import { AsciiFigure } from "@site/src/components/AsciiFigure";
 
 const LINES = [
   ["  compare(previous, new, force)"],

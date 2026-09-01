@@ -2,7 +2,7 @@
 // Standalone React component. Inline styles only, React is the only dependency.
 // Generated art; the LINES arrays hold [color, text] segments.
 
-import { AsciiFigure } from "./AsciiFigure";
+import { AsciiFigure } from "@site/src/components/AsciiFigure";
 
 const LINES = [
   [" client          Chicago (bucket owner)         Singapore"],
