@@ -1,7 +1,7 @@
 // Fig 03 — sharding FoundationDB clusters into replicasets
 // Standalone React component. Inline styles only, React is the only dependency.
 
-import { AsciiFigure } from "./AsciiFigure";
+import { AsciiFigure } from "@site/src/components/AsciiFigure";
 
 const LINES = [
   ["  S3 request"],

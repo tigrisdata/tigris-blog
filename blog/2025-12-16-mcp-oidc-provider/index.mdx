@@ -21,6 +21,7 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import heroImage from "./mcp-oid.webp";
+import OidcTopology from "./diagrams/OidcTopology";
 
 <img
   src={heroImage}
@@ -141,30 +142,9 @@ value store. You can use Tigris as your KV store like we did, or any other store
 that is supported by [Keyv](https://github.com/jaredwray/keyv/), like Redis or
 Postgres.
 
-<center>
-
-```mermaid
-flowchart TD
-    subgraph CLIENT_SIDE["Client Side"]
-        MCP_CLIENT["MCP Client<br/>(Claude, Cursor, ChatGPT, etc.)"]
-    end
-
-    subgraph AUTH_LAYER["Auth Layer"]
-        OIDC_PROVIDER["mcp-oidc-provider<br/>(OIDC Authorization Server)"]
-        UPSTREAM_IDP["Upstream IdP<br/>(Auth0, Clerk, Okta, etc.)"]
-    end
-
-    subgraph RESOURCE_LAYER["Resource Layer"]
-        MCP_SERVER["MCP Server<br/>(OAuth 2.1 Resource Server)"]
-    end
-
-    MCP_CLIENT -->|"OIDC Discovery<br/>Client Registration<br/>/authorize /token /jwks"| OIDC_PROVIDER
-    OIDC_PROVIDER -->|"OIDC Federation<br/>(User authentication, claims)"| UPSTREAM_IDP
-    MCP_CLIENT -->|"MCP Requests with<br/>Bearer Access Token"| MCP_SERVER
-    MCP_SERVER -.->|"JWT Verification via<br/>/jwks & token introspection"| OIDC_PROVIDER
-```
-
-</center>
+<div className="mermaid-frame">
+  <OidcTopology />
+</div>
 
 ### Usage: Referencing the Standalone Implementation
 

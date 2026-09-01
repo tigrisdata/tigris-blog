@@ -25,10 +25,12 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-import MermaidFrame from "@site/src/components/MermaidFrame";
 import PullQuote from "@site/src/components/PullQuote";
 import creationGif from "./creation.gif";
 import heroImage from "./hero-img.webp";
+import NotificationControlPlane from "./diagrams/NotificationControlPlane";
+import ExtractionDataPath from "./diagrams/ExtractionDataPath";
+import UploadToQueryFlow from "./diagrams/UploadToQueryFlow";
 
 <img
   src={heroImage}
@@ -120,26 +122,9 @@ details on working with buckets, see the
 
 At a high level, the control plane looks like this:
 
-<MermaidFrame title="Tigris object events flow into Mixpeek, which ingests and indexes each change.">
-
-```mermaid
-graph LR
-  A["Tigris Bucket (videos, images, PDFs)"] -->|"OBJECT_CREATED_* / OBJECT_DELETED_*"| B["Object Notification webhook"]
-  B --> C["Mixpeek Ingestion (idempotent, DLQ-aware)"]
-  C --> D["Extraction + Indexing (embeddings, manifests)"]
-
-  classDef bucket fill:#0f766e,stroke:#0b4f4a,color:#ffffff;
-  classDef notification fill:#2563eb,stroke:#1d4ed8,color:#ffffff;
-  classDef ingestion fill:#f97316,stroke:#ea580c,color:#111827;
-  classDef extraction fill:#0ea5e9,stroke:#0369a1,color:#0f172a;
-
-  class A bucket;
-  class B notification;
-  class C ingestion;
-  class D extraction;
-```
-
-</MermaidFrame>
+<div className="mermaid-frame">
+  <NotificationControlPlane />
+</div>
 
 ## How Mixpeek turns files into searchable layers
 
@@ -164,26 +149,9 @@ documents on arrival.
 
 Conceptually, the data path is:
 
-<MermaidFrame title="Mixpeek breaks each Tigris object into transcripts, visual features, and an index you can query.">
-
-```mermaid
-graph LR
-  A["Tigris Object (video / image / PDF)"] --> B["Mixpeek Extractors"]
-  B --> C["Transcripts"]
-  B --> D["Visual embeddings"]
-  C --> E["Search Index + API (frames, pages, segments, entities)"]
-  D --> E
-
-  classDef object fill:#0f766e,stroke:#0b4f4a,color:#ffffff;
-  classDef extractor fill:#f59e0b,stroke:#d97706,color:#111827;
-  classDef index fill:#0ea5e9,stroke:#0369a1,color:#0f172a;
-
-  class A object;
-  class B extractor;
-  class C,D,E index;
-```
-
-</MermaidFrame>
+<div className="mermaid-frame">
+  <ExtractionDataPath />
+</div>
 
 And here's what the query looks like once your media is indexed:
 
@@ -324,29 +292,9 @@ buckets, follow the
 
 ## End-to-end flow from upload to query
 
-<MermaidFrame title="An object upload triggers a notification, Mixpeek processes it, and the results become queryable.">
-
-```mermaid
-graph LR
-  A["Write object to Tigris (S3-compatible upload)"]
-    --> B["Tigris Object Notification webhook"]
-  B --> C["Mixpeek receives event and checks idempotency key"]
-  C --> D["Extraction job (transcript, embeddings, entities)"]
-  D --> E["Results queryable in Mixpeek"]
-  E --> F["Derived artifacts written back to Tigris"]
-
-  classDef stepUpload fill:#0f766e,stroke:#0b4f4a,color:#ffffff;
-  classDef stepNotify fill:#2563eb,stroke:#1d4ed8,color:#ffffff;
-  classDef stepProcess fill:#f97316,stroke:#ea580c,color:#111827;
-  classDef stepResult fill:#0ea5e9,stroke:#0369a1,color:#0f172a;
-
-  class A stepUpload;
-  class B stepNotify;
-  class C,D stepProcess;
-  class E,F stepResult;
-```
-
-</MermaidFrame>
+<div className="mermaid-frame">
+  <UploadToQueryFlow />
+</div>
 
 Each step is independently observable. You can monitor DLQ depth and batch
 metrics, and replay any event that was missed during an outage using Mixpeek's

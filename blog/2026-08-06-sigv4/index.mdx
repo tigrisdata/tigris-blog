@@ -23,6 +23,7 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import heroImage from "./hero-image.webp";
+import TagSigningKeyProxy from "./diagrams/TagSigningKeyProxy";
 
 <img
   src={heroImage}
@@ -333,23 +334,9 @@ client and TAG both prove their identity to Tigris. Once that proof is sent,
 then TAG gets the intermediate derived signing key and uses that for locally
 validating requests, kinda like this:
 
-```mermaid
-sequenceDiagram
-   participant Client
-   participant TAG
-   participant Tigris
-
-   Client->>TAG: ListBuckets<br/>(signed)
-   TAG->>Tigris: ListBuckets<br/>(signed) + proxy hdrs
-   Note right of Tigris: 2xx, keys returned
-   Tigris-->>TAG: ListBucketsResponse<br/>+ keys (encrypted)
-   Note right of TAG: decrypt, cache
-   TAG-->>Client: ListBucketsResponse
-
-   Client->>TAG: ListBuckets<br/>(signed)
-   Note right of TAG: verify locally,<br/>cache hit
-   TAG-->>Client: 200 OK
-```
+<div className="mermaid-frame">
+  <TagSigningKeyProxy />
+</div>
 
 The
 [actual implementation in TAG](https://github.com/tigrisdata/tag/blob/baca0287073290af5dbba04e5046d8b292abc3a6/proxy/forwarder_transparent.go)

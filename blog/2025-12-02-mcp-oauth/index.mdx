@@ -21,6 +21,16 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 
+import McpMentalModel from "./diagrams/McpMentalModel";
+import ClassicWebAppModel from "./diagrams/ClassicWebAppModel";
+import WebAppOauth from "./diagrams/WebAppOauth";
+import McpOauthChain from "./diagrams/McpOauthChain";
+import ClientRegistration from "./diagrams/ClientRegistration";
+import AuthorizeKickoff from "./diagrams/AuthorizeKickoff";
+import Auth0Handshake from "./diagrams/Auth0Handshake";
+import SecondInteraction from "./diagrams/SecondInteraction";
+import TokenExchange from "./diagrams/TokenExchange";
+
 import heroimage from "./domo-arigato.webp";
 import styles from "!!raw-loader!./styles.css";
 
@@ -65,33 +75,15 @@ resource owner is still the human user, but they configure their MCP client
 
 So your mental model is:
 
-```mermaid
-flowchart LR
-    U(User)
-    C(MCP
-Client)
-    S(MCP
-Server)
-    A(OAuth-protected
-API)
-
-    U <--> C
-    C <--> S
-    S <--> A
-```
+<div className="mermaid-frame">
+  <McpMentalModel />
+</div>
 
 Instead of:
 
-```mermaid
-flowchart LR
-    U(User)
-    App(Your App)
-    A(OAuth-protected
-API)
-
-    U <--> App
-    App <--> A
-```
+<div className="mermaid-frame">
+  <ClassicWebAppModel />
+</div>
 
 The OAuth flow is typically done in the browser with a redirect URL. But MCP
 servers aren’t in browser, so they have to spawn their own HTTP server to
@@ -265,45 +257,16 @@ Another thing to keep in mind is that doing this means you need to add yet
 another level of indirection to your authentication flow. Normally the OAuth
 flow for a Web App that uses GitHub for authentication looks like this:
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Web App
-    participant GitHub
-
-    Client ->>+ Web App: Authorize me please
-    Web App ->>- Client: Ask GitHub to confirm
-    Client ->>+ GitHub: Authorize me please
-    GitHub ->>- Client: Authorized, please confirm with Web App
-    Client ->>+ Web App: GitHub asked me to confirm with you
-    Web App ->>+ Client: Sounds good, welcome back Xe!
-```
+<div className="mermaid-frame">
+  <WebAppOauth />
+</div>
 
 In contrast, our authentication flow with the MCP Server and an Auth0 user
 backed by GitHub looks a bit more like this:
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant MCP Server
-    participant Auth0
-    participant GitHub
-
-    Client ->>+ MCP Server: Authorize me please
-    MCP Server ->>- Client: Ask Auth0 to confirm
-    Client ->>+ Auth0: Authorize me please
-    Auth0 ->>- Client: Ask GitHub to confirm
-    Client ->>+ GitHub: Authorize me please
-    GitHub ->>- Client: Authorized, please confirm with Auth0
-    Client ->>+ Auth0: GitHub asked me to confirm with you
-    Auth0 ->>+ GitHub: Use the access code to get a token
-    GitHub ->>- Auth0: Here's a token
-    Auth0 ->>- Client: Authorized, please confirm with MCP Server
-    Client ->>+ MCP Server: Auth0 asked me to confirm with you
-    MCP Server ->>+ Auth0: Use the access code to get a token
-    Auth0 ->>- MCP Server: Here's a token
-    MCP Server ->>- Client: Here's your access token
-```
+<div className="mermaid-frame">
+  <McpOauthChain />
+</div>
 
 More complicated, certainly, but most of this is handled ambiently by
 authentication providers and library code. In most cases, you’ll only need to
@@ -316,19 +279,9 @@ an OAuth application with the MCP server. To make it happen, the Client makes a
 new application using the
 [RFC7591 OAuth Dynamic Client Registration Protocol](https://datatracker.ietf.org/doc/html/rfc7591):
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant MCP Server
-    participant Tigris
-    Client->>+MCP Server: Discover OIDC metadata
-    MCP Server->>-Client: OIDC metadata response
-    Client->>+MCP Server: Register client at /register
-    MCP Server->>Tigris: Save client details
-    MCP Server->>-Client: Return client credentials
-    Client->>+MCP Server: Start OAuth flow
-    MCP Server->>-Client: Return interaction redirect URL
-```
+<div className="mermaid-frame">
+  <ClientRegistration />
+</div>
 
 When registering with the server, the MCP client sends a request with
 information about the OAuth application kinda like this:
@@ -367,13 +320,9 @@ From here the Client needs to create a new OAuth Interaction with the MCP
 server. This authorization request is what creates the login form on GitHub when
 you click the Login with GitHub button.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant MCP Server
-    Client->>+MCP Server: Start OAuth flow at /authorize
-    MCP Server->>-Client: Return interaction redirect URL to Auth0
-```
+<div className="mermaid-frame">
+  <AuthorizeKickoff />
+</div>
 
 This kicks off the three-way handshake between your client, our MCP Server, and
 Auth0. The Client gets a redirect to Auth0, which makes your browser open to the
@@ -387,20 +336,9 @@ our MCP server is. Your users could ultimately be authenticated by Google,
 Microsoft, [Fly.io](http://Fly.io) or GitHub. Auth0 is acting as the
 authentication aggregator in this equation.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant MCP Server
-    participant Tigris
-    participant Auth0
-    Client->>+Auth0: User authenticates with Auth0
-    Auth0->>-Client: Redirect back to MCP server
-    Client->>+MCP Server: Redirect with details from Auth0
-    MCP Server->>+Auth0: Verify details from redirect
-    Auth0->>-MCP Server: Return access, id, refresh tokens
-    MCP Server->>Tigris: Save user session details
-    MCP Server->>-Client: Redirect to start interaction
-```
+<div className="mermaid-frame">
+  <Auth0Handshake />
+</div>
 
 Once the MCP server finishes that handshake with Auth0, it saves the session
 data to Tigris and then kicks off its own Interaction.
@@ -410,17 +348,9 @@ data to Tigris and then kicks off its own Interaction.
 Now that the MCP server has details about your Auth0 session, it uses that to
 correlate it with its own authentication logic. That flow looks kinda like this:
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant MCP Server
-    participant Tigris
-    Client->>+MCP Server: Start interaction
-    MCP Server->>+Tigris: Request client / session data
-    Tigris->>-MCP Server: Return client / session data
-    MCP Server->>Tigris: Create OIDC grant token
-    MCP Server->>-Client: Finish Interaction, redirect to agent
-```
+<div className="mermaid-frame">
+  <SecondInteraction />
+</div>
 
 ### Peace is restored to the kingdom
 
@@ -430,15 +360,9 @@ used by the Client every time it starts a new MCP session or makes a call. Peace
 gets restored to the kingdom and your vibes can flow out through your editor
 into the most holy of B2B SaaS applications.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant MCP Server
-    participant Tigris
-    Client->>+MCP Server: Exchange code for token
-    MCP Server->>Tigris: Request interaction data
-    MCP Server->>-Client: Return newly minted tokens
-```
+<div className="mermaid-frame">
+  <TokenExchange />
+</div>
 
 That’s pretty much all of the moving parts at play. In an ideal world, we
 wouldn’t have to ship about half of this. I’d really love it if Auth0 and other

@@ -27,10 +27,12 @@ tags:
 import InlineCta from "@site/src/components/InlineCta";
 import QuickSummary from "@site/src/components/QuickSummary";
 import BucketLocationDiagram from "@site/src/components/BucketLocationDiagram";
-import DiagramFrame from "@site/src/components/DiagramFrame";
 import heroImage from "./hero-img.webp";
 import complianceImage from "./compliance.webp";
 import globalImage from "./global.webp";
+import MultiRegionEur from "./diagrams/MultiRegionEur";
+import DualRegionPinned from "./diagrams/DualRegionPinned";
+import SingleRegionSin from "./diagrams/SingleRegionSin";
 
 <img
   src={heroImage}
@@ -147,31 +149,9 @@ details.
 
 A multi-region bucket in the EUR geography might look like this:
 
-<DiagramFrame title="Multi-region bucket (EUR)">
-
-```mermaid
-flowchart TD;
-  M["Multi-region bucket (EUR)"]
-  eurNode["EUR geography"]
-  autoNode["Tigris-selected regions within EUR"]
-  ams["ams"]
-  fra["fra"]
-
-  M --> eurNode
-  eurNode --> autoNode
-  autoNode --> ams
-  autoNode --> fra
-
-  classDef bucket fill:#1d4ed8,stroke:#1e3a8a,stroke-width:2px,color:#ffffff;
-  classDef eur fill:#22c55e,stroke:#16a34a,color:#111827;
-  classDef auto fill:#e5e7eb,stroke:#6b7280,stroke-width:2px,color:#111827;
-
-  class M bucket;
-  class eurNode,ams,fra eur;
-  class autoNode auto;
-```
-
-</DiagramFrame>
+<div className="mermaid-frame">
+  <MultiRegionEur />
+</div>
 
 Here is how to create multi-region buckets with the CLI:
 
@@ -209,25 +189,9 @@ $0.06/GB/month** in total, with zero egress fees.
 
 For example, a dual-region bucket might be:
 
-<DiagramFrame title="Dual-region bucket (iad,sjc)">
-
-```mermaid
-flowchart TD;
-  D["Dual-region bucket (iad,sjc)"]
-  iadNode["iad (Ashburn)"]
-  sjcNode["sjc (San Jose)"]
-
-  D --> iadNode
-  D --> sjcNode
-
-  classDef bucket fill:#1d4ed8,stroke:#1e3a8a,stroke-width:2px,color:#ffffff;
-  classDef usa fill:#22c55e,stroke:#16a34a,color:#111827;
-
-  class D bucket;
-  class iadNode,sjcNode usa;
-```
-
-</DiagramFrame>
+<div className="mermaid-frame">
+  <DualRegionPinned />
+</div>
 
 Example CLI commands for common dual-region setups:
 
@@ -246,23 +210,9 @@ don't need.
 
 In the simplest case, everything lives in one place:
 
-<DiagramFrame title="Single-region bucket (sin)">
-
-```mermaid
-flowchart TD;
-  S["Single-region bucket (sin)"]
-  sinNode["sin (Singapore)"]
-
-  S --> sinNode
-
-  classDef bucket fill:#1d4ed8,stroke:#1e3a8a,stroke-width:2px,color:#ffffff;
-  classDef apac fill:#06b6d4,stroke:#0891b2,color:#111827;
-
-  class S bucket;
-  class sinNode apac;
-```
-
-</DiagramFrame>
+<div className="mermaid-frame">
+  <SingleRegionSin />
+</div>
 
 You can create single-region buckets with a simple CLI flag:
 

@@ -1,7 +1,7 @@
 // Fig 01 — the single-region write path
 // Standalone React component. Inline styles only, React is the only dependency.
 
-import { AsciiFigure } from "./AsciiFigure";
+import { AsciiFigure } from "@site/src/components/AsciiFigure";
 
 const LINES = [
   [
