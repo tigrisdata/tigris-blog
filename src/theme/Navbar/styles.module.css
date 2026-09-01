@@ -1,0 +1,183 @@
+/* Top navigation ported from the marketing site (tigrisdata.com) Navbar.
+   Dark bar, matching the homepage palette regardless of blog color mode. */
+/* Compound with :global(.navbar) so these win over infima's base `.navbar`
+   styles. The `.navbar` class is required because Docusaurus's TOC highlight
+   hook reads `document.querySelector('.navbar').clientHeight`. */
+.nav:global(.navbar) {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: block;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: rgba(10, 23, 30, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.nav:global(.navbar).scrolled {
+  border-bottom-color: rgba(30, 51, 64, 0.5);
+}
+
+.inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+.links {
+  display: none;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #8fa3b0;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.link:hover,
+.linkActive {
+  color: #fff;
+  text-decoration: none;
+}
+
+.actions {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-family: "Hanken Grotesk", var(--ifm-font-family-base);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btnSignin {
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: #142229;
+  color: #fff;
+  transition: background-color 0.2s ease;
+}
+
+.btnSignin:hover {
+  background: #1a2d36;
+  color: #fff;
+  text-decoration: none;
+}
+
+.btnStarted {
+  border: 1px solid transparent;
+  background: #62feb5;
+  color: #050c0f;
+  transition: opacity 0.2s ease;
+}
+
+.btnStarted:hover {
+  opacity: 0.9;
+  color: #050c0f;
+  text-decoration: none;
+}
+
+.menuBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 0;
+  cursor: pointer;
+}
+
+.mobile {
+  border-top: 1px solid #1e3340;
+  background: #0a171e;
+  padding: 1rem 1.5rem;
+}
+
+.mobileLink {
+  display: block;
+  padding: 0.5rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #8fa3b0;
+  text-decoration: none;
+}
+
+.mobileLink:hover,
+.mobileLinkActive {
+  color: #fff;
+  text-decoration: none;
+}
+
+.mobileActions {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 800px) {
+  .links {
+    display: flex;
+  }
+
+  .actions {
+    display: flex;
+  }
+
+  .menuBtn {
+    display: none;
+  }
+
+  .mobile {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .inner {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
