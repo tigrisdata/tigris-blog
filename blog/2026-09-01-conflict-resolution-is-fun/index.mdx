@@ -40,11 +40,12 @@ import ReplicasetSharding from "./diagrams/ReplicasetSharding";
 <img
   src={heroImage}
   className="hero-image"
-  alt="A dark teal flowchart titled “Conflict resolution is fun: how Tigris
-  decides which version wins in a distributed system.” The compare(previous,
-  new, force) function branches through three decisions: new data wins if the
-  previous value is unset, newer data wins if it is more recent, forced changes
-  win the tiebreaker, and otherwise the existing data stays."
+  alt="An ascii-art decision tree showing how the compare(previous, new, force)
+  function decides which version of an object wins. If prev or next is unset or
+  the key is brand new, the versions are different objects: drop and log the
+  conflict. If prev is older than the new data, the new version is newer:
+  apply, row replaced. On a tie or older data, a forced change applies and
+  replaces the row; otherwise the change is dropped and the conflict logged."
 />
 
 One of the hardest problems in distributed systems is conflict resolution, or
