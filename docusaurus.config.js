@@ -251,13 +251,17 @@ const config = {
           width: "59",
           height: "24",
         },
+        // Mirrors the marketing footer's columns, order and link set exactly
+        // (website repo: src/components/Footer.tsx -- `resourceLinks` and
+        // `companyLinks`). Relative hrefs there are absolute here because the
+        // blog is a separate Docusaurus site.
         links: [
           {
-            title: "Company",
+            title: "Resources",
             items: [
               {
-                label: "About",
-                href: `https://www.tigrisdata.com/about/`,
+                label: "Docs",
+                href: `${tigrisConfig.docsUrl}/`,
                 target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
@@ -266,21 +270,28 @@ const config = {
                 label: "Blog",
                 href: "/",
               },
-            ],
-          },
-          {
-            title: "Resources",
-            items: [
               {
-                href: "https://www.tigrisdata.com/pricing/",
-                label: "Pricing",
+                label: "Status",
+                href: tigrisConfig.statusPageUrl,
                 target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
               },
               {
-                label: "Terms of Service",
-                href: `${tigrisConfig.docsUrl}/legal/service-terms/`,
+                label: "Report Abuse",
+                href: tigrisConfig.reportAbuseUrl,
+                target: "_self",
+                rel: "",
+                className: "footer__link-item disable-external-icon",
+              },
+            ],
+          },
+          {
+            title: "Company",
+            items: [
+              {
+                label: "Careers",
+                href: `${tigrisConfig.websiteUrl}/careers`,
                 target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
@@ -293,44 +304,11 @@ const config = {
                 className: "footer__link-item disable-external-icon",
               },
               {
-                label: "Report Abuse",
-                href: tigrisConfig.reportAbuseUrl,
-              },
-              // {
-              //   label: "Videos",
-              //   href: tigrisConfig.youTubeUrl,
-              // },
-              // {
-              //   label: "Community",
-              //   href: tigrisConfig.discordUrl,
-              // },
-            ],
-          },
-          {
-            title: "Developers",
-            items: [
-              {
-                href: `${tigrisConfig.docsUrl}/`,
-                label: "Docs",
+                label: "Terms of Service",
+                href: `${tigrisConfig.docsUrl}/legal/service-terms/`,
                 target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
-              },
-              {
-                label: "Status",
-                href: tigrisConfig.statusPageUrl,
-              },
-              {
-                label: "Support",
-                href: "mailto:help@tigrisdata.com",
-              },
-              // {
-              //   label: "Videos",
-              //   href: "https://www.youtube.com/channel/UCsCQ5Nl3JOh71UNCCNZ3q2g",
-              // },
-              {
-                label: "Community",
-                href: tigrisConfig.discordUrl,
               },
             ],
           },

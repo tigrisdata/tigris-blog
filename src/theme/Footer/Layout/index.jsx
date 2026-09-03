@@ -1,6 +1,8 @@
 /* eslint-disable react/prop-types */
 import React from "react";
 import clsx from "clsx";
+import useBaseUrl from "@docusaurus/useBaseUrl";
+import AISummary from "@site/src/components/AISummary";
 
 // Mirrors the brand column of the marketing footer
 // (website: src/components/Footer.tsx).
@@ -34,12 +36,6 @@ export default function FooterLayout({ style, links, logo, copyright }) {
           <div className="footer__row">
             <div className="footer__data">
               {logo && <div className="footer__brand">{logo}</div>}
-              <p className="footer__description">
-                Tigris is a globally distributed S3-compatible object storage
-                service that provides low latency anywhere in the world. Tigris
-                enables developers to quickly and easily store and access any
-                amount of data for a wide range of use cases.
-              </p>
               <div className="footer__eyebrow">Connect with us</div>
               <div className="footer__social">
                 {socialLinks.map((social) => (
@@ -65,6 +61,59 @@ export default function FooterLayout({ style, links, logo, copyright }) {
               </div>
             </div>
             <div className="links">{links}</div>
+            <div className="footer__compliance">
+              <div className="footer__eyebrow">Compliance</div>
+              {/* The badge artwork is white-on-transparent, so in light mode it
+                  sits on a dark plaque to stay legible. The asset itself is the
+                  marketing site's, unmodified. */}
+              <div className="footer__soc2">
+                <img
+                  src={useBaseUrl("/img/SOC2-badge-new.webp")}
+                  alt="SOC 2 Type II Certified"
+                  width="180"
+                  height="73"
+                  loading="lazy"
+                />
+              </div>
+              <div className="footer__card footer__card--chip">
+                <div className="footer__card-icon">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="7" width="18" height="13" rx="2" />
+                    <path d="M8 7V5a4 4 0 0 1 8 0v2" />
+                  </svg>
+                </div>
+                <div className="footer__card-text">
+                  <div className="footer__card-title">HIPAA BAA</div>
+                  <div className="footer__card-subtitle">Available</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="footer__cards">
+            <div className="footer__card footer__card--aaif">
+              <div className="footer__card-icon footer__card-icon--plain">
+                <img
+                  src={useBaseUrl("/img/aaif-member-badge.svg")}
+                  alt=""
+                  loading="lazy"
+                />
+              </div>
+              <div className="footer__card-text">
+                <div className="footer__card-title">AAIF Member</div>
+                <div className="footer__card-subtitle">Silver · 2026</div>
+              </div>
+            </div>
+            <AISummary />
           </div>
           {copyright && (
             <div className="footer__bottom">

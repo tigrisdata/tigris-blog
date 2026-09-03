@@ -249,6 +249,10 @@ nav.menu {
   --footer-accent-color: var(--ifm-color-primary-darkest);
   --footer-accent-border-color: var(--ifm-color-primary);
   --footer-accent-background-color: rgba(56, 172, 140, 0.08);
+  --footer-heading-color: var(--docs-color-text);
+  --footer-card-background-color: #f6f8f9;
+  --footer-card-border-color: var(--docs-color-border);
+  --footer-plaque-background-color: #0b181e;
   border-top: 1px solid var(--footer-border-color);
   padding-top: 3.5rem;
   padding-bottom: 3.5rem;
@@ -266,18 +270,44 @@ html[data-theme="dark"] .footer {
   --footer-accent-color: #4ed9b2;
   --footer-accent-border-color: rgba(78, 217, 178, 0.35);
   --footer-accent-background-color: rgba(98, 254, 181, 0.08);
+  --footer-heading-color: #ffffff;
+  --footer-card-background-color: rgba(11, 24, 30, 0.6);
+  --footer-card-border-color: rgba(255, 255, 255, 0.08);
+  --footer-plaque-background-color: transparent;
 }
 
+/* Homepage grid is 1.4fr 1fr 1fr 1.1fr (brand, Resources, Company,
+   Compliance). Docusaurus renders both link columns inside one `.links`
+   wrapper, so that wrapper takes the 2fr the two 1fr columns add up to. */
 .footer__row {
   display: grid;
-  grid-template-columns: 1.4fr 3fr;
+  grid-template-columns: 1.4fr 2fr 1.1fr;
   gap: 3.5rem;
+}
+
+.footer__row .footer__links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3.5rem;
+  margin: 0;
+}
+
+.footer__row .footer__col {
+  max-width: none;
+  padding: 0;
 }
 
 @media (max-width: 996px) {
   .footer__row {
     grid-template-columns: 1fr;
     gap: 2.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .footer__row .footer__links {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
 }
 
@@ -289,13 +319,6 @@ html[data-theme="dark"] .footer {
   height: 24px !important;
   width: auto;
   margin-top: 0;
-}
-
-.footer__description {
-  margin-bottom: 1.25rem;
-  font-size: 14px;
-  letter-spacing: -0.005em;
-  color: var(--footer-link-color);
 }
 
 .footer__eyebrow,
@@ -343,15 +366,26 @@ html[data-theme="dark"] .footer {
   color: var(--footer-accent-color);
 }
 
+/* The homepage list is `flex flex-col gap-2.5` with 14px/20px links inside a
+   16px-based `li`, i.e. a 24px item box plus a 10px gap. */
+.footer__items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 0;
+}
+
 .footer__item {
+  margin-top: 0;
   font-size: 14px;
   font-weight: normal;
+  line-height: 24px;
   letter-spacing: -0.005em;
 }
 
 .footer__link-item {
   color: var(--footer-link-color);
-  line-height: 1.75;
+  line-height: 20px;
 }
 
 .footer__link-item:hover {
@@ -372,6 +406,194 @@ html[data-theme="dark"] .footer {
 
 .footer__copyright {
   margin-top: 0;
+}
+
+/* Compliance column, AAIF card and AI-summary card, ported from the marketing
+   footer (website repo: src/components/Footer.tsx, src/components/AISummary.tsx
+   -- the `.agent-feature-card` surface). */
+.footer__compliance {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.625rem;
+}
+
+.footer__soc2 {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background-color: var(--footer-plaque-background-color);
+}
+
+html[data-theme="light"] .footer__soc2,
+html:not([data-theme="dark"]) .footer__soc2 {
+  padding: 0.5rem 0.75rem;
+}
+
+.footer__soc2 img {
+  width: 100%;
+  height: auto;
+}
+
+.footer__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 3rem;
+}
+
+.footer__card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  border: 1px solid var(--footer-card-border-color);
+  border-radius: 12px;
+  background-color: var(--footer-card-background-color);
+  transition: border-color 300ms ease;
+}
+
+.footer__card:hover {
+  border-color: var(--footer-accent-border-color);
+}
+
+.footer__card--chip {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+}
+
+/* Below the desktop grid the column is full-bleed, so both compliance items
+   fall back to the homepage's narrow `w-[180px]` form. */
+@media (max-width: 996px) {
+  .footer__soc2,
+  .footer__card--chip {
+    max-width: 180px;
+  }
+}
+
+.footer__card--aaif {
+  flex-shrink: 0;
+  padding: 1.25rem 1.5rem;
+}
+
+.footer__card--ai {
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1.25rem;
+  min-width: min(100%, 320px);
+  padding: 1.25rem 1.5rem;
+}
+
+.footer__card-lede {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.footer__card-icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--footer-accent-border-color);
+  border-radius: 8px;
+  background-color: var(--footer-accent-background-color);
+  color: var(--footer-accent-color);
+}
+
+.footer__card-icon--plain {
+  overflow: hidden;
+  border: 0;
+  background-color: #ffffff;
+}
+
+.footer__card-icon--plain img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.footer__card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.footer__card-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.3;
+  color: var(--footer-heading-color);
+}
+
+.footer__card--chip .footer__card-title {
+  font-size: 13px;
+}
+
+.footer__card-subtitle {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  line-height: 1.6;
+  color: var(--footer-eyebrow-color);
+}
+
+.footer__card--chip .footer__card-subtitle {
+  font-size: 9px;
+}
+
+.footer__ai-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (min-width: 1140px) {
+  .footer__ai-buttons {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.footer__ai-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--footer-card-border-color);
+  border-radius: 8px;
+  background-color: var(--footer-card-background-color);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--footer-heading-color);
+  cursor: pointer;
+  transition: border-color 200ms ease, background-color 200ms ease,
+    color 200ms ease;
+}
+
+.footer__ai-button:hover {
+  border-color: var(--footer-accent-border-color);
+  background-color: var(--footer-accent-background-color);
+  color: var(--footer-accent-color);
+}
+
+@media (max-width: 996px) {
+  .footer__cards {
+    margin-top: 2.5rem;
+  }
+
+  .footer__card--ai {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .navbar-sidebar__item {
