@@ -68,7 +68,7 @@ export default function FooterLayout({ style, links, logo, copyright }) {
                   marketing site's, unmodified. */}
               <div className="footer__soc2">
                 <img
-                  src={useBaseUrl("/img/SOC2-badge-new.webp")}
+                  src={useBaseUrl("/img/SOC2-badge-new.png")}
                   alt="SOC 2 Type II Certified"
                   width="180"
                   height="73"
