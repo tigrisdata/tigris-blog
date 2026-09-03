@@ -1,0 +1,474 @@
+---
+slug: object-storage-is-all-you-need
+title: "Object storage is all you need"
+description: |
+  How Ampbase runs a B2B control plane with no database: conditional writes for
+  uniqueness and compare-and-swap, per-tenant buckets, and what it costs.
+image: ./hero-image.webp
+keywords:
+  - object storage
+  - conditional writes
+  - compare-and-swap
+  - S3 If-Match
+  - multi-tenant isolation
+  - control plane
+  - DuckDB
+  - Parquet
+  - Tigris
+authors:
+  - jp
+tags:
+  - Engineering
+  - Object Storage
+  - distributed systems
+  - multi-tenancy
+---
+
+import PullQuote from "@site/src/components/PullQuote";
+import LostUpdate from "./diagrams/LostUpdate";
+import ReducedTelemetryPath from "./diagrams/ReducedTelemetryPath";
+
+In
+[an earlier post on our own blog](https://ampbase.io/blog/posts/why-we-built-ampbase/)
+I said Ampbase runs without a database, listed the ones we don't operate, and
+then promised a follow-up explaining where that breaks down. This is that post,
+and I want to be honest about the genre: "we didn't need a database" is a
+sentence that usually appears about eight months before "how we migrated to
+Postgres."
+
+So let's do the interesting version. The SQL you actually reach for turns out to
+be four features rather than a language: a unique constraint, a transaction, an
+index, and a history table. Here is how each one gets done without a database,
+the two primitives that make that possible, the places it has already cost us
+something, and the one thing that would make me abandon it. There is still SQL
+in here, and the spoiler is that it's for analytics.
+
+{/* truncate */}
+
+## What's actually stored
+
+Everything the control plane knows lives in object storage as serialized blobs
+at keys we compute. Two buckets matter.
+
+A global directory bucket holds the things that exist above any one customer:
+
+```
+directory/orgs/{org_id}/
+  metadata.json
+  members/{sha256(email)}.json
+  billing.json
+  channels/{channel_id}/metadata.json
+  api-tokens/{token_id}.json
+  events/audit/{event_ulid}.pb
+directory/org-ops/queue.pb
+```
+
+And each organization gets a bucket of its own, holding the things that only
+mean anything inside it:
+
+```
+channel-slugs/{slug}.json
+channel-{channel_id}/
+  config-meta/{config_id}.json
+  config-versions/{version_ulid}.json
+  bundle-meta/{bundle_id}.pb
+  bundle-versions/{bundle_id}/{version_ulid}.pb
+  active-config.pb
+  events/{event_ulid}.json
+```
+
+That's abridged, not exhaustive: there are more prefixes than these, and none of
+them change the argument. Protobuf where the record is new, JSON where it
+predates that convention. No migrations, no connection string, no ORM, no schema
+owned by a tool that is not the application.
+
+The per-customer bucket is not us calling `CreateBucket` in a loop. Tigris has a
+[Partner Integration Program](https://www.tigrisdata.com/docs/partner-integrations/)
+for exactly this shape, and one call to it creates a Tigris organization for
+that customer, its bucket, and a set of access keys scoped to it. We hold a
+provider identity; each customer is an organization underneath it, which their
+docs describe as providing "strong isolation between end users."
+
+The convenience is not the point. Isolation stops being something the
+application has to remember: no `WHERE org_id = ?` to forget, because the
+credentials that reach one customer's data cannot address anyone else's. And a
+shared database shares more than rows. There is no connection pool for one
+customer's traffic to starve, no query plan that stays fast only while the
+tenants stay the same size, no single instance that takes every customer down
+with it. Offboarding is a delete rather than a migration for the same reason.
+
+The obvious question is how you get anything resembling database behavior out of
+a key-value store that historically couldn't even promise you'd read back what
+you just wrote. The answer is that object storage grew two primitives, and that
+plenty of people worked this out before we did. Streaming systems, search
+indexes, and databases have spent the last few years moving their storage layer
+onto S3-compatible object storage, which meant we mostly got to read about the
+sharp edges instead of discovering them.
+
+<PullQuote>
+  And when you do need a database, let someone else run it for you. We've built
+  more than one platform for this, so we're biased, but we also have the scars.
+  Databases are hard.
+</PullQuote>
+
+So this isn't a clever trick we found. What we wanted from it was operational
+simplicity and reliability at the data layer, and that's most of the actual
+return. Durability becomes somebody else's problem, and they are much better at
+it than we would be. The state a small team spends the most anxious hours on is
+the state underneath everything, and this design mostly removes the category.
+
+## The two primitives
+
+**Read-after-write consistency.** For most of S3's life a write was a
+suggestion, which is a miserable foundation for a control plane where "which
+config version is deployed" cannot be a question with two answers.
+[That stopped being true in December 2020](https://aws.amazon.com/about-aws/whats-new/2020/12/amazon-s3-now-delivers-strong-read-after-write-consistency-automatically-for-all-applications/):
+strong consistency on every request, list operations included, at no extra cost.
+The rest of the field followed, nobody sells it as a feature anymore, and that
+is exactly why this design is available to anyone who wants it rather than to
+whoever picked the right vendor. Werner Vogels
+[wrote up how S3 actually does it](https://www.allthingsdistributed.com/2021/04/s3-strong-consistency.html)
+if you want the mechanism rather than my summary of it.
+
+What we get from [Tigris](https://www.tigrisdata.com/docs/concepts/consistency/)
+specifically is control over the regional dimension. A read issued from the same
+region as the data always returns the latest write. Across regions it depends on
+the bucket's
+[location type](https://www.tigrisdata.com/docs/buckets/locations/): Global, the
+default, is eventual, so you can write in one region and read a slightly older
+version from another, and there are location types that are strongly consistent
+across the whole bucket instead.
+
+That choice isn't free in either direction, which is what makes it a design
+decision rather than a setting. Strong consistency across regions is paid for at
+the write: a Multi-region bucket replicates the metadata of each write
+synchronously to more than one region before the write completes. Eventual
+consistency gets you fast local reads and cheap writes everywhere, and hands you
+back the job of knowing which of your reads can actually tolerate being a moment
+behind. We built on the default, which is the eventual one, and a fair chunk of
+this post is about paying that bill honestly, including the part where it turns
+out we had priced it wrong.
+
+**Conditional writes.** The one that matters more, and the one people still
+don't expect. Tigris supports
+[HTTP preconditions](https://www.tigrisdata.com/docs/objects/conditionals/) on
+writes: `If-None-Match: *` writes only when the key doesn't exist, and
+`If-Match: {etag}` writes only when the object hasn't changed since you read it.
+Both evaluate against the object's latest state, within whatever consistency
+model your bucket's location type gives you. Hold on to that second clause. It
+is doing far more work than it looks like, and the section on where this design
+breaks is largely about what it costs to read past it.
+
+That's compare-and-swap. Once you have compare-and-swap on a key, you have the
+primitive underneath most of what you actually use a database for, and the two
+things people are most certain you need one for become tractable.
+
+## Uniqueness without UNIQUE
+
+Every channel has a slug, and two channels in an org can't share one. In
+Postgres that's a unique index and about four seconds of thought.
+
+Without one, the naive version is a race in three lines: check whether the slug
+exists, see that it doesn't, write it, and lose to the request that did the same
+thing between your read and your write. Both succeed. Both users believe they
+own `production`.
+
+The conditional write closes it. We attempt the create with `If-None-Match: *`,
+which instructs the storage layer to reject the write if anything is already at
+that key. Concurrent creates serialize; exactly one wins. The loser gets a
+`412 Precondition Failed`, and then does something worth noticing:
+
+```go
+switch {
+case err == nil:
+    return nil
+case isPreconditionFailed(err):
+    // Another writer created the slug concurrently. Re-read to determine
+    // whether this is idempotent (same channelID) or a conflicting mapping.
+    return s.handlePutConflict(ctx, slug, channelID, err)
+```
+
+A 412 doesn't tell you _why_ you lost. It might mean somebody else claimed the
+slug, a real conflict, and the user needs to pick another name. It might mean
+your own retry arrived twice, which is not a conflict at all and must succeed
+silently. The only way to tell is to read the key back and look at who's in it.
+That re-read is easy to skip, and skipping it produces a system that
+occasionally tells a user their own slug is taken by them.
+
+## Mutation without transactions
+
+Billing state is one JSON object per org, and several things write to it: a
+Stripe webhook, the retention sweeper, the lifecycle email worker. Two of them
+firing at once is uncommon but entirely possible, and a lost update means a
+customer's subscription state is silently wrong, the kind of bug you find out
+about from the customer.
+
+Without transactions, you get optimistic concurrency: read the object and its
+ETag, compute the new state, write it back conditional on the ETag still
+matching, and retry from a fresh read if it doesn't.
+
+```go
+// Nothing read, so create only while the key is still absent; a version read,
+// so replace only that version.
+func precondition(etag string) (ifMatch, ifNoneMatch *string) {
+    switch etag {
+    case "":
+        return nil, aws.String("*")
+    default:
+        return aws.String(etag), nil
+    }
+}
+
+switch _, err := s.client.PutObject(ctx, in); {
+case isPreconditionFailed(err):
+    return nil, err // retry from a fresh read
+```
+
+Backoff is 10ms rising to 100ms, capped at five attempts, because contention
+here is rare and a conflict should resolve on the first retry. If it doesn't
+resolve in five, something is wrong that a sixth attempt won't fix.
+
+The subtle constraint is in the function signature. The caller passes a `mutate`
+function, and because that function re-runs against freshly read state on every
+attempt, **it has to be a pure function of its input**. Any side effect inside
+it (an email, a counter, a Stripe call) happens once per attempt rather than
+once per update. That requirement isn't enforced by the compiler. It's enforced
+by a comment and by whoever reviews the next person who tries to send a receipt
+from inside one.
+
+## Indexes without an index
+
+`members/{sha256(email)}.json` looks like a hash for privacy reasons. It isn't.
+It's an index.
+
+"Is this user a member of this org" is the single hottest question in the
+system: every authenticated request asks it. With the email hashed into the key,
+the answer is one `GetObject` at a path you can compute locally. No listing, no
+scan, no secondary index to keep in sync. The key _is_ the lookup.
+
+This is the whole design pattern, and it's also the design's central limitation,
+which I'll come back to: you get O(1) access to exactly the questions you
+thought of in advance.
+
+## History without a history table
+
+Config versions are append-only under ULID keys, and this is where the storage
+model stops being a workaround and starts being better than the thing it
+replaced.
+
+ULIDs sort lexicographically by creation time. Object storage lists keys in
+lexicographic order. So "every config change in this channel, in order" is a
+prefix list, and "everything that happened between Tuesday and Thursday" is a
+range read over a key space that was already sorted for you. No index, no
+`ORDER BY`, no `created_at` column that somebody forgot to index.
+
+Version objects and events are never rewritten, so the audit trail isn't a
+feature anyone implemented. It's a consequence of there being no code path that
+writes twice to those keys. History can't be lost by a careless `UPDATE`,
+because there is no `UPDATE`.
+
+What _does_ get overwritten is the pointers: which version a configuration
+currently serves, and the deployed-config object each channel's agents read.
+Those are mutable by design, and it's worth being precise that the immutability
+guarantee covers the record of what happened, not the statement of what's
+current. Deploying is a pointer move; rolling back is the same move in the other
+direction. The old version never went anywhere, because nothing was ever asked
+to remove it.
+
+## Where it actually breaks
+
+Four places, roughly in order of how much they've cost us.
+
+**Read amplification is the real bill.** The control plane, the Main App in our
+code, runs at N ≥ 2 instances per region, and every instance reads the same
+directory bucket on every request: token validation, org metadata, member RBAC,
+refresh-token rotation. At N instances you pay each read N times. Worse are the
+fan-outs. Listing members, invitations, API tokens, or webhooks is one
+`ListObjectsV2` followed by one `GetObject` per result. That's a page-load
+costing dozens of round trips to a service across the network, where Postgres
+would have charged you one query and a join you didn't think twice about.
+
+The answer is no different from the one you'd reach for with a database
+underneath. You put a read-through cache in front of it. That's the workflow, so
+the technology is a preference: Valkey, DragonflyDB, Memcached, Redis, there is
+no shortage of caches. We are still paying the amplification, which makes this
+the live version of the problem rather than a war story.
+
+One rule outlives whichever we pick: **the cache is never a source of truth.**
+Every read path has to work correctly with it absent, unreachable, or wrong. It
+shortens latency; it never gates correctness. The moment a cache becomes
+load-bearing you have a database again, except it's in RAM, nobody backed it up,
+and its failure mode is silence.
+
+**You can only ask the questions you designed for.** There are no joins and no
+queries. Every access pattern is a key you chose in advance, and a new question
+means a new key, which means a migration, except now the migration is a backfill
+job you wrote by hand instead of `CREATE INDEX`. We have eaten this cost more
+than once and will again. It is the single largest ongoing tax of the design,
+and anyone who tells you object storage is free of schema work is describing a
+system that has never had a second feature.
+
+**The event log is not a source of truth, and calling this event sourcing would
+be flattering.** The layout looks event-sourced. There's an append-only,
+ULID-keyed event log, and the previous section made much of it. But nothing
+replays it to reconstruct anything. Current state is stored directly: a pointer
+object records which version is deployed, and reading it is one `GetObject` at a
+computed key. The log is a record of what happened, never an input to deciding
+what currently is.
+
+That's a deliberate simplification and mostly a good trade: there's no replay
+path, so there's no replay path to get slow, and the machinery that usually
+comes with event sourcing is machinery we don't operate.
+
+The cost is elsewhere, and it's the kind you don't notice. Writing the state and
+appending the event are two separate `PutObject` calls, and object storage
+offers no way to make them one. If the first succeeds and the second doesn't (a
+process dying in between will do it), the state is right and the history is
+missing an entry. Nothing detects this, because detecting it would require
+something that reads the log and compares it to state, and the entire point is
+that nothing does. The audit trail is trustworthy in the direction that matters
+legally, since entries are never rewritten. It just isn't guaranteed complete,
+and the gap between "immutable" and "complete" is one an auditor will eventually
+ask you about.
+
+**Cross-region consistency is work you have to actually do.** Within a region
+the guarantees above hold absolutely. Across regions the default is eventual,
+which means every correctness argument in this post is scoped to readers in the
+data's own region, and the moment you run in more than one, somebody has to go
+and check which of them still holds.
+
+For reads that's auditable rather than architectural, and the append-only design
+makes the exposed set much smaller than you'd guess. Serving an agent its config
+is the case that looks alarming and isn't: config versions are immutable, so a
+stale read of which version is current doesn't hand anyone a wrong config, it
+hands them the previous one, which was valid, and they pick up the new one on
+the next check-in. Staleness degrades to latency rather than incorrectness. That
+isn't luck, it's what immutability buys you, and it's most of why this design
+tolerates eventual consistency as well as it does.
+
+The writes are where the comfortable intuition is wrong. It is tempting to
+assume a conditional write settles everything: it evaluates against the object's
+latest state, so uniqueness and CAS should hold however stale any reader is.
+That holds within a region and not across them. A conditional write is checked
+by whichever region receives it, and what that region thinks current depends on
+the bucket's location type. The default is strongly consistent inside a region
+and eventually consistent between them, and that is what we built on. So the
+same compare-and-swap issued from two regions can be judged against two
+different views and both succeed. The loser gets no 412 and no error. The update
+is simply gone. That comes from Tigris rather than from reasoning about it:
+conditional operations
+["always evaluate against the latest state of the object within the consistency model defined by your bucket's location type"](https://www.tigrisdata.com/docs/objects/conditionals/).
+Inside that model, not above it.
+
+<LostUpdate />
+
+The important half of that is _where_ it happens. The lost update is at the
+write, so nothing you do on the read side reaches it, which rules out the whole
+class of fixes people reach for first. The reads are the tractable half: the
+exposed set is the one whose _answer drives a decision_, which is small enough
+to just enumerate. So we enumerated it, six conditional-write sites and every
+read around them. What that turned up, and what we did about both halves, is a
+post of its own.
+
+## The asterisk: analytics
+
+The last post left an asterisk on all of this, and the asterisk was analytics:
+the one place the design actually tapped out. The honest version is that it
+tapped out against a plan we later changed our minds about.
+
+The original design was telemetry-shaped. We were going to ingest raw OTLP and
+keep a 1% sample of it, and for that job ClickHouse isn't a compromise, it is
+the right answer: high volume in, aggregation on the server. Then two things
+turned out to be wrong with the plan rather than with the database. Holding a
+slice of every customer's actual log bodies and attribute values is a liability
+we didn't want, for a product whose whole pitch is helping you spend less on
+telemetry. And the sample wasn't even good analytics. One percent of the data
+was more than we wanted to hold and less than we needed.
+
+So the reduction moved to the host. The supervisor reduces over every frame
+instead of a sample of them, and what reaches us is what came out of that:
+sketches, masked templates, and rollups, per agent, per 60 second window. That
+is a different shape. It is small, it is already aggregated, it is append-only,
+and it arrives already partitioned by the customer it came from. Nothing about
+it needs a columnar warehouse. It needs somewhere to put files.
+
+Which re-answered the tool question, and not because we got cleverer: the data
+changed underneath the decision.
+
+A tiger and a duck walk into a bucket. Somebody asks where the rest of the
+infrastructure went...
+
+Here it is without the animals:
+
+<ReducedTelemetryPath />
+
+Every hop there is scoped to one customer, and the ClickHouse tables that used
+to hold the reduced data are gone. The reader is
+[DuckDB over those files](https://duckdb.org/docs/stable/core_extensions/httpfs/s3api.html).
+We noticed the animals after the benchmarks rather than before them, which is
+the right order and the worse story.
+
+Where that left tenancy is the part I didn't expect. We set out to stop holding
+customer content, and what we ended up with is a layout where one customer's
+telemetry isn't addressable from another customer's credentials at all: the same
+bucket boundary as the rest of this post, finally applied to the one plane that
+had been the exception to it. That is a stronger property than the one we were
+trying to buy, and it arrived as a side effect of wanting less data.
+
+ClickHouse doesn't go away, because one job genuinely is warehouse-shaped: the
+interactive agent and supervisor telemetry the fleet views are built on, which
+we want to keep building into rather than shrinking. That one is a post for
+another day.
+
+The point here is narrower. We didn't find a cleverer way to store the telemetry
+we had. We decided we wanted different telemetry, and the storage question
+answered itself afterwards. This is our general approach: understand the
+workflow, pick the best technology around it. Doing it the other way round is
+how you end up defending a database because you already have one.
+
+## No regrets, ask me in a year
+
+What would make me abandon this is a better question than whether the design is
+universally correct, because it isn't.
+
+Ampbase gets away with this because of a specific shape: writes are low-volume
+and mostly uncontended, reads are point lookups on keys we control, the data
+partitions cleanly per organization, and the interesting history is append-only
+by nature. Config changes happen a few times a day, not a few thousand times a
+second.
+
+Change any of those and the answer flips. If two writers contended on the same
+key continuously, CAS-with-retry would become a livelock generator instead of a
+concurrency primitive. If we needed a transaction spanning several objects (real
+atomicity across keys, not per-key CAS), there is no way to build that on
+preconditions, and the honest move would be to stop trying. If the product
+needed ad-hoc queries over control-plane state, we'd be reimplementing a query
+planner badly, one backfill at a time.
+
+None of those are hypothetical for other people's products. They're just not
+true of this one yet.
+
+<PullQuote>
+  SQLite per tenant is the alternative I considered, and Litestream made it a
+  real design rather than a strawman. I went the other way because this puts a
+  database back, hundreds of smaller ones, which puts us on the hook for
+  replication.
+</PullQuote>
+
+The version of this post I'd have written two years ago would have been wrong,
+because without conditional writes none of it holds together: you cannot build
+uniqueness or safe mutation on a store that will happily let two writers both
+believe they won. S3 got the create-if-absent half in August 2024 and
+[compare-and-swap that November](https://aws.amazon.com/about-aws/whats-new/2024/11/amazon-s3-functionality-conditional-writes/),
+and the useful consequence is that a statement of "obviously you need Postgres
+for that" has been getting quietly narrower, in public, across a lot of systems
+that are not ours.
+
+Which is the actual recommendation, and it is duller than the title. Not that
+object storage is all you need. For a while it wasn't, and what closed the gap
+was not a better way to store the telemetry but deciding we wanted less of it.
+The shape of your data is a decision too, and it is usually the one that picks
+your database, which is the same thing as saying the workflow picks it and you
+are only choosing when to notice. We didn't do this to be interesting. We did it
+because the data layer is where small teams lose their evenings, and this is the
+version with the fewest moving parts we have to be awake for.
