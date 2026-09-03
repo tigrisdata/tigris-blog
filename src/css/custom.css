@@ -325,13 +325,18 @@ html[data-theme="dark"] .footer {
 }
 
 .footer__brand {
+  /* Flex so the wordmark is blockified and drops the inline descender gap,
+     the way the marketing footer's block image does. Setting `display` on
+     `.footer__logo` itself cannot work: ThemedImage emits BOTH the light and
+     dark <img> in the SSR markup and hides the inactive one with
+     `display: none`, so any blanket display rule on that class un-hides it
+     and both wordmarks stack until hydration. */
+  display: flex;
+  align-items: flex-start;
   margin-bottom: 1.25rem;
 }
 
 .footer__logo {
-  /* `!important` for the same reason as the height: the ThemedImage CSS
-     module sets `display: initial` on the visible variant. */
-  display: block !important;
   height: 24px !important;
   width: auto;
   margin-top: 0;
