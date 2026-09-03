@@ -237,12 +237,19 @@ const config = {
         ],
       },
       footer: {
+        // No `href`: the marketing footer renders the wordmark as a plain
+        // image, and Docusaurus' footer logo link is styled at opacity 0.5,
+        // which is what made the wordmark look muted here.
+        // Both files are the brand wordmark as shipped by the website repo:
+        // `/img/tigris-logo.svg` is public/images/tigris-logo.svg (the asset
+        // the marketing footer itself uses) and `/logo/light.svg` is
+        // public/brand/color-light/Logo.svg for the light color mode.
         logo: {
-          href: "/",
-          src: "/logo/light.png",
-          srcDark: "/logo/dark.png",
-          alt: "Tigris Blog",
-          height: "26px",
+          src: "/logo/light.svg",
+          srcDark: "/img/tigris-logo.svg",
+          alt: "Tigris",
+          width: "59",
+          height: "24",
         },
         links: [
           {
@@ -328,7 +335,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Tigris Data, Inc. All rights reserved.`,
+        copyright: `© ${new Date().getFullYear()} Tigris Data, Inc · All rights reserved`,
       },
       ...(process.env.NEXT_ALGOLIA_APPID && process.env.NEXT_ALGOLIA_APIKEY
         ? {

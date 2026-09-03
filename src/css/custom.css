@@ -238,73 +238,140 @@ nav.menu {
   border-radius: 6px;
 }
 
-.footer__description {
-  color: var(--docs-color-text-100);
-  font-size: 16px;
+/* Footer. Mirrors the marketing site footer (website repo:
+   src/components/Footer.tsx). */
+.footer {
+  --footer-border-color: var(--docs-color-border);
+  --footer-eyebrow-color: var(--docs-color-text-100);
+  --footer-link-color: var(--docs-color-text-100);
+  --footer-link-hover-color: var(--docs-color-text);
+  --footer-icon-color: var(--docs-color-text-100);
+  --footer-accent-color: var(--ifm-color-primary-darkest);
+  --footer-accent-border-color: var(--ifm-color-primary);
+  --footer-accent-background-color: rgba(56, 172, 140, 0.08);
+  border-top: 1px solid var(--footer-border-color);
+  padding-top: 3.5rem;
+  padding-bottom: 3.5rem;
 }
 
-.footer__copyright {
-  margin-top: 32px;
-  font-size: 14px;
-  color: var(--docs-color-text-100);
+/* Dark is the mode the marketing site ships, so these are the exact tokens
+   its footer uses (website repo: src/app/globals.css -- --color-border,
+   --color-text-secondary, --color-text-muted). */
+html[data-theme="dark"] .footer {
+  --footer-border-color: #1e3340;
+  --footer-eyebrow-color: rgba(255, 255, 255, 0.45);
+  --footer-link-color: #8fa3b0;
+  --footer-link-hover-color: #ffffff;
+  --footer-icon-color: #728f9a;
+  --footer-accent-color: #4ed9b2;
+  --footer-accent-border-color: rgba(78, 217, 178, 0.35);
+  --footer-accent-background-color: rgba(98, 254, 181, 0.08);
 }
 
 .footer__row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.4fr 3fr;
+  gap: 3.5rem;
 }
 
-.footer__cta {
-  padding-right: 24px;
+@media (max-width: 996px) {
+  .footer__row {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+.footer__brand {
+  margin-bottom: 1.25rem;
+}
+
+.footer__logo {
+  height: 24px !important;
+  width: auto;
+  margin-top: 0;
+}
+
+.footer__description {
+  margin-bottom: 1.25rem;
   font-size: 14px;
+  letter-spacing: -0.005em;
+  color: var(--footer-link-color);
 }
 
-.footer__cta p {
-  margin: 0;
+.footer__eyebrow,
+.footer__title,
+.footer__copyright,
+.footer__endpoint {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 10px;
+  font-weight: normal;
+  line-height: 1.6;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--footer-eyebrow-color);
 }
 
-.footer__cta a {
-  --ifm-link-hover-color: #fff;
-  margin-top: 0.25rem;
-  display: inline-block;
-  padding: 0.25rem 1.5rem;
-  border-radius: 4px;
-  background-color: var(--docs-color-primary);
-  color: #000000;
-  text-decoration: none;
-}
-
-.footer__cta a:hover {
-  background-color: var(--docs-color-primary-100);
-  color: #000000;
-}
-
-.footer__data {
-  flex: 2;
-}
-
-.footer__row .links {
-  flex: 3;
+.footer__eyebrow {
+  margin-bottom: 0.75rem;
 }
 
 .footer__title {
-  font-size: 16px;
-  font-weight: normal;
-  color: var(--docs-color-text-100);
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.footer__social {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.footer__social-link {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--footer-border-color);
+  border-radius: 8px;
+  color: var(--footer-icon-color);
+  transition: border-color 200ms ease, background-color 200ms ease,
+    color 200ms ease;
+}
+
+.footer__social-link:hover {
+  border-color: var(--footer-accent-border-color);
+  background-color: var(--footer-accent-background-color);
+  color: var(--footer-accent-color);
 }
 
 .footer__item {
   font-size: 14px;
   font-weight: normal;
-  color: var(--docs-color-text);
+  letter-spacing: -0.005em;
+}
+
+.footer__link-item {
+  color: var(--footer-link-color);
+  line-height: 1.75;
 }
 
 .footer__link-item:hover {
+  color: var(--footer-link-hover-color);
   text-decoration: none;
 }
 
-.footer__logo {
-  height: 26px !important;
+.footer__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--footer-border-color);
+}
+
+.footer__copyright {
+  margin-top: 0;
 }
 
 .navbar-sidebar__item {
