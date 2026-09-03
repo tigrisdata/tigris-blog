@@ -249,13 +249,28 @@ nav.menu {
   --footer-accent-color: var(--ifm-color-primary-darkest);
   --footer-accent-border-color: var(--ifm-color-primary);
   --footer-accent-background-color: rgba(56, 172, 140, 0.08);
+  /* Icon plates are a step softer than the hover accent above -- on the
+     marketing footer these are two different pairs of values. */
+  --footer-icon-surface-background-color: rgba(56, 172, 140, 0.06);
+  --footer-icon-surface-border-color: rgba(56, 172, 140, 0.28);
   --footer-heading-color: var(--docs-color-text);
   --footer-card-background-color: #f6f8f9;
   --footer-card-border-color: var(--docs-color-border);
+  --footer-button-background-color: #ffffff;
+  --footer-button-border-color: var(--docs-color-border);
   --footer-plaque-background-color: #0b181e;
   border-top: 1px solid var(--footer-border-color);
-  padding-top: 3.5rem;
-  padding-bottom: 3.5rem;
+  /* Marketing footer is `py-14` with no horizontal padding; the inset comes
+     from the inner container instead. */
+  padding: 3.5rem 0;
+  line-height: 1.5;
+}
+
+/* Marketing container is `max-w-7xl px-6`, i.e. 1280px wide with a 24px
+   inset, giving 1232px of content. Docusaurus' own container is wider. */
+.footer .container {
+  max-width: 1280px;
+  padding: 0 1.5rem;
 }
 
 /* Dark is the mode the marketing site ships, so these are the exact tokens
@@ -270,26 +285,31 @@ html[data-theme="dark"] .footer {
   --footer-accent-color: #4ed9b2;
   --footer-accent-border-color: rgba(78, 217, 178, 0.35);
   --footer-accent-background-color: rgba(98, 254, 181, 0.08);
+  --footer-icon-surface-background-color: rgba(98, 254, 181, 0.06);
+  --footer-icon-surface-border-color: rgba(78, 217, 178, 0.28);
   --footer-heading-color: #ffffff;
   --footer-card-background-color: rgba(11, 24, 30, 0.6);
   --footer-card-border-color: rgba(255, 255, 255, 0.08);
+  --footer-button-background-color: #1a2d36;
+  --footer-button-border-color: #1e3340;
   --footer-plaque-background-color: transparent;
 }
 
-/* Homepage grid is 1.4fr 1fr 1fr 1.1fr (brand, Resources, Company,
-   Compliance). Docusaurus renders both link columns inside one `.links`
-   wrapper, so that wrapper takes the 2fr the two 1fr columns add up to. */
+/* Marketing grid is 1.4fr 1fr 1fr 1.1fr (brand, Resources, Company,
+   Compliance) with a single 56px gap track between each. Docusaurus nests
+   both link columns inside two wrapper divs, so those wrappers are removed
+   from the layout with `display: contents` and the four columns become real
+   siblings -- otherwise the two nested columns share one track and every
+   column ends up the wrong width. */
 .footer__row {
   display: grid;
-  grid-template-columns: 1.4fr 2fr 1.1fr;
+  grid-template-columns: 1.4fr 1fr 1fr 1.1fr;
   gap: 3.5rem;
 }
 
+.footer__row .links,
 .footer__row .footer__links {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 3.5rem;
-  margin: 0;
+  display: contents;
 }
 
 .footer__row .footer__col {
@@ -304,18 +324,14 @@ html[data-theme="dark"] .footer {
   }
 }
 
-@media (max-width: 600px) {
-  .footer__row .footer__links {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-}
-
 .footer__brand {
   margin-bottom: 1.25rem;
 }
 
 .footer__logo {
+  /* `!important` for the same reason as the height: the ThemedImage CSS
+     module sets `display: initial` on the visible variant. */
+  display: block !important;
   height: 24px !important;
   width: auto;
   margin-top: 0;
@@ -328,7 +344,7 @@ html[data-theme="dark"] .footer {
   font-family: var(--ifm-font-family-monospace);
   font-size: 10px;
   font-weight: normal;
-  line-height: 1.6;
+  line-height: 1.5;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: var(--footer-eyebrow-color);
@@ -399,7 +415,7 @@ html[data-theme="dark"] .footer {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-top: 3rem;
+  margin-top: 1.5rem;
   padding-top: 1.25rem;
   border-top: 1px dashed var(--footer-border-color);
 }
@@ -416,6 +432,12 @@ html[data-theme="dark"] .footer {
   flex-direction: column;
   align-items: stretch;
   gap: 0.625rem;
+}
+
+/* This column spaces its children with the flex `gap` above, exactly as the
+   marketing one does, so the eyebrow must not add its own margin on top. */
+.footer__compliance .footer__eyebrow {
+  margin-bottom: 0;
 }
 
 .footer__soc2 {
@@ -440,6 +462,7 @@ html:not([data-theme="dark"]) .footer__soc2 {
 .footer__cards {
   display: flex;
   flex-wrap: wrap;
+  align-items: stretch;
   gap: 0.75rem;
   margin-top: 3rem;
 }
@@ -447,7 +470,7 @@ html:not([data-theme="dark"]) .footer__soc2 {
 .footer__card {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
+  gap: 0.75rem;
   border: 1px solid var(--footer-card-border-color);
   border-radius: 12px;
   background-color: var(--footer-card-background-color);
@@ -499,9 +522,9 @@ html:not([data-theme="dark"]) .footer__soc2 {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--footer-accent-border-color);
+  border: 1px solid var(--footer-icon-surface-border-color);
   border-radius: 8px;
-  background-color: var(--footer-accent-background-color);
+  background-color: var(--footer-icon-surface-background-color);
   color: var(--footer-accent-color);
 }
 
@@ -527,12 +550,13 @@ html:not([data-theme="dark"]) .footer__soc2 {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.005em;
-  line-height: 1.3;
+  line-height: 20px;
   color: var(--footer-heading-color);
 }
 
 .footer__card--chip .footer__card-title {
   font-size: 13px;
+  line-height: 19.5px;
 }
 
 .footer__card-subtitle {
@@ -540,7 +564,7 @@ html:not([data-theme="dark"]) .footer__soc2 {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--footer-eyebrow-color);
 }
 
@@ -563,15 +587,15 @@ html:not([data-theme="dark"]) .footer__soc2 {
 .footer__ai-button {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--footer-card-border-color);
+  border: 1px solid var(--footer-button-border-color);
   border-radius: 8px;
-  background-color: var(--footer-card-background-color);
+  background-color: var(--footer-button-background-color);
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
+  line-height: 19.5px;
   letter-spacing: -0.005em;
   color: var(--footer-heading-color);
   cursor: pointer;
