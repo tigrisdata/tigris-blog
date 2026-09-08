@@ -12,13 +12,10 @@ keywords:
   - columnar
   - zstd
   - tigris
+image: ./hero-image.webp
 authors: [xe]
 tags: [build with tigris, engineering, go]
 ---
-
-{/* TODO(Xe): hero image. Drop hero-image.webp in this directory, add */}
-{/* `image: ./hero-image.webp` to the frontmatter, and open the post with */}
-{/* the same <img className="hero-image" /> block the other posts use. */}
 
 import SeaOfObjects from "./diagrams/SeaOfObjects";
 import PackfileAndIndex from "./diagrams/PackfileAndIndex";
@@ -28,6 +25,13 @@ import ObjgitCueFormat from "./diagrams/ObjgitCueFormat";
 import StreamingScoop from "./diagrams/StreamingScoop";
 import InlineCta from "@site/src/components/InlineCta";
 import deltaBrain from "./delta-brain.png";
+import heroImage from "./hero-image.webp";
+
+<img
+  src={heroImage}
+  className="hero-image"
+  alt='Two monospace panels on a dark background. The first, labelled "what a .idx entry holds", lists hash, crc32 and offset. The second, labelled "what a ranged GET needs", lists a first byte of 0x1f3a4 in green and a last byte of question marks in red, above the line Range: bytes=127908-???????'
+/>
 
 - Something about git server being stateless now, cloud native
 - This is why it's hard to run Git in production. We made it easier.
