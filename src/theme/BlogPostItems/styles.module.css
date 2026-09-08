@@ -32,10 +32,17 @@
   color: inherit;
 }
 
+/* 7:3 frames the wide diagrams our hero images are drawn as: they fill it
+   edge to edge, with no bars above and below and no clipped labels at the left
+   or right. Hero art should be exported at this ratio, since `object-fit:
+   cover` crops the long edge of anything squarer. `align-self: center` keeps
+   the frame at its ratio rather than stretching it to the height of the text
+   beside it. */
 .featuredImageWrap {
   flex: 0 0 55%;
   max-width: 55%;
-  aspect-ratio: 16 / 10;
+  align-self: center;
+  aspect-ratio: 7 / 3;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--ifm-color-emphasis-200);
