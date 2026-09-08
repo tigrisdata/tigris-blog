@@ -30,7 +30,8 @@ export function AsciiFigure({ label, title, lines, fontSize }) {
   return (
     <figure
       style={{
-        margin: 0,
+        // Tailwind mb-4 (1rem); no other margins.
+        margin: "0 0 1rem",
         display: "flex",
         flexDirection: "column",
         gap: 10,
