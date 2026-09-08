@@ -69,7 +69,9 @@ organization gets a bucket of its own. Four of those keys are doing a job a
 database would normally do for you, so they're labelled here and picked apart in
 the next section:
 
-<BucketLayout />
+<div className="mermaid-frame">
+  <BucketLayout />
+</div>
 
 We started out writing everything as JSON objects to each customer's bucket.
 After a while we started adopting more and more features to our API with
@@ -371,7 +373,9 @@ both succeed, but only one of them is treated as the current state of the world
 when the distributed system converges. It's as if the losing update is just
 gone.
 
-<LostConditionalWrite />
+<div className="mermaid-frame">
+  <LostConditionalWrite />
+</div>
 
 Reading this, your first instinct for working around this is "oh, if the data is
 just gonna be updated after I wrote it, I should just read it back, make sure it
@@ -420,7 +424,9 @@ infrastructure went...
 
 Here it is without the animals:
 
-<AnalyticsPath />
+<div className="mermaid-frame">
+  <AnalyticsPath />
+</div>
 
 Every hop there is scoped to one customer, and the ClickHouse tables that used
 to hold the reduced data are gone. The reader is
