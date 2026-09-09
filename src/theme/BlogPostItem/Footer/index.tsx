@@ -3,21 +3,13 @@ import clsx from "clsx";
 import { useBlogPost } from "@docusaurus/plugin-content-blog/client";
 import TagsListInline from "@theme/TagsListInline";
 import BlogPostItemHeaderInfo from "../Header/Info";
+import ShareArticle from "@site/src/components/ShareArticle";
 
 export default function BlogPostItemFooter(): ReactNode {
   const { metadata, isBlogPostPage } = useBlogPost();
-  const { tags, editUrl, hasTruncateMarker } = metadata;
-
-  // A post is truncated if it's in the "list view" and it has a truncate marker
-  const truncatedPost = !isBlogPostPage && hasTruncateMarker;
+  const { tags } = metadata;
 
   const tagsExists = tags.length > 0;
-
-  const renderFooter = tagsExists || truncatedPost || editUrl;
-
-  if (!renderFooter) {
-    return null;
-  }
 
   // BlogPost footer - details view
   if (isBlogPostPage) {
@@ -30,9 +22,11 @@ export default function BlogPostItemFooter(): ReactNode {
             </div>
           </div>
         )}
+        <ShareArticle />
       </footer>
     );
-  } else {
-    return <BlogPostItemHeaderInfo />;
   }
+
+  // List view
+  return <BlogPostItemHeaderInfo />;
 }
