@@ -26,28 +26,15 @@ import StreamingScoop from "./diagrams/StreamingScoop";
 import InlineCta from "@site/src/components/InlineCta";
 import deltaBrain from "./delta-brain.png";
 
-- Something about git server being stateless now, cloud native
-- This is why it's hard to run Git in production. We made it easier.
+It sure seems that a bunch of companies are trying to ship a git product of some
+kind as of late. Wonder why that is.
 
-{/* TODO(Xe): put this somewhere. (image1 from the draft was a placeholder.) */}
-
-- When we last left off on git in object storage, I had stapled the entire
-  system together as a "how bad could this be if we just did the lazy thing?"
-  and wanted to see how far I could get.
-  - Turns out, pretty far! You get things that push, you get things that pull,
-    but it is just so slow it's unbearable
-  - The root cause is that git's disk format design is just not made with object
-    storage in mind
-  - Additionally, trying to staple things together so that the primitives of
-    object storage does work\*, but it's a lot of fighting windmills and working
-    things around the fundamental storage nature of Git
-
-I'm building a Git server backed by object storage as an
+Either way, I’m building a Git server backed by object storage as an
 [open-source project](https://github.com/tigrisdata/objgit). It sounded simple
-enough to start: Git looks like a filesystem, so let's use a filesystem as a
+enough to start: Git looks like a filesystem, so let’s use a filesystem as a
 translation layer on top of object storage to make Git speak object storage.
 This model worked… [ok, I guess?](https://www.tigrisdata.com/blog/objgit/) But
-it didn't work for real-world size repositories, so I needed a different
+it didn’t work for real-world size repositories, so I needed a different
 approach. Git stores everything in
 [Objects](https://git-scm.com/book/en/v2/Git-Internals-Git-Objects), so why not
 store those as objects in Tigris?
@@ -56,61 +43,41 @@ store those as objects in Tigris?
 
 Turns out Git packfiles and how they intersected with my (admittedly somewhat
 terrible) filesystem shim were the main reason why it was slow. I ended up
-having to invent my own packfile format with a columnar store that's object
+having to invent my own packfile format with a columnar store that’s object
 storage native. This is the fruit of all of my performance analysis, metrics
 annotations, and more
 [Texas-style distributed systems work](https://www.usenix.org/system/files/1311_05-08_mickens.pdf)
 than you can make your k8s cluster shake sticks at.
 
-This approach worked surprisingly well for production-sized repositories, so I'm
+This approach worked surprisingly well for production-sized repositories, so I’m
 sticking with this new Packfile format for now. It seems the least obtrusive
 change to make Git Objects feel like object storage Objects, without any client
 side changes.
 
 ## What is a Git? [A miserable little pile of objects!](https://youtu.be/5tV33Ewf_hw)
 
-- The fundamental nature of Git
-  - Git repositories are made out of a sea of objects and named references into
-    that sea
-  - In an ideal world, storing all of those objects as separate files on the
-    disk would be easy and/or free.
-    - However we do not live in that ideal world and instead have inode limits
-      to worry about
-  - To work around this, Git bundles objects into packages it calls packfiles.
-    Normally this would be great, but it presents some annoyances when it comes
-    to doing this in object storage
-
 When you make a commit, Git stores the changes you make as objects inside the
-`.git` (I'll call this "dotgit" so I don't have to write as many backticks)
+`.git` (I’ll call this “dotgit” so I don’t have to write as many backticks)
 folder.
 
 Imagine Git as two things: a sea of objects and named references to individual
 objects. Each object is a
 [content-addressed](https://en.wikipedia.org/wiki/Content-addressable_storage)
-and compressed file. Here's an example from a tiny git repository, so tiny it
-doesn't :
+and compressed file. Here’s an example from a tiny git repository:
 
 ```
 $ mkdir ~/tmp/gitexample
 $ git init && git branch -m main
 $ echo "Hello, blog!" >> hello.txt$ git add . && git commit -sm "chore: initial commit"
-$ tree .git/objects
-.git/objects
-├── 1c
-│   └── 7a26a901724b4ce766655ac387413fb9ec7966
-├── 8e
-│   └── 67afbb2ee6bdcbb79061dfdfb93febce857bd3
-├── 9c
-│   └── c9867337c2ebae85ba2350f901e0bcc209fe26
-├── info
-└── pack
 ```
+
+This produces several objects on the disk like this:
 
 <div className="mermaid-frame">
   <SeaOfObjects />
 </div>
 
-If you want to read the contents of an object, it's compressed, so you have to
+If you want to read the contents of an object, it’s compressed, so you have to
 use a fairly evil looking python oneliner to scoop out the tasty innards:
 
 ```
@@ -122,10 +89,12 @@ $ python3 -c "import sys, zlib; sys.stdout.buffer.write(zlib.decompress(sys.stdi
 blob 13Hello, blog!
 ```
 
-As you can see, the objects are just bare files. Let's look at a Git repository
+As you can see, the objects are just bare files. Let’s look at a Git repository
 of the Linux kernel and try to extract out an arbitrary commit. Everything
-should just be a billionty bare object files, right? It should be easy to find
-something:
+should just be a billionty bare object files, right? It should be easy to find a
+single commit just by looking for the ID on the disk, right?
+
+If only reality were so simple:
 
 ```
 $ cd ~/Code/linux.git/
@@ -140,16 +109,25 @@ objects
 3 directories, 3 files
 ```
 
-Yeah, as I'm sure you guessed just putting everything into their own files won't
-scale to something like the Linux kernel. I'm pretty sure you'd run into inode
+Yeah, as I’m sure you guessed just putting everything into their own files won’t
+scale to something like the Linux kernel. I’m pretty sure you’d run into inode
 limits like everyone did in the era of
-[fractal `node_modules` folders](https://github.com/npm/npm/issues/11747). Git
-works around this by putting objects into
+[fractal `node_modules` folders](https://github.com/npm/npm/issues/11747).
+
+:::note Aside
+
+If you’ve used Node for long enough to remember that, please go get a
+colonoscopy. Colon cancer is a real concern that too many people overlook for
+too long and takes too many lives too early.
+
+:::
+
+Git works around this by putting objects into
 [packfiles](https://git-scm.com/book/en/v2/Git-Internals-Packfiles), compressed
 bundles of objects that store them all in the same file. Here's an example of
 the packfile efficiency in my checkout of objgit:
 
-```
+```text
 $ git count-objects -v
 count: 756
 size: 3500
@@ -161,12 +139,29 @@ garbage: 0
 size-garbage: 0
 ```
 
+If you ever need to “force” git to put bare objects into a packfile, you can run
+`git gc`:
+
+```text
+$ git gc
+[omitted for brevity]
+$ git count-objects -v
+count: 0
+size: 0
+in-pack: 1203
+packs: 2
+size-pack: 848
+prune-packable: 0
+garbage: 0
+size-garbage: 0
+```
+
 :::note Aside
 
 One of the beautiful things about implementing Git on top of object storage like
-I am is that I'm using a platform where the object data is a sea of objects with
+I am is that I’m using a platform where the object data is a sea of objects with
 named references to points in that sea stored in FoundationDB. This is a kind of
-divine recursion that I don't really know how to describe the beauty of. As
+divine recursion that I don’t really know how to describe the beauty of. As
 above, so below.
 
 :::
@@ -189,25 +184,27 @@ size-garbage: 0
 
 This is eleven million objects, which at a very generous assumption of 10ms per
 GetObject call means that fetching each of them takes over an hour to fetch them
-all. The truth is there really aren't 11M objects as individual files on the
-disk, they're bundled into one big happy 3.4Gi packfile. Your typical git repo
+all. The truth is there really aren’t 11M objects as individual files on the
+disk, they’re bundled into one big happy 3.4Gi packfile. Your typical git repo
 ends up accumulating them as it makes sense to break them up. My local copy of
 the Tigris blog has 4 packfiles and 290-ish bare objects.
 
-**So you'd be thinking, "Oh, if git has packfiles, then why is the rest of this
-post a thing?"** Well, like many things in distributed systems it's complicated.
-Packfiles are difficult because they're designed with local storage and/or mmap
-in mind. Git constantly writes Packfiles to disk and then re-reads them.
-Filesystem reads in that case are 10 nanoseconds _at most_ (the filesystem cache
-helps so much here) but doing any network roundtrip is 10 milliseconds _at
-minimum_. It's at least a million times slower because of how reality works.
+**So you’d be thinking, “Oh, if git has packfiles, then why is the rest of this
+post a thing?”**
 
-:::note
+Well, like many things in distributed systems it’s complicated. Packfiles are
+difficult because they’re designed with local storage and/or mmap in mind. Git
+constantly writes Packfiles to disk and then re-reads them. Filesystem reads in
+that case are 10 nanoseconds _at most_ (the filesystem cache helps so much here)
+but doing any network roundtrip is 10 milliseconds _at minimum_. It’s at least a
+million times slower because of how reality works.
+
+::note
 
 One of the things that `/usr/bin/git` does that makes integrating it into object
 storage difficult is the unix-y idiom of writing to a file and then immediately
-reading back from that file to calculate the hash. In object storage you can't
-GetObject something that hasn't finished a PutObject call. I worked around this
+reading back from that file to calculate the hash. In object storage you can’t
+GetObject something that hasn’t finished a PutObject call. I worked around this
 previously by writing to the disk and then doing it that way, but the experience
 kinda sucked in practice.
 
@@ -215,13 +212,13 @@ kinda sucked in practice.
 
 ### Messin' with Packfiles
 
-Does Git really need to write and re-read so much? Let's look at the tasty
+Does Git really need to write and re-read so much? Let’s look at the tasty
 innards of a Git packfile to find out:
 
 {/* TODO(Xe): image2 from the draft was the slop packfile picture; FIG 02 */}
 {/* below covers it. Delete this comment once you're happy with that. */}
 
-Each packfile has an index that describes what's in it. Here's a view of the
+Each packfile has an index that describes what’s in it. Here’s a view of the
 index of the packfile made out of that trivial Git repo from earlier uppost:
 
 ```
@@ -234,8 +231,8 @@ non delta: 3 objects
 .git/objects/pack/pack-3971f5085c23c38be00e517ed0c64ca7df19b746.pack: ok
 ```
 
-The commit points to the tree whose file "hello.txt" points to the blob and,
-bob's your uncle, you have a repo. Git uses these binary indices to let it know
+The commit points to the tree whose file “hello.txt” points to the blob and,
+bob’s your uncle, you have a repo. Git uses these binary indices to let it know
 where to look and how far it needs to seek into the packfile to know where to go
 to get things.
 
@@ -246,14 +243,16 @@ to get things.
 The great part is that this works really well when everything is in a
 filesystem. Git [mmaps](https://en.wikipedia.org/wiki/Mmap) the packfiles so
 that the kernel treats disk contents as memory pages, meaning that trying to
-read past what's "in memory" makes the kernel load it instead of userspace. This
-is faster than loading it from the disk directly. It's a shame this design
-doesn't work in object storage.
+read past what’s “in memory” makes the kernel load it instead of userspace. This
+is faster than loading it from the disk directly. It’s a shame this design
+doesn’t work in object storage.
+
+### If only you could construct Range requests from packfiles
 
 ### If only you could construct Range requests from packfiles
 
 At some level this sounds pretty great for object storage, right? You have
-offsets into the packfiles and then you can "just" grab out a single object from
+offsets into the packfiles and then you can “just” grab out a single object from
 a packfile with an
 [HTTP Range request](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Range_requests)
 right? Objects are placed randomly within packfiles and other attempts at
@@ -261,10 +260,25 @@ storing Git in object storage end up having problems here. Tigris is really good
 at random access scans, so most of the hard part is figuring out how to grab the
 right data out of the bucket.
 
-Well, it's complicated. The example I gave shows all of the index entries one
+:::note Aside
+
+HTTP Range requests let a client download _part_ of a file. The main usecase
+they're built for is back in the day of dial-up internet you weren't online all
+the time. Your main path to the Internet was the same way you send and received
+phone calls. As such, if someone called you while you were online, all your
+downloads got interrupted. Range requests let Internet Explorer resume downloads
+where they got cut off instead of having to start all the way over.
+
+They've been maintained into the modern era but don't really get much use
+outside of galaxy brain format abuse like what I'm doing and online video
+streaming.
+
+:::
+
+Well, it’s complicated. The example I gave shows all of the index entries one
 after the other, but in the real world processing the index entries one after
 the other you know the _decompressed_ size of a single object in the packfile,
-but not the _compressed_ size. This means you don't have enough information to
+but not the _compressed_ size. This means you don’t have enough information to
 construct a HTTP Range request.
 
 <div className="mermaid-frame">
@@ -275,24 +289,6 @@ This core problem is half the reason why I ended up needing to make my own
 object-storage native Git packfile format.
 
 ## Demoscene inspiration
-
-- Throwback to the past
-  - Way back in the day of physical media, the most common format was CD-ROM. A
-    CD rom contains at least one recording session that is composed of up to 99
-    tracks.
-    - This was intended to correlate directly to the concept of audio tracks so
-      that a CD player could know where one song began and another song ended.
-    - The locations and offsets of every track's beginning are stored in the
-      Table of Contents so that CD players can skip ahead to the right place.
-      - Unless of course your CD mastering team decides to put every movement of
-        Nobuo Uematsu's masterpiece
-        [Dancing Mad](https://youtu.be/g6UgxJtHIVY?list=RDg6UgxJtHIVY) into a
-        single 17 minute track, meaning that you just have to know where
-        [that blessed fourth movement is](https://youtu.be/g6UgxJtHIVY?t=590)
-        like the good old days with analogue cassettes.
-    - This is why you end up seeing legal backups of DVD-based data media
-      optimized for being stored as .iso files
-      - An ISO file stores one recording session which can contain data
 
 Way back in the days of physical media, one of the most common formats was the
 CD-ROM (Compact Disc Read-Only-Memory, or CD). A CD is a 700Mi container that
@@ -320,9 +316,9 @@ that may contain data or audio.
   <CueSheetComparison />
 </div>
 
-However there's one catch that kinda ruins this easy way to back up CDs: they
+However there’s one catch that kinda ruins this easy way to back up CDs: they
 can store _multiple_ recording sessions on the same disc. Most of the time this
-wasn't used outside of making piracy on certain late 90's/early 00's game
+wasn’t used outside of making piracy on certain late 90’s/early 00’s game
 consoles more annoying, but there was
 [that one Ricoh Encryptease product](https://youtu.be/_5ucImqdKbY) that combined
 a user-recordable area with a factory printed area so that you could encrypt
@@ -334,8 +330,8 @@ is about as cursed as it sounds.
 The trick of using multiple sessions is how Dreamcast games play as audio CDs
 telling you to put it into a Dreamcast or how Xbox 360 games play as DVDs
 telling you to put it into an Xbox 360. As an added bonus it means that when you
-stick it into a computer it thinks that it's an audio CD or DVD, which means
-that lazy pirates can't easily scoop out all the game files to their hard
+stick it into a computer it thinks that it’s an audio CD or DVD, which means
+that lazy pirates can’t easily scoop out all the game files to their hard
 drives.
 
 :::
@@ -354,12 +350,20 @@ for you.
 This got me thinking, how would we take all of these lessons into heart and
 build a new git packfile format optimized for object storage?
 
-Normally it's not a good idea to do this because we're talking about source code
-revisions, which is one of the more precious things to a company's ability to
-deal with software. However in this case Git's history as a distributed version
-control system comes in handy because everyone with a copy of the repository on
-their computer has _the entire history of that repo_, meaning that recreating
-that data in the cloud is annoying instead of a show-stopper.
+Wait, I know what you’re thinking. You’re thinking that I’m about to make a
+[Chesterton’s Fence violation](https://en.wikipedia.org/wiki/Wikipedia:Chesterton%27s_fence).
+Just “rolling my own” format for something as dear and precious as storing the
+revision history of a company’s code repositories is probably one of the worst
+decisions you can make, right?
+
+Normally, yes, it’s a bad idea to do this. However Git is a _distributed_
+version control system. When you clone a repository, you clone _all_ of the
+changes ever made to it on every branch at the same time. This also means that
+everyone has a copy of the entire history of that repository, meaning that if
+the worst does in fact come to pass and my handrolled format ends up sucking
+it’s trivial to recreate all the data. Just push it again.
+
+So what would this format look like?
 
 Well for one the format needs to be Range-request native. You should be able to
 scoop any one object out of a packfile without having to download or process
@@ -368,8 +372,8 @@ design the format with that usecase directly in mind. The format should also
 take advantage of modern compression libraries like
 [zstd](https://en.wikipedia.org/wiki/Zstd) which are faster and more
 data-efficient than zlib. Finally delta objects should be stored as their own
-object in the packfile instead of slapped onto the end of the object it's a
-delta of so that you don't have to read the object and its deltas to read the
+object in the packfile instead of slapped onto the end of the object it’s a
+delta of so that you don’t have to read the object and its deltas to read the
 object in the first place.
 
 :::note
@@ -388,29 +392,9 @@ in commits. At some level this meme is both accurate and wrong:
 
 ### Objgit's packfile format that probably needs a name
 
-- The format I came up with for objgit
-  - Objects are stored one after the other in a giant .bin file
-  - The table of contents about each object is stored in a .cue sheet
-    - CD .cue sheets are normally a plaintext format that requires a special
-      parser. In the name of efficiency I decided to binpack everything as a
-      record structure with a header instructing objgit how to treat the .cue
-      sheet:
-      - Diagram of header and row
-    - This includes:
-      - The hash of the object (its identity in Git)
-      - The type of the object
-      - How the object was compressed in the .bin file
-      - Where the payload starts in the .bin file
-      - How many bytes were stored in the .bin file
-      - The uncompressed size
-      - The delta base hash (or all zeroes)
-  - This gives objgit enough information to be able to construct range requests
-    against individual objects in a packfile while it's downloading.
-  - I guess this technically means I put git in a columnar store?
-
 The format I came up with is pretty directly inspired from the `.bin` and `.cue`
 format of CD backup. Objects are stored one after the other in a `.bin` file
-that's normally up to 128Mi (the oddly specific number was chosen because it
+that’s normally up to 128Mi (the oddly specific number was chosen because it
 looked round to me) and the metadata of what objects are in there are stored
 separately in a binary-encoded `.cue` sheet. Together this makes Git repository
 storage in Tigris a columnar store.
@@ -431,14 +415,34 @@ background.
 
 As an optimization for latency, whenever the Git library requests any object
 from a packfile, the entire packfile is downloaded from object storage to a
-temporary folder. Anything on the "far end" of the packfile is Range-requested
-from Tigris until the downloaded packfile "catches up". In practice this ends up
+temporary folder. Anything on the “far end” of the packfile is Range-requested
+from Tigris until the downloaded packfile “catches up”. In practice this ends up
 meaning that packfiles get downloaded just in time for them to be useful to read
-from and there's overall fairly little latency beyond what's unavoidable with
-the Git library I'm using. If the "scooping objects out of the far end" problem
-ends up being an issue in practice I'll just have it start fetching the most
+from and there’s overall fairly little latency beyond what’s unavoidable with
+the Git library I’m using. If the “scooping objects out of the far end” problem
+ends up being an issue in practice I’ll just have it start fetching the most
 recent packfiles for a given repository in the background when you start pushing
 or pulling.
+
+<div className="mermaid-frame">
+  TODO(Xe): make diagram showing the "racing the beam" effect of fetching
+  individual objects in parallel.
+</div>
+
+:::note
+
+There’s nothing in the definition of the packfile format that limits packfiles
+to 128Mi, I’m just doing that to prevent them from getting too big to download
+quickly. In theory if you store a large binary blob (such as 3d models,
+perfectly legal backups, etc) into the git repository directly it could result
+in a packfile that’s bigger than 128Mi. I plan to solve this by implementing
+[Git Large File Storage](https://git-lfs.com/) in the near future.
+
+But for now if you have a workflow that involves storing large binary files in
+your git repository and want to use objgit for that: consider a different
+architecture.
+
+:::
 
 ## The funny numbers
 
@@ -448,6 +452,20 @@ or pulling.
 TODO(Xe): compare pushing objgit's repo, /x/, and tigris-blog to objgit before
 and after the changes, funny numbers with my corp laptop on wifi. End the
 section saying "oh yeah this was with my corporate laptop on wifi".
+
+## What about the other takes?
+
+As I mentioned earlier, there’s a bunch of hype around making different ways of
+storing git repositories outside of the context of putting everything on
+filesystem files like the good old days. A lot of them seem to commit a
+distributed systems sin that’s kind of hard to work around: I think they’re
+being vastly over-engineered for the kind of problem Git actually is.
+
+One of the things that sucks about Git is that its data format is yada yada etc
+compare with cursor and walgit etc
+
+NOTE: walgit has a separate process for compaction and noted that they can’t
+easily do range requests over packfiles, maybe they hit the same problem I did?
 
 - How does this compare to other projects?
   - We're putting the distributed system part of Git into an existing
@@ -495,13 +513,26 @@ section saying "oh yeah this was with my corporate laptop on wifi".
 
 ## Conclusion section
 
-- Still working on this, not confident enough to say this is ready for you to
-  use.
-  - Still have not completed authentication, the authentication work was going
-    to be part of my SigV4 post (and is the source of a lot of my work on it)
-    but for now I'm cutting things down to manageable chunks so I can ship it
-    properly.
-  - Not sure if the library I'm using handles sha256 yet?
+I’m still actively working on this. I’m not confident enough to use this for my
+own projects yet and I wouldn’t blame you for not wanting to use this yet
+either. I still haven’t implemented authentication, authorization, any kind of
+API (my long-form [SigV4 auth post](https://www.tigrisdata.com/blog/sigv4/) was
+actually going to be an objgit post\!), or any rate limit beyond what your
+machine can physically process. If you were to take this, run it, and then
+expose it to the Internet, then anyone that can connect to that server can pull
+or push whatever they want. Consider not doing that.
+
+Objgit packfiles also currently accumulate forever, so if you have a bunch of
+small pushes then there will be a bunch of small packfiles in the bucket. I’m
+toying with designs that would occasionally compact them into bigger packfiles,
+but that’s something that can be done later.
+
+At the least though: Git’s packfile format is a great format for the constraints
+of storing git repositories in actual filesystems. The moment you put network
+roundtrips into the mix it all goes south.
+
+I'm gonna keep working on this and publish reports like this as I learn more. I
+hope this was interesting! Stay safe out there.
 
 <InlineCta
   title={"Read the packfile code before I name the format"}
