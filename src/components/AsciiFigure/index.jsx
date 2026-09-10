@@ -20,6 +20,13 @@ export const COLORS = {
   green: "#4ade80",
   red: "#f87171",
   gray: "#64748b",
+  // Added for figures that need to tell more than two things apart. All
+  // Tailwind 400-weight like the three above, so they sit at the same
+  // brightness against #0f172a, and the same set AnimatedAsciiFigure uses.
+  amber: "#fbbf24",
+  cyan: "#38bdf8",
+  violet: "#a78bfa",
+  base: "#cbd5e1",
 };
 
 // A line is an array of segments; a segment is either a plain string or a
