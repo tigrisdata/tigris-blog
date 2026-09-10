@@ -1,4 +1,4 @@
-// Fig 03 — the length a ranged GET needs is nowhere in a .idx
+// Fig 03 — one ranged GET pulls 366 bytes out of the middle of a 128 MiB file
 // Standalone React component. Inline styles only, React is the only dependency.
 // Generated art: the LINES arrays hold plain strings and tagged
 // ["#id", text, color] segments that the STEPS below reveal and light up.
@@ -6,149 +6,108 @@
 import { AnimatedAsciiFigure } from "@site/src/components/AnimatedAsciiFigure";
 
 const LINES = [
+  ["  ", ["#fn", "packs/019a7f3c..bin", "base"]],
   [
     "  ",
-    ["#ixh", "what a .idx entry holds", "gray"],
-    "                ",
-    ["#rqh", "what a ranged GET needs", "gray"],
+    ["#box", "┌────────────────────────────────────────────────┐", "base"],
   ],
   [
     "  ",
-    ["#ix", "┌──────────────────────────────┐", "base"],
-    "      ",
-    ["#rq", "┌──────────────────────────────┐", "base"],
+    ["#box", "│", "base"],
+    ["#pad", "                                   ", "base"],
+    ["#obj", "██", "amber"],
+    ["#pad", "           ", "base"],
+    ["#box", "│", "base"],
   ],
   [
     "  ",
-    ["#ix", "│ hash    1c7a26a901..ec7966   │", "base"],
-    "      ",
-    ["#rq", "│ first byte   ", "base"],
-    ["#ok", "0x1f3a4", "green"],
-    ["#rq", "         │", "base"],
+    ["#box", "└───────────────────────────────────", "base"],
+    ["#tick", "▲", "amber"],
+    ["#box", "────────────┘", "base"],
   ],
   [
     "  ",
-    ["#ix", "│ crc32   0x8f2a11bd           │", "base"],
-    "      ",
-    ["#rq", "│ last byte    ", "base"],
-    ["#bad", "???????", "red"],
-    ["#rq", "         │", "base"],
+    ["#ruler", " 0", "gray"],
+    "                                  ",
+    ["#tick", "│", "amber"],
+    ["#ruler", "      128 MiB", "gray"],
   ],
   [
-    "  ",
-    ["#ix", "│ offset  0x1f3a4              │", "base"],
-    "      ",
-    ["#rq", "└──────────────────────────────┘", "base"],
-  ],
-  [
-    "  ",
-    ["#ix", "└──────────────────────────────┘", "base"],
-    "       ",
-    ["#bad", "Range: bytes=127908-???????", "red"],
-  ],
-  ["  ", ["#ixn", "no length. anywhere. it is not a", "gray"]],
-  ["  ", ["#ixn", "field the .idx format has at all.", "gray"]],
-  [],
-  ["  ", ["#ph", "and at 0x1f3a4, inside the .pack:", "gray"]],
-  [
-    "  ",
-    [
-      "#pb",
-      "┌────────┬─────────────────────────────────────────────────┐",
-      "base",
-    ],
-  ],
-  [
-    "  ",
-    ["#pb", "│", "base"],
-    " ",
-    ["#hdr", "header", "amber"],
-    " ",
-    ["#pb", "│", "base"],
-    " ",
-    ["#zl", "zlib stream, ends when it ends", "base"],
-    "                  ",
-    ["#pb", "│", "base"],
-  ],
-  [
-    "  ",
-    [
-      "#pb",
-      "└────┬───┴─────────────────────────────────────────────────┘",
-      "base",
-    ],
-  ],
-  [
-    "  ",
-    ["#hn", "     └── type + the", "gray"],
-    " ",
-    ["#hn2", "decompressed", "amber"],
-    " ",
-    ["#hn", "size. never the stored one.", "gray"],
+    "                                      ",
+    ["#tick", "└── 366 bytes, right here", "amber"],
   ],
   [],
   [
     "  ",
-    [
-      "#dh",
-      "and if that header says OBJ_REF_DELTA, the bytes you just paid for",
-      "gray",
-    ],
+    ["#ask", "you know where it starts and how long it is, so ask for", "gray"],
   ],
-  ["  ", ["#dh", "are instructions, not an object:", "gray"]],
+  ["  ", ["#ask", "exactly that span and nothing else:", "gray"]],
+  [],
+  ["  ", ["#get", "GET /packs/019a7f3c..bin", "base"]],
+  ["  ", ["#rng", "Range: bytes=100663296-100663661", "green"]],
+  [],
+  ["  ", ["#and", "and that is all the bucket sends back:", "gray"]],
+  [],
+  ["  ", ["#resp", "206 Partial Content", "green"]],
+  ["  ", ["#cr", "Content-Range: bytes 100663296-100663661/134217728", "base"]],
+  ["  ", ["#rbox", "┌────┐", "base"]],
   [
     "  ",
-    [
-      "#dc",
-      "   1c7a26a9 ──▶ 4f0be112 ──▶ 9ab3c0d7 ──▶ ...  up to 50 deep",
-      "violet",
-    ],
-  ],
-  [
+    ["#rbox", "│", "base"],
+    ["#rb", "████", "amber"],
+    ["#rbox", "│", "base"],
     "  ",
-    [
-      "#dt",
-      "     10 ms       10 ms        10 ms          one round trip each",
-      "red",
-    ],
+    ["#rnote", "366 B on the wire, not 128 MiB", "gray"],
   ],
+  ["  ", ["#rbox", "└────┘", "base"]],
 ];
 
 const STEPS = [
-  { show: ["ixh", "ix"], caption: "everything one .idx entry holds" },
   {
-    show: ["rqh", "rq", "ok"],
-    caption: "a ranged GET needs a first byte and a last byte",
+    show: ["fn", "box", "pad", "ruler"],
+    caption: "one packfile in the bucket, 128 MiB of it",
   },
   {
-    show: ["bad", "ixn"],
-    focus: ["bad", "ixn", "ix"],
-    caption: "the length is not there. it is not a field the format has",
+    show: ["obj", "tick"],
+    focus: ["obj", "tick"],
+    caption: "the object you want is 366 bytes, 96 MiB in",
   },
   {
-    show: ["ph", "pb", "hdr", "zl"],
-    caption:
-      "seek to the offset and you land on a stream that ends when it ends",
+    show: ["ask", "get", "rng"],
+    focus: ["ask", "get", "rng"],
+    caption: "so name the span in a Range header",
   },
   {
-    show: ["hn", "hn2"],
-    focus: ["hn", "hn2", "hdr"],
-    caption: "its header gives you the decompressed size, never the stored one",
+    show: ["and", "resp", "cr", "rbox", "rb", "rnote"],
+    focus: ["and", "resp", "cr", "rbox", "rb", "rnote"],
+    caption: "the bucket answers with a partial response, and only that",
   },
   {
-    show: ["dh", "dc"],
-    caption: "and what you paid for may be a delta against some other object",
-  },
-  {
-    show: ["dt"],
-    focus: ["dt", "dc"],
-    caption: "which is another offset, another guess, another ten milliseconds",
+    show: [],
+    focus: [
+      "fn",
+      "box",
+      "pad",
+      "ruler",
+      "obj",
+      "tick",
+      "ask",
+      "get",
+      "rng",
+      "and",
+      "resp",
+      "cr",
+      "rbox",
+      "rb",
+      "rnote",
+    ],
+    caption: "one round trip, and you paid for 366 bytes of it",
   },
 ];
 
 export default function RangeRequestGap({
   label = "FIG 03",
-  title = "The one number a ranged GET needs, and where it isn't",
+  title = "One ranged GET, 366 bytes out of the middle of 128 MiB",
   fontSize,
 }) {
   return (

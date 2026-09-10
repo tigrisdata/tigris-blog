@@ -147,8 +147,7 @@ const STEPS = [
     show: [],
     focus: ["r1", "b8", "r2", "b1", "r3", "b5"],
     ms: 1700,
-    caption:
-      "1c7a26a9 at 0x1f3a4. the index is sorted by hash, the pack is not",
+    caption: "1c7a26a9 starts at 0x1f3a4",
   },
   {
     show: [],

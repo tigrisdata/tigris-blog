@@ -1,152 +1,126 @@
-// Fig 06 — the read ladder: a ranged GET until the download catches up
+// Fig 06 — two requests race: the ranged GET and the whole container
 // Standalone React component. Inline styles only, React is the only dependency.
 // Generated art: the LINES arrays hold plain strings and tagged
 // ["#id", text, color] segments that the STEPS below reveal and light up.
+//
+// The bar is one segment so a step can swap in a fuller version of it; every
+// replacement is the same 48 characters wide, so the art never reflows.
 
 import { AnimatedAsciiFigure } from "@site/src/components/AnimatedAsciiFigure";
 
 const LINES = [
   ["  ", ["#q", "read 1c7a26a901..ec7966 out of packs/019a7f3c..bin", "base"]],
+  ["  ", ["#q", "its .cue record says: offset 100663296, stored 366", "base"]],
+  [],
+  ["  ", ["#hdr", "two requests go out at the same time:", "gray"]],
+  [],
   [
     "  ",
-    [
-      "#q",
-      "its .cue record already said: offset 100663296, stored 366",
-      "base",
-    ],
+    ["#la", "A   ", "cyan"],
+    ["#ga", "GET packs/019a7f3c..bin", "base"],
+    "  ",
+    ["#ra", "Range: bytes=100663296-100663661", "cyan"],
+    "     ",
+    ["#sa", "366 B", "cyan"],
+  ],
+  [
+    "  ",
+    ["#lb", "B   ", "green"],
+    ["#gb", "GET packs/019a7f3c..bin", "base"],
+    "  ",
+    ["#rb", "the whole container", "green"],
+    "                ",
+    ["#sb", "128 MiB", "green"],
   ],
   [],
   [
     "  ",
-    ["#t1", "tier 1   staged locally, not uploaded yet", "base"],
-    "         ",
-    ["#t1b", "open + pread", "gray"],
-    "   ",
-    ["#t1t", "  0 ms", "green"],
+    ["#box", "┌────────────────────────────────────────────────┐", "base"],
   ],
   [
     "  ",
-    ["#t2", "tier 2   whole container already downloaded", "base"],
-    "       ",
-    ["#t2b", "pread", "gray"],
-    "          ",
-    ["#t2t", "  0 ms", "green"],
+    ["#box", "│", "base"],
+    ["#bar", "████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░", "green"],
+    ["#box", "│", "base"],
+    "  ",
+    ["#blab", "B, still arriving", "green"],
   ],
   [
     "  ",
-    ["#t3", "tier 3   download in flight and already past it", "base"],
-    "   ",
-    ["#t3b", "pread", "gray"],
-    "          ",
-    ["#t3t", "  0 ms", "green"],
+    ["#box", "└───────────────────────────────────", "base"],
+    ["#tick", "▲", "cyan"],
+    ["#box", "────────────┘", "base"],
   ],
   [
-    "  ",
-    ["#t4", "tier 4   none of the above", "base"],
-    "                        ",
-    ["#t4b", "GetObject", "gray"],
-    "      ",
-    ["#t4t", " 10 ms", "red"],
+    "                                      ",
+    ["#tick", "└── the bytes A asked for", "cyan"],
   ],
   [],
-  [
-    "  ",
-    ["#dh", "the container downloads behind you, in offset order:", "gray"],
-  ],
-  [],
-  ["    ┌────────────────────────────────────────────────┐"],
-  [
-    "    │",
-    ["#bar", "████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░", "green"],
-    "│",
-  ],
-  [
-    "    └───────────────────────────────────",
-    ["#ob", "▲", "amber"],
-    "────────────┘",
-  ],
-  [
-    "     0                                  ",
-    ["#ob", "│", "amber"],
-    "     128 MiB",
-  ],
-  [
-    "                                        ",
-    ["#ob", "└── the object you asked for, at 96 MiB", "amber"],
-  ],
-  [],
-  [
-    "  ",
-    [
-      "#fin",
-      "no read ever waits for the download. the far end is a ranged GET",
-      "gray",
-    ],
-  ],
-  [
-    "  ",
-    [
-      "#fin",
-      "until the watermark passes it, and a pread from then on.",
-      "gray",
-    ],
-  ],
+  ["  ", ["#win", "whichever lands first is what the read gets.", "gray"]],
 ];
 
 const bar = (n) => "█".repeat(n) + "░".repeat(48 - n);
 
-const TIERS = [
-  "t1",
-  "t2",
-  "t3",
-  "t4",
-  "t1b",
-  "t2b",
-  "t3b",
-  "t4b",
-  "t1t",
-  "t2t",
-  "t3t",
-  "t4t",
+const ALL = [
+  "q",
+  "hdr",
+  "la",
+  "ga",
+  "ra",
+  "sa",
+  "lb",
+  "gb",
+  "rb",
+  "sb",
+  "box",
+  "bar",
+  "blab",
+  "tick",
+  "win",
 ];
 
 const STEPS = [
   {
-    show: ["q", ...TIERS],
-    focus: ["q"],
+    show: ["q"],
     text: { bar: bar(0) },
-    caption: "one object, four ways to get it, cheapest first",
+    caption: "one object, 366 bytes, somewhere in a 128 MiB container",
   },
   {
-    show: ["dh", "bar", "ob"],
-    focus: ["t4", "t4b", "t4t", "ob", "bar"],
-    text: { bar: bar(4) },
-    caption: "nothing local yet, so: a ranged GET into those 366 bytes",
+    show: ["hdr", "la", "ga", "ra", "sa", "lb", "gb", "rb", "sb"],
+    focus: ["hdr", "la", "ga", "ra", "sa", "lb", "gb", "rb", "sb"],
+    text: { bar: bar(0) },
+    caption: "two requests go out at once: the span, and the whole file",
   },
   {
-    show: [],
-    focus: ["dh", "bar"],
+    show: ["box", "bar", "blab", "tick"],
+    focus: ["lb", "gb", "rb", "sb", "box", "bar", "blab"],
+    text: { bar: bar(12) },
+    caption: "B is streaming, but it has not reached the object yet",
+  },
+  {
+    show: ["win"],
+    focus: ["la", "ga", "ra", "sa", "tick", "win"],
+    ms: 1900,
     text: { bar: bar(20) },
-    caption:
-      "meanwhile the whole container streams in behind you, in offset order",
+    caption: "so A gets there first, and A is what this read reads",
   },
   {
     show: [],
-    focus: ["t3", "t3b", "t3t", "bar", "ob"],
-    text: { bar: bar(39) },
-    caption: "once the watermark passes the object, that same read is a pread",
+    focus: ["lb", "gb", "rb", "sb", "bar", "blab", "win"],
+    text: { bar: bar(44) },
+    caption: "later, B has passed the object and wins instead. no A is sent",
   },
   {
-    show: ["fin"],
-    focus: ["t2", "t2b", "t2t", "bar", "fin"],
+    show: [],
+    focus: ALL,
     text: { bar: bar(48) },
-    caption: "and when it lands, every read out of this container is local",
+    caption: "no read ever waits for B. it takes whichever is already there",
   },
 ];
 
 export default function StreamingScoop({
   label = "FIG 06",
-  title = "A ranged GET until the download catches up",
+  title = "Two requests, racing: the span and the whole container",
   fontSize,
 }) {
   return (
