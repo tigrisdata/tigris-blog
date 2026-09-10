@@ -2,6 +2,9 @@
 // Standalone React component. Inline styles only, React is the only dependency.
 // Generated art: the LINES arrays hold plain strings and tagged
 // ["#id", text, color] segments that the STEPS below reveal and light up.
+//
+// Each .idx row is colour-paired with the run of bytes it points at, so the
+// steps light a row and its block in the packfile together.
 
 import { AnimatedAsciiFigure } from "@site/src/components/AnimatedAsciiFigure";
 
@@ -34,58 +37,83 @@ const LINES = [
   [],
   [
     "  ",
-    ["#ix", " .idx", "base"],
+    ["#ixl", " .idx", "base"],
     "                            ",
-    ["#pkb", " .pack", "base"],
+    ["#pkl", " .pack", "base"],
   ],
   [
     "  ",
-    ["#ix", "┌───────────────────────┐", "base"],
+    ["#ixb", "┌───────────────────────┐", "base"],
     "       ",
     ["#pkb", "┌──────────────────────────────────────┐", "base"],
   ],
   [
     "  ",
-    ["#ix", "│ 0002ff4c..  0x0000c   │", "base"],
+    ["#ixb", "│ ", "base"],
+    ["#r1", "0002ff4c..  0x0000c", "violet"],
+    ["#ixb", "   │", "base"],
     "       ",
-    ["#pkb", "│███ ██ ████ █ ███████ ██ █ ████ ██████│", "base"],
+    ["#pkb", "│", "base"],
+    ["#b1", "███", "violet"],
+    " ",
+    ["#b2", "██", "base"],
+    " ",
+    ["#b3", "████", "cyan"],
+    " ",
+    ["#b4", "█", "base"],
+    " ",
+    ["#b5", "███████", "green"],
+    " ",
+    ["#b6", "██", "base"],
+    " ",
+    ["#b7", "█", "base"],
+    " ",
+    ["#b8", "████", "base"],
+    " ",
+    ["#b9", "██████", "base"],
+    ["#pkb", "│", "base"],
   ],
   [
     "  ",
-    ["#ix", "│ 0031ab90..  0x0a13f   │", "base"],
+    ["#ixb", "│ ", "base"],
+    ["#r2", "0031ab90..  0x0a13f", "cyan"],
+    ["#ixb", "   │", "base"],
     "       ",
-    ["#pkb", "└──────", "base"],
-    ["#seek", "▲", "amber"],
-    ["#pkb", "───────────────────────────────┘", "base"],
+    ["#pkb", "└──────────────────────────────────────┘", "base"],
   ],
   [
     "  ",
-    ["#ix", "│ 1c7a26a9..  0x1f3a4   │", "base"],
-    ["#seek", "──────────────┘", "amber"],
-  ],
-  ["  ", ["#ix", "│ ...                   │", "base"]],
-  ["  ", ["#ix", "└───────────────────────┘", "base"]],
-  [],
-  [
-    "  ",
-    [
-      "#fast",
-      "on a filesystem git mmaps the .pack and the kernel pages it in",
-      "green",
-    ],
-    "   ",
-    ["#fast", "~10 ns", "green"],
+    ["#ixb", "│ ", "base"],
+    ["#r3", "1c7a26a9..  0x1f3a4", "green"],
+    ["#ixb", "   │", "base"],
   ],
   [
     "  ",
-    [
-      "#slow",
-      "over the network that same seek is a GetObject round trip",
-      "red",
-    ],
-    "        ",
-    ["#slow", "~10 ms", "red"],
+    ["#ixb", "│ ", "base"],
+    ["#rdots", "...", "base"],
+    ["#ixb", "                   │", "base"],
   ],
+  ["  ", ["#ixb", "└───────────────────────┘", "base"]],
+];
+
+const FRAME = [
+  "ixl",
+  "ixb",
+  "r1",
+  "r2",
+  "r3",
+  "rdots",
+  "pkl",
+  "pkb",
+  "b1",
+  "b2",
+  "b3",
+  "b4",
+  "b5",
+  "b6",
+  "b7",
+  "b8",
+  "b9",
 ];
 
 const STEPS = [
@@ -100,21 +128,31 @@ const STEPS = [
     caption: "so git bundles them into a single packfile instead",
   },
   {
-    show: ["ix", "pkb"],
-    caption: "and writes an index saying which object starts at which byte",
+    show: FRAME,
+    caption: "and writes an index: one entry per object, and where it starts",
   },
   {
-    show: ["seek"],
-    focus: ["seek", "pkb", "ix"],
-    caption: "a read becomes a seek to an offset in one big file",
+    show: [],
+    focus: ["r1", "b1"],
+    ms: 1700,
+    caption: "0002ff4c starts at 0x0000c, and those bytes are its object",
   },
   {
-    show: ["fast"],
-    caption: "mmapped, the kernel pages it in and that seek is free",
+    show: [],
+    focus: ["r1", "b1", "r2", "b3"],
+    ms: 1700,
+    caption: "0031ab90 starts at 0x0a13f",
   },
   {
-    show: ["slow"],
-    caption: "over the network it is a round trip. a million times slower",
+    show: [],
+    focus: ["r1", "b1", "r2", "b3", "r3", "b5"],
+    ms: 1700,
+    caption: "1c7a26a9 at 0x1f3a4. objects sit wherever they landed",
+  },
+  {
+    show: [],
+    focus: ["cnt", "pk", "inode", ...FRAME],
+    caption: "so a read becomes a seek to an offset inside one big file",
   },
 ];
 
