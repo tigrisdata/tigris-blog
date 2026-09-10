@@ -1,6 +1,6 @@
 ---
 slug: objgit-packfiles
-title: "Object storage is not a filesystem"
+title: "You can run git on object storage if you re-make packfiles"
 description: |
   Git packfiles were designed for mmap and local disk, so pulling one object out
   of a bucket means guessing at a byte range. I wrote a new format instead.
@@ -22,7 +22,7 @@ import PackfileAndIndex from "./diagrams/PackfileAndIndex";
 import RangeRequestGap from "./diagrams/RangeRequestGap";
 import CueSheetComparison from "./diagrams/CueSheetComparison";
 import ObjgitCueFormat from "./diagrams/ObjgitCueFormat";
-import StreamingScoop from "./diagrams/StreamingScoop";
+import RacingTheBeam from "./diagrams/RacingTheBeam";
 import InlineCta from "@site/src/components/InlineCta";
 import deltaBrain from "./delta-brain.png";
 
@@ -194,12 +194,12 @@ post a thing?”**
 
 Well, like many things in distributed systems it’s complicated. Packfiles are
 difficult because they’re designed with local storage and/or mmap in mind. Git
-constantly writes Packfiles to disk and then re-reads them. Filesystem reads in
+constantly writes packfiles to disk and then re-reads them. Filesystem reads in
 that case are 10 nanoseconds _at most_ (the filesystem cache helps so much here)
 but doing any network roundtrip is 10 milliseconds _at minimum_. It’s at least a
 million times slower because of how reality works.
 
-::note
+:::note
 
 One of the things that `/usr/bin/git` does that makes integrating it into object
 storage difficult is the unix-y idiom of writing to a file and then immediately
@@ -211,12 +211,6 @@ kinda sucked in practice.
 :::
 
 ### Messin' with Packfiles
-
-Does Git really need to write and re-read so much? Let’s look at the tasty
-innards of a Git packfile to find out:
-
-{/* TODO(Xe): image2 from the draft was the slop packfile picture; FIG 02 */}
-{/* below covers it. Delete this comment once you're happy with that. */}
 
 Each packfile has an index that describes what’s in it. Here’s a view of the
 index of the packfile made out of that trivial Git repo from earlier uppost:
@@ -246,8 +240,6 @@ that the kernel treats disk contents as memory pages, meaning that trying to
 read past what’s “in memory” makes the kernel load it instead of userspace. This
 is faster than loading it from the disk directly. It’s a shame this design
 doesn’t work in object storage.
-
-### If only you could construct Range requests from packfiles
 
 ### If only you could construct Range requests from packfiles
 
@@ -409,10 +401,6 @@ means that you can trivially construct the right HTTP Range requests to scoop
 individual objects out of Tigris while the packfile is downloading in the
 background.
 
-<div className="mermaid-frame">
-  <StreamingScoop />
-</div>
-
 As an optimization for latency, whenever the Git library requests any object
 from a packfile, the entire packfile is downloaded from object storage to a
 temporary folder. Anything on the “far end” of the packfile is Range-requested
@@ -425,8 +413,7 @@ recent packfiles for a given repository in the background when you start pushing
 or pulling.
 
 <div className="mermaid-frame">
-  TODO(Xe): make diagram showing the "racing the beam" effect of fetching
-  individual objects in parallel.
+  <RacingTheBeam />
 </div>
 
 :::note

@@ -1,108 +1,62 @@
 // Fig 03 — one ranged GET pulls 366 bytes out of the middle of a 128 MiB file
 // Standalone React component. Inline styles only, React is the only dependency.
-// Generated art: the LINES arrays hold plain strings and tagged
-// ["#id", text, color] segments that the STEPS below reveal and light up.
+// Static figure: same panel and palette as the other figures in this post.
+//
+// Generated art. The ██ in the container, the ▲ under it, the │ under that and
+// the "└── 366 bytes" pointer all start at column 38, so the callout reads as
+// one vertical down from the object's first byte.
 
-import { AnimatedAsciiFigure } from "@site/src/components/AnimatedAsciiFigure";
+import { AsciiFigure } from "@site/src/components/AsciiFigure";
 
 const LINES = [
-  ["  ", ["#fn", "packs/019a7f3c..bin", "base"]],
+  ["  ", "packs/019a7f3c..bin"],
+  ["  ", "┌────────────────────────────────────────────────┐"],
   [
     "  ",
-    ["#box", "┌────────────────────────────────────────────────┐", "base"],
+    "│",
+    "                                   ",
+    ["amber", "██"],
+    "           ",
+    "│",
   ],
   [
     "  ",
-    ["#box", "│", "base"],
-    ["#pad", "                                   ", "base"],
-    ["#obj", "██", "amber"],
-    ["#pad", "           ", "base"],
-    ["#box", "│", "base"],
+    "└───────────────────────────────────",
+    ["amber", "▲"],
+    "────────────┘",
   ],
   [
     "  ",
-    ["#box", "└───────────────────────────────────", "base"],
-    ["#tick", "▲", "amber"],
-    ["#box", "────────────┘", "base"],
-  ],
-  [
-    "  ",
-    ["#ruler", " 0", "gray"],
+    ["gray", " 0"],
     "                                  ",
-    ["#tick", "│", "amber"],
-    ["#ruler", "      128 MiB", "gray"],
+    ["amber", "│"],
+    ["gray", "      128 MiB"],
   ],
   [
     "                                      ",
-    ["#tick", "└── 366 bytes, right here", "amber"],
+    ["amber", "└── 366 bytes, right here"],
   ],
   [],
+  ["  ", ["gray", "you know where it starts and how long it is, so ask for"]],
+  ["  ", ["gray", "exactly that span and nothing else:"]],
+  [],
+  ["  ", "GET /packs/019a7f3c..bin"],
+  ["  ", ["green", "Range: bytes=100663296-100663661"]],
+  [],
+  ["  ", ["gray", "and that is all the bucket sends back:"]],
+  [],
+  ["  ", ["green", "206 Partial Content"]],
+  ["  ", "Content-Range: bytes 100663296-100663661/134217728"],
+  ["  ", "┌────┐"],
   [
     "  ",
-    ["#ask", "you know where it starts and how long it is, so ask for", "gray"],
-  ],
-  ["  ", ["#ask", "exactly that span and nothing else:", "gray"]],
-  [],
-  ["  ", ["#get", "GET /packs/019a7f3c..bin", "base"]],
-  ["  ", ["#rng", "Range: bytes=100663296-100663661", "green"]],
-  [],
-  ["  ", ["#and", "and that is all the bucket sends back:", "gray"]],
-  [],
-  ["  ", ["#resp", "206 Partial Content", "green"]],
-  ["  ", ["#cr", "Content-Range: bytes 100663296-100663661/134217728", "base"]],
-  ["  ", ["#rbox", "┌────┐", "base"]],
-  [
+    "│",
+    ["amber", "████"],
+    "│",
     "  ",
-    ["#rbox", "│", "base"],
-    ["#rb", "████", "amber"],
-    ["#rbox", "│", "base"],
-    "  ",
-    ["#rnote", "366 B on the wire, not 128 MiB", "gray"],
+    ["gray", "366 B on the wire, not 128 MiB"],
   ],
-  ["  ", ["#rbox", "└────┘", "base"]],
-];
-
-const STEPS = [
-  {
-    show: ["fn", "box", "pad", "ruler"],
-    caption: "one packfile in the bucket, 128 MiB of it",
-  },
-  {
-    show: ["obj", "tick"],
-    focus: ["obj", "tick"],
-    caption: "the object you want is 366 bytes, 96 MiB in",
-  },
-  {
-    show: ["ask", "get", "rng"],
-    focus: ["ask", "get", "rng"],
-    caption: "so name the span in a Range header",
-  },
-  {
-    show: ["and", "resp", "cr", "rbox", "rb", "rnote"],
-    focus: ["and", "resp", "cr", "rbox", "rb", "rnote"],
-    caption: "the bucket answers with a partial response, and only that",
-  },
-  {
-    show: [],
-    focus: [
-      "fn",
-      "box",
-      "pad",
-      "ruler",
-      "obj",
-      "tick",
-      "ask",
-      "get",
-      "rng",
-      "and",
-      "resp",
-      "cr",
-      "rbox",
-      "rb",
-      "rnote",
-    ],
-    caption: "one round trip, and you paid for 366 bytes of it",
-  },
+  ["  ", "└────┘"],
 ];
 
 export default function RangeRequestGap({
@@ -111,11 +65,10 @@ export default function RangeRequestGap({
   fontSize,
 }) {
   return (
-    <AnimatedAsciiFigure
+    <AsciiFigure
       label={label}
       title={title}
       lines={LINES}
-      steps={STEPS}
       fontSize={fontSize}
     />
   );
