@@ -23,6 +23,10 @@ import RangeRequestGap from "./diagrams/RangeRequestGap";
 import CueSheetComparison from "./diagrams/CueSheetComparison";
 import ObjgitCueFormat from "./diagrams/ObjgitCueFormat";
 import RacingTheBeam from "./diagrams/RacingTheBeam";
+import PushRequestCounts from "./diagrams/PushRequestCounts";
+import PushWallTime from "./diagrams/PushWallTime";
+import CloneRequestCounts from "./diagrams/CloneRequestCounts";
+import CloneWallTime from "./diagrams/CloneWallTime";
 import InlineCta from "@site/src/components/InlineCta";
 import deltaBrain from "./delta-brain.png";
 
@@ -433,12 +437,92 @@ architecture.
 
 ## The funny numbers
 
-- Latency/storage improvements
-  - TODO(Xe): get before/after comparisons of a few repos
+One of the more surprising things about Git is that basically every interaction
+with it is expensive. As such, you can go a long way by benchmarking how long it
+takes to push/pull repositories. As such, I decided to compare against a few git
+repos that have some interesting properties:
 
-TODO(Xe): compare pushing objgit's repo, /x/, and tigris-blog to objgit before
-and after the changes, funny numbers with my corp laptop on wifi. End the
-section saying "oh yeah this was with my corporate laptop on wifi".
+- objgit itself: https://github.com/tigrisdata/objgit, a newer repository with
+  some AI assisted development for prototyping.
+- My e/x/perimental monorepo: https://github.com/Xe/x/, a repo that's been
+  around for over a decade and holds many experiments.
+- The Tigris blog repo: https://github.com/tigrisdata/tigris-blog, a repo that
+  has a lot of images and other incompressible objects in it.
+
+Here are the conditions I ran the tests in:
+
+| Item          | Value                     |
+| ------------- | ------------------------- |
+| Started       | 2026-09-11T12:28:59-04:00 |
+| Finished      | 2026-09-11T13:06:52-04:00 |
+| Host          | Mac, 16 CPUs              |
+| Go            | go1.26.5                  |
+| Git           | git version 2.55.0        |
+| Bucket        | xe-objgit-devel           |
+| Build "old"   | v1.0.2                    |
+| Build "fixed" | origin/main               |
+
+### Push tests
+
+The big thing I wanted to fix was reducing the number of object storage calls.
+Less object storage calls, less latency waiting for them to resolve. It ended up
+being ridiculously effective. Object storage call counts sank like a stone.
+
+:::note
+
+All charts in this post are at logarithmic scales so they render more cleanly
+and the green bars are visible.
+
+:::
+
+<div className="mermaid-frame">
+  <PushRequestCounts />
+</div>
+
+| Repo        | Build |                      Wall |         S3 requests |   PUT |           GET | HEAD |                LIST |  Keys | Bucket bytes |
+| ----------- | ----- | ------------------------: | ------------------: | ----: | ------------: | ---: | ------------------: | ----: | -----------: |
+| objgit      | old   |         8.7s (8.7s-15.9s) |                 231 |    46 |            47 |    0 |                 138 |    42 |   829.27 KiB |
+| objgit      | new   |          2.2s (1.9s-2.5s) |          18 (17-20) |     5 |     10 (9-12) |    0 |                   3 |     4 |   902.98 KiB |
+| x           | old   | 3m29.4s (3m29.4s-3m40.6s) | 9,236 (9,236-9,304) | 1,087 |         2,170 |    0 | 5,979 (5,979-6,047) | 1,082 |    54.96 MiB |
+| x           | new   |       14.3s (14.3s-14.7s) |                  30 |     6 |            20 |    0 |                   4 |     4 |    46.38 MiB |
+| tigris-blog | old   | 2m13.4s (1m29.1s-2m30.5s) | 3,324 (2,687-3,417) |   515 |           522 |    0 | 2,287 (1,650-2,380) |   511 |   354.67 MiB |
+| tigris-blog | new   |       26.5s (19.2s-27.4s) |       136 (113-146) |     9 | 123 (100-133) |    0 |                   4 |     8 |   360.75 MiB |
+
+The biggest gain was wall clock time for pushing though:
+
+<div className="mermaid-frame">
+  <PushWallTime />
+</div>
+
+One of the biggest places that objgit used to lag was pushing taking way longer
+than it felt like it should. Eliminating the Tigris round trips made pushing way
+more responsive.
+
+### Clone tests
+
+I also wanted to see how the difference affected clone times. There were the
+same benefits as with pushing:
+
+<div className="mermaid-frame">
+  <CloneRequestCounts />
+</div>
+
+| Repo        | Build |                      Wall |         S3 requests |           GET | HEAD |                LIST |                         Wire bytes |
+| ----------- | ----- | ------------------------: | ------------------: | ------------: | ---: | ------------------: | ---------------------------------: |
+| objgit      | old   |       11.8s (11.5s-19.5s) |                 323 |            51 |    0 |                 272 |                         763.63 KiB |
+| objgit      | new   |          2.6s (1.5s-5.7s) |          17 (16-17) |    13 (12-13) |    0 |                   4 |                         767.96 KiB |
+| x           | old   | 3m23.5s (3m23.5s-3m33.6s) | 6,428 (6,428-6,780) |         1,091 |    0 | 5,337 (5,337-5,689) |    40.68 MiB (40.68 MiB-40.70 MiB) |
+| x           | new   |       54.4s (54.4s-57.8s) |          17 (17-71) |    13 (13-67) |    0 |                   4 |    42.22 MiB (42.22 MiB-42.36 MiB) |
+| tigris-blog | old   | 2m23.6s (2m19.4s-2m50.2s) | 3,675 (3,601-4,123) |           520 |    0 | 3,155 (3,081-3,603) | 350.94 MiB (350.93 MiB-351.07 MiB) |
+| tigris-blog | new   |   1m22s (1m20.8s-1m38.7s) |       158 (137-317) | 155 (134-314) |    0 |                   3 | 349.04 MiB (348.00 MiB-352.67 MiB) |
+
+<div className="mermaid-frame">
+  <CloneWallTime />
+</div>
+
+Oh yeah, the time numbers would probably be better if I tested this on a machine
+with ethernet. I did all my testing with my corp laptop on Wi-Fi to specifically
+put this in one of the worst conditions it could possibly be in.
 
 ## What about the other takes?
 
