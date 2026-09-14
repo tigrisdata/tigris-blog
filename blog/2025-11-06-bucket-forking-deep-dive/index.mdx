@@ -26,6 +26,7 @@ import InlineCta from "@site/src/components/InlineCta";
 import PostEmbed from "@site/src/components/PostEmbed";
 
 import heroimage from "./absolutely-safe-capsule.webp";
+import ErrorForkFlow from "./diagrams/ErrorForkFlow";
 
 <img
   src={heroimage}
@@ -57,6 +58,8 @@ These lessons are small kernels of wisdom that take multiple thousands of words
 to fully unpack. Today, I’m going to break down everything involved with those
 three statements so that you can learn how Tigris exposes terabytes of data into
 new buckets in milliseconds.
+
+{/* truncate */}
 
 ## Snapshots are time travel for state
 
@@ -246,23 +249,9 @@ if err := fout.Close(); err != nil {
 
 If you model this out in a timeline, it could look like this:
 
-```mermaid
-flowchart LR
-    CF{Create foo.txt}
-    WF{Write to file}
-    CloseF{Close file}
-    Fail(Failure)
-    Start(Start)
-    End(Success)
-
-    Start --> CF
-    CF -->|Can't open| Fail
-    CF --> WF
-    WF -->|Can't write| Fail
-    WF --> CloseF
-    CloseF -->|Can't close| Fail
-    CloseF --> End
-```
+<div className="mermaid-frame">
+  <ErrorForkFlow />
+</div>
 
 Every single thing that can fail creates a "fork" in the timeline for when it
 does fail. This basic idea is how we handle bucket forking. When you create a

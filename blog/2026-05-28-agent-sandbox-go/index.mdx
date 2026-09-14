@@ -69,6 +69,8 @@ wrong is way too big. Nobody wants "what if our expense-submission agent yeets
 all the receipts out of the bucket?" showing up on a threat model. But how do
 you safely give these agents access to shells?
 
+{/* truncate */}
+
 You'd need to sandbox the agents so that they can only affect their own little
 storage world. This is doable with conventional tooling, but that usually
 requires giving your executors way more permissions than they need. It gets

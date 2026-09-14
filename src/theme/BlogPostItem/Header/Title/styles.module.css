@@ -1,18 +1,18 @@
 .title {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
+  line-height: 1.3;
+  margin-bottom: 0;
   text-wrap: balance;
 }
 
 .titleLink {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 2.8em;
+  color: var(--ifm-heading-color);
+  transition: color 0.2s ease;
 }
 
 .titleLink:hover {
   text-decoration: none;
+  color: var(--ifm-color-primary);
 }
 
 .titleBlogPostPage {
@@ -23,62 +23,23 @@
   text-transform: capitalize;
 }
 
-.titleImageLink {
-  display: block;
-  overflow: hidden;
-  border-radius: 0.65rem;
-  border: 1px solid rgba(78, 217, 178, 0.2);
-  margin-bottom: 1rem;
-  aspect-ratio: 2752 / 1536;
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ifm-color-primary);
 }
 
-.titleImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+.eyebrow:hover {
+  text-decoration: none;
+  opacity: 0.75;
 }
 
-.zoomImage {
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease;
-}
-
-.zoomImage::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
-  );
-  transition: left 0.5s ease;
-}
-
-.zoomImage:hover::before {
-  left: 100%;
-}
-
-.titleImageLink:focus-visible {
-  outline: 2px solid var(--ifm-color-primary);
-  outline-offset: 2px;
-}
-
-.titleImageLink:hover .titleImage {
-  transform: scale(1.05);
-}
-
-/**
-  Blog post title should be smaller on smaller devices
-**/
 @media (max-width: 576px) {
   .title {
-    font-size: 1rem;
+    font-size: 1.15rem;
   }
 }

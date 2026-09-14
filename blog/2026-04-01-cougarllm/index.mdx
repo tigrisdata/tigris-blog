@@ -22,9 +22,9 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import PullQuote from "@site/src/components/PullQuote";
-import MermaidFrame from "@site/src/components/MermaidFrame";
 import ecosystemImage from "./ecosystem.webp";
 import heroImage from "./hero-image.webp";
+import GlobalRoutingFlow from "./diagrams/GlobalRoutingFlow";
 
 <img
   src={heroImage}
@@ -102,31 +102,10 @@ the same time, model weights replicate out from a single Tigris bucket so each
 region can serve locally. The result is straightforward in theory and chaotic in
 practice: one URL, local-ish latency, and no regional replica babysitting.
 
-<MermaidFrame title="CougarLLM routes each request to the nearest region while model weights replicate from a single Tigris bucket.">
-```mermaid
-flowchart TD
-    U1["User in Tokyo"] -->|request| GE["CougarLLM Global Endpoint"]
-    U2["User in São Paulo"] -->|request| GE
-    U3["User in Frankfurt"] -->|request| GE
+<div className="mermaid-frame">
+  <GlobalRoutingFlow />
+</div>
 
-    GE -->|route to nearest| TYO["Tokyo Region"]
-    GE -->|route to nearest| GRU["São Paulo Region"]
-    GE -->|route to nearest| FRA["Frankfurt Region"]
-
-    TYO --- W1["Weights + KV Cache"]
-    GRU --- W2["Weights + KV Cache"]
-    FRA --- W3["Weights + KV Cache"]
-
-    TB["Tigris Bucket
-    (single source of truth)"] -.->|auto-replicates| W1
-    TB -.->|auto-replicates| W2
-    TB -.->|auto-replicates| W3
-
-    style GE fill:#f97316,color:#fff
-    style TB fill:#0ea5e9,color:#fff
-
-```
-</MermaidFrame>
 <p style={{ maxWidth: "42rem", margin: "0.5rem auto 0" }}>
   <em>
     Figure 2: CougarLLM request flow. One global endpoint, nearest-region
@@ -159,8 +138,8 @@ billing perspective.
 
 ## Why KV cache becomes chaos at global scale
 
-KV cache is why long conversations get expensive fast. It grows with context,
-it is session-specific, and it usually gets trapped on one machine.
+KV cache is why long conversations get expensive fast. It grows with context, it
+is session-specific, and it usually gets trapped on one machine.
 
 In CougarLLM, Tigris holds durable KV state while inference nodes keep the hot
 working set local for low-latency decoding. That means cross-region recovery can
@@ -172,10 +151,9 @@ streaming token-by-token KV reads from object storage.
 A 70B checkpoint is large enough that naive copying for every experiment gets
 expensive immediately. CougarLLM uses
 [Bucket Forks](https://www.tigrisdata.com/docs/forks/) so you clone instantly
-and pay for deltas, not for 40 near-identical copies and a prayer.
-For the non-joke deep dive, read
-[Fork Buckets Like Code](/blog/fork-buckets-like-code/) and
-[Bucket Forking Deep Dive](/blog/bucket-forking-deep-dive/).
+and pay for deltas, not for 40 near-identical copies and a prayer. For the
+non-joke deep dive, read [Fork Buckets Like Code](/blog/fork-buckets-like-code/)
+and [Bucket Forking Deep Dive](/blog/bucket-forking-deep-dive/).
 
 :::note
 
@@ -191,19 +169,18 @@ that one "temporary" dataset everyone is weirdly attached to.
 
 CougarLLM supports **shadow deployments** using the same
 [shadow bucket](https://www.tigrisdata.com/docs/migration/) mechanism Tigris
-offers for storage migrations. Route a percentage of inference traffic
-to the new model, compare outputs, and promote it when you're confident.
-Rollback is instant. The old weights are still there, you're just changing
-which fork gets traffic, not performing emergency archaeology at 2 a.m.
-If you want the production pattern, see
+offers for storage migrations. Route a percentage of inference traffic to the
+new model, compare outputs, and promote it when you're confident. Rollback is
+instant. The old weights are still there, you're just changing which fork gets
+traffic, not performing emergency archaeology at 2 a.m. If you want the
+production pattern, see
 [How to Migrate to Tigris with Shadow Buckets](/blog/shadow-bucket/).
 
 :::warning
 
 CougarLLM is not real. We invented it with complete confidence, three coffees,
 and a suspiciously detailed architecture diagram. But everything it relies on is
-real.
-[Global distribution](https://www.tigrisdata.com/docs/concepts/regions/),
+real. [Global distribution](https://www.tigrisdata.com/docs/concepts/regions/),
 [zero egress fees](https://www.tigrisdata.com/docs/account-management/billing/),
 [bucket forks](https://www.tigrisdata.com/docs/forks/),
 [shadow buckets](https://www.tigrisdata.com/docs/migration/), and
@@ -219,4 +196,3 @@ the building blocks are already here, no fake big-cat branding required.
   button="Get Started with Tigris"
   link="https://www.tigrisdata.com/docs/get-started/"
 />
-```

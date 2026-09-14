@@ -43,7 +43,29 @@ const config = {
   },
   themes: ["@docusaurus/theme-mermaid"],
 
-  headTags: [...rb2bHeadTag],
+  headTags: [
+    {
+      tagName: "link",
+      attributes: { rel: "preconnect", href: "https://fonts.googleapis.com" },
+    },
+    {
+      tagName: "link",
+      attributes: {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossorigin: "anonymous",
+      },
+    },
+    ...rb2bHeadTag,
+  ],
+
+  // Match the marketing homepage fonts (Geist / Geist Mono / Hanken Grotesk).
+  stylesheets: [
+    {
+      href: "https://fonts.googleapis.com/css2?family=Geist:wght@300..900&family=Geist+Mono:wght@300..700&family=Hanken+Grotesk:wght@400..800&display=swap",
+      rel: "stylesheet",
+    },
+  ],
 
   clientModules: [
     require.resolve("./src/util/ensureGtag.js"),
@@ -64,9 +86,10 @@ const config = {
         docs: false,
         blog: {
           routeBasePath: "/",
-          postsPerPage: 12,
-          blogTitle: "Tigris Blog",
-          blogDescription: "A blog dedicated to all things storage!",
+          postsPerPage: "ALL",
+          blogTitle: "Engineering blog",
+          blogDescription:
+            "Posts from the Tigris engineering team about how we build global object storage for any cloud — low-latency access anywhere, millions of buckets, and 99.99% availability you can rely on.",
           blogSidebarTitle: "All our posts",
           blogSidebarCount: 0,
           showReadingTime: true,
@@ -88,6 +111,7 @@ const config = {
   ],
 
   plugins: [
+    require.resolve("./plugins/blog-stats.js"),
     [
       "@signalwire/docusaurus-plugin-llms-txt",
       {
@@ -213,20 +237,31 @@ const config = {
         ],
       },
       footer: {
+        // No `href`: the marketing footer renders the wordmark as a plain
+        // image, and Docusaurus' footer logo link is styled at opacity 0.5,
+        // which is what made the wordmark look muted here.
+        // Both files are the brand wordmark as shipped by the website repo:
+        // `/img/tigris-logo.svg` is public/images/tigris-logo.svg (the asset
+        // the marketing footer itself uses) and `/logo/light.svg` is
+        // public/brand/color-light/Logo.svg for the light color mode.
         logo: {
-          href: "/",
-          src: "/logo/light.png",
-          srcDark: "/logo/dark.png",
-          alt: "Tigris Blog",
-          height: "26px",
+          src: "/logo/light.svg",
+          srcDark: "/img/tigris-logo.svg",
+          alt: "Tigris",
+          width: "59",
+          height: "24",
         },
+        // Mirrors the marketing footer's columns, order and link set exactly
+        // (website repo: src/components/Footer.tsx -- `resourceLinks` and
+        // `companyLinks`). Relative hrefs there are absolute here because the
+        // blog is a separate Docusaurus site.
         links: [
           {
-            title: "Company",
+            title: "Resources",
             items: [
               {
-                label: "About",
-                href: `https://www.tigrisdata.com/about/`,
+                label: "Docs",
+                href: `${tigrisConfig.docsUrl}/`,
                 target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
@@ -235,21 +270,28 @@ const config = {
                 label: "Blog",
                 href: "/",
               },
-            ],
-          },
-          {
-            title: "Resources",
-            items: [
               {
-                href: "https://www.tigrisdata.com/pricing/",
-                label: "Pricing",
+                label: "Status",
+                href: tigrisConfig.statusPageUrl,
                 target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
               },
               {
-                label: "Terms of Service",
-                href: `${tigrisConfig.docsUrl}/legal/service-terms/`,
+                label: "Report Abuse",
+                href: tigrisConfig.reportAbuseUrl,
+                target: "_self",
+                rel: "",
+                className: "footer__link-item disable-external-icon",
+              },
+            ],
+          },
+          {
+            title: "Company",
+            items: [
+              {
+                label: "Careers",
+                href: `${tigrisConfig.websiteUrl}/careers`,
                 target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
@@ -262,49 +304,16 @@ const config = {
                 className: "footer__link-item disable-external-icon",
               },
               {
-                label: "Report Abuse",
-                href: tigrisConfig.reportAbuseUrl,
-              },
-              // {
-              //   label: "Videos",
-              //   href: tigrisConfig.youTubeUrl,
-              // },
-              // {
-              //   label: "Community",
-              //   href: tigrisConfig.discordUrl,
-              // },
-            ],
-          },
-          {
-            title: "Developers",
-            items: [
-              {
-                href: `${tigrisConfig.docsUrl}/`,
-                label: "Docs",
+                label: "Terms of Service",
+                href: `${tigrisConfig.docsUrl}/legal/service-terms/`,
                 target: "_self",
                 rel: "",
                 className: "footer__link-item disable-external-icon",
               },
-              {
-                label: "Status",
-                href: tigrisConfig.statusPageUrl,
-              },
-              {
-                label: "Support",
-                href: "mailto:help@tigrisdata.com",
-              },
-              // {
-              //   label: "Videos",
-              //   href: "https://www.youtube.com/channel/UCsCQ5Nl3JOh71UNCCNZ3q2g",
-              // },
-              {
-                label: "Community",
-                href: tigrisConfig.discordUrl,
-              },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Tigris Data, Inc. All rights reserved.`,
+        copyright: `© ${new Date().getFullYear()} Tigris Data, Inc · All rights reserved`,
       },
       ...(process.env.NEXT_ALGOLIA_APPID && process.env.NEXT_ALGOLIA_APIKEY
         ? {

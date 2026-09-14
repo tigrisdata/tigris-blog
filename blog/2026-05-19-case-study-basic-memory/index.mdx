@@ -29,9 +29,10 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import BreakoutQuote from "@site/src/components/BreakoutQuote";
-import MermaidFrame from "@site/src/components/MermaidFrame";
 import QuickSummary from "@site/src/components/QuickSummary";
 import heroImage from "./basic-memory-hero.webp";
+import TenantIsolationFlow from "./diagrams/TenantIsolationFlow";
+import EditSyncFlow from "./diagrams/EditSyncFlow";
 
 <img
   src={heroImage}
@@ -181,58 +182,9 @@ writes against that tenant's bucket and Postgres only. The rclone sync path
 skips the API entirely and talks straight to the tenant's bucket with its own
 scoped credentials.
 
-<MermaidFrame title="Shared compute, per-tenant storage. The gateway proxy resolves tenancy; the bucket is the isolation boundary.">
-
-```mermaid
-flowchart TB
-    subgraph Clients["Client Layer"]
-        web["Web Editor"]
-        mcp["MCP Clients<br/>(Claude, Cursor, VS Code)"]
-        sync["rclone bisync"]
-    end
-
-    subgraph Shared["Shared Compute"]
-        gateway["Gateway Proxy<br/>Auth + Tenant Resolution"]
-        api["Cloud API Pool<br/>(multi-tenant)"]
-    end
-
-    gateway -->|"X-BM-Tenant-ID<br/>X-BM-Database-URL<br/>X-BM-Bucket-Name"| api
-
-    subgraph TenantA["Tenant A — Isolated"]
-        bucketA[("Tigris Bucket A<br/>scoped credentials")]
-        dbA[("Neon Postgres A")]
-    end
-
-    subgraph TenantB["Tenant B — Isolated"]
-        bucketB[("Tigris Bucket B<br/>scoped credentials")]
-        dbB[("Neon Postgres B")]
-    end
-
-    subgraph TenantC["Tenant C — Isolated"]
-        bucketC[("Tigris Bucket C<br/>scoped credentials")]
-        dbC[("Neon Postgres C")]
-    end
-
-    web & mcp --> gateway
-    sync -->|"direct S3"| bucketA
-    sync -->|"direct S3"| bucketB
-
-    api --> bucketA & dbA
-    api --> bucketB & dbB
-    api --> bucketC & dbC
-
-    classDef client fill:#142229,stroke:#38ac8c,color:#62feb5;
-    classDef compute fill:#277862,stroke:#38ac8c,color:#ffffff;
-    classDef bucket fill:#62feb5,stroke:#38ac8c,color:#142229;
-    classDef db fill:#38ac8c,stroke:#277862,color:#ffffff;
-
-    class web,mcp,sync client;
-    class gateway,api compute;
-    class bucketA,bucketB,bucketC bucket;
-    class dbA,dbB,dbC db;
-```
-
-</MermaidFrame>
+<div className="mermaid-frame">
+  <TenantIsolationFlow />
+</div>
 
 ## Sync that pays for itself
 
@@ -269,27 +221,9 @@ the web editor, or the API —
 tell the cloud API which files changed, so the indexer re-reads only what it
 needs. No polling, no scheduled scans.
 
-<MermaidFrame title="How an edit flows through Basic Memory. Writes from any path converge cleanly at the index.">
-
-```mermaid
-graph LR
-  A["Local machine"] <-->|"rclone bisync<br/>X-Tigris-Consistent"| B["Tigris bucket<br/>per-tenant"]
-  B -->|"bucket-event webhook"| C["Cloud API<br/>Postgres index"]
-  C --> D["Web editor"]
-  C --> E["Remote MCP clients"]
-
-  classDef local fill:#142229,stroke:#38ac8c,color:#62feb5;
-  classDef storage fill:#277862,stroke:#38ac8c,color:#ffffff;
-  classDef api fill:#38ac8c,stroke:#277862,color:#ffffff;
-  classDef client fill:#62feb5,stroke:#38ac8c,color:#142229;
-
-  class A local;
-  class B storage;
-  class C api;
-  class D,E client;
-```
-
-</MermaidFrame>
+<div className="mermaid-frame">
+  <EditSyncFlow />
+</div>
 
 Egress is the load-bearing economic detail. Users sync files back and forth all
 day, and agents re-read the same notes while building context. That bill

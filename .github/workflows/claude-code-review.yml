@@ -12,6 +12,12 @@ on:
 
 jobs:
   claude-review:
+    # Fork PRs run with a read-only GITHUB_TOKEN and no access to secrets, so
+    # `id-token: write` below cannot be honored and the action fails with
+    # "Could not fetch an OIDC token". Skip the job on those rather than
+    # leaving a permanently red check on external contributions.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||

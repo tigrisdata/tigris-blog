@@ -21,6 +21,7 @@ import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
 import InlineCta from "@site/src/components/InlineCta";
+import RagPipeline from "./diagrams/RagPipeline";
 import heroImage from "./ty-embedding.webp";
 
 <img
@@ -68,24 +69,9 @@ you're doing a
 [Retrieval-Augmented Generation (RAG)](https://blogs.nvidia.com/blog/what-is-retrieval-augmented-generation/)
 pipeline like this:
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Backend
-    participant Model
-    participant Vector DB
-    participant Tigris
-
-    User->>+Backend: How do I upload a file to Tigris?
-    Backend->>+Model: Produce embeddings of question
-    Model->>+Backend: High-dimensional vector embeddings
-    Backend->>+Vector DB: Search for similar documents
-    Vector DB->>+Tigris: Fetch data...
-    Tigris->>+Vector DB: Binary data...
-    Vector DB->>+Backend: Here's the top 10 documents
-    Backend->>+Model: Using these documents, answer the question
-    Model->>+User: Sure, you upload a file using...
-```
+<div className="mermaid-frame">
+  <RagPipeline />
+</div>
 
 Vector databases are also general search engines and you can search anything
 that can be embedded, be it text, images, audio, or video. Most AI providers

@@ -9,71 +9,41 @@ import styles from "./styles.module.css";
 export default function BlogPostItemHeaderTitle({
   className,
 }: Props): ReactNode {
-  const { metadata, isBlogPostPage, assets, frontMatter } = useBlogPost();
+  const { metadata, isBlogPostPage } = useBlogPost();
   const tag = metadata.tags[0];
-
   const { permalink, title } = metadata;
-  const TitleHeading = isBlogPostPage ? "h1" : "h2";
 
-  const breadcrumb = isBlogPostPage ? (
-    <>
-      <Link to="/blog" className="">
-        Blog
-      </Link>{" "}
-      /{" "}
-      <Link to={tag.permalink} className={clsx(styles.tagLink)}>
-        {tag.label}
-      </Link>
-    </>
-  ) : (
-    <></>
-  );
+  if (isBlogPostPage) {
+    return (
+      <>
+        {tag && (
+          <>
+            <Link to="/blog">Blog</Link> /{" "}
+            <Link to={tag.permalink} className={clsx(styles.tagLink)}>
+              {tag.label}
+            </Link>
+          </>
+        )}
+        <h1 className={clsx(className, styles.titleBlogPostPage)}>{title}</h1>
+      </>
+    );
+  }
 
   return (
     <>
-      {breadcrumb}
-      <TitleHeading
-        className={clsx(
-          className,
-          isBlogPostPage ? styles.titleBlogPostPage : styles.title
-        )}
-      >
-        {!isBlogPostPage && assets.image && (
-          <Link
-            to={permalink}
-            className={clsx(styles.titleImageLink, "blog-card-image-link")}
-          >
-            <img
-              src={assets.image}
-              alt={metadata.title}
-              className={clsx(
-                styles.titleImage,
-                styles.zoomImage,
-                "blog-card-image"
-              )}
-              loading="lazy"
-              width={400}
-              height={225}
-              sizes="(max-width: 768px) 100vw, (max-width: 996px) 50vw, 400px"
-              style={
-                frontMatter.image_position
-                  ? { objectPosition: frontMatter.image_position as string }
-                  : undefined
-              }
-            />
-          </Link>
-        )}
-        {isBlogPostPage ? (
-          title
-        ) : (
-          <Link
-            to={permalink}
-            className={clsx(styles.titleLink, "blog-card-title-link")}
-          >
-            {title}
-          </Link>
-        )}
-      </TitleHeading>
+      {tag && (
+        <Link to={tag.permalink} className={styles.eyebrow}>
+          {tag.label}
+        </Link>
+      )}
+      <h2 className={clsx(className, styles.title)}>
+        <Link
+          to={permalink}
+          className={clsx(styles.titleLink, "blog-card-title-link")}
+        >
+          {title}
+        </Link>
+      </h2>
     </>
   );
 }

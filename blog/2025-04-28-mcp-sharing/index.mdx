@@ -28,6 +28,7 @@ import ks from "@site/static/img/avatars/ks.jpg";
 import ty from "@site/static/img/avatars/ty/happy.webp";
 import tyCoffee from "@site/static/img/avatars/ty/coffee.webp";
 import Conv from "@site/src/components/Conv";
+import ToolCallFlow from "./diagrams/ToolCallFlow";
 
 export const Ty = ({ children, mood, top, bottom }) => {
   let url = ty;
@@ -141,16 +142,9 @@ useful, we taught them to be able to use tools. These tools are function
 signature definitions that get passed to the system prompt and then the model
 can use them kinda like this:
 
-```mermaid
-sequenceDiagram
-	participant User
-	participant Model
-	participant Tool
-	User->>Model: Can you upload an image to my bucket?
-	Model->>Tool: upload_image(bucket, path, key)
-	Tool->>Model: HTTP 200, it worked
-	Model->>User: It's in the bucket!
-```
+<div className="mermaid-frame">
+  <ToolCallFlow />
+</div>
 
 In order to make sharing files easier, I added a tool named
 `upload_file_and_get_url`. This takes the bucket name, the key to store the file

@@ -40,6 +40,11 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  /* !important because the global `.markdown img:not(.hero-image)` rule in
+     src/css/custom.css outspecifies this module class. The fixed-size
+     .avatarContainer hides the effect today; reset it so a future layout change
+     does not surface the prose image spacing here. */
+  margin-bottom: 0 !important;
 }
 
 .content {
