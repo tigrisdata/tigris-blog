@@ -4,6 +4,13 @@ title: "Object storage is all you need"
 description: |
   Ampbase runs its control plane on Tigris object storage with no database
   underneath. Here are the four database primitives they built, and what broke.
+lede: |
+  Tigris makes object storage using a database engine we built on top of
+  FoundationDB: a distributed key-value store. JP, the founder of Ampbase, uses a
+  control plane on Tigris with no database underneath it, and today he's going
+  over which database behaviors he had to build himself and what that cost.
+
+  Thanks JP!
 image: ./hero-image.webp
 keywords:
   - object storage
@@ -27,22 +34,10 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-import Lede from "@site/src/components/Lede";
 
 import BucketLayout from "./diagrams/BucketLayout";
 import LostConditionalWrite from "./diagrams/LostConditionalWrite";
 import AnalyticsPath from "./diagrams/AnalyticsPath";
-
-<Lede>
-
-Tigris makes object storage using a database engine we built on top of
-FoundationDB: a distributed key-value store. JP, the founder of Ampbase, uses a
-control plane on Tigris with no database underneath it, and today he's going
-over which database behaviors he had to build himself and what that cost.
-
-Thanks JP!
-
-</Lede>
 
 Last time on
 [the Ampbase blog](https://ampbase.io/blog/posts/why-we-built-ampbase/) I talked
