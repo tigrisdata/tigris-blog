@@ -27,12 +27,13 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import Lede from "@site/src/components/Lede";
 
 import BucketLayout from "./diagrams/BucketLayout";
 import LostConditionalWrite from "./diagrams/LostConditionalWrite";
 import AnalyticsPath from "./diagrams/AnalyticsPath";
 
-:::note Context
+<Lede>
 
 Tigris makes object storage using a database engine we built on top of
 FoundationDB: a distributed key-value store. JP, the founder of Ampbase, uses a
@@ -41,7 +42,7 @@ over which database behaviors he had to build himself and what that cost.
 
 Thanks JP!
 
-:::
+</Lede>
 
 Last time on
 [the Ampbase blog](https://ampbase.io/blog/posts/why-we-built-ampbase/) I talked
