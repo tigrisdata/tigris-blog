@@ -11,7 +11,11 @@
   .inlineToc {
     display: block;
     position: relative;
-    margin: 1.5rem 0 2rem;
+    /* Match the 42rem prose measure and centre it, so the panel lines up with
+       the header and body rather than spilling wider than them in the
+       769–996px range. */
+    max-width: 42rem;
+    margin: 1.5rem auto 2rem;
     background: var(--docs-color-background-100);
     border: 1px solid var(--docs-color-border);
     border-radius: 4px;

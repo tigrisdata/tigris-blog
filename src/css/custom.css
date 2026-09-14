@@ -1596,17 +1596,12 @@ table td {
   }
 }
 
-/* Constrain non-hero images on large screens */
-@media (min-width: 1536px) {
-  .markdown img:not(.hero-image) {
-    max-width: 48rem; /* 3xl equivalent */
-  }
-}
-
-/* Center non-hero images, and space them from the prose that follows.
-   Hero images are excluded: they keep their tighter 0.5rem so their caption
-   sits close underneath. */
+/* Center non-hero images and constrain them to the prose measure so they line
+   up with the text instead of spilling past it. Space them from the prose that
+   follows. Hero images are excluded: they keep their tighter 0.5rem so their
+   caption sits close underneath. */
 .markdown img:not(.hero-image) {
+  max-width: min(42rem, 100%);
   margin-left: auto;
   margin-right: auto;
   /* In-post component avatars (Conv, PostEmbed, BreakoutQuote) opt out of this

@@ -10,7 +10,9 @@
 
 @media (min-width: 768px) {
   .container {
-    max-width: 80ch;
+    /* Match the 42rem prose measure so the conversation lines up with the
+       body text (see .markdown p in src/css/custom.css). */
+    max-width: 42rem;
     margin-left: auto;
     margin-right: auto;
   }
