@@ -105,6 +105,10 @@ export function AnimatedAsciiFigure({
   // an accumulation, so this is the default; pass false for a figure whose
   // steps are alternatives rather than a sequence.
   cumulative = true,
+  // A looping figure never finishes: it wraps from the last step back to the
+  // first and keeps going. The control row turns into play/pause, because
+  // "replay" means nothing to something that never stopped.
+  loop = false,
   stepMs = 2200,
 }) {
   const reduced = useReducedMotion();
@@ -140,6 +144,10 @@ export function AnimatedAsciiFigure({
     setPlaying(true);
   }, []);
 
+  // Looping figures pause and resume in place instead of restarting, so a
+  // reader can freeze the frame they want to look at.
+  const toggle = useCallback(() => setPlaying((p) => !p), []);
+
   // Start once, when enough of the figure is on screen to be worth watching.
   const startedRef = useRef(false);
   useEffect(() => {
@@ -169,15 +177,18 @@ export function AnimatedAsciiFigure({
   // Advance.
   useEffect(() => {
     if (!playing) return undefined;
-    if (step >= lastStep) {
+    if (!loop && step >= lastStep) {
       setPlaying(false);
       setFinished(true);
       return undefined;
     }
     const hold = resolved[step]?.ms ?? stepMs;
-    const t = setTimeout(() => setStep((s) => s + 1), hold);
+    const t = setTimeout(
+      () => setStep((s) => (s >= lastStep ? 0 : s + 1)),
+      hold
+    );
     return () => clearTimeout(t);
-  }, [playing, step, lastStep, resolved, stepMs]);
+  }, [playing, step, lastStep, resolved, stepMs, loop]);
 
   const frame = resolved[Math.min(step, lastStep)];
 
@@ -299,7 +310,9 @@ export function AnimatedAsciiFigure({
                 border: "none",
                 borderRadius: 2,
                 cursor: "pointer",
-                background: i <= step ? "#4ade80" : "#243147",
+                background: (loop ? i === step : i <= step)
+                  ? "#4ade80"
+                  : "#243147",
                 transition: "background 300ms ease",
               }}
             />
@@ -312,7 +325,7 @@ export function AnimatedAsciiFigure({
 
         <button
           type="button"
-          onClick={play}
+          onClick={loop ? toggle : play}
           style={{
             flexShrink: 0,
             background: "transparent",
@@ -325,7 +338,7 @@ export function AnimatedAsciiFigure({
             cursor: "pointer",
           }}
         >
-          {"↺ replay"}
+          {loop ? (playing ? "❚❚ pause" : "▶ play") : "↺ replay"}
         </button>
       </div>
     </figure>
