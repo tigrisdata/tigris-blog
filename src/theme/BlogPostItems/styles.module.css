@@ -269,4 +269,11 @@
     background-position: center;
     background-size: 1.1rem;
   }
+
+  /* Firefox inherits the select's transparent color into the native option
+     popup, blanking the labels. Restore it so the opened list stays readable
+     while the collapsed button label remains hidden. */
+  .sort option {
+    color: var(--ifm-font-color-base);
+  }
 }
