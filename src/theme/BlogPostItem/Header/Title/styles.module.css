@@ -15,8 +15,31 @@
   color: var(--ifm-color-primary);
 }
 
+/* Green-dash "BLOG" eyebrow above the title (replaces the breadcrumb) */
+.eyebrowBlog {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  font: 500 11px/1 var(--ifm-font-family-monospace);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--docs-color-text-100);
+}
+
+.eyebrowBlog::before {
+  content: "";
+  width: 26px;
+  height: 2px;
+  background: var(--ifm-color-primary);
+}
+
+.eyebrowBlog:hover {
+  text-decoration: none;
+  color: var(--docs-color-text);
+}
+
 .titleBlogPostPage {
-  margin: 0.75rem 0 0;
+  margin: 1.25rem 0 1.5rem;
   max-width: 21ch;
   font-size: clamp(34px, 5.4vw, 60px);
   font-weight: 500;

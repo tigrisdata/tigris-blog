@@ -16,7 +16,7 @@ export default function BlogPostItemHeader(): ReactNode {
     const ledeText =
       (metadata.frontMatter.lede as string | undefined) ?? metadata.description;
     return (
-      <header>
+      <header className="blog-post-header">
         <BlogPostItemHeaderTitle />
         <Lede text={ledeText} />
         <BlogPostItemHeaderMeta />

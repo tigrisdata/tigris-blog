@@ -16,14 +16,9 @@ export default function BlogPostItemHeaderTitle({
   if (isBlogPostPage) {
     return (
       <>
-        {tag && (
-          <>
-            <Link to="/blog">Blog</Link> /{" "}
-            <Link to={tag.permalink} className={clsx(styles.tagLink)}>
-              {tag.label}
-            </Link>
-          </>
-        )}
+        <Link to="/blog" className={styles.eyebrowBlog}>
+          Blog
+        </Link>
         <h1 className={clsx(className, styles.titleBlogPostPage)}>{title}</h1>
       </>
     );
