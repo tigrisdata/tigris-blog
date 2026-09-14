@@ -1642,11 +1642,111 @@ table td {
   margin-right: auto;
 }
 
+/* ==========================================================================
+   Blog tables — 2B Hairline grid (default)
+   Every markdown table renders as a mono, tabular-nums figure grid on its own
+   dark plane. The first column stays prose (sans, brighter); columns 3+ are
+   right-aligned figures. Table scrolls horizontally on overflow rather than
+   wrapping. To opt a table into banded comparison rows instead, wrap it in
+   <div class="table-banded"> — see below.
+   ========================================================================== */
 .markdown table {
-  max-width: 42rem;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border: 1px solid #27272c;
+  border-radius: 4px;
+  background: #101013;
+  margin: 2.25rem auto;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: #d2d2d7;
+}
+.markdown table thead tr {
+  background: #17171b;
+}
+.markdown table th,
+.markdown table td {
+  border: 1px solid #27272c;
+  padding: 10px 14px;
+}
+.markdown table th {
+  font: 500 10px/1.4 "Geist Mono", ui-monospace, monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9a9aa4;
+  white-space: nowrap;
+}
+.markdown table tbody tr {
+  background: none;
+}
+.markdown table tbody tr:hover {
+  background: #15151a;
+}
+
+/* first column stays prose, the rest are figures */
+.markdown table td:first-child {
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 13.5px;
+  color: #e7e7ea;
+  white-space: nowrap;
+}
+.markdown table th:nth-child(n + 3),
+.markdown table td:nth-child(n + 3) {
+  text-align: right;
+}
+
+/* ==========================================================================
+   Blog tables — 2C Banded rows (opt-in)
+   For comparison data (old/new pairs, benchmarks). Wrap the markdown table in
+   <div class="table-banded"> to drop the grid lines in favour of zebra
+   striping, with an accent edge on every even row (the "new" build in an
+   old/new pairing).
+   ========================================================================== */
+.markdown .table-banded table {
+  border: 1px solid #27272c;
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: inherit;
+  font-size: 13.5px;
+}
+.markdown .table-banded table th {
+  border: 0;
+  border-bottom: 1px solid #27272c;
+  padding: 11px 16px;
+}
+.markdown .table-banded table td {
+  border: 0;
+  padding: 12px 16px;
+}
+.markdown .table-banded table tbody tr:hover {
+  background: none;
+}
+.markdown .table-banded table tbody tr:nth-child(even) {
+  background: #16161a;
+}
+.markdown .table-banded table th:nth-child(n + 3),
+.markdown .table-banded table td:nth-child(n + 3) {
+  text-align: right;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+}
+
+/* accent edge on the rows you want compared: every even row (the "new" build
+   in old/new pairs). For explicit control, add a class via MDX and target
+   that instead. */
+.markdown .table-banded table tbody tr td:first-child {
+  border-left: 2px solid transparent;
+  white-space: nowrap;
+  color: #e7e7ea;
+  font-family: inherit;
+  font-size: inherit;
+}
+.markdown .table-banded table tbody tr:nth-child(even) td:first-child {
+  border-left-color: #8aa2ff;
 }
 
 /* Excalidraw diagram frame (see .claude/skills/excalidraw-diagrams) */
