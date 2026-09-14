@@ -1713,7 +1713,11 @@ table td {
 .markdown .table-banded table {
   border: 1px solid #27272c;
   border-radius: 4px;
-  overflow: hidden;
+  /* keep horizontal scroll from the default rule (a bare `overflow: hidden`
+     would clip wide comparison tables with no way to reach the off-screen
+     columns); `overflow-x: auto` still clips the striped rows to the rounded
+     corners. */
+  overflow-x: auto;
   font-family: inherit;
   font-size: 13.5px;
 }
