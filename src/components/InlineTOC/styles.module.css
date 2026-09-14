@@ -106,5 +106,10 @@
 
 .tocLink:hover,
 .tocLinkActive {
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
+}
+
+.tocLink:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
 }

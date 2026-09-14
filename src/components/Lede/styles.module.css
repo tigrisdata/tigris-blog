@@ -28,7 +28,7 @@
 }
 
 .lede a {
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
   text-decoration: none;
 }
 

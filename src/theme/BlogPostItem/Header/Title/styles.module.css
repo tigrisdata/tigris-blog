@@ -12,7 +12,7 @@
 
 .titleLink:hover {
   text-decoration: none;
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
 }
 
 /* Green-dash "BLOG" eyebrow above the title (replaces the breadcrumb) */
@@ -60,7 +60,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
 }
 
 .eyebrow:hover {

@@ -66,32 +66,37 @@
   color: var(--docs-color-text);
 }
 
+.button:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
 /* Copy link — the accent action, pushed to the far right */
 .copyLink {
   margin-left: auto;
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
   border-color: color-mix(in srgb, var(--ifm-color-primary) 45%, transparent);
   background: color-mix(in srgb, var(--ifm-color-primary) 10%, transparent);
 }
 
 .copyLink svg {
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
 }
 
 .copyLink:hover,
 .copyLink:focus-visible {
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
   border-color: var(--ifm-color-primary);
   background: color-mix(in srgb, var(--ifm-color-primary) 16%, transparent);
 }
 
 .copyLink:hover svg,
 .copyLink:focus-visible svg {
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
 }
 
 .copied {
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
   border-color: var(--ifm-color-primary);
 }
 

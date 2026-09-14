@@ -39,6 +39,13 @@ function BlogPostItemHeaderTags(): ReactNode {
             type="button"
             className="blog-meta-tags-toggle"
             aria-expanded={expanded}
+            aria-label={
+              expanded
+                ? "Show fewer tags"
+                : `Show ${hiddenCount} more ${
+                    hiddenCount === 1 ? "tag" : "tags"
+                  }`
+            }
             onClick={() => setExpanded((value) => !value)}
           >
             {expanded ? "Less" : `+${hiddenCount}`}

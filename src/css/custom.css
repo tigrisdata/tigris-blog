@@ -93,6 +93,12 @@ code {
   --ifm-color-primary-lighter: #44c29f;
   --ifm-color-primary-lightest: #5ecbad;
 
+  /* Accent colour for TEXT/icons. The bright brand green fails WCAG AA on the
+     white light-mode background, so text uses a darker green here (~5.3:1 on
+     white). Fills, borders and the always-dark panels keep the brand green.
+     Overridden brighter in dark mode below. */
+  --accent-text: #1f7a5f;
+
   --ifm-color-gray-200: #ebedf0;
   --ifm-color-gray-300: #dadde1;
 
@@ -146,6 +152,10 @@ html[data-theme="dark"] {
   --ifm-color-primary-light: #66debd;
   --ifm-color-primary-lighter: #72e1c2;
   --ifm-color-primary-lightest: #97e9d2;
+
+  /* On the dark ground the bright green is already high-contrast. */
+  --accent-text: #4ed9b2;
+
   --ifm-background-color: #0b181e;
 
   --docs-color-border: #2a3731;
@@ -2077,9 +2087,15 @@ html[data-theme="dark"] {
   border-color: var(--docs-color-text-100);
 }
 
+.blog-meta-strip .blog-meta-tags a:focus-visible,
+.blog-meta-strip .blog-meta-tags-toggle:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
 /* The category tag is always first — give it the accent */
 .blog-meta-strip .blog-meta-tags a:first-child {
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
   border-color: color-mix(in srgb, var(--ifm-color-primary) 45%, transparent);
 }
 

@@ -69,7 +69,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ifm-color-primary);
+  color: var(--accent-text);
 }
 
 .featuredTitle {
@@ -141,6 +141,11 @@
 .chip:hover {
   background: var(--ifm-color-emphasis-200);
   color: var(--ifm-heading-color);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
 }
 
 .chipActive,
