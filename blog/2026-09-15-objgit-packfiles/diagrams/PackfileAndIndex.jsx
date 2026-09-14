@@ -5,6 +5,9 @@
 // Generated art. The figure cycles one .idx row at a time: the row lights up
 // and so does the run of bytes its offset points at, while everything else in
 // the index and the packfile stays gray. Three rows, one second each, forever.
+//
+// It starts at rest with all three pairings lit at once, which is the figure as
+// a still. Play walks them one at a time; pause puts all three back up.
 
 import { AnimatedAsciiFigure } from "@site/src/components/AnimatedAsciiFigure";
 
@@ -118,6 +121,21 @@ const STEPS = [
   },
 ];
 
+// Where the figure sits when it is not cycling, and where it starts: all three
+// pairings lit at once. The filler rows and runs stay gray, because they are
+// the haystack, not the needles.
+const REST = {
+  focus: [
+    "rowViolet",
+    "runViolet",
+    "rowCyan",
+    "runCyan",
+    "rowGreen",
+    "runGreen",
+  ],
+  caption: "three rows, three offsets, three runs of bytes",
+};
+
 export default function PackfileAndIndex({
   label = "FIG 02",
   title = "Eleven million objects, one packfile, one index",
@@ -130,6 +148,7 @@ export default function PackfileAndIndex({
       lines={LINES}
       steps={STEPS}
       loop
+      rest={REST}
       stepMs={1000}
       fontSize={fontSize}
     />

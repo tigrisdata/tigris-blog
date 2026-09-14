@@ -109,6 +109,14 @@ export function AnimatedAsciiFigure({
   // first and keeps going. The control row turns into play/pause, because
   // "replay" means nothing to something that never stopped.
   loop = false,
+  // The frame a paused figure rests on: step-shaped ({ focus, text, caption }),
+  // with everything the steps ever reveal already visible. A cycling figure
+  // shows one thing at a time, so its resting frame is the whole picture, which
+  // is also what a reader who hits pause is asking to see. It renders on the
+  // server too, so no-JS readers and crawlers get the complete figure.
+  rest = null,
+  // Figures that rest start there and wait to be played.
+  autoPlay = rest === null,
   stepMs = 2200,
 }) {
   const reduced = useReducedMotion();
@@ -118,6 +126,9 @@ export function AnimatedAsciiFigure({
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [finished, setFinished] = useState(false);
+  // Resting is its own state, not just "not playing": clicking a dot pauses on
+  // that specific step, which is the opposite of resting on all of them.
+  const [resting, setResting] = useState(rest !== null);
 
   // Resolve a step to the set of ids that are visible and the set that is lit.
   const resolved = useMemo(() => {
@@ -138,21 +149,44 @@ export function AnimatedAsciiFigure({
     return out;
   }, [steps, cumulative]);
 
+  // Everything the steps ever reveal, lit unless the resting frame is choosier.
+  const restFrame = useMemo(() => {
+    if (!rest) return null;
+    const shown = new Set();
+    for (const s of steps) for (const id of s.show || []) shown.add(id);
+    return {
+      shown,
+      focus: new Set(rest.focus || shown),
+      caption: rest.caption || "",
+      text: rest.text || null,
+    };
+  }, [rest, steps]);
+
   const play = useCallback(() => {
     setStep(0);
+    setResting(false);
     setFinished(false);
     setPlaying(true);
   }, []);
 
-  // Looping figures pause and resume in place instead of restarting, so a
-  // reader can freeze the frame they want to look at.
-  const toggle = useCallback(() => setPlaying((p) => !p), []);
+  // Looping figures resume in place instead of restarting, and pausing one
+  // drops it back on its resting frame.
+  const toggle = useCallback(() => {
+    if (playing) {
+      setPlaying(false);
+      setResting(rest !== null);
+    } else {
+      setPlaying(true);
+      setResting(false);
+    }
+  }, [playing, rest]);
 
   // Start once, when enough of the figure is on screen to be worth watching.
   const startedRef = useRef(false);
   useEffect(() => {
     const node = containerRef.current;
     if (!node || typeof IntersectionObserver === "undefined") return undefined;
+    if (!autoPlay) return undefined;
     if (reduced) {
       // No motion: hand the reader the finished figure and a button.
       setStep(lastStep);
@@ -172,7 +206,7 @@ export function AnimatedAsciiFigure({
     );
     io.observe(node);
     return () => io.disconnect();
-  }, [play, reduced, lastStep]);
+  }, [play, reduced, lastStep, autoPlay]);
 
   // Advance.
   useEffect(() => {
@@ -190,7 +224,8 @@ export function AnimatedAsciiFigure({
     return () => clearTimeout(t);
   }, [playing, step, lastStep, resolved, stepMs, loop]);
 
-  const frame = resolved[Math.min(step, lastStep)];
+  const atRest = restFrame !== null && resting && !playing;
+  const frame = atRest ? restFrame : resolved[Math.min(step, lastStep)];
 
   const rendered = useMemo(
     () =>
@@ -286,7 +321,7 @@ export function AnimatedAsciiFigure({
             flexShrink: 0,
           }}
         >
-          {stepNo}/{stepTotal}
+          {atRest ? `ALL/${stepTotal}` : `${stepNo}/${stepTotal}`}
         </span>
 
         <span
@@ -299,6 +334,7 @@ export function AnimatedAsciiFigure({
               type="button"
               onClick={() => {
                 setPlaying(false);
+                setResting(false);
                 setFinished(true);
                 setStep(i);
               }}
@@ -310,7 +346,7 @@ export function AnimatedAsciiFigure({
                 border: "none",
                 borderRadius: 2,
                 cursor: "pointer",
-                background: (loop ? i === step : i <= step)
+                background: (atRest ? true : loop ? i === step : i <= step)
                   ? "#4ade80"
                   : "#243147",
                 transition: "background 300ms ease",
