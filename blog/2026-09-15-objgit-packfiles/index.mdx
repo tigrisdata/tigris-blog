@@ -69,10 +69,12 @@ objects. Each object is a
 [content-addressed](https://en.wikipedia.org/wiki/Content-addressable_storage)
 and compressed file. Here’s an example from a tiny git repository:
 
-```
+```text
 $ mkdir ~/tmp/gitexample
 $ git init && git branch -m main
-$ echo "Hello, blog!" >> hello.txt$ git add . && git commit -sm "chore: initial commit"
+$ echo "Hello, blog!" >> hello.txt
+$ git add .
+$ git commit -sm "chore: initial commit"
 ```
 
 This produces several objects on the disk like this:
@@ -84,7 +86,7 @@ This produces several objects on the disk like this:
 If you want to read the contents of an object, it’s compressed, so you have to
 use a fairly evil looking python oneliner to scoop out the tasty innards:
 
-```
+```text
 $ file .git/objects/**/* | grep -v directory
 .git/objects/1c/7a26a901724b4ce766655ac387413fb9ec7966: zlib compressed data
 .git/objects/8e/67afbb2ee6bdcbb79061dfdfb93febce857bd3: zlib compressed data
@@ -100,7 +102,7 @@ single commit just by looking for the ID on the disk, right?
 
 If only reality were so simple:
 
-```
+```text
 $ cd ~/Code/linux.git/
 $ tree objects
 objects
@@ -174,7 +176,7 @@ above, so below.
 
 Here's the object count for a copy of the Linux kernel:
 
-```
+```text
 xe@zohar:~/Code/linux.git$ git count-objects -v
 count: 0
 size: 0
@@ -284,7 +286,7 @@ construct a HTTP Range request.
 This core problem is half the reason why I ended up needing to make my own
 object-storage native Git packfile format.
 
-## Demoscene inspiration
+## SEND CUE SHEET
 
 Way back in the days of physical media, one of the most common formats was the
 CD-ROM (Compact Disc Read-Only-Memory, or CD). A CD is a 700Mi container that
