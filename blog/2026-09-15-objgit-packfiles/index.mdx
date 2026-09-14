@@ -453,16 +453,20 @@ repos that have some interesting properties:
 
 Here are the conditions I ran the tests in:
 
-| Item          | Value                     |
-| ------------- | ------------------------- |
-| Started       | 2026-09-11T12:28:59-04:00 |
-| Finished      | 2026-09-11T13:06:52-04:00 |
-| Host          | Mac, 16 CPUs              |
-| Go            | go1.26.5                  |
-| Git           | git version 2.55.0        |
-| Bucket        | xe-objgit-devel           |
-| Build "old"   | v1.0.2                    |
+<div className="table-banded">
+
+|          Item | Value                     |
+| ------------: | :------------------------ |
+|       Started | 2026-09-11T12:28:59-04:00 |
+|      Finished | 2026-09-11T13:06:52-04:00 |
+|          Host | Mac, 16 CPUs              |
+|            Go | go1.26.5                  |
+|           Git | git version 2.55.0        |
+|        Bucket | xe-objgit-devel           |
+|   Build "old" | v1.0.2                    |
 | Build "fixed" | origin/main               |
+
+</div>
 
 ### Push tests
 
@@ -481,6 +485,8 @@ and the green bars are visible.
   <PushRequestCounts />
 </div>
 
+<div className="table-banded">
+
 | Repo        | Build |                      Wall |         S3 requests |   PUT |           GET | HEAD |                LIST |  Keys | Bucket bytes |
 | ----------- | ----- | ------------------------: | ------------------: | ----: | ------------: | ---: | ------------------: | ----: | -----------: |
 | objgit      | old   |         8.7s (8.7s-15.9s) |                 231 |    46 |            47 |    0 |                 138 |    42 |   829.27 KiB |
@@ -489,6 +495,8 @@ and the green bars are visible.
 | x           | new   |       14.3s (14.3s-14.7s) |                  30 |     6 |            20 |    0 |                   4 |     4 |    46.38 MiB |
 | tigris-blog | old   | 2m13.4s (1m29.1s-2m30.5s) | 3,324 (2,687-3,417) |   515 |           522 |    0 | 2,287 (1,650-2,380) |   511 |   354.67 MiB |
 | tigris-blog | new   |       26.5s (19.2s-27.4s) |       136 (113-146) |     9 | 123 (100-133) |    0 |                   4 |     8 |   360.75 MiB |
+
+</div>
 
 The biggest gain was wall clock time for pushing though:
 
