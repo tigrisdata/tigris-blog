@@ -524,64 +524,6 @@ Oh yeah, the time numbers would probably be better if I tested this on a machine
 with ethernet. I did all my testing with my corp laptop on Wi-Fi to specifically
 put this in one of the worst conditions it could possibly be in.
 
-## What about the other takes?
-
-As I mentioned earlier, there’s a bunch of hype around making different ways of
-storing git repositories outside of the context of putting everything on
-filesystem files like the good old days. A lot of them seem to commit a
-distributed systems sin that’s kind of hard to work around: I think they’re
-being vastly over-engineered for the kind of problem Git actually is.
-
-One of the things that sucks about Git is that its data format is yada yada etc
-compare with cursor and walgit etc
-
-NOTE: walgit has a separate process for compaction and noted that they can’t
-easily do range requests over packfiles, maybe they hit the same problem I did?
-
-- How does this compare to other projects?
-  - We're putting the distributed system part of Git into an existing
-    distributed system instead of building a new one.
-  - Cursor
-    - They compare a lot to Spokes, and there's a lot of discussion about
-      retaining a copy of the git repo on nvme.
-    - We let Tigris do the distribution. Git server doesn't know anything about
-      it.
-      - "All updates to the write-ahead log are synchronized with an atomic
-        compare-and-swap (CAS) operation on S3" – this is essentially a
-        git-flavored version of Tigris. We already had the abstracted out
-        primitive of this WAL to leverage. We just needed to fit Git into
-        objects, and everything else fell into place
-    - We avoid the "git as a DAG" trap.
-    - They also have a new format, `.wal`. Every push is a `.wal`
-      - Effectively for us each push is a packfile, but we can add
-    - They "synchronize the reference transaction with a single local
-      repository"-- there is a translation layer and work to stay in sync
-    - "This doesn't scale indefinitely: each packfile has its own attached
-      index, which allows Git to efficiently look up the objects it contains,
-      but this lookup is only efficient on a per-_packfile_ basis. If you're
-      looking for a specific object, and your repository has 100 packfiles,
-      you'll need to open the index for each one of them and look up the object
-      until you find it in one of the packfiles"
-      - We treat packfile folder as append only. Index files are small, 10s or
-        100s of KBs at max, and that's within the FDB inlining threshold. I saw
-        one packfile that's 735KB, the horror.
-    - The reason I'm using Tigris is so I don't have to write the global
-      distribution bit.
-      - There's less complexity in the server itself
-      - I expect that when you have multiple writers in different regions
-        pushing the same objects, that's going to be fun. Imagine when two
-        people push changes to the same repo
-  - Walgit
-    - We're working with a different primitive-- they're building a WAL on top
-      of object storage to store git. I'm building git on object storage using
-      object storage that has an append only log (like a WAL but more powerful)
-      - I already had the distributed system piece, so it's a bit simpler
-        implementation in some ways.
-        - Compartmentalization, cohesion
-        - Not to toot my own horn, but it feels elegant to separate all the very
-          hard distributed systems problems from the Git domain specific
-          problems. Maybe I should read Domain Driven Design again.
-
 ## Conclusion section
 
 I’m still actively working on this. I’m not confident enough to use this for my
