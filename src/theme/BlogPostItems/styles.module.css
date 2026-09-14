@@ -256,4 +256,17 @@
     width: auto;
     min-width: 0;
   }
+
+  /* Collapse the sort dropdown to an icon-only control so it doesn't
+     overflow the row. The selected label is visually hidden; the native
+     option list still renders normally when opened. */
+  .sort {
+    flex: 0 0 auto;
+    width: 2.5rem;
+    padding: 0.45rem 0;
+    color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 18' fill='none' stroke='%23728F9A' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M3 4h14M3 9h9M3 14h5'/%3E%3C/svg%3E");
+    background-position: center;
+    background-size: 1.1rem;
+  }
 }
