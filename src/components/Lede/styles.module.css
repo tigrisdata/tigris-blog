@@ -4,8 +4,9 @@
 
 .lede {
   margin: 0 0 2.5rem;
-  font-size: 1.25rem;
-  line-height: 1.6;
+  max-width: 60ch;
+  font-size: 19.5px;
+  line-height: 1.52;
   font-weight: 400;
   color: var(--docs-color-text-100);
   text-wrap: pretty;
