@@ -29,7 +29,6 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import BreakoutQuote from "@site/src/components/BreakoutQuote";
-import QuickSummary from "@site/src/components/QuickSummary";
 import heroImage from "./basic-memory-hero.webp";
 import TenantIsolationFlow from "./diagrams/TenantIsolationFlow";
 import EditSyncFlow from "./diagrams/EditSyncFlow";
@@ -38,32 +37,6 @@ import EditSyncFlow from "./diagrams/EditSyncFlow";
   src={heroImage}
   className="hero-image"
   alt="Own your own AI context with Basic Memory — your knowledge, your data, anywhere your AI goes"
-/>
-
-<QuickSummary
-  readTime="6 min read"
-  items={[
-    {
-      title: "Per-tenant isolation.",
-      description:
-        "Every Basic Memory Cloud user gets their own Tigris bucket with scoped credentials, provisioned automatically at signup.",
-    },
-    {
-      title: "Markdown as objects.",
-      description:
-        "Users' Markdown knowledge bases are stored directly as S3 objects on Tigris — the same plain text files they can edit by hand or feed into any model.",
-    },
-    {
-      title: "Bidirectional sync.",
-      description:
-        "Rclone-powered sync keeps local and cloud copies in lockstep, with Tigris's strong-consistency header ensuring fresh reads globally.",
-    },
-    {
-      title: "Point-in-time restore.",
-      description:
-        "Tigris bucket snapshots let users roll back their entire knowledge base to any previous state.",
-    },
-  ]}
 />
 
 We are the sum of our experiences. All of your notes, your back and forth with

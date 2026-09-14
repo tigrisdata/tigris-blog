@@ -25,7 +25,6 @@ tags:
 
 import InlineCta from "@site/src/components/InlineCta";
 import MermaidFrame from "@site/src/components/MermaidFrame";
-import QuickSummary from "@site/src/components/QuickSummary";
 import heroImage from "./hero-image.webp";
 import BucketForking from "./bucket-forking.svg";
 import QueryEngines from "./query-engines.svg";
@@ -35,27 +34,6 @@ import ForkFan from "./fork-fan.svg";
   src={heroImage}
   className="hero-image"
   alt="Fifty agents for the price of one bucket — agent data on Tigris object storage"
-/>
-
-<QuickSummary
-  readTime="8 min read"
-  items={[
-    {
-      title: "One file replaces your data stack:",
-      description:
-        "Vectors, metadata, and raw files go in one Lance file on Tigris. Query with LanceDB for search or DuckDB for SQL. No separate stores to sync.",
-    },
-    {
-      title: "Give every agent its own data:",
-      description:
-        "Bucket forking creates a writable copy in constant time with no duplication. Fifty agents, one storage bill.",
-    },
-    {
-      title: "Replay any agent run:",
-      description:
-        "Snapshots capture the exact bucket state at any moment. When an agent misbehaves, pin the version and see what it saw.",
-    },
-  ]}
 />
 
 I [forked](/fork-buckets-like-code) a 50 GB bucket on Tigris fifty times.

@@ -26,7 +26,6 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-import QuickSummary from "@site/src/components/QuickSummary";
 import MermaidFrame from "@site/src/components/MermaidFrame";
 import Architecture from "./architecture.svg";
 import heroImage from "./hero-img.webp";
@@ -35,32 +34,6 @@ import heroImage from "./hero-img.webp";
   src={heroImage}
   className="hero-image"
   alt="Agent Kit — storage primitives for AI agents on Tigris"
-/>
-
-<QuickSummary
-  readTime="6 min read"
-  items={[
-    {
-      title: <a href="#forks">Forks.</a>,
-      description:
-        "Give every agent its own writable copy of the same dataset in one function call, with one storage bill and zero risk of contaminating the source.",
-    },
-    {
-      title: <a href="#workspaces">Workspaces.</a>,
-      description:
-        "Hand an agent a scratch bucket it can't escape, and stop paying for it the moment its TTL expires — even if nobody remembers to clean up.",
-    },
-    {
-      title: <a href="#checkpoints">Checkpoints.</a>,
-      description:
-        "Pin an exact moment in a bucket's history so you can replay what an agent saw when things went wrong, without freezing live data.",
-    },
-    {
-      title: <a href="#coordination">Coordination.</a>,
-      description:
-        "Trigger the next stage of a pipeline the instant an object lands, with no polling loops, cron jobs, or glue services to keep running.",
-    },
-  ]}
 />
 
 [**`@tigrisdata/agent-kit`**](https://www.npmjs.com/package/@tigrisdata/agent-kit)

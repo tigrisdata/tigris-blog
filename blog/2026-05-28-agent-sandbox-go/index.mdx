@@ -27,7 +27,6 @@ tags:
   - Object Storage
 ---
 
-import QuickSummary from "@site/src/components/QuickSummary";
 import InlineCta from "@site/src/components/InlineCta";
 import ZoomableDiagram from "@site/src/components/ZoomableDiagram";
 import heroImage from "./hero-image.webp";
@@ -36,32 +35,6 @@ import heroImage from "./hero-image.webp";
   src={heroImage}
   className="hero-image"
   alt="A mad god surrounded by robotic minions, evoking Kefka from Final Fantasy VI commanding a horde of AI agents."
-/>
-
-<QuickSummary
-  readTime="6 min read"
-  items={[
-    {
-      title: "Userspace sandbox in Go.",
-      description:
-        "A real shell interpreter (mvdan.cc/sh) plus ported coreutils entirely in userspace, so you can multiplex hundreds of agent sessions on one server without containers, VMs, or extra kernel overhead.",
-    },
-    {
-      title: "A bucket fork per agent.",
-      description:
-        "Every session gets its own copy-on-write Tigris bucket fork as its filesystem. Whatever the agent does stays in the fork, and the fork is force-deleted the moment it disconnects.",
-    },
-    {
-      title: "Python, jq, and ripgrep via WebAssembly.",
-      description:
-        "Compiling these tools to WebAssembly lets Kefka inject the agent's workspace as the filesystem, so agents run whatever scripts they want without touching the host.",
-    },
-    {
-      title: "POSIX-checked compatibility.",
-      description:
-        "The ported commands were scanned against the POSIX 2018 spec to generate a conformance report that shows exactly where the gaps are.",
-    },
-  ]}
 />
 
 Agents need disposable environments because the blast radius of things going
