@@ -1670,6 +1670,10 @@ table td {
 }
 .markdown table th,
 .markdown table td {
+  /* clear the opaque `var(--ifm-background-color)` the base
+     `table :is(tr, td, th, thead)` rule paints on every cell, so the table
+     plane, header tint, hover, and zebra stripes (all set on tr/table) show. */
+  background-color: transparent;
   border: 1px solid #27272c;
   padding: 10px 14px;
 }
