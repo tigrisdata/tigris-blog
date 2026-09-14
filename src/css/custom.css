@@ -2095,3 +2095,17 @@ html[data-theme="dark"] {
     padding-right: 0;
   }
 }
+
+/* ==========================================================================
+   Blog TOC sidebar — wider column, full height, never scrolls
+   The Docusaurus default caps the desktop TOC at the viewport height with an
+   inner scrollbar. On long posts (e.g. object-storage-all-need) that shows an
+   ugly scrollbar. Let the TOC grow to its full content height instead; the
+   wider .blog-toc-col column keeps long entries from wrapping into a tall
+   column. Still sticky so it stays in view as you read.
+   ========================================================================== */
+
+.blog-toc-col [class*="tableOfContents"] {
+  max-height: none;
+  overflow: visible;
+}
