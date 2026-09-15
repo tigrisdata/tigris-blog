@@ -33,12 +33,8 @@ function ReadingTime({ readingTime }: { readingTime: number }) {
 }
 
 function formatDate(date: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(date));
+  // ISO date (YYYY-MM-DD) to match the spec-sheet meta strip on post pages.
+  return new Date(date).toISOString().slice(0, 10);
 }
 
 function DateTime({ date }: { date: string }) {

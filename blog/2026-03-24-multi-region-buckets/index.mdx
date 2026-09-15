@@ -25,7 +25,6 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-import QuickSummary from "@site/src/components/QuickSummary";
 import BucketLocationDiagram from "@site/src/components/BucketLocationDiagram";
 import heroImage from "./hero-img.webp";
 import complianceImage from "./compliance.webp";
@@ -38,34 +37,6 @@ import SingleRegionSin from "./diagrams/SingleRegionSin";
   src={heroImage}
   className="hero-image"
   alt="Multi-Region and Dual-Region Buckets in Tigris"
-/>
-
-<QuickSummary
-  readTime="6 min read"
-  items={[
-    {
-      title: <a href="#global-buckets">Four location types.</a>,
-      description:
-        "Global, multi-region, dual-region, and single-region buckets cover the main combinations of data residency and availability.",
-    },
-    {
-      title: <a href="#pricing">Simple pricing.</a>,
-      description:
-        "Multi-region is $0.025/GB/month with zero egress fees and no per-geo premiums, so your bill stays predictable even as you add regions.",
-    },
-    {
-      title: <a href="#consistency-options">Clear consistency model.</a>,
-      description:
-        "Consistency is tied directly to bucket location type, so you always know how reads behave in and across regions.",
-    },
-    {
-      title: (
-        <a href="#configuring-bucket-locations">CLI and dashboard updates.</a>
-      ),
-      description:
-        "Use the new tigris mk commands and updated dashboard flows to create and manage location-aware buckets.",
-    },
-  ]}
 />
 
 Today, we're introducing

@@ -29,7 +29,6 @@ import HorizontalRule from "@site/src/components/HorizontalRule";
 import heroimage from "./parseable-hero.webp";
 import nitishTiwariImage from "./nitish-tiwari.jpg";
 import ParseableArchitectureDiagram from "@site/src/components/ParseableArchitectureDiagram";
-import QuickSummary from "@site/src/components/QuickSummary";
 
 <img
   src={heroimage}
@@ -42,32 +41,6 @@ import QuickSummary from "@site/src/components/QuickSummary";
     <em>Ty the tiger and Parseable building the observability data lake.</em>
   </small>
 </center>
-
-<QuickSummary
-  readTime="5 min read"
-  items={[
-    {
-      title: "Unified Observability:",
-      description:
-        "Agent behavior, LLM costs, and infrastructure telemetry in a single queryable data lake.",
-    },
-    {
-      title: "80-90% Compression:",
-      description:
-        "All observability data compressed into Parquet format and stored on Tigris object storage.",
-    },
-    {
-      title: "Smart Caching:",
-      description:
-        "Frequently queried data stays hot on local NVMe SSDs, cold data on cheap, scalable object storage.",
-    },
-    {
-      title: "Natural Language Queries:",
-      description:
-        "Go from question to answer without translating between incompatible query languages.",
-    },
-  ]}
-/>
 
 The problem with observability data is there's a lot of it. And most of it isn't
 useful, except for the precious picks that are actually used in debugging. It's

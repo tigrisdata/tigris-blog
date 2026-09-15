@@ -1,0 +1,115 @@
+/* Inline table of contents — "fig panel"
+   Mirrors the admonition/figure vocabulary: a panel on its own plane, 1px
+   hairline, sharp 4px corners, and a mono uppercase tag with a corner tick.
+   Only shown at ≤996px, where Docusaurus hides the desktop TOC sidebar. */
+
+.inlineToc {
+  display: none;
+}
+
+@media (max-width: 996px) {
+  .inlineToc {
+    display: block;
+    position: relative;
+    /* Match the 42rem prose measure and centre it, so the panel lines up with
+       the header and body rather than spilling wider than them in the
+       769–996px range. */
+    max-width: 42rem;
+    margin: 1.5rem auto 2rem;
+    background: var(--docs-color-background-100);
+    border: 1px solid var(--docs-color-border);
+    border-radius: 4px;
+  }
+}
+
+/* Corner tick on the hairline, echoing the admonition accent */
+.inlineToc::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 2.25rem;
+  height: 2px;
+  background: var(--ifm-color-primary);
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+/* Hide the native disclosure triangle across engines */
+.summary::-webkit-details-marker {
+  display: none;
+}
+.summary::marker {
+  content: "";
+}
+
+.tag {
+  font: 500 11px / 1.2 var(--ifm-font-family-monospace);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--docs-color-text-100);
+}
+
+.chevron {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 1.5px solid var(--docs-color-text-100);
+  border-bottom: 1.5px solid var(--docs-color-text-100);
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+.inlineToc[open] .chevron {
+  transform: rotate(-135deg);
+}
+
+.nav {
+  padding: 0 1.25rem 1.125rem;
+  border-top: 1px solid var(--docs-color-border);
+}
+
+/* TOCItems renders a .table-of-contents <ul>; neutralise its sidebar chrome
+   and lay it out as a plain, tight jump list. */
+.tocItems {
+  margin: 0.875rem 0 0;
+  padding: 0;
+  font-size: 0.9375rem;
+  list-style: none;
+  border-left: none;
+}
+
+.tocItems :global(ul) {
+  margin: 0;
+  padding-left: 1rem;
+  list-style: none;
+}
+
+.tocItems :global(li) {
+  margin: 0.375rem 0;
+}
+
+.tocLink {
+  display: block;
+  color: var(--docs-color-text-100);
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.tocLink:hover,
+.tocLinkActive {
+  color: var(--accent-text);
+}
+
+.tocLink:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}

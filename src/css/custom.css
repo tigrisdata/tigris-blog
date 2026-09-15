@@ -93,6 +93,12 @@ code {
   --ifm-color-primary-lighter: #44c29f;
   --ifm-color-primary-lightest: #5ecbad;
 
+  /* Accent colour for TEXT/icons. The bright brand green fails WCAG AA on the
+     white light-mode background, so text uses a darker green here (~5.3:1 on
+     white). Fills, borders and the always-dark panels keep the brand green.
+     Overridden brighter in dark mode below. */
+  --accent-text: #1f7a5f;
+
   --ifm-color-gray-200: #ebedf0;
   --ifm-color-gray-300: #dadde1;
 
@@ -146,6 +152,10 @@ html[data-theme="dark"] {
   --ifm-color-primary-light: #66debd;
   --ifm-color-primary-lighter: #72e1c2;
   --ifm-color-primary-lightest: #97e9d2;
+
+  /* On the dark ground the bright green is already high-contrast. */
+  --accent-text: #4ed9b2;
+
   --ifm-background-color: #0b181e;
 
   --docs-color-border: #2a3731;
@@ -1596,17 +1606,12 @@ table td {
   }
 }
 
-/* Constrain non-hero images on large screens */
-@media (min-width: 1536px) {
-  .markdown img:not(.hero-image) {
-    max-width: 48rem; /* 3xl equivalent */
-  }
-}
-
-/* Center non-hero images, and space them from the prose that follows.
-   Hero images are excluded: they keep their tighter 0.5rem so their caption
-   sits close underneath. */
+/* Center non-hero images and constrain them to the prose measure so they line
+   up with the text instead of spilling past it. Space them from the prose that
+   follows. Hero images are excluded: they keep their tighter 0.5rem so their
+   caption sits close underneath. */
 .markdown img:not(.hero-image) {
+  max-width: min(42rem, 100%);
   margin-left: auto;
   margin-right: auto;
   /* In-post component avatars (Conv, PostEmbed, BreakoutQuote) opt out of this
@@ -1974,4 +1979,152 @@ html[data-theme="dark"] {
 .theme-admonition [class*="admonitionContent_"] pre,
 .theme-admonition [class*="admonitionContent_"] .theme-code-block {
   background: var(--docs-color-code-background);
+}
+
+/* ==========================================================================
+   Blog post header — "spec sheet" meta strip
+   Author / published / reading / tags as a row of labelled cells between two
+   hairlines — no vertical dividers, just whitespace. Author/published/reading
+   size to content; tags take the remaining width so chips sit two or more to a
+   line. Two states only: a desktop row and a mobile stack, at one breakpoint.
+   Theme-aware. Markup lives in src/theme/BlogPostItem/Header/Meta.
+   ========================================================================== */
+
+/* The whole header sits left-aligned with the (centered) body measure, so the
+   title, lede and meta strip start at the same left edge as the post body. */
+.blog-post-header {
+  padding-left: max(0px, calc((100% - 42rem) / 2));
+}
+
+.blog-meta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.5rem 3rem;
+  margin: 2rem 0 3rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--docs-color-border);
+  border-bottom: 1px solid var(--docs-color-border);
+}
+
+.blog-meta-strip > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* Tags cell grows to fill the remaining width */
+.blog-meta-strip > div:last-child {
+  flex: 1 1 220px;
+}
+
+.blog-meta-strip .label {
+  font: 500 10px/1 var(--ifm-font-family-monospace);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--docs-color-text-100);
+}
+
+.blog-meta-strip time,
+.blog-meta-strip .value {
+  font: 400 14px/1.3 var(--ifm-font-family-monospace);
+  color: var(--docs-color-text);
+}
+
+/* Author cell — reuse the theme BlogAuthor, trimmed to the strip */
+.blog-meta-strip .blog-meta-authors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.blog-meta-strip .avatar {
+  margin-bottom: 0 !important;
+}
+
+.blog-meta-strip .avatar__photo {
+  width: 26px;
+  height: 26px;
+}
+
+.blog-meta-strip [class*="authorName"] {
+  font-size: 14px;
+  color: var(--docs-color-text);
+}
+
+.blog-meta-strip [class*="authorTitle"] {
+  font-size: 12px;
+  color: var(--docs-color-text-100);
+}
+
+/* Tag chips + the "+N" / "Less" expander share the chip look */
+.blog-meta-strip .blog-meta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.blog-meta-strip .blog-meta-tags a,
+.blog-meta-strip .blog-meta-tags-toggle {
+  font: 400 10.5px/1 var(--ifm-font-family-monospace);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--docs-color-text-100);
+  background: transparent;
+  border: 1px solid var(--docs-color-border);
+  border-radius: 2px;
+  padding: 5px 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.blog-meta-strip .blog-meta-tags a:hover,
+.blog-meta-strip .blog-meta-tags-toggle:hover {
+  color: var(--docs-color-text);
+  border-color: var(--docs-color-text-100);
+}
+
+.blog-meta-strip .blog-meta-tags a:focus-visible,
+.blog-meta-strip .blog-meta-tags-toggle:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
+/* The category tag is always first — give it the accent */
+.blog-meta-strip .blog-meta-tags a:first-child {
+  color: var(--accent-text);
+  border-color: color-mix(in srgb, var(--ifm-color-primary) 45%, transparent);
+}
+
+/* Two states only: desktop row above, mobile stack below. */
+@media (max-width: 768px) {
+  .blog-post-header {
+    padding-left: 0;
+  }
+
+  .blog-meta-strip {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .blog-meta-strip > div:last-child {
+    flex: 0 0 auto;
+  }
+}
+
+/* ==========================================================================
+   Blog TOC sidebar — wider column, full height, never scrolls
+   The Docusaurus default caps the desktop TOC at the viewport height with an
+   inner scrollbar. On long posts (e.g. object-storage-all-need) that shows an
+   ugly scrollbar. Let the TOC grow to its full content height instead; the
+   wider .blog-toc-col column keeps long entries from wrapping into a tall
+   column. Still sticky so it stays in view as you read.
+   ========================================================================== */
+
+.blog-toc-col [class*="tableOfContents"] {
+  max-height: none;
+  overflow: visible;
 }

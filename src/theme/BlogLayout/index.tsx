@@ -22,13 +22,13 @@ export default function BlogLayout(props: Props): ReactNode {
           <main
             className={clsx("row", "col", {
               "col--12": !toc,
-              "col--10": toc,
+              "col--9": toc,
             })}
           >
             {children}
           </main>
 
-          {toc && <div className="col col--2">{toc}</div>}
+          {toc && <div className="col col--3 blog-toc-col">{toc}</div>}
         </div>
       </div>
     </Layout>

@@ -26,47 +26,12 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-import QuickSummary from "@site/src/components/QuickSummary";
 import heroImage from "./hero-img.webp";
 
 <img
   src={heroImage}
   className="hero-image"
   alt="The Tigris tiger handing colorful skill modules to an AI coding agent"
-/>
-
-<QuickSummary
-  readTime="7 min read"
-  items={[
-    {
-      title: (
-        <a href="#five-cli-skills-one-install">Five skills, one install.</a>
-      ),
-      description:
-        "Authentication, buckets, objects, access keys, and IAM — each skill loads automatically when the conversation needs it.",
-    },
-    {
-      title: (
-        <a href="#a-subagent-for-multi-step-workflows">A storage subagent.</a>
-      ),
-      description:
-        "A specialized agent handles multi-step workflows like project setup, S3 migration, dev sandboxes, and security audits.",
-    },
-    {
-      title: (
-        <a href="#install-on-claude-code-cursor-and-more">
-          Works where you work.
-        </a>
-      ),
-      description:
-        "Claude Code, Cursor, OpenCode, OpenAI Codex, and Pi are all supported. Install once, use everywhere.",
-    },
-    {
-      title: <a href="#two-security-rules-always-on">Security by default.</a>,
-      description:
-        "Built-in rules enforce private buckets, scoped access keys, snapshot-before-delete, and credential safety.",
-    },
-  ]}
 />
 
 AI coding agents are good at writing application code. They are not good at

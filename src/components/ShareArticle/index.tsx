@@ -136,7 +136,7 @@ function CopyLinkButton({ url }: { url: string }) {
   return (
     <button
       type="button"
-      className={clsx(styles.button, copied && styles.copied)}
+      className={clsx(styles.button, styles.copyLink, copied && styles.copied)}
       onClick={onCopy}
       aria-live="polite"
     >
@@ -187,8 +187,8 @@ export default function ShareArticle(): ReactNode {
 
   return (
     <section className={styles.share} aria-label="Share this article">
-      <h2 className={styles.heading}>Share article</h2>
-      <div className={styles.buttons}>
+      <div className={styles.row}>
+        <h2 className={styles.label}>Share</h2>
         {links.map(({ label, href, icon }) => (
           <ShareLink key={label} href={href} label={label}>
             {icon}

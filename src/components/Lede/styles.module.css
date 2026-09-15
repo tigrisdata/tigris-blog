@@ -1,0 +1,44 @@
+/* Lede / standfirst — a larger, muted intro paragraph under the post header.
+   Mirrors the Turso blog deck: bigger than body copy, ~60% text colour, no box
+   or border. Left-aligned to sit with this blog's left-aligned header. */
+
+.lede {
+  margin: 0 0 2.5rem;
+  max-width: 60ch;
+  font-size: 19.5px;
+  line-height: 1.52;
+  font-weight: 400;
+  color: var(--docs-color-text-100);
+  text-wrap: pretty;
+}
+
+.lede > :first-child {
+  margin-top: 0;
+}
+
+.lede > :last-child {
+  margin-bottom: 0;
+}
+
+.lede p {
+  margin: 0 0 0.75rem;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.lede a {
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+.lede a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 996px) {
+  .lede {
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+  }
+}

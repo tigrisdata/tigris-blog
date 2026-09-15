@@ -24,7 +24,6 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-import QuickSummary from "@site/src/components/QuickSummary";
 import MermaidFrame from "@site/src/components/MermaidFrame";
 import heroimage from "./hero-image.webp";
 import TwoLayerRead from "./two-layer-read.svg";
@@ -37,32 +36,6 @@ import ThreeLayerStack from "./three-layer-stack.svg";
   src={heroimage}
   className="hero-image"
   alt="Cache coherence: a cache in front of a consistent store"
-/>
-
-<QuickSummary
-  readTime="12 min read"
-  items={[
-    {
-      title: "A cache in front of a consistent store is a contradiction.",
-      description:
-        "The store guarantees every read reflects the latest write. The cache guarantees most reads never touch the store. Under failure, they diverge.",
-    },
-    {
-      title: "Antithesis found three manifestations of the same seam.",
-      description:
-        "Delete-then-read race, rename treating cache invalidation as a hard dependency, and deleted objects resurfacing under regional failure. Same root cause, three different code paths.",
-    },
-    {
-      title: "The fix is a three-layer defense.",
-      description:
-        "Eager invalidation on the write path, tombstone barriers on the read path, tombstone returns from the metadata layer. Each layer catches what the one above misses.",
-    },
-    {
-      title: "Individually-tested mechanisms aren't enough.",
-      description:
-        "CI exercised each layer and each layer passed. The bugs lived in the gaps between layers under fault. That's what Antithesis is for.",
-    },
-  ]}
 />
 
 {/* truncate */}
