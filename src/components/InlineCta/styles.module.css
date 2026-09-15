@@ -1,89 +1,18 @@
-/* Inline CTA — "5A tagline + button"
-   A dark spotlight panel that stands out in both light and dark mode: 1px
-   hairline, sharp 4px corners, and a green corner tick echoing the admonition
-   and figure vocabulary. Tagline left, filled button right; they stack below
-   ~520px. */
-
-.cta {
-  --cta: #57d3a4;
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px 24px;
-  /* Match the 42rem prose measure (see .markdown p/headings/admonitions in
-     custom.css) so the panel lines up with the surrounding text. */
-  max-width: 42rem;
-  margin: 2.25rem auto;
-  padding: 22px;
-  background: #1f1f26;
-  border: 1px solid #34343c;
-  border-radius: 4px;
+.InlineCta {
+  background-color: #f6f8fa;
 }
 
-/* Corner tick on the hairline */
-.cta::before {
-  content: "";
-  position: absolute;
-  top: -1px;
-  left: -1px;
-  width: 34px;
-  height: 2px;
-  background: var(--cta);
+[data-theme="dark"] .InlineCta {
+  background-color: #142229;
 }
 
-.cta .copy {
-  flex: 1 1 260px;
-  min-width: 0;
+.ContainerWidth {
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.cta .title {
-  display: block;
-  font: 500 17.5px/1.4 var(--ifm-font-family-base);
-  letter-spacing: -0.01em;
-  color: #f0f0f3;
-  text-wrap: pretty;
-}
-
-.cta .subtitle {
-  margin: 7px 0 0;
-  max-width: 54ch;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: #8f8f99;
-}
-
-/* Filled button — the end-of-post weight */
-.cta .button {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 16px;
-  background: var(--cta);
-  color: #08150f;
-  font: 500 14px/1 var(--ifm-font-family-base);
-  letter-spacing: -0.005em;
-  text-decoration: none;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  white-space: nowrap;
-  transition: background 120ms ease;
-}
-
-.cta .button:hover {
-  background: #79e0bb;
-  color: #08150f;
-  text-decoration: none;
-}
-
-.cta .button:focus-visible {
-  outline: 2px solid var(--cta);
-  outline-offset: 2px;
-}
-
-.cta .arrow {
-  font-family: var(--ifm-font-family-monospace);
-  font-size: 13px;
+@media (min-width: 1024px) {
+  .ContainerWidth {
+    max-width: 36rem; /* xl equivalent */
+  }
 }
