@@ -1,4 +1,4 @@
-// FIG 10 — a long job keeps moving its own deadline
+// FIG 08 — a long job keeps moving its own deadline
 //
 // Hand-written animated figure. var/quick-fdb-kafka-diagrams.mjs does NOT
 // generate this file; it only re-exports it from index.js.
@@ -60,7 +60,12 @@ const span = (k) => "◀" + "═".repeat(T[k] - T[0] - 1) + "▶";
 const LINES = [
   L([
     AXIS[0],
-    [["gray", "w-7 is diffing a whole bucket. the work outlasts one lease."]],
+    [
+      [
+        "gray",
+        "worker1 is diffing a whole bucket. the work outlasts one lease.",
+      ],
+    ],
   ]),
   [],
   L(...T.map((c, i) => [c - 1, [["gray", LABEL[i]]]])),
@@ -90,7 +95,7 @@ const LINES = [
     [
       [
         "#barLabel",
-        "no other worker can see a91f for this whole span",
+        "no other worker can see job2 for this whole span",
         "amber",
       ],
     ],
@@ -127,7 +132,8 @@ const STEPS = [
     show: ["e0", "v1", "bar", "barLabel"],
     focus: ["e0", "v1"],
     text: upto(1),
-    caption: "t2: w-7 takes the lease, and the key it writes says vest = t8",
+    caption:
+      "t2: worker1 takes the lease, and the key it writes says vest = t8",
     ms: 2800,
   },
   {
@@ -135,7 +141,7 @@ const STEPS = [
     focus: ["e1", "v2", "bar", "barLabel"],
     text: upto(2),
     caption:
-      "t8: the diff is not done, so w-7 checks in and moves the deadline",
+      "t8: the diff is not done, so worker1 checks in and moves the deadline",
     ms: 3000,
   },
   {
@@ -150,7 +156,7 @@ const STEPS = [
     focus: ["e4"],
     text: upto(4),
     caption:
-      "t26: the diff finishes, so w-7 clears the key instead of renewing",
+      "t26: the diff finishes, so worker1 clears the key instead of renewing",
     ms: 3000,
   },
   // The figure as a still, which is where it stops.
@@ -164,7 +170,7 @@ const STEPS = [
 ];
 
 export default function LeaseRenewal({
-  label = "FIG 10",
+  label = "FIG 08",
   title = "a long job keeps moving its own deadline",
   fontSize,
 }) {

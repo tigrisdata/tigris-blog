@@ -1,4 +1,4 @@
-// FIG 13 — what a coin flip does to the job nobody picks
+// FIG 10 — what a coin flip does to the job nobody picks
 //
 // Hand-written animated figure. var/quick-fdb-kafka-diagrams.mjs does NOT
 // generate this file; it only re-exports it from index.js.
@@ -160,7 +160,7 @@ const STEPS = [
 ];
 
 export default function UnluckyJob({
-  label = "FIG 13",
+  label = "FIG 10",
   title = "what a coin flip does to the job nobody picks",
   fontSize,
 }) {

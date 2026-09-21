@@ -36,15 +36,11 @@ import TwoFrames from "./diagrams/TwoFrames";
 import KeyAnatomy from "./diagrams/KeyAnatomy";
 import EnqueueInTxn from "./diagrams/EnqueueInTxn";
 import LeaseClaim from "./diagrams/LeaseClaim";
-import JobOutcomes from "./diagrams/JobOutcomes";
 import Samsara from "./diagrams/Samsara";
-import LeaseWrite from "./diagrams/LeaseWrite";
 import LeaseRenewal from "./diagrams/LeaseRenewal";
-import TxnConflict from "./diagrams/TxnConflict";
 import SelfScheduling from "./diagrams/SelfScheduling";
 import UnluckyJob from "./diagrams/UnluckyJob";
 import HashringLanes from "./diagrams/HashringLanes";
-import DeleteWrites from "./diagrams/DeleteWrites";
 
 [FoundationDB](https://www.foundationdb.org/) is the only database we use. This
 should surprise you since FoundationDB is pretty barebones, just a key-value
@@ -105,16 +101,19 @@ So you need a queue. The FoundationDB docs contain
 At a high level you put messages in on one end of the keyspace (namespace for
 keys) and then read them out of the other end of the keyspace. This works fairly
 well (if you’ve ever used Sidekiq, this model should be very familiar), but the
-main problems come with naming the entries in the queue. The naïve way to do it
-is to have the FoundationDB equivalent of MySQL’s `AUTO INCREMENT` where you
-assign each queue item its own atomically increasing integer ID, but what
-happens when you have more than one producer? Both of them decide they are
-number 67 at the same time. This will conflict very quickly, so you end up
-needing to encode random values, UUIDs, or even creation time into the key of
-the value. With enough work I’m sure you could come up with a system that’s
-robust enough to handle most of the demands of reality, but the basic problem is
-that a worker reading a value off of the left side of the queue results in that
-queue item getting deleted from the database.
+main problems come with naming the entries in the queue.
+
+The naïve way to do it is to use the FoundationDB equivalent of MySQL’s
+`AUTO INCREMENT` where you assign each queue item its own atomically increasing
+integer ID, but what happens when you have more than one producer?
+
+Given a sufficiently distributed system, it's easy for two jobs to have
+conflicting IDs, such as two tasks getting the ID 67 and conflicting with
+eachother on insert. Sure, with enough work you can random or UUID your way out
+of this, but the core problem is that consuming work deletes it from the
+database. If a worker dies while it's processing an item, there's no way for
+another worker to retry. Once the worker consumes a job, it's no longer in the
+queue and that job dies with it.
 
 <div className="mermaid-frame">
   <PopDestroys />
@@ -215,23 +214,19 @@ it to do.
 
 Then the job finishes and the worker responds by deleting it from the database.
 But if the worker crashes while processing the job for some reason, another
-worker will pick it up when it becomes eligible for processing again. Those are
-the only two endings a leased job gets:
-
-<div className="mermaid-frame">
-  <JobOutcomes />
-</div>
-
-So in the best case every job gets picked up once, gets processed, achieves
-enlightenment, and then re-enters the cosmic background radiation until its time
-is needed again. Otherwise jobs end up in an endless wheel of samsara where they
-just bounce between workers until one of them doesn’t fail to process it (or if
-it’s pathologically crashing workers, then a new worker binary is pushed that
-won’t crash this time, we hope).
+worker will pick it up when it becomes eligible for processing again. Jobs are
+either done instantly or eventually.
 
 <div className="mermaid-frame">
   <Samsara />
 </div>
+
+So in the best case every job gets picked up once, gets processed, achieves
+enlightenment, and then re-enters the cosmic background radiation until its time
+is needed again. Otherwise jobs end up in an endless wheel of saṃsāra where they
+just bounce between workers until one of them doesn’t fail to process it (or if
+it’s pathologically crashing workers, then a new worker binary is pushed that
+won’t crash this time, we hope).
 
 ### Workers will own no jobs yet will still be happy
 
@@ -243,10 +238,6 @@ In general, every worker has their own unique ID and every class of job has its
 own fixed lease time, so when workers crash it’ll take at most the lease time
 for the jobs to be picked up by another worker and for the spice to continue
 flowing.
-
-<div className="mermaid-frame">
-  <LeaseWrite />
-</div>
 
 Also when a worker takes longer than the lease time to get something done, it
 re-leases jobs so that other workers don’t pick them up and step on the worker
@@ -262,81 +253,39 @@ From what I’ve seen in practice and what I can crack from the technical paper,
 this really does seem to get you most of the durability and reliability
 guarantees you’d expect from Kafka or other message queues without having to
 have a second system in the mix and its associated transactions. However there’s
-some thorns in the roses that are worth mentioning.
+some thorns in the roses that are worth mentioning:
 
-The big one is that everything being in FoundationDB like it is means that
-you’re inviting workers to step on eachother and make conflicting transactions
-when claiming multiple jobs at once. This is part of why the Apple paper has
-workers _randomly_ decide if they want to claim jobs or not. This randomness
-doesn’t _eliminate_ the possibility of transaction conflicts, but it does make
-them much less likely.
-
-<div className="mermaid-frame">
-  <TxnConflict />
-</div>
-
-This ends up working a lot better in practice than you’d think it would given a
-sufficiently large worker pool.
-
-One of the other big downsides of this approach is that you create a lot of
-write pressure on your FoundationDB server cluster. The great part about this is
-that your data mutations and queue insertion happen in the same transaction,
-however the FoundationDB rate limiter will start to bite you as the storage
-servers naturally start to lag behind the logs. This ends up creating
-operational positive feedback loops that are only really resolved by sharding
-your database or throwing biblical amounts of hardware at the problem. Given
-hardware is now stupidly expensive, you can guess what most users end up doing.
-
-Also, being so heavily reliant on time for job identity means that you _really_
-need to make sure your servers have their clocks in sync. Usually you can “just”
-rely on the public NTP constellation, however if it ends up being a problem in
-practice you can “just” run your own stratum 1 NTP server or do time
-synchronization over GPS. What could go wrong?
+- Everything being in FoundationDB means you're inviting transaction conflicts
+  as part of the core way your message queue works. This is a huge part of why
+  the Apple paper has workers _randomly_ claim jobs instead of being
+  deterministic about it. The randomness doesn't eliminate conflicts, but it
+  makes them less likely.
+- The randomness also can result in "chronically unlucky" jobs that just never
+  get picked. I'll expand on this some more later.
+- You end up creating a lot of write pressure on your FoundationDB cluster. This
+  ends up being a problem when the storage server is not able to keep up with
+  the logs. Again, I'll expand on this some more later in the post.
+- You end up needing to make sure your clocks are synced. They should be
+  already, but worst case you need to set up a stratum 1 NTP server or do GPS
+  time synchronization.
 
 ## We made some changes
 
 I mentioned that Apple published a paper, not a GitHub repo or source tarball.
 As a result, this means we needed to adapt this design for our use case, and
-write all the code ourselves.
+write all the code ourselves. In the process we changed some things:
 
-### The immediate suspects
-
-The biggest one is that we don’t use
-[FoundationDB’s Record Layer](https://foundationdb.github.io/fdb-record-layer/)
-for storing data. Record Layer is a Java library that adapts a raw key/value
-FoundationDB client into something more resembling a SQL database. When the team
-behind FoundationDB was working on it, they envisioned the database as the
-_foundation_ of other database engines so that you could have
-[layers](https://apple.github.io/foundationdb/layer-concept.html) on top of it
-to give you MySQL or Postgres client support. In practice, this ended up not
-being the case for a wide variety of complicated/boring reasons. We ended up
-using the corpse of our pre-pivot database product as the record layer on top of
-FoundationDB.
-
-Apple’s system is designed to accommodate dynamic numbers of queues (their paper
-claims billions, I’d personally believe it), whereas we have a pretty fixed
-number of queues for known tasks like
-[lifecycle rules](https://www.tigrisdata.com/docs/buckets/object-lifecycle-rules/)
-or
-[global replication](https://www.tigrisdata.com/blog/conflict-resolution-is-fun/).
-This allows us to take out a huge chunk of the complexity involved in the
-message queue logic.
-
-As we grew, we ended up making long-running jobs that would be annoying to
-restart if the worker dies. Consider something like the job that cleans up
-unreferenced data from the backend. That’s basically a giant loop over both the
-block storage and database that diffs the two. Restarting that wouldn’t be
-catastrophic, but it would certainly be annoying to have all that progress lost.
-
-We worked around it by adding the ability for jobs to include a checkpoint of
-their progress in the job definition as they progress through the leasing
-periods. This lets another worker catch up where the last one left off instead
-of having to start over from scratch. The checkpoint is a field in the job’s own
-body, so it lives in the queue instead of in the worker that wrote it.
-
-This has scaled well enough for our needs, though some of the more complicated
-workloads end up needing to split that checkpoint data across multiple
-FoundationDB keys. Our record layer handles this adequately enough though!
+- We don't use
+  [FoundationDB’s Record Layer](https://foundationdb.github.io/fdb-record-layer/),
+  we use the corpse of our pre-pivot database product as the record/query layer
+  for FoundationDB.
+- Apple's system is designed to accommodate dynamic numbers of queues, we have a
+  fixed number of queues. Removing that stipulation removed a lot of complexity.
+- We ended up needing the concept of "long-running" jobs that checkpoint their
+  status into the message queue so another worker picking them up doesn't have
+  to start over from scratch.
+- We also needed cronjobs. Time being a huge part of the job identity makes this
+  way less complicated in practice.
 
 ### The wrath of cron
 
@@ -448,25 +397,36 @@ things up in a few stages:
 3. Each cleanup task then checks yet again and deletes the tombstone and its
    associated data blocks.
 
-Let's do some napkin math. Every one of those tasks is a QuiCK job, so it costs
-an enqueue write, a claim write, at least one lease write, and a delete when it
-finishes. That's at least four writes and a delete before any storage bytes are
-changed, plus 4 more for the per-bucket task that found it, plus range scans
-over the entire bucket to find those tombstones in the first place. Then all the
-workers fighting for jobs are scanning over the work ranges, which competes with
-user requests against the storage servers. Delete a million objects and that's
-at least four million queue writes on a cluster that's probably already the
-bottleneck.
+Let's do some napkin math. Every one of those tasks is a QuiCK job, and every
+QuiCK job costs an enqueue write, a claim write, at least one lease write, and a
+delete when it finishes. Here's what it takes to remove one tombstone, and what
+survives the move to Kafka:
 
-<div className="mermaid-frame">
-  <DeleteWrites />
+<div className="table-banded">
+
+| Write                                 | QuiCK | Kafka |
+| ------------------------------------- | :---: | :---: |
+| tombstone written over the key        |   ✓   |   ✓   |
+| cleanup task enqueued                 |   ✓   |   ✗   |
+| cleanup task claimed                  |   ✓   |   ✗   |
+| cleanup task leased, at least once    |   ✓   |   ✗   |
+| cleanup task deleted when it finishes |   ✓   |   ✗   |
+| tombstone and its data blocks removed |   ✓   |   ✓   |
+
 </div>
 
-In our brave new Kafka world, stage 1 and 2 of that diagram vanish. Servers
-write tombstones to FoundationDB, enqueue a message to a cleanup topic, and go
-back to doing whatever it is you want them to do. The cleanup topic is naturally
-in delete order, so consumers read from the earliest offset and process
-tombstones as their time comes.
+Four of those six writes are the queue talking to itself, and the per-bucket
+task that found the tombstone cost another four before it ever got there, plus
+range scans over the entire bucket. Then all the workers fighting for jobs are
+scanning over the work ranges, which competes with user requests against the
+storage servers. Delete a million objects and that's at least four million queue
+writes on a cluster that's probably already the bottleneck.
+
+In our brave new Kafka world, stage 1 and 2 of that vanish. Servers write
+tombstones to FoundationDB, enqueue a message to a cleanup topic, and go back to
+doing whatever it is you want them to do. The cleanup topic is naturally in
+delete order, so consumers read from the earliest offset and process tombstones
+as their time comes.
 
 Kafka's consumer offset ends up doing the job that QuiCK's vesting time did with
 no additional FoundationDB write pressure. The queue is the schedule. The only

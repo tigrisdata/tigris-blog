@@ -1,4 +1,4 @@
-// FIG 14 — lanes on a hashring, and what a dead worker costs
+// FIG 11 — lanes on a hashring, and what a dead worker costs
 //
 // Hand-written animated figure. var/quick-fdb-kafka-diagrams.mjs does NOT
 // generate this file; it only re-exports it from index.js.
@@ -8,13 +8,14 @@
 // throws if two cells collide; every border and every tee is computed from the
 // columns it joins.
 //
-// One picture of the whole arrangement: the queue on top with its own storage,
-// the ring below it as three horizontal lanes, and every worker holding a few
-// jobs. The lease arrow runs down out of a job and into the worker that took
-// it; the checkpoint arrow runs back up into the job's own JSON body, because
-// that body is where progress lives. w-9 sits in all three lanes, so killing
-// it takes work out of all three, and the survivors pick that work up with the
-// checkpoints already written.
+// Each job has its own colour and keeps it from its row in the queue into
+// whatever worker is holding it, so a reader can follow one job across the
+// ring. A segment's colour is fixed, so a slot only ever belongs to one job for
+// the whole animation: a job that moves gets its own slot at the far end rather
+// than borrowing someone else's.
+//
+// The two arrow columns are derived from worker slots, so the lease arrow lands
+// exactly on job1's slot and the checkpoint arrow leaves exactly job4's.
 
 import { AnimatedAsciiFigure } from "@site/src/components/AnimatedAsciiFigure";
 
@@ -23,14 +24,14 @@ import { AnimatedAsciiFigure } from "@site/src/components/AnimatedAsciiFigure";
 const BOX = 2; // left border, shared by both boxes
 const W = 74; // inner width
 const RIGHT = BOX + W + 1; // right border
-const JOB = [5, 23, 41, 59]; // job slots in the queue
+const QUEUED = [5, 23, 41, 59]; // job slots in the queue
 const LANE = 4; // the "lane N" label
 const WORKER = [13, 34, 55]; // worker slots inside a lane
-const SLOT = 10; // worker cell, then its status
-const LEASE = 18; // a square inside the first worker of lane 0
-const CK = 61; // a square inside the last worker of lane 0
+const NAMED = 5; // the "w-7 [" before a worker's first slot
+const HELD = 10; // worker cell, then its status
+const LEASE = WORKER[0] + NAMED; // lane 0's first worker, first slot
+const CK = WORKER[2] + NAMED; // lane 0's last worker, first slot
 
-const rule = (n) => "─".repeat(n);
 const segText = (s) => (typeof s === "string" ? s : s[1]);
 const segsWidth = (segs) => segs.reduce((n, s) => n + segText(s).length, 0);
 
@@ -59,37 +60,67 @@ function border(left, right, tee, cols = []) {
   return s + right;
 }
 
-// A job in the queue: the id plus the raw body, which is where the checkpoint
-// lives. Every body is the same width so a step can swap one for another
-// without moving a column.
-const job = (id, ck) => `${id} {"ck":${ck}}`;
-const NONE = "null";
+// One job, one colour, used everywhere that job appears.
+const JOBS = [
+  { id: "job1", color: "cyan", ck: '"03"' },
+  { id: "job2", color: "green", ck: "null" },
+  { id: "job3", color: "amber", ck: "null" },
+  { id: "job4", color: "violet", ck: "null" },
+];
 
-// A worker: a name, then three squares, one per job it is holding.
-function worker(lane, i, name, dead) {
+// The body is where the checkpoint lives. Every body is the same width, so a
+// step can swap one for another without moving a column.
+const body = (id, ck) => `${id} {"ck":${ck}}`;
+
+// Which job owns each worker slot. A slot named here takes that job's colour;
+// the rest are inert. The `b` slots are where job2 and job3 land after they
+// re-hash, so they carry the same colour as the job they are.
+const LANES = [
+  [
+    { name: "w-7", slots: ["job1"] },
+    { name: "w-9", slots: ["job2"], dead: true },
+    { name: "w-2", slots: ["job4"] },
+  ],
+  [
+    { name: "w-9", slots: [], dead: true },
+    { name: "w-3", slots: ["job3b"] },
+    { name: "w-5", slots: ["job2b"] },
+  ],
+  [
+    { name: "w-1", slots: [] },
+    { name: "w-4", slots: [] },
+    { name: "w-9", slots: ["job3"], dead: true },
+  ],
+];
+
+const SLOTS = 3; // how many jobs a worker can hold at once
+const COLOR = Object.fromEntries(JOBS.map((j) => [j.id, j.color]));
+COLOR.job2b = COLOR.job2;
+COLOR.job3b = COLOR.job3;
+
+function worker(lane, i, w) {
+  const slots = Array.from({ length: SLOTS }, (_, s) => w.slots[s] || null);
   const cells = [
-    [WORKER[i], [`${name} [`, [`#sq${lane}${i}`, "░░░", "green"], "]"]],
+    [
+      WORKER[i],
+      [
+        `${w.name} [`,
+        ...slots.map((id) => (id ? [`#${id}`, "░", COLOR[id]] : ["gray", "░"])),
+        "]",
+      ],
+    ],
   ];
-  if (dead) cells.push([WORKER[i] + SLOT, [[`#dead${lane}`, "    ", "red"]]]);
+  if (w.dead) cells.push([WORKER[i] + HELD, [[`#dead${lane}`, "    ", "red"]]]);
   return cells;
 }
 
-function laneRow(lane, names, deadAt) {
-  return L(
+const laneRow = (lane) =>
+  L(
     [BOX, [["gray", "│"]]],
     [LANE, [["gray", `lane ${lane}`]]],
-    ...names.flatMap((name, i) => worker(lane, i, name, i === deadAt)),
+    ...LANES[lane].flatMap((w, i) => worker(lane, i, w)),
     [RIGHT, [["gray", "│"]]]
   );
-}
-
-// w-9 is in every lane, which is the point: a worker watches a few lanes, so
-// the ring holds it more than once.
-const LANES = [
-  { names: ["w-7", "w-9", "w-2"], dead: 1 },
-  { names: ["w-9", "w-3", "w-5"], dead: 0 },
-  { names: ["w-1", "w-4", "w-9"], dead: 2 },
-];
 
 // --------------------------------------------------------------------- lines
 
@@ -106,24 +137,24 @@ const LINES = [
   L([BOX, [["gray", border("┌", "┐", "─")]]]),
   L(
     [BOX, [["gray", "│"]]],
-    [JOB[0], [["#job1", job("a91f", '"03"'), "cyan"]]],
-    [JOB[1], [["gray", job("b17c", NONE)]]],
-    [JOB[2], [["gray", job("c04e", '"7f"')]]],
-    [JOB[3], [["#job4", job("d22a", NONE), "green"]]],
+    ...JOBS.map((j, i) => [
+      QUEUED[i],
+      [[`#q${j.id}`, body(j.id, j.ck), j.color]],
+    ]),
     [RIGHT, [["gray", "│"]]]
   ),
   L([BOX, [["gray", border("└", "┘", "┬", [LEASE, CK])]]]),
   L(
     [LEASE, [["#lease", "│ lease", "cyan"]]],
-    [CK - 11, [["#ck", "checkpoint ▲", "green"]]]
+    [CK - 11, [["#ck", "checkpoint ▲", "violet"]]]
   ),
-  L([LEASE, [["#lease", "▼", "cyan"]]], [CK, [["#ck", "│", "green"]]]),
+  L([LEASE, [["#lease", "▼", "cyan"]]], [CK, [["#ck", "│", "violet"]]]),
   L([BOX, [["gray", border("┌", "┐", "┴", [LEASE, CK])]]]),
-  laneRow(0, LANES[0].names, LANES[0].dead),
+  laneRow(0),
   L([BOX, [["gray", border("├", "┤", "─")]]]),
-  laneRow(1, LANES[1].names, LANES[1].dead),
+  laneRow(1),
   L([BOX, [["gray", border("├", "┤", "─")]]]),
-  laneRow(2, LANES[2].names, LANES[2].dead),
+  laneRow(2),
   L([BOX, [["gray", border("└", "┘", "─")]]]),
   [],
   L([
@@ -143,43 +174,6 @@ const LINES = [
 
 // --------------------------------------------------------------------- steps
 
-// A frame is three lanes of three workers, each holding up to three jobs.
-const held = (rows) => {
-  const text = {};
-  rows.forEach((row, lane) =>
-    row.forEach((sq, i) => {
-      text[`sq${lane}${i}`] = sq;
-    })
-  );
-  return text;
-};
-
-const IDLE = held([
-  ["░░░", "░░░", "░░░"],
-  ["░░░", "░░░", "░░░"],
-  ["░░░", "░░░", "░░░"],
-]);
-
-const CLAIMED = held([
-  ["██░", "██░", "█░░"],
-  ["█░░", "█░░", "░░░"],
-  ["█░░", "░░░", "█░░"],
-]);
-
-// w-9's four jobs, spread over the workers that now own those lanes.
-const REDEALT = held([
-  ["███", "░░░", "██░"],
-  ["░░░", "█░░", "█░░"],
-  ["█░░", "█░░", "░░░"],
-]);
-
-const CHECKPOINTED = { job4: job("d22a", '"a4"') };
-const GONE = { dead0: "dead", dead1: "dead", dead2: "dead" };
-
-const SQUARES = Object.keys(CLAIMED);
-const DEAD_SQUARES = LANES.map((l, i) => `sq${i}${l.dead}`);
-const ALIVE_SQUARES = SQUARES.filter((id) => !DEAD_SQUARES.includes(id));
-
 // Every tag the figure declares, read back off the lines so the last frame
 // cannot drift out of step with them.
 const ALL = [
@@ -190,61 +184,69 @@ const ALL = [
   ),
 ];
 
+const QUEUE = JOBS.map((j) => `q${j.id}`);
+const HOLDING = ["job1", "job2", "job3", "job4"];
+const MOVED = ["job2b", "job3b"];
+
+// A slot is filled when it is holding its job.
+const filled = (...ids) => Object.fromEntries(ids.map((id) => [id, "█"]));
+const CLAIMED = filled(...HOLDING);
+const AFTER = {
+  ...filled("job1", "job4", ...MOVED),
+  job2: "░",
+  job3: "░",
+};
+const CHECKPOINTED = { qjob4: body("job4", '"a4"') };
+const DEAD = { dead0: "dead", dead1: "dead", dead2: "dead" };
+
 const STEPS = [
   {
-    show: ["job1", "job4", ...SQUARES],
-    focus: ["job1", "job4"],
-    text: IDLE,
-    caption: "four jobs in the queue. ck is how far each one has got",
-    ms: 2600,
+    show: [...QUEUE, ...HOLDING, ...MOVED],
+    focus: QUEUE,
+    caption: "four jobs in the queue, each with its own colour and checkpoint",
+    ms: 2800,
   },
   {
     show: ["lease"],
-    focus: ["lease", "job1", ...SQUARES],
+    focus: ["lease", ...QUEUE, ...HOLDING],
     text: CLAIMED,
     caption:
       "hash(key) picks the lane; the workers on it lease what lands there",
-    ms: 3000,
+    ms: 3200,
   },
   {
     show: ["ck"],
-    focus: ["ck", "job4", "sq02"],
+    focus: ["ck", "qjob4", "job4"],
     text: { ...CLAIMED, ...CHECKPOINTED },
-    caption:
-      "a long job writes its checkpoint back into its own body in the queue",
+    caption: "job4 writes its checkpoint back into its own body in the queue",
     ms: 3000,
   },
   {
     show: ["dead0", "dead1", "dead2"],
-    focus: ["dead0", "dead1", "dead2"],
-    text: { ...CLAIMED, ...CHECKPOINTED, ...GONE },
-    caption: "w-9 stops renewing. it was in all three lanes, holding four jobs",
-    ms: 3000,
+    focus: ["dead0", "dead1", "dead2", "job2", "job3"],
+    text: { ...CLAIMED, ...CHECKPOINTED, ...DEAD },
+    caption:
+      "w-9 stops renewing. it is in all three lanes, holding job2 and job3",
+    ms: 3200,
   },
   {
-    focus: [...ALIVE_SQUARES, "job4"],
-    text: { ...REDEALT, ...CHECKPOINTED, ...GONE },
-    caption: "the leases lapse, the jobs re-hash, and the ring picks them up",
-    ms: 3000,
-  },
-  {
-    focus: ["job4", "sq02", "ck"],
-    text: { ...REDEALT, ...CHECKPOINTED, ...GONE },
-    caption: "each one resumes from the checkpoint in the queue, not from zero",
+    focus: [...MOVED, "qjob2", "qjob3"],
+    text: { ...AFTER, ...CHECKPOINTED, ...DEAD },
+    caption: "both leases lapse, both jobs re-hash, and both land in lane 1",
     ms: 3400,
   },
   // The figure as a still, which is where it stops.
   {
     show: ALL,
     focus: ALL,
-    text: { ...REDEALT, ...CHECKPOINTED, ...GONE },
-    caption: "leases down, checkpoints up, and nothing of value in a worker",
+    text: { ...AFTER, ...CHECKPOINTED, ...DEAD },
+    caption: "no job belongs to a worker, and no job stays in one lane",
     ms: 4000,
   },
 ];
 
 export default function HashringLanes({
-  label = "FIG 14",
+  label = "FIG 11",
   title = "lanes on a hashring, and what a dead worker costs",
   fontSize,
 }) {

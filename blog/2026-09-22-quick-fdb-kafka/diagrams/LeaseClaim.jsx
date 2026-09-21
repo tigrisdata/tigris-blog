@@ -10,7 +10,7 @@
 //
 // The queue is drawn as one ordered keyspace with a divider at `now`. Left of
 // the divider is what a scan of the front of the queue can see; right of it is
-// the future. a91f is drawn twice, once at t2 and once at t8, because a claim
+// the future. job2 is drawn twice, once at t2 and once at t8, because a claim
 // does not mark the job — it moves the key. The step that claims it blanks the
 // t2 copy and reveals the t8 copy, so the job visibly leaves the scan window
 // without any other column shifting.
@@ -25,7 +25,7 @@ const RIGHT = BOX + W + 1; // right border
 const DIV = 48; // the `now` divider
 const IN = [5, 18, 31]; // job slots left of the divider (vested)
 const OUT = [52, 65]; // job slots right of it (not vested yet)
-const OLD = IN[1]; // where a91f starts
+const OLD = IN[1]; // where job2 starts
 const NEW = OUT[1]; // where the lease puts it
 const MID = 4; // half of a 9-wide slot, for centring a rail under one
 
@@ -97,12 +97,12 @@ const LINES = [
   L([BOX, [["gray", edge("┌", "┬", "┐")]]]),
   L(
     [BOX, [["gray", "│"]]],
-    [IN[0], [["gray", job("b17c", "t1")]]],
-    [OLD, [["#old", job("a91f", "t2"), "amber"]]],
-    [IN[2], [["gray", job("c04e", "t5")]]],
+    [IN[0], [["gray", job("job1", "t1")]]],
+    [OLD, [["#old", job("job2", "t2"), "amber"]]],
+    [IN[2], [["gray", job("job3", "t5")]]],
     [DIV, [["gray", "│"]]],
-    [OUT[0], [["gray", job("d22a", "t9")]]],
-    [NEW, [["#new", job("a91f", "t8"), "green"]]],
+    [OUT[0], [["gray", job("job4", "t9")]]],
+    [NEW, [["#new", job("job2", "t8"), "green"]]],
     [RIGHT, [["gray", "│"]]]
   ),
   L([BOX, [["gray", edge("└", "┴", "┘")]]]),
@@ -127,7 +127,7 @@ const LINES = [
     [
       [
         "#expire",
-        "when now catches up to t8, a91f drops back into the window for anyone to take",
+        "when now catches up to t8, job2 drops back into the window for anyone to take",
         "red",
       ],
     ],
@@ -161,7 +161,7 @@ const STEPS = [
   },
   {
     focus: ["old"],
-    caption: "a91f vested at t2, so it is inside the window. w-7 wants it",
+    caption: "job2 vested at t2, so it is inside the window. w-7 wants it",
     ms: 2400,
   },
   {
@@ -174,7 +174,7 @@ const STEPS = [
   {
     focus: ["scan", "new"],
     text: { old: " " },
-    caption: "a91f now sits past now, where no scan of the front can reach it",
+    caption: "job2 now sits past now, where no scan of the front can reach it",
     ms: 2800,
   },
   {

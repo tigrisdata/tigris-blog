@@ -1,4 +1,4 @@
-// FIG 12 — recurring jobs that book their own next slot
+// FIG 09 — recurring jobs that book their own next slot
 //
 // Hand-written animated figure. var/quick-fdb-kafka-diagrams.mjs does NOT
 // generate this file; it only re-exports it from index.js.
@@ -172,7 +172,7 @@ const STEPS = [
 ];
 
 export default function SelfScheduling({
-  label = "FIG 12",
+  label = "FIG 09",
   title = "recurring jobs that book their own next slot",
   fontSize,
 }) {
