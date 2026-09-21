@@ -13,4 +13,3 @@ export { default as SelfScheduling } from "./SelfScheduling"; // animated, hand-
 export { default as UnluckyJob } from "./UnluckyJob"; // animated, hand-written
 export { default as HashringLanes } from "./HashringLanes"; // animated, hand-written
 export { default as DeleteWrites } from "./DeleteWrites"; // animated, hand-written
-export { default as VersionWrites } from "./VersionWrites"; // animated, hand-written
