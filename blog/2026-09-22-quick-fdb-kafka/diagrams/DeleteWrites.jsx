@@ -77,7 +77,7 @@ const LINES = [
     [
       IN,
       STAGE.flatMap((s, i) => [
-        ...(i ? [["gray", " ▸ "]] : []),
+        ...(i ? [["gray", " → "]] : []),
         [`#s${i}`, s, "red"],
       ]),
     ],

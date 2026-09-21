@@ -20,7 +20,17 @@ import React, {
   useState,
 } from "react";
 
-const FONT_STACK = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+// One font has to draw the latin text AND the box-drawing glyphs, or the
+// borders fall back to a font with a different advance width and a frame's
+// corners stop meeting its sides. The first four families cover Apple and
+// Windows. None of them exist on Linux, and Firefox does not support
+// `ui-monospace` at all, so it lands on generic `monospace`, whose box-drawing
+// coverage is whatever that box happens to have. Fira Code is self-hosted by
+// this site and covers U+2500-257F, so it catches that case before the generic
+// does. Ligatures off: Fira Code has plenty, and a ligature is two cells
+// rendered as one glyph.
+const FONT_STACK =
+  "ui-monospace, SFMono-Regular, Menlo, Consolas, 'Fira Code VF', monospace";
 
 const PRE_STYLE = {
   margin: "0",
@@ -32,6 +42,7 @@ const PRE_STYLE = {
   lineHeight: "1.3",
   color: "#cbd5e1",
   fontFamily: FONT_STACK,
+  fontVariantLigatures: "none",
   fontSize: "13px",
   whiteSpace: "pre",
   textAlign: "left",

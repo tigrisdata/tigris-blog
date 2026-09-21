@@ -10,7 +10,9 @@ const PRE_STYLE = {
   overflowX: "auto",
   lineHeight: "1.3",
   color: "#cbd5e1",
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+  fontFamily:
+    "ui-monospace, SFMono-Regular, Menlo, Consolas, 'Fira Code VF', monospace",
+  fontVariantLigatures: "none",
   fontSize: "13px",
   whiteSpace: "pre",
   textAlign: "left",
