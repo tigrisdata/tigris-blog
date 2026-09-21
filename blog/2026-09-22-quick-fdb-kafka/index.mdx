@@ -1,0 +1,514 @@
+---
+slug: quick-fdb-kafka
+title: "We used a database as a message queue. Now we use Kafka."
+description: >
+  FoundationDB was our only database, queue included. We built Apple's QuiCK
+  design on top of it, hit the write limits, and moved async tasks to Kafka.
+# TODO: hero image. Drop hero-image.webp into this folder, uncomment the line
+# below, then add to the body after the imports:
+#   import heroImage from "./hero-image.webp";
+#   <img src={heroImage} className="hero-image" alt="describe the image" />
+# image: ./hero-image.webp
+keywords:
+  - foundationdb
+  - kafka
+  - message queue
+  - QuiCK
+  - task queue
+  - distributed systems
+  - object storage
+  - garbage collection
+  - lease
+  - Tigris
+authors:
+  - xe
+  - firsov
+tags:
+  - Engineering
+  - foundationdb
+  - kafka
+  - distributed systems
+  - message queues
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import friendshipEnded from "./friendship-ended-fdb.webp";
+
+import NaiveQueue from "./diagrams/NaiveQueue";
+import IdCollision from "./diagrams/IdCollision";
+import PopDestroys from "./diagrams/PopDestroys";
+import OneClock from "./diagrams/OneClock";
+import TwoFrames from "./diagrams/TwoFrames";
+import KeyAnatomy from "./diagrams/KeyAnatomy";
+import EnqueueInTxn from "./diagrams/EnqueueInTxn";
+import LeaseClaim from "./diagrams/LeaseClaim";
+import JobCompletes from "./diagrams/JobCompletes";
+import WorkerCrash from "./diagrams/WorkerCrash";
+import Samsara from "./diagrams/Samsara";
+import LeaseWrite from "./diagrams/LeaseWrite";
+import LeaseRenewal from "./diagrams/LeaseRenewal";
+import TxnConflict from "./diagrams/TxnConflict";
+import Checkpoints from "./diagrams/Checkpoints";
+import SelfScheduling from "./diagrams/SelfScheduling";
+import UnluckyJob from "./diagrams/UnluckyJob";
+import HashringLanes from "./diagrams/HashringLanes";
+
+[FoundationDB](https://www.foundationdb.org/) is the only database we use. This
+should surprise you since FoundationDB is pretty barebones, just a key-value
+store. It stores everything for us: tenants, object metadata, the replication
+log for data distributed across regions, etc. We also use it as a queue to
+handle async tasks, à la [QuiCK](https://www.foundationdb.org/files/QuiCK.pdf),
+the queuing system Apple uses for CloudKit. This has scaled very nicely. I’m not
+surprised; it’s the same tech behind iCloud, a platform with at least 900
+million users. Furthermore, keeping the queue inside FoundationDB means all
+transactions stay in the database, eliminating the
+[dual-write problem](https://www.confluent.io/blog/dual-write-problem/).
+
+So why start using Kafka now?
+
+We’ve seen a few issues using our database as a message queue:
+
+- Scheduling requires many writes and scans, which puts read load on
+  FoundationDB that directly competes with user requests.
+- Each task is expensive and needs multiple writes to complete (enqueue, claim,
+  lease, etc). We have ever more tasks as we add more features.
+- New team members have to learn all the custom code resulting from actually
+  implementing the QuiCK paper. There’s no standard implementation, even though
+  it’s a well known pattern in theory. Finesse is not something you can learn
+  from a paper.
+
+This isn’t a story of a neat 1:1 replacement. We still have the queues in
+FoundationDB. We moved asynchronous tasks like garbage collection to Kafka, we
+can reduce the read and write load on FDB and shave off a good amount of that
+pesky custom code. Read more to see how it all turned out for us!
+
+:::note
+
+You might tell us we should have “just used Kafka” the whole time. Beyond the
+fact that you used the j-word: have you ever waited for your not-even-that-big
+broker to catch up on a cold start? Do you know what a zookeeper is and why you
+don’t pay to take care of the animals? The poor zookeeper can’t even pet them.
+Have you ever felt like a plastic bag drifting through the wind but unable to
+start again because of the sheer madness that comes with spending months
+permuting JVM flags to try to eke out a spectre’s worth of performance so that
+your servers aren’t constantly on fire?
+
+No? Just me?
+
+Either way we kinda wanted to avoid Kafka because running it yourself is the
+administrative experience of finding yourself turned into a monstrous vermin and
+everyone around you is mildly annoyed at your experience and asking you to move
+on with life instead of understanding that you can’t work anymore because your
+arms have turned into dozens of legs. By the way, that’s actually what people
+mean when they call something “kafkaesque”, not a
+[Qu’vatlh](https://klingon.wiki/Word/Qu-vatlh) of paperwork.
+
+:::
+
+## Beyond the naïve way to build a queue on FoundationDB
+
+So you need a queue. The FoundationDB docs contain
+[tutorials for making simple queues in multiple languages](https://apple.github.io/foundationdb/queues.html).
+At a high level you put messages in on one end of the keyspace (namespace for
+keys) and then read them out of the other end of the keyspace, kinda like this:
+
+<div className="mermaid-frame">
+  <NaiveQueue />
+</div>
+
+This works fairly well (if you’ve ever used Sidekiq, this model should be very
+familiar), but the main problems come with naming the entries in the queue. The
+naïve way to do it is to have the FoundationDB equivalent of MySQL’s
+`AUTO INCREMENT` where you assign each queue item its own atomically increasing
+integer ID, but what happens when you have more than one producer?
+
+<div className="mermaid-frame">
+  <IdCollision />
+</div>
+
+This will conflict very quickly, so you end up needing to encode random values,
+UUIDs, or even creation time into the key of the value. With enough work I’m
+sure you could come up with a system that’s robust enough to handle most of the
+demands of reality, but the basic problem is that a worker reading a value off
+of the left side of the queue results in that queue item getting deleted from
+the database.
+
+<div className="mermaid-frame">
+  <PopDestroys />
+</div>
+
+We really don’t want to just _lose_ queue items because this could mean that
+running a `PutObject` to the Tigris region in Chicago makes the object not show
+up as visible to a user that just happens to be in Europe and is hitting the
+Frankfurt region. It sure would be convenient if someone had thought of this
+problem in detail and published a detailed description of how they solved it.
+
+:::note Aside
+
+Foreshadowing is a literary device in which the author creates dramatic tension
+from which to signal to the reader that something is about to happen.
+
+:::
+
+## We implemented an Apple paper that describes how to implement durable message queues on top of FoundationDB
+
+Turns out Apple has thought about this and implemented it for CloudKit with a
+system they call [QuiCK](https://www.foundationdb.org/files/QuiCK.pdf), or a
+Queueing System in CloudKit. Our industry has silly names for things. QuiCK is a
+robust queuing system that uses
+[FoundationDB’s Record Layer](https://foundationdb.github.io/fdb-record-layer/)
+to implement a message queue based on time. To understand why this is such a
+galaxy-brained genius move, let’s take a sidestep into how time works in
+distributed systems.
+
+### Much ado about time
+
+FoundationDB is an ordered key-value store, and the _ordering_ is a huge bit of
+how it’s (ab)used in practice. One of the nice things about time is that
+generally it’s an _ordered_ phenomenon. These two match.
+
+In most temporal reference frames, events happen sequentially:
+
+<div className="mermaid-frame">
+  <OneClock />
+</div>
+
+Now, that “generally” in the previous paragraph is a bit of a misnomer in
+distributed systems. It helps to think about every part of a distributed system
+having its own independent observation of time and that changes a lot about how
+event ordering can be strange in practice.
+
+Imagine that you have two reference frames: one is closer to the person
+interacting with that apple and the other is farther away from it and gets news
+about the apple from the initial reference frame tweeting about it over UDP for
+some reason.
+
+<div className="mermaid-frame">
+  <TwoFrames />
+</div>
+
+Oh no! The first tweet was slow and the clocks are slightly out of sync, so the
+second reference frame saw the tweets out of order! The obvious answer here is
+to attach the _observed time_ to each tweet (and maybe get better time
+synchronization in your clusters). This makes everything in the distributed
+system have at least _some_ understanding of when things happen and in what
+order they should have been observed in.
+
+### Much a-queue about time
+
+As such, the message queue Apple built on top of FoundationDB uses _time_ as a
+key part of job identity. Jobs are identified by their task type, item space,
+execution / vesting time, priority, and a unique ID.
+
+<div className="mermaid-frame">
+  <KeyAnatomy />
+</div>
+
+This seems a bit excessive until you realize that queue workers will fail,
+crash, and die, but it’s _unacceptable_ to lose work in the process like if you
+did it naïvely. If the user doesn’t get the email for their birthday but their
+friends do, that’s an angry tweet and negative feedback on Yelp (the last
+bastion of real human contact, for now).
+
+As such, here’s what the entire lifecycle flow for the message queue looks like.
+
+First, application code does something that needs to schedule eventual work to
+be done, such as a user uploading an object to Tigris. The queue item is
+constructed and put into the queue to be executed in the near future:
+
+<div className="mermaid-frame">
+  <EnqueueInTxn />
+</div>
+
+Every so often a worker will poll the queue for work by asking the queue for
+available keys from the beginning of time until now. The worker will then
+randomly select jobs it’s interested in and then push them into the future to
+claim them. Once the job is claimed, it starts doing whatever the job requires
+it to do.
+
+<div className="mermaid-frame">
+  <LeaseClaim />
+</div>
+
+Then the job finishes and the worker responds by deleting it from the database.
+
+<div className="mermaid-frame">
+  <JobCompletes />
+</div>
+
+But if the worker crashes while processing the job for some reason, another
+worker will pick it up when it becomes eligible for processing again.
+
+<div className="mermaid-frame">
+  <WorkerCrash />
+</div>
+
+So in the best case every job gets picked up once, gets processed, achieves
+enlightenment, and then re-enters the cosmic background radiation until its time
+is needed again. Otherwise jobs end up in an endless wheel of samsara where they
+just bounce between workers until one of them doesn’t fail to process it (or if
+it’s pathologically crashing workers, then a new worker binary is pushed that
+won’t crash this time, we hope).
+
+<div className="mermaid-frame">
+  <Samsara />
+</div>
+
+### Workers will own no jobs yet will still be happy
+
+One of the key parts of this is the idea of workers _leasing_ jobs instead of
+claiming them like they would in other queue worker systems. When a worker
+leases a job, it marks itself as having its greasy paws on the job in the
+database and then pushes it forward so that it can be taken over if it crashes.
+In general, every worker has their own unique ID and every class of job has its
+own fixed lease time, so when workers crash it’ll take at most the lease time
+for the jobs to be picked up by another worker and for the spice to continue
+flowing.
+
+<div className="mermaid-frame">
+  <LeaseWrite />
+</div>
+
+Also when a worker takes longer than the lease time to get something done, it
+re-leases jobs so that other workers don’t pick them up and step on the worker
+currently in progress:
+
+<div className="mermaid-frame">
+  <LeaseRenewal />
+</div>
+
+### The thorns in the roses
+
+From what I’ve seen in practice and what I can crack from the technical paper,
+this really does seem to get you most of the durability and reliability
+guarantees you’d expect from Kafka or other message queues without having to
+have a second system in the mix and its associated transactions. However there’s
+some thorns in the roses that are worth mentioning.
+
+The big one is that everything being in FoundationDB like it is means that
+you’re inviting workers to step on eachother and make conflicting transactions
+when claiming multiple jobs at once. This is part of why the Apple paper has
+workers _randomly_ decide if they want to claim jobs or not. This randomness
+doesn’t _eliminate_ the possibility of transaction conflicts, but it does make
+them much less likely.
+
+<div className="mermaid-frame">
+  <TxnConflict />
+</div>
+
+This ends up working a lot better in practice than you’d think it would given a
+sufficiently large worker pool.
+
+One of the other big downsides of this approach is that you create a lot of
+write pressure on your FoundationDB server cluster. The great part about this is
+that your data mutations and queue insertion happen in the same transaction,
+however the FoundationDB rate limiter will start to bite you as the storage
+servers naturally start to lag behind the logs. This ends up creating
+operational positive feedback loops that are only really resolved by sharding
+your database or throwing biblical amounts of hardware at the problem. Given
+hardware is now stupidly expensive, you can guess what most users end up doing.
+
+Also, being so heavily reliant on time for job identity means that you _really_
+need to make sure your servers have their clocks in sync. Usually you can “just”
+rely on the public NTP constellation, however if it ends up being a problem in
+practice you can “just” run your own stratum 1 NTP server or do time
+synchronization over GPS. What could go wrong?
+
+## We made some changes
+
+I mentioned that Apple published a paper, not a GitHub repo or source tarball.
+As a result, this means we needed to adapt this design for our use case, and
+write all the code ourselves.
+
+### The immediate suspects
+
+The biggest one is that we don’t use
+[FoundationDB’s Record Layer](https://foundationdb.github.io/fdb-record-layer/)
+for storing data. Record Layer is a Java library that adapts a raw key/value
+FoundationDB client into something more resembling a SQL database. When the team
+behind FoundationDB was working on it, they envisioned the database as the
+_foundation_ of other database engines so that you could have
+[layers](https://apple.github.io/foundationdb/layer-concept.html) on top of it
+to give you MySQL or Postgres client support. In practice, this ended up not
+being the case for a wide variety of complicated/boring reasons. We ended up
+using the corpse of our pre-pivot database product as the record layer on top of
+FoundationDB.
+
+Apple’s system is designed to accommodate dynamic numbers of queues (their paper
+claims billions, I’d personally believe it), whereas we have a pretty fixed
+number of queues for known tasks like
+[lifecycle rules](https://www.tigrisdata.com/docs/buckets/object-lifecycle-rules/)
+or
+[global replication](https://www.tigrisdata.com/blog/conflict-resolution-is-fun/).
+This allows us to take out a huge chunk of the complexity involved in the
+message queue logic.
+
+As we grew, we ended up making long-running jobs that would be annoying to
+restart if the worker dies. Consider something like the job that cleans up
+unreferenced data from the backend. That’s basically a giant loop over both the
+block storage and database that diffs the two. Restarting that wouldn’t be
+catastrophic, but it would certainly be annoying to have all that progress lost.
+
+We worked around it by adding the ability for jobs to include a checkpoint of
+their progress in the job definition as they progress through the leasing
+periods. This lets another worker catch up where the last one left off instead
+of having to start over from scratch.
+
+<div className="mermaid-frame">
+  <Checkpoints />
+</div>
+
+This has scaled well enough for our needs, though some of the more complicated
+workloads end up needing to split that checkpoint data across multiple
+FoundationDB keys. Our record layer handles this adequately enough though!
+
+### The wrath of cron
+
+One of the key advantages of a system like QuiCK is that there’s no central
+coordination layer, so you don’t have to maintain another service that has wide
+ranging downstream effects upon failure. One of the key disadvantages of a
+system like QuiCK is that you don’t have a central coordination layer so you end
+up needing to build things like recurring/cronjobs by yourself. The fun part
+about how this is implemented is that jobs self-identify by _when_ they get
+executed, so the cheeky way to implement cronjobs is to just have a job that
+reschedules itself when it’s done executing. This is what we ended up doing.
+
+<div className="mermaid-frame">
+  <SelfScheduling />
+</div>
+
+When you add up the durability, temporal smear from workers occasionally
+retrying jobs, and other third order effects of this design, you end up with all
+of the benefits of something like cron or systemd timers without having to
+actually run a cron service in your cluster. You basically farm out the
+scheduling work to the workers themselves. This is kinda beautiful in a way that
+I’m having trouble describing succinctly, it’s great.
+
+### We sharded the message queue
+
+Apple’s paper recommends having workers randomly pick jobs to ensure that they
+don’t step on eachother when claiming them in FoundationDB. In practice we found
+that explicitly sharding jobs by the cryptographic hash of their key was a lot
+more useful. One of the downsides of randomly picking jobs is that with a
+sufficiently small number of workers, it’s hard to find a random selection
+percentage that has low conflict rates and doesn’t let jobs lag behind realtime
+too much.
+
+<div className="mermaid-frame">
+  <UnluckyJob />
+</div>
+
+In order to work around this, we explicitly sharded jobs into “lanes”. Every
+worker monitors a few lanes, and when jobs get claimed, their vesting time
+changes, which makes the key change, which makes the lane change. This means
+that jobs constantly bounce between lanes as different workers cycle in and out
+so that any one worker or any one “unlucky” lane is automatically mitigated
+against at the infrastructure level.
+
+<div className="mermaid-frame">
+  <HashringLanes />
+</div>
+
+This is another case of something that would normally be solved by some kind of
+central management system with other message queue systems, but by not having
+one and being a bit clever about the design you can completely mitigate that
+entire failure mode.
+
+## We ended up with Kafka anyways
+
+As we mentioned earlier, we suffered from our own success and now this
+implementation of QuiCK no longer supports our scale. Let’s take a look at our
+workloads and see which ones can be ~~shoved~~, er, compartmentalized, into
+Kafka so we can scale them independently.
+
+<img
+  src={friendshipEnded}
+  alt="A cursed image macro reading “Friendship ended with FOUNDATIONDB, now KAFKA is my best friend”, with the Apache Kafka logo in the middle and the FoundationDB logo and a key-value store architecture diagram both crossed out in green marker"
+/>
+
+Ultimately, we have three categories of async jobs in our system:
+
+1. Jobs that can be scheduled directly to Kafka (GC tasks, all async tasks
+   triggered by events or RPC)
+2. Jobs that can be scheduled to Kafka by FDB bucket scanners (for example, TTL
+   and lifecycle transition tasks)
+3. Replication
+
+### Jobs that can be scheduled directly to Kafka
+
+In the current implementation, all objects deleted from buckets are not dropped
+immediately. Instead, tombstone objects are created and final cleanup happens
+asynchronously. Tombstones are then cleaned up by workers using a three stage
+process:
+
+1. Workers schedule per-bucket cleanup tasks
+2. Each task scans the bucket for tombstones and for each expired tombstone
+   schedules a cleanup task
+3. Cleanup task does sanity checks and performs actual cleanup
+
+This process can be vastly simplified by moving tombstones to Kafka -
+essentially upon deleting the object from FDB, the server will produce a
+tombstone entry to some cleanup topic. The entries in this topic will naturally
+be in chronological order, so consumers will get them from earliest to latest,
+and can pause consumption (via pause-resume mechanism in Kafka) if the next
+entry they consumed is not due to cleanup yet.
+
+There is, however, the caveat with soft deletes, where the retention period can
+be different from hard deletes, and it can be dynamic (same issue as lifecycle
+transitions described below). So this case might require separate flow.
+
+### Object versions cleanup
+
+This process is fairly similar to tombstones cleanup - workers scan for old
+object versions and schedule tasks for cleaning them up after some grace period.
+Since it is only used to cleanup block storage from old objects, internal
+versions table can be right away replaced with Kafka topic while saving writes
+on hot path.
+
+### Object notifications
+
+Currently, object notifications are using separate `change_index` subspace which
+is written every time user changes the object, and used only for sending
+notifications. Similar to internal versions table, this subspace can be
+deprecated entirely by moving notifications to Kafka.
+
+### Apropos
+
+FoundationDB doesn’t really cope with large insert volumes in a single cluster
+very well, and as our customers eagerly started to store more and more data in
+Tigris we occasionally ran into problems where the storage servers would lag
+behind the commit log. This turned out to be a huge problem in practice as
+everything started to lag behind realtime. If you saw occasional issues where
+you pushed an object in one region and didn’t see it from another region within
+a minute or two: this is why.
+
+As a result, push came to shove, hardware became prohibitively expensive (we’ve
+had to cut our desired RAM configurations in half), and customers keep using our
+data storage product to store data (the horror!); so we had to swallow our pride
+and eat the infrastructure complexity of using Kafka. We’ve been using it for a
+month or so now and it has absolutely paid off in spades.
+
+:::note
+
+We ended up using a hosted Kafka product so we too don’t have to know why the
+zookeeper can’t pet the animals.
+
+:::
+
+## So far nobody’s turned into a centipede
+
+Overall, we’re pretty happy with how things have turned out. In an ideal world
+we’d be able to expand upon our FoundationDB-based message queue system.
+However, until we can put the time/energy into sharding our FoundationDB
+clusters, this works enough and should last us until we hit our next scaling
+threshold that requires us to rethink our design.
+
+Oh, and as an added bonus we’re pretty sure that nobody on the team has turned
+into a centipede without warning. I’ll double-check with the team to be sure
+though!
+
+<InlineCta
+  title="Storage that doesn’t make you run a broker"
+  subtitle="Tigris is globally distributed, S3-compatible object storage. We handle the queues, the leases, and the clock skew so that you don’t have to."
+  button="Start building on Tigris"
+/>
