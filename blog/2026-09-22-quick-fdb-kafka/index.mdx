@@ -4,11 +4,7 @@ title: "We used a database as a message queue. Now we use Kafka."
 description: >
   FoundationDB was our only database, queue included. We built Apple's QuiCK
   design on top of it, hit the write limits, and moved async tasks to Kafka.
-# TODO: hero image. Drop hero-image.webp into this folder, uncomment the line
-# below, then add to the body after the imports:
-#   import heroImage from "./hero-image.webp";
-#   <img src={heroImage} className="hero-image" alt="describe the image" />
-# image: ./hero-image.webp
+image: ./friendship-ended-fdb.webp
 keywords:
   - foundationdb
   - kafka
@@ -22,7 +18,7 @@ keywords:
   - Tigris
 authors:
   - xe
-  - firsov
+  - garren
 tags:
   - Engineering
   - foundationdb
@@ -34,24 +30,22 @@ tags:
 import InlineCta from "@site/src/components/InlineCta";
 import friendshipEnded from "./friendship-ended-fdb.webp";
 
-import NaiveQueue from "./diagrams/NaiveQueue";
-import IdCollision from "./diagrams/IdCollision";
 import PopDestroys from "./diagrams/PopDestroys";
 import OneClock from "./diagrams/OneClock";
 import TwoFrames from "./diagrams/TwoFrames";
 import KeyAnatomy from "./diagrams/KeyAnatomy";
 import EnqueueInTxn from "./diagrams/EnqueueInTxn";
 import LeaseClaim from "./diagrams/LeaseClaim";
-import JobCompletes from "./diagrams/JobCompletes";
-import WorkerCrash from "./diagrams/WorkerCrash";
+import JobOutcomes from "./diagrams/JobOutcomes";
 import Samsara from "./diagrams/Samsara";
 import LeaseWrite from "./diagrams/LeaseWrite";
 import LeaseRenewal from "./diagrams/LeaseRenewal";
 import TxnConflict from "./diagrams/TxnConflict";
-import Checkpoints from "./diagrams/Checkpoints";
 import SelfScheduling from "./diagrams/SelfScheduling";
 import UnluckyJob from "./diagrams/UnluckyJob";
 import HashringLanes from "./diagrams/HashringLanes";
+import DeleteWrites from "./diagrams/DeleteWrites";
+import VersionWrites from "./diagrams/VersionWrites";
 
 [FoundationDB](https://www.foundationdb.org/) is the only database we use. This
 should surprise you since FoundationDB is pretty barebones, just a key-value
@@ -110,28 +104,18 @@ mean when they call something “kafkaesque”, not a
 So you need a queue. The FoundationDB docs contain
 [tutorials for making simple queues in multiple languages](https://apple.github.io/foundationdb/queues.html).
 At a high level you put messages in on one end of the keyspace (namespace for
-keys) and then read them out of the other end of the keyspace, kinda like this:
-
-<div className="mermaid-frame">
-  <NaiveQueue />
-</div>
-
-This works fairly well (if you’ve ever used Sidekiq, this model should be very
-familiar), but the main problems come with naming the entries in the queue. The
-naïve way to do it is to have the FoundationDB equivalent of MySQL’s
-`AUTO INCREMENT` where you assign each queue item its own atomically increasing
-integer ID, but what happens when you have more than one producer?
-
-<div className="mermaid-frame">
-  <IdCollision />
-</div>
-
-This will conflict very quickly, so you end up needing to encode random values,
-UUIDs, or even creation time into the key of the value. With enough work I’m
-sure you could come up with a system that’s robust enough to handle most of the
-demands of reality, but the basic problem is that a worker reading a value off
-of the left side of the queue results in that queue item getting deleted from
-the database.
+keys) and then read them out of the other end of the keyspace. This works fairly
+well (if you’ve ever used Sidekiq, this model should be very familiar), but the
+main problems come with naming the entries in the queue. The naïve way to do it
+is to have the FoundationDB equivalent of MySQL’s `AUTO INCREMENT` where you
+assign each queue item its own atomically increasing integer ID, but what
+happens when you have more than one producer? Both of them decide they are
+number 67 at the same time. This will conflict very quickly, so you end up
+needing to encode random values, UUIDs, or even creation time into the key of
+the value. With enough work I’m sure you could come up with a system that’s
+robust enough to handle most of the demands of reality, but the basic problem is
+that a worker reading a value off of the left side of the queue results in that
+queue item getting deleted from the database.
 
 <div className="mermaid-frame">
   <PopDestroys />
@@ -231,16 +215,12 @@ it to do.
 </div>
 
 Then the job finishes and the worker responds by deleting it from the database.
-
-<div className="mermaid-frame">
-  <JobCompletes />
-</div>
-
 But if the worker crashes while processing the job for some reason, another
-worker will pick it up when it becomes eligible for processing again.
+worker will pick it up when it becomes eligible for processing again. Those are
+the only two endings a leased job gets:
 
 <div className="mermaid-frame">
-  <WorkerCrash />
+  <JobOutcomes />
 </div>
 
 So in the best case every job gets picked up once, gets processed, achieves
@@ -352,11 +332,8 @@ catastrophic, but it would certainly be annoying to have all that progress lost.
 We worked around it by adding the ability for jobs to include a checkpoint of
 their progress in the job definition as they progress through the leasing
 periods. This lets another worker catch up where the last one left off instead
-of having to start over from scratch.
-
-<div className="mermaid-frame">
-  <Checkpoints />
-</div>
+of having to start over from scratch. The checkpoint is a field in the job’s own
+body, so it lives in the queue instead of in the worker that wrote it.
 
 This has scaled well enough for our needs, though some of the more complicated
 workloads end up needing to split that checkpoint data across multiple
@@ -416,84 +393,89 @@ entire failure mode.
 
 ## We ended up with Kafka anyways
 
-As we mentioned earlier, we suffered from our own success and now this
-implementation of QuiCK no longer supports our scale. Let’s take a look at our
-workloads and see which ones can be ~~shoved~~, er, compartmentalized, into
-Kafka so we can scale them independently.
+But yeah, here's the part where we hit the limits of our setup and had to
+swallow our pride before setting up Kafka anyways.
+
+FoundationDB is really bad at coping with large sustained amounts of inserts in
+a single cluster. Sure, commits are fast, but at some point the storage servers
+have to apply and replicate out those changes. When those storage servers fall
+behind the transaction logs, the ratekeeper of the database throttles _everyone_
+so they can catch up. As our customers start storing more and more data, we
+started hitting this issue pretty regularly. Every `PutObject` call turned into
+more and more writes which resulted in more writes downstream and it was all
+inflicted on the same database clusters. Something had to give because this was
+manifesting by customers seeing the replication lag with their eyes.
+
+The only real paths out of this are to shard FoundationDB clusters or to just
+throw more hardware at the problem. Given that ram is at human kidney prices and
+that we have a small enough team that we're out of spare kidneys (for now, until
+we hire more), we gotta eat the complexity of setting up a second system to
+handle the message queue logic. We've had to cut our ram configurations in half.
+It's brutal out there.
+
+So we ended up turning our message queue into a monstrous vermin.
 
 <img
   src={friendshipEnded}
   alt="A cursed image macro reading “Friendship ended with FOUNDATIONDB, now KAFKA is my best friend”, with the Apache Kafka logo in the middle and the FoundationDB logo and a key-value store architecture diagram both crossed out in green marker"
 />
 
-Ultimately, we have three categories of async jobs in our system:
+Well, we didn't completely end the friendship with FoundationDB, we still use it
+across our workloads, but everything splits into three categories now:
 
-1. Jobs that can be scheduled directly to Kafka (GC tasks, all async tasks
-   triggered by events or RPC)
-2. Jobs that can be scheduled to Kafka by FDB bucket scanners (for example, TTL
-   and lifecycle transition tasks)
-3. Replication
+1. **S3API or event triggered jobs**: They go to Kafka.
+2. **Jobs that need a scan to find**: Think TTL expiry and lifecycle
+   transitions. We still have FoundationDB scan for them, but then that scanner
+   produces queue items in Kafka instead of FoundationDB.
+3. **Replication**: This stays in FoundationDB to avoid the dual-write problem.
+   We have saved so much write pressure everywhere else that we bought the
+   wiggle-room we need to handle the writes for replication.
 
-### Jobs that can be scheduled directly to Kafka
+Most of the savings come from that first category of changes, so let's dig into
+that.
 
-In the current implementation, all objects deleted from buckets are not dropped
-immediately. Instead, tombstone objects are created and final cleanup happens
-asynchronously. Tombstones are then cleaned up by workers using a three stage
-process:
+### Deletion isn't really deletion at our scale
 
-1. Workers schedule per-bucket cleanup tasks
-2. Each task scans the bucket for tombstones and for each expired tombstone
-   schedules a cleanup task
-3. Cleanup task does sanity checks and performs actual cleanup
+One of the fun facts about distributed systems nonsense is that at a certain
+scale "deletion" stops actually removing data from the database. We end up
+putting a tombstone in the database and deferring the actual removal until
+later, mostly so that we can have soft-deletes be soft instead of hard. We clean
+things up in a few stages:
 
-This process can be vastly simplified by moving tombstones to Kafka -
-essentially upon deleting the object from FDB, the server will produce a
-tombstone entry to some cleanup topic. The entries in this topic will naturally
-be in chronological order, so consumers will get them from earliest to latest,
-and can pause consumption (via pause-resume mechanism in Kafka) if the next
-entry they consumed is not due to cleanup yet.
+1. We have a recurring job per bucket to clean things up.
+2. Each per-bucket task scans for tombstones and for every tombstone that's past
+   the retention period, it schedules another task to actually clean that
+   tombstone up.
+3. Each cleanup task then checks yet again and deletes the tombstone and its
+   associated data blocks.
 
-There is, however, the caveat with soft deletes, where the retention period can
-be different from hard deletes, and it can be dynamic (same issue as lifecycle
-transitions described below). So this case might require separate flow.
+Let's do some napkin math. Every one of those tasks is a QuiCK job, so it costs
+an enqueue write, a claim write, at least one lease write, and a delete when it
+finishes. That's at least four writes and a delete before any storage bytes are
+changed, plus 4 more for the per-bucket task that found it, plus range scans
+over the entire bucket to find those tombstones in the first place. Then all the
+workers fighting for jobs are scanning over the work ranges, which competes with
+user requests against the storage servers. Delete a million objects and that's
+at least four million queue writes on a cluster that's probably already the
+bottleneck.
 
-### Object versions cleanup
+<div className="mermaid-frame">
+  <DeleteWrites />
+</div>
 
-This process is fairly similar to tombstones cleanup - workers scan for old
-object versions and schedule tasks for cleaning them up after some grace period.
-Since it is only used to cleanup block storage from old objects, internal
-versions table can be right away replaced with Kafka topic while saving writes
-on hot path.
+In our brave new Kafka world, stage 1 and 2 of that diagram vanish. Servers
+write tombstones to FoundationDB, enqueue a message to a cleanup topic, and go
+back to doing whatever it is you want them to do. The cleanup topic is naturally
+in delete order, so consumers read from the earliest offset and process
+tombstones as their time comes.
 
-### Object notifications
-
-Currently, object notifications are using separate `change_index` subspace which
-is written every time user changes the object, and used only for sending
-notifications. Similar to internal versions table, this subspace can be
-deprecated entirely by moving notifications to Kafka.
-
-### Apropos
-
-FoundationDB doesn’t really cope with large insert volumes in a single cluster
-very well, and as our customers eagerly started to store more and more data in
-Tigris we occasionally ran into problems where the storage servers would lag
-behind the commit log. This turned out to be a huge problem in practice as
-everything started to lag behind realtime. If you saw occasional issues where
-you pushed an object in one region and didn’t see it from another region within
-a minute or two: this is why.
-
-As a result, push came to shove, hardware became prohibitively expensive (we’ve
-had to cut our desired RAM configurations in half), and customers keep using our
-data storage product to store data (the horror!); so we had to swallow our pride
-and eat the infrastructure complexity of using Kafka. We’ve been using it for a
-month or so now and it has absolutely paid off in spades.
-
-:::note
-
-We ended up using a hosted Kafka product so we too don’t have to know why the
-zookeeper can’t pet the animals.
-
-:::
+Kafka's consumer offset ends up doing the job that QuiCK's vesting time did with
+no additional FoundationDB write pressure. The queue is the schedule. The only
+cost is that Kafka has its own transactions outside of FoundationDB. This is
+okay because the failure mode of the FoundationDB transaction working but the
+Kafka transaction failing is a tombstone sticking around longer than it would
+otherwise, not user data falling into the shadow realm. This tradeoff is
+acceptable.
 
 ## So far nobody’s turned into a centipede
 
