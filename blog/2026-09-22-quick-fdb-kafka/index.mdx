@@ -262,9 +262,10 @@ some thorns in the roses that are worth mentioning:
   makes them less likely.
 - The randomness also can result in "chronically unlucky" jobs that just never
   get picked. I'll expand on this some more later.
-- You end up creating a lot of write pressure on your FoundationDB cluster. This
-  ends up being a problem when the storage server is not able to keep up with
-  the logs. Again, I'll expand on this some more later in the post.
+- You end up creating a lot of write pressure on your FoundationDB cluster once
+  you reach a fairly large scale (eg: millions of items backlogged in the
+  queue). This ends up being a problem when the storage server is not able to
+  keep up with the logs. Again, I'll expand on this some more later in the post.
 - You end up needing to make sure your clocks are synced. They should be
   already, but worst case you need to set up a stratum 1 NTP server or do GPS
   time synchronization.
