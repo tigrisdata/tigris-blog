@@ -20,7 +20,17 @@ import React, {
   useState,
 } from "react";
 
-const FONT_STACK = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+// One font has to draw the latin text AND the box-drawing glyphs, or the
+// borders fall back to a font with a different advance width and a frame's
+// corners stop meeting its sides. The first four families cover Apple and
+// Windows. None of them exist on Linux, and Firefox does not support
+// `ui-monospace` at all, so it lands on generic `monospace`, whose box-drawing
+// coverage is whatever that box happens to have. Fira Code is self-hosted by
+// this site and covers U+2500-257F, so it catches that case before the generic
+// does. Ligatures off: Fira Code has plenty, and a ligature is two cells
+// rendered as one glyph.
+const FONT_STACK =
+  "ui-monospace, SFMono-Regular, Menlo, Consolas, 'Fira Code VF', monospace";
 
 const PRE_STYLE = {
   margin: "0",
@@ -32,6 +42,7 @@ const PRE_STYLE = {
   lineHeight: "1.3",
   color: "#cbd5e1",
   fontFamily: FONT_STACK,
+  fontVariantLigatures: "none",
   fontSize: "13px",
   whiteSpace: "pre",
   textAlign: "left",
@@ -185,7 +196,7 @@ export function AnimatedAsciiFigure({
   const startedRef = useRef(false);
   useEffect(() => {
     const node = containerRef.current;
-    if (!node || typeof IntersectionObserver === "undefined") return undefined;
+    if (!node) return undefined;
     if (!autoPlay) return undefined;
     if (reduced) {
       // No motion: hand the reader the finished figure and a button.
@@ -193,19 +204,63 @@ export function AnimatedAsciiFigure({
       setFinished(true);
       return undefined;
     }
+    if (typeof IntersectionObserver === "undefined") return undefined;
+
+    // The whole figure has to be on screen before it starts, because the first
+    // step of one of these is usually the still it animates away from: a figure
+    // that begins while its bottom half is below the fold has already said
+    // something the reader never saw. A figure taller than the viewport can
+    // never be fully visible, so for those the bar is its top edge reaching the
+    // top of the screen, which is as much of it as the reader can ever get.
+    const seen = () => {
+      const r = node.getBoundingClientRect();
+      const h = window.innerHeight || document.documentElement.clientHeight;
+      if (r.height > h) return r.top <= 0 && r.bottom > h;
+      return r.top >= 0 && r.bottom <= h;
+    };
+
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      if (startedRef.current || !seen()) return;
+      startedRef.current = true;
+      watch(false);
+      io.disconnect();
+      play();
+    };
+    // Scrolling fires far more often than this needs to run.
+    const schedule = () => {
+      if (frame || startedRef.current) return;
+      frame = requestAnimationFrame(check);
+    };
+
+    // The observer is only the cheap gate: it says when the figure is near
+    // enough to be worth measuring, and the measuring decides when to start.
+    let watching = false;
+    const watch = (on) => {
+      if (on === watching) return;
+      watching = on;
+      const fn = on ? window.addEventListener : window.removeEventListener;
+      fn.call(window, "scroll", schedule, { passive: true });
+      fn.call(window, "resize", schedule);
+    };
+
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting && !startedRef.current) {
-            startedRef.current = true;
-            play();
-          }
+          if (startedRef.current) continue;
+          watch(entry.isIntersecting);
+          if (entry.isIntersecting) schedule();
         }
       },
-      { threshold: 0.35 }
+      { threshold: 0 }
     );
     io.observe(node);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      watch(false);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, [play, reduced, lastStep, autoPlay]);
 
   // Advance.

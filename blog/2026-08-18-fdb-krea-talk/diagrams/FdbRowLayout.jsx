@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
-const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+const MONO =
+  "ui-monospace, SFMono-Regular, Menlo, Consolas, 'Fira Code VF', monospace";
 
 const LINES = [
   "  key   ·   lexicographic, one contiguous range per subspace                 value",
@@ -86,6 +87,7 @@ export default function FdbRowLayout({
           fontSize,
           lineHeight: 1.3,
           whiteSpace: "pre",
+          fontVariantLigatures: "none",
           color: "#cbd5e1",
           overflowX: "auto",
         }}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
-const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+const MONO =
+  "ui-monospace, SFMono-Regular, Menlo, Consolas, 'Fira Code VF', monospace";
 
 const LINES = [
   "┌─ server / API plane ───────────────────┐   ┌─ worker deployment ──────────────────┐",
@@ -109,6 +110,7 @@ export default function ControlPlaneWorkers({
           fontSize,
           lineHeight: 1.3,
           whiteSpace: "pre",
+          fontVariantLigatures: "none",
           color: "#cbd5e1",
           overflowX: "auto",
         }}
