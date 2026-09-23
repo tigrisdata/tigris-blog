@@ -1,5 +1,22 @@
-/* Top navigation ported from the marketing site (tigrisdata.com) Navbar.
-   Dark bar, matching the homepage palette regardless of blog color mode. */
+/* Top navigation ported from the marketing site (tigrisdata/website,
+   src/components/Navbar.tsx + the .btn/.panel/.label rules in
+   src/app/globals.css). The Tailwind classes there are translated 1:1 to plain
+   CSS here; keep the two in sync. The bar is always dark, like the homepage,
+   whatever the site's color mode is.
+
+   Every rule sets its own font, colour, margin and padding so infima's global
+   element styles (a, a:hover, ul, p, button) never leak in. */
+
+.nav {
+  --nav-font: Geist, "Geist Fallback", sans-serif;
+  --nav-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --nav-accent: #57d3a4;
+  --nav-ground: #0a171e;
+  --nav-hover: color-mix(in oklab, var(--nav-accent) 6%, var(--nav-ground));
+  --nav-muted: #8fa3b0;
+  --nav-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Compound with :global(.navbar) so these win over infima's base `.navbar`
    styles. The `.navbar` class is required because Docusaurus's TOC highlight
    hook reads `document.querySelector('.navbar').clientHeight`. */
@@ -8,176 +25,481 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 200;
+  z-index: var(--ifm-z-index-fixed);
   display: block;
   height: auto;
   min-height: 0;
   margin: 0;
   padding: 0;
-  background: rgba(10, 23, 30, 0.8);
+  box-shadow: none;
+  font-family: var(--nav-font);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-align: left;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: color-mix(in oklab, var(--nav-ground) 80%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.2s ease;
+  border: 0 solid transparent;
+  border-bottom-width: 1px;
+  transition: border-color 200ms var(--nav-ease);
+}
+
+/* The website only ever puts the bar over its dark ground. Over the light
+   color mode's white page the 80% ground would read as grey, so it goes
+   opaque there to look the same. */
+:global(html[data-theme="light"]) .nav:global(.navbar) {
+  background-color: var(--nav-ground);
 }
 
 .nav:global(.navbar).scrolled {
-  border-bottom-color: rgba(30, 51, 64, 0.5);
+  border-color: color-mix(in oklab, #1e3340 50%, transparent);
+}
+
+.nav svg,
+.nav img {
+  display: block;
 }
 
 .inner {
+  display: flex;
   max-width: 1440px;
   margin: 0 auto;
-  display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
+  padding: 16px 24px;
 }
 
 .left {
   display: flex;
   align-items: center;
-  gap: 2.5rem;
+  gap: 40px;
 }
 
 .logo {
   display: flex;
   align-items: center;
+  color: inherit;
 }
 
 .logo img {
+  color: transparent;
   height: 32px;
   width: auto;
-  display: block;
+  max-width: none;
 }
 
 .links {
   display: none;
   align-items: center;
-  gap: 1.5rem;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.link {
-  font-size: 0.875rem;
+.item {
+  position: relative;
+  margin: 0;
+}
+
+.topLink,
+.trigger {
+  border-radius: 3px;
+  padding: 6px 12px;
+  font-family: var(--nav-font);
+  font-size: 14px;
   font-weight: 600;
-  color: #8fa3b0;
+  line-height: 20px;
+  letter-spacing: normal;
+  color: var(--nav-muted);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition-property: color, background-color, border-color, outline-color,
+    text-decoration-color, fill, stroke;
+  transition-duration: 150ms;
+  transition-timing-function: var(--nav-ease);
 }
 
-.link:hover,
-.linkActive {
+.topLink {
+  display: block;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  border: 0;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.topLink:hover,
+.trigger:hover,
+.active,
+.active:hover {
   color: #fff;
   text-decoration: none;
+}
+
+.triggerOpen,
+.triggerOpen:hover {
+  background-color: color-mix(in oklab, #fff 6%, transparent);
+  color: #fff;
+}
+
+.chevron {
+  transition-property: transform, translate, scale, rotate;
+  transition-duration: 150ms;
+  transition-timing-function: var(--nav-ease);
+}
+
+.chevronOpen {
+  rotate: 180deg;
+}
+
+/* the padding-top is the bridge between the trigger and the panel */
+.panelWrap {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 50;
+  padding-top: 12px;
+}
+
+.panel {
+  position: relative;
+  display: grid;
+  width: 680px;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: #0b181e;
+  border: 1px solid #1b2b32;
+  border-radius: 4px;
+  /* the four empty layers mirror Tailwind's ring/inset shadow slots */
+  box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000,
+    0 25px 50px -12px color-mix(in oklab, #000 40%, transparent);
+}
+
+.featured,
+.panelLink {
+  border-radius: 3px;
+  background-color: var(--nav-ground);
+  color: #fff;
+  text-decoration: none;
+  transition-property: color, background-color, border-color, outline-color,
+    text-decoration-color, fill, stroke;
+  transition-duration: 150ms;
+  transition-timing-function: var(--nav-ease);
+}
+
+.featured:hover,
+.panelLink:hover {
+  background-color: var(--nav-hover);
+  color: #fff;
+  text-decoration: none;
+}
+
+.panel a:focus-visible {
+  outline: 2px solid var(--nav-accent);
+  outline-offset: 2px;
+}
+
+.featured {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 24px 20px;
+}
+
+.featuredTitle {
+  font-size: 17px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.featuredDesc {
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: color-mix(in oklab, #fff 65%, transparent);
+}
+
+.featuredArt {
+  display: block;
+  margin-top: 24px;
+  height: 120px;
+  opacity: 0.8;
+  transition: opacity 150ms var(--nav-ease);
+}
+
+.featured:hover .featuredArt {
+  opacity: 1;
+}
+
+.art {
+  width: 100%;
+  height: 100%;
+  color: var(--nav-accent);
+}
+
+.panelList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panelItem {
+  display: flex;
+  flex: 1 1 0%;
+  margin: 0;
+}
+
+.panelLink {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  justify-content: center;
+  padding: 16px 24px;
+}
+
+.panelTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.extIcon {
+  color: color-mix(in oklab, #fff 45%, transparent);
+}
+
+.panelDesc {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: color-mix(in oklab, #fff 60%, transparent);
 }
 
 .actions {
   display: none;
   align-items: center;
-  gap: 0.75rem;
+  gap: 12px;
 }
 
+/* website .btn / .btn--primary / .btn--secondary */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.625rem;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  font-family: "Hanken Grotesk", var(--ifm-font-family-base);
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.25rem;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 17px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  font: 500 14.5px/1 var(--nav-font);
+  letter-spacing: -0.005em;
   text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
-.btnSignin {
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  background: #142229;
-  color: #fff;
-  transition: background-color 0.2s ease;
-}
-
-.btnSignin:hover {
-  background: #1a2d36;
-  color: #fff;
+.btn:hover {
   text-decoration: none;
 }
 
-.btnStarted {
-  border: 1px solid transparent;
-  background: #62feb5;
-  color: #050c0f;
-  transition: opacity 0.2s ease;
+.btn:focus-visible {
+  outline: 2px solid var(--nav-accent);
+  outline-offset: 2px;
 }
 
-.btnStarted:hover {
-  opacity: 0.9;
-  color: #050c0f;
-  text-decoration: none;
+.btnPrimary {
+  background: var(--nav-accent);
+  color: #04231b;
+}
+
+.btnPrimary:hover {
+  background: #74e0b8;
+  color: #04231b;
+}
+
+.btnPrimary:focus-visible {
+  outline-color: #fff;
+}
+
+.btnSecondary {
+  border-color: #2a4a44;
+  background: color-mix(in oklab, var(--nav-accent) 7%, transparent);
+  color: #bfe8dd;
+}
+
+.btnSecondary:hover {
+  border-color: var(--nav-accent);
+  background: color-mix(in oklab, var(--nav-accent) 15%, transparent);
+  color: #fff;
 }
 
 .menuBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: #fff;
+  display: block;
+  margin: 0;
   padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
 }
 
-.mobile {
-  border-top: 1px solid #1e3340;
-  background: #0a171e;
-  padding: 1rem 1.5rem;
+.sheet {
+  max-height: calc(100dvh - 64px);
+  overflow-y: auto;
+  border: 0 solid #1e3340;
+  border-top-width: 1px;
+  background: var(--nav-ground);
+  padding: 16px 24px;
 }
 
-.mobileLink {
+.mobileLink,
+.mobileSubLink {
   display: block;
-  padding: 0.5rem 0;
-  font-size: 0.95rem;
   font-weight: 600;
-  color: #8fa3b0;
+  color: var(--nav-muted);
   text-decoration: none;
 }
 
 .mobileLink:hover,
-.mobileLinkActive {
+.mobileSubLink:hover {
+  color: var(--nav-muted);
+  text-decoration: none;
+}
+
+.mobileLink {
+  padding: 12px 0;
+}
+
+.mobileSubLink {
+  padding: 8px 0;
+}
+
+.mobileActive,
+.mobileActive:hover {
+  color: #fff;
+}
+
+.mobileGroup {
+  border: 0 solid #1b2b32;
+  border-bottom-width: 1px;
+  padding: 12px 0;
+}
+
+.mobileGroup:last-child {
+  border-bottom-width: 0;
+}
+
+/* website .label */
+.label {
+  margin: 0 0 8px;
+  font: 500 9.5px/1 var(--nav-mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #8ba3a0;
+}
+
+.mobileActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* right-click menu on the logo */
+.ctx {
+  position: fixed;
+  z-index: 100;
+  min-width: 200px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in oklab, #fff 10%, transparent);
+  background: #142229;
+  box-shadow: 0 20px 25px -5px color-mix(in oklab, #000 34%, transparent),
+    0 8px 10px -6px color-mix(in oklab, #000 34%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  font-family: Geist, "Geist Fallback", sans-serif;
+  line-height: 1.5;
+}
+
+.ctxPreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 12px 12px 6px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in oklab, #fff 5%, transparent);
+  background: #fff;
+  padding: 16px;
+}
+
+.ctxPreview img {
+  display: block;
+  height: 32px;
+  width: auto;
+}
+
+.ctxList {
+  padding: 6px 0;
+}
+
+.ctxItem {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  color: #8fa3b0;
+  text-decoration: none;
+  cursor: pointer;
+  transition-property: color, background-color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ctxItem:hover {
+  background: color-mix(in oklab, #fff 5%, transparent);
   color: #fff;
   text-decoration: none;
 }
 
-.mobileActions {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
 @media (min-width: 800px) {
-  .links {
-    display: flex;
-  }
-
+  .links,
   .actions {
     display: flex;
   }
 
-  .menuBtn {
-    display: none;
-  }
-
-  .mobile {
+  .menuBtn,
+  .sheet {
     display: none;
   }
 }
 
 @media (min-width: 1024px) {
   .inner {
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
+    padding-left: 40px;
+    padding-right: 40px;
   }
 }
