@@ -4,7 +4,7 @@ title: "We used a database as a message queue. Now we use Kafka."
 description: >
   FoundationDB was our only database, queue included. We built Apple's QuiCK
   design on top of it, hit the write limits, and moved async tasks to Kafka.
-image: ./friendship-ended-fdb.webp
+image: ./hero-image.webp
 keywords:
   - foundationdb
   - kafka
@@ -28,7 +28,6 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-import friendshipEnded from "./friendship-ended-fdb.webp";
 
 import PopDestroys from "./diagrams/PopDestroys";
 import OneClock from "./diagrams/OneClock";
@@ -363,11 +362,6 @@ handle the message queue logic. We've had to cut our ram configurations in half.
 It's brutal out there.
 
 So we ended up turning our message queue into a monstrous vermin.
-
-<img
-  src={friendshipEnded}
-  alt="A cursed image macro reading “Friendship ended with FOUNDATIONDB, now KAFKA is my best friend”, with the Apache Kafka logo in the middle and the FoundationDB logo and a key-value store architecture diagram both crossed out in green marker"
-/>
 
 Well, we didn't completely end the friendship with FoundationDB, we still use it
 across our workloads, but everything splits into three categories now:
