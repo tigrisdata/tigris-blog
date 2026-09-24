@@ -110,9 +110,10 @@ code {
   --ifm-leading: calc(var(--ifm-leading-desktop) * 1rem);
 
   --ifm-navbar-shadow: none;
-  /* Matches the real height of the custom navbar (logo + Sign in / Get started
-     buttons). Used for anchor scroll offsets and the sticky filter bar's top. */
-  --ifm-navbar-height: 78px;
+  /* Matches the real height of the custom navbar (16px padding, 44px Sign in /
+     Get started buttons, 16px padding, 1px border). Used for anchor scroll
+     offsets and the sticky filter bar's top. */
+  --ifm-navbar-height: 77px;
   --ifm-toc-border-color: #dedede;
 
   --ifm-table-border-color: var(--docs-color-border);
@@ -196,7 +197,7 @@ nav.navbar {
    desktop breakpoint at exactly 800px. */
 @media (max-width: 799.98px) {
   :root {
-    --ifm-navbar-height: 64px;
+    --ifm-navbar-height: 65px;
   }
 }
 
