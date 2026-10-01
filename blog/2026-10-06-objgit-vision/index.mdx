@@ -1,0 +1,212 @@
+---
+slug: objgit-vision
+title: "objgit is not a git forge"
+description: |
+  objgit is not a git forge. It's a git server on Tigris object storage that you
+  can script with hooks, explore over SSH, and grow with. Here's what's next.
+keywords:
+  - objgit
+  - git server
+  - git hooks
+  - webhooks
+  - webassembly
+  - object storage
+  - tigris
+authors: [xe]
+tags: [Engineering, Open Source, git, webassembly]
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+
+Hey all, I’ve been working more on
+[objgit](https://github.com/tigrisdata/objgit) and I think it’s time to
+transition it from a rudderless experiment to something that we can actually
+rely on. Today I want to spell out the vision I have for objgit and what I think
+will make it or something built on top of it shine.
+
+TL;DR: objgit is not a git forge, it’s a git server you can grow with. Let me
+explain.
+
+{/* truncate */}
+
+## The current state of the git
+
+Operating a Git server at scale is a nightmare. At a small scale you can just
+have a single VPS with Gitea, Forgejo, or
+[soft-serve](https://github.com/charmbracelet/soft-serve) and be fine. If you
+only have a few projects and want to keep it on your homelab, this will work and
+it will be good enough.
+
+The devil comes in with the details, and most of the problems begin when you
+expose that Git server to the public internet. The scrapers will discover your
+single person git forge and will gladly click on every link of every link of
+every link over and over until your server crashes and you need to install
+[a web application firewall](https://anubis.techaro.lol) or take other drastic
+measures to keep it online.
+
+Additionally, with most git forges your data is stored in a single folder on a
+single drive. You should be using RAID or some kind of distributed storage
+system to store your git data, however the process of actually doing that
+requires a lot of toil and maybe even a more than healthy dose of claudeops to
+just get to the point where the thing works. If this is your jam, this is pretty
+fun. Hell, I set up my own git server like that in my homelab until
+[Amazon’s scraper took it out](https://xeiaso.net/notes/2025/amazon-crawler/).
+
+## The state of the objgit
+
+What if things were set up to be robust by default? What if your git server just
+focused on being that: a git server? In the process you’d probably end up with
+objgit.
+
+In objgit, everything is stored in Tigris by default. Repository contents are
+temporarily cached on the disk for speed, but the default state is that things
+are in Tigris. When you push large objects, they automatically get added to LFS
+in Tigris. Every time you push you get a read-only snapshot of that tree saved
+to Tigris so that you can consume it later with other tools. Basically: we want
+you to have a Git _server_, and then you just deal with that using your git
+client. Other tools build on top of it.
+
+### Scripting your Git server
+
+Historically the main extension point you have for git servers is CI. What if
+your main extension point was the git server itself? If you’re a certain kind of
+greybeard, this sounds incredibly obvious, however for a huge portion of
+developers they have never dealt with their own git server on an Ubuntu box.
+They don’t know you can “just” put a shell script in the repo because that
+detail is abstracted away on GitHub or with any git forge in a box project.
+
+Objgit lets you define post-receive hooks in your repo so that you can use the
+git server as the extension point like the good old days. Just put a shell
+script in `.objgit/hooks/receive-pack`:
+
+```sh
+#!/usr/bin/env bash
+
+# Variables visible in the shell script:
+#   OBJGIT_REPO      repository path, e.g. Xe/soteria
+#   OBJGIT_SERVICE   always "receive-pack"
+#   OBJGIT_REF       full ref name, e.g. refs/heads/main
+#   OBJGIT_BRANCH    short branch name, e.g. main
+#   OBJGIT_OLD_SHA   previous tip (all zeros when the branch was created)
+#   OBJGIT_NEW_SHA   new tip
+#   OBJGIT_ADDED_FILES_JSON, OBJGIT_CHANGED_FILES_JSON,
+#   OBJGIT_DELETED_FILES_JSON are JSON arrays of net file changes.
+#   OBJGIT_CHANGES_FILE points to the full JSON object in /tmp.
+
+echo "push to ${OBJGIT_REPO} ${OBJGIT_REF}: ${OBJGIT_OLD_SHA} -> ${OBJGIT_NEW_SHA}"
+
+# Start Tekton tests only if you push to main
+
+if [ "${OBJGIT_BRANCH}" != "main" ]; then
+  exit 0
+fi
+
+kustomize build /src/.tekton | kube:apply && tekton:pipelinerun /src/.tekton/testrun.yaml
+```
+
+Et voila! You have CI with [Tekton](https://tekton.dev/). The `kustomize`
+command is the upstream `kustomize` compiled for WebAssembly and
+`kube:apply`/`tekton:pipelinerun` are custom pseudo-commands that do exactly
+what they say on the tin: apply Kubernetes manifests (for updating your pipeline
+definition) and create a new PipelineRun to make CI go.
+
+Additionally, why can’t you SSH into your git server to explore a repository
+yourself?
+
+```text
+λ ssh -t git@github.com sh Xe/x master
+PTY allocation request failed on channel 0
+```
+
+Imagine a world where you can just do that:
+
+```text
+λ ssh -t git@objgit.objgit.svc.alrest.xeserv.us sh Xe/x master
+objgit hook shell: Xe/x refs/heads/master @ 0a1d4562cab28281b6d2c288d6d1184afd0bbf42
+/src is read-only and /tmp is writable. Type exit or press Ctrl-D to leave.
+$ head -n3 go.mod
+module within.website/x
+
+go 1.25.7
+$ uname -av
+wasi localhost 0.0.0 0.0.0 wasm32 WASI
+```
+
+This looks like it’d be catastrophically unsafe, but it’s all sandboxed with
+[userspace shells](https://www.tigrisdata.com/blog/agent-sandbox-go/) and the
+same coreutils implementation that Ubuntu uses. Again, everything is compiled to
+WebAssembly and runs in the scope of your repository. Sure right now the UX is
+kinda bad, it doesn’t support tab-completion, some commands are missing (such as
+`grep`), however right now it works just enough that it’s good enough to be the
+basis to make something better.
+
+### Events with webhooks
+
+Webhooks are the message queue of the people. As such, objgit supports them
+using a format
+[similar to GitHub’s webhooks](https://github.com/tigrisdata/objgit/blob/main/proto/tigrisdata/objgit/events/push/v1/push.example.json).
+Right now the UX for configuring webhooks is kinda crummy and needs a lot of
+love, but here’s how you set them up today:
+
+```text
+$ ssh -t git@objgit.objgit.svc.alrest.xeserv.us objgit-webhook-set Xe/x --url https://domain.tld/path/with/segments
+```
+
+Webhooks can be validated using
+[standard HMAC validation](https://github.com/tigrisdata/objgit/blob/main/docs/usage/webhooks.md#headers-and-verification).
+You will get details about every commit pushed so you can do whatever it is you
+want to do, such as integrating with your Jenkins install that speaks GitHub
+webhooks.
+
+## What’s coming up
+
+Here’s what I’m cooking up with objgit to make it the best git server it can
+possibly be:
+
+- I plan to finish out POSIX compatibility with `grep`, `find`, and other core
+  utilities.
+- I want to add System One / Jev API commands so that you can make sure that
+  docs changes don’t cause a full CI run.
+- Maybe I should figure out an easy way to get [WASIX](https://www.wasix.org/)
+  support so that WebAssembly binaries can make outgoing HTTP requests.
+- I plan to continue working on optimization so that you can push git repos of
+  any size. Currently I can barely push the Linux kernel git repo. I plan to
+  make this better so that the size of your git repo is a moot point.
+- I want to make it easy for you to add your own commands to objgit hook
+  contexts. Maybe this could be done with some kind of meta-repo that has a
+  `bin` folder full of WebAssembly binaries in LFS.
+- I want to use the foundation of objgit to build a scraper-resistant web UI for
+  git. Most of the expensive calls (tree generation, archive generation, tree
+  browsing, git blame, etc) can be cached but usually aren’t because it’s
+  assumed that disk space isn’t infinite. Storing everything in Tigris makes
+  storage effectively infinite. This would only serve cached information to
+  users over the web and everything else will just give you an error page
+  telling you what commands you need to run to get that information yourself.
+- I want to build a robust authentication and authorization system built on the
+  lessons I’ve learned writing my own IAM server and implementing
+  [SigV4 authentication](https://www.tigrisdata.com/blog/sigv4/) myself.
+  Ideally, IAM should let you control how people are allowed to push, pull, and
+  create repos, branches, and more. This would also hook into the API when
+  that’s ready.
+- I want to make objgit’s primitives easy to embed into other projects so that
+  you can swap out the storage backend with Tigris.
+- I want to make an API for controlling various aspects of the objgit service.
+- I want to build administrative dashboards so you can account for who is using
+  the git server the most.
+- Maybe it would be cool to build a static website server on top of the
+  primitives of objgit. This could be an interesting experiment!
+- I’d also like to explore agentic integrations so that your agent can create a
+  git repository to help it work on a task.
+
+Above all though, I want to make objgit the git server of my dreams. I’m
+crossing a lot of things off of my git server design bucket list as I’ve learned
+how git servers fail in production helping keep core open source infrastructure
+online. I can only hope it will be useful for you too. Please give it a try and
+let me know what you think!
+
+<InlineCta
+  title="Want a git server you can grow with?"
+  subtitle="objgit stores every repository in Tigris, so your git data is globally distributed and durable by default."
+  button="Try objgit"
+  link="https://github.com/tigrisdata/objgit"
+/>
