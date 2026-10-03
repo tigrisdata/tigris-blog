@@ -1,0 +1,114 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 650 220"
+  width="650"
+  height="220"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 18px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 14px;
+      fill: #94a3b8;
+    }
+    .label {
+      font-size: 16px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .outcome-muted {
+      font-size: 17px;
+      fill: #94a3b8;
+      font-weight: 600;
+    }
+    .outcome-good {
+      font-size: 17px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .box {
+      rx: 8;
+      ry: 8;
+      fill: #142229;
+      stroke: #2a3731;
+      stroke-width: 1.5;
+    }
+    .accent-box {
+      rx: 8;
+      ry: 8;
+      fill: rgba(98, 254, 181, 0.1);
+      stroke: rgba(98, 254, 181, 0.5);
+      stroke-width: 1.5;
+    }
+    .arrow-muted {
+      stroke: #94a3b8;
+      stroke-width: 1.5;
+      fill: none;
+    }
+    .arrow-good {
+      stroke: #62feb5;
+      stroke-width: 1.5;
+      fill: none;
+    }
+  </style>
+
+  <defs>
+    <marker
+      id="ah-muted"
+      markerWidth="7"
+      markerHeight="6"
+      refX="7"
+      refY="3"
+      orient="auto"
+    >
+      <polygon points="0 0, 7 3, 0 6" fill="#94a3b8" />
+    </marker>
+    <marker
+      id="ah-good"
+      markerWidth="7"
+      markerHeight="6"
+      refX="7"
+      refY="3"
+      orient="auto"
+    >
+      <polygon points="0 0, 7 3, 0 6" fill="#62feb5" />
+    </marker>
+  </defs>
+
+  <text x="325" y="26" text-anchor="middle" class="title">
+    Same agent, different outcomes
+  </text>
+  <text x="325" y="48" text-anchor="middle" class="sub">
+    what the agent writes to decides what breaks
+  </text>
+
+  <rect x="40" y="78" width="240" height="56" class="box" />
+  <text x="160" y="113" text-anchor="middle" class="label">
+    Production storage
+  </text>
+
+  <path d="M280 106 L370 106" class="arrow-muted" marker-end="url(#ah-muted)" />
+
+  <text x="495" y="113" text-anchor="middle" class="outcome-muted">
+    Hacker News thread
+  </text>
+
+  <rect x="40" y="148" width="240" height="56" class="accent-box" />
+  <text x="160" y="183" text-anchor="middle" class="label" fill="#62feb5">
+    Disposable workspace
+  </text>
+
+  <path d="M280 176 L370 176" class="arrow-good" marker-end="url(#ah-good)" />
+
+  <text x="495" y="183" text-anchor="middle" class="outcome-good">
+    Slack incident
+  </text>
+</svg>
