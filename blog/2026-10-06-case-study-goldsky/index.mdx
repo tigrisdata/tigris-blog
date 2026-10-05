@@ -31,7 +31,6 @@ import InlineCta from "@site/src/components/InlineCta";
 import BreakoutQuote from "@site/src/components/BreakoutQuote";
 import PrismArchitecture from "./diagrams/PrismArchitecture";
 import jeffLing from "./jeff-ling.webp";
-import hakonAmdal from "./hakon-amdal.webp";
 
 _Goldsky published their own deep dive on this architecture:
 [Prism: A Geo-Replicated Data Lake Serving Billions of \<10 ms Point Lookups](https://goldsky.com/blog/prism-geo-replicated-data-lake-tigris-vortex-slatedb).
@@ -98,15 +97,9 @@ Acceleration Gateway, is an open source, S3-compatible caching proxy. Goldsky's
 readers point their S3 client at TAG instead of at the bucket, and TAG keeps the
 objects each region actually reads on local NVMe.
 
-<BreakoutQuote
-  username="Håkon Åmdal and Jeff Ling"
-  title="Goldsky"
-  imageUrl={[hakonAmdal, jeffLing]}
->
-  We use the Tigris Acceleration Gateway (TAG), which acts as a cache to make a
-  large proportion of reads get served straight from a centralized cache instead
-  of object storage.
-</BreakoutQuote>
+As Goldsky describes it, "We use the Tigris Acceleration Gateway (TAG), which
+acts as a cache to make a large proportion of reads get served straight from a
+centralized cache instead of object storage."
 
 That gives Goldsky three things:
 

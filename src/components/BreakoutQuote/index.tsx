@@ -6,8 +6,8 @@ interface BreakoutQuoteProps {
   username: string;
   /** job title and company, e.g. "Co-Founder & CEO, LogSeam" */
   title: string;
-  /** optional image link or filepath; pass an array for a quote with more than one author */
-  imageUrl?: string | string[];
+  /** optional image link or filepath */
+  imageUrl?: string;
   /** the actual quote text */
   children: React.ReactNode;
 }
@@ -18,7 +18,6 @@ const BreakoutQuote: React.FC<BreakoutQuoteProps> = ({
   imageUrl,
   children,
 }) => {
-  const images = imageUrl ? [imageUrl].flat() : [];
   return (
     <div className={styles.container}>
       {/* Content */}
@@ -30,17 +29,8 @@ const BreakoutQuote: React.FC<BreakoutQuoteProps> = ({
           <span className={styles.username}>{username}</span>
           <span className={styles.title}>{title}</span>
         </div>
-        {images.length > 0 && (
-          <div className={styles.avatars}>
-            {images.map((src, i) => (
-              <img
-                key={src}
-                src={src}
-                alt={i === 0 ? username : ""}
-                className={styles.avatar}
-              />
-            ))}
-          </div>
+        {imageUrl && (
+          <img src={imageUrl} alt={username} className={styles.avatar} />
         )}
       </div>
     </div>
