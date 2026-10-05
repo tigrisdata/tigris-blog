@@ -37,6 +37,17 @@
   margin-bottom: 0 !important;
 }
 
+.avatars {
+  display: flex;
+  flex-shrink: 0;
+}
+
+/* Overlap the second and later avatars when a quote has several authors. */
+.avatars > .avatar + .avatar {
+  margin-left: -12px;
+  box-shadow: 0 0 0 2px oklch(12.9% 0.042 264.695);
+}
+
 .userInfo {
   display: flex;
   flex-direction: column;

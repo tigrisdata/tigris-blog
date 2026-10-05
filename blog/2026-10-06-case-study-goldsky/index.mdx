@@ -30,6 +30,8 @@ tags:
 import InlineCta from "@site/src/components/InlineCta";
 import BreakoutQuote from "@site/src/components/BreakoutQuote";
 import PrismArchitecture from "./diagrams/PrismArchitecture";
+import jeffLing from "./jeff-ling.webp";
+import hakonAmdal from "./hakon-amdal.webp";
 
 A wallet that takes a second to show a balance feels broken. A trading app that
 reads stale state loses money. For teams building onchain, the read path is the
@@ -54,7 +56,11 @@ answer a real-time API call in under 10 ms.
 The usual fix is a database in every region, each with its own copy of the
 chain. Goldsky went the other way.
 
-<BreakoutQuote username="Håkon Åmdal and Jeff Ling" title="Goldsky">
+<BreakoutQuote
+  username="Håkon Åmdal and Jeff Ling"
+  title="Goldsky"
+  imageUrl={[hakonAmdal, jeffLing]}
+>
   Prism is Goldsky's data lake for blockchain data. It stores each chain once
   and serves all of our products from the same files.
 </BreakoutQuote>
@@ -90,7 +96,11 @@ Acceleration Gateway, is an open source, S3-compatible caching proxy. Goldsky's
 readers point their S3 client at TAG instead of at the bucket, and TAG keeps the
 objects each region actually reads on local NVMe.
 
-<BreakoutQuote username="Håkon Åmdal and Jeff Ling" title="Goldsky">
+<BreakoutQuote
+  username="Håkon Åmdal and Jeff Ling"
+  title="Goldsky"
+  imageUrl={[hakonAmdal, jeffLing]}
+>
   We use the Tigris Acceleration Gateway (TAG), which acts as a cache to make a
   large proportion of reads get served straight from a centralized cache instead
   of object storage.
@@ -108,11 +118,30 @@ That gives Goldsky three things:
 ## Why Tigris
 
 Goldsky names two reasons. Prism is an extremely egress-heavy workload, and
-Tigris does not charge egress fees. And stability mattered as much as speed.
+Tigris does not charge egress fees. And of all the object storage providers they
+tried, Tigris "offered the most stable performance" for the workload.
 
-<BreakoutQuote username="Håkon Åmdal and Jeff Ling" title="Goldsky">
-  Of all the object storage providers we tried, Tigris offered the most stable
-  performance for our workload.
+<BreakoutQuote
+  username="Jeff Ling"
+  title="Co-founder and CTO, Goldsky"
+  imageUrl={jeffLing}
+>
+  Without Tigris, the economics of this project likely wouldn't work at all.
+  Tigris's way of doing things enabled the project to begin with. Rather than
+  saying we could simplify, it's that now we can actually do the project.
+</BreakoutQuote>
+
+Goldsky did not take that on faith. Before committing, the team ran the real
+workload against Tigris in the shadow for months.
+
+<BreakoutQuote
+  username="Jeff Ling"
+  title="Co-founder and CTO, Goldsky"
+  imageUrl={jeffLing}
+>
+  We ran a shadow deployment with not much of your team's involvement. We just
+  ran it. It's length of testing time, plus a lack of random things happening,
+  that lets us feel good about using the service.
 </BreakoutQuote>
 
 ## Results
