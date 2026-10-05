@@ -54,7 +54,7 @@ answer a real-time API call in under 10 ms.
 The usual fix is a database in every region, each with its own copy of the
 chain. Goldsky went the other way.
 
-<BreakoutQuote username="Jeff Ling" title="Co-founder and CTO, Goldsky">
+<BreakoutQuote username="Håkon Åmdal and Jeff Ling" title="Goldsky">
   Prism is Goldsky's data lake for blockchain data. It stores each chain once
   and serves all of our products from the same files.
 </BreakoutQuote>
@@ -90,7 +90,7 @@ Acceleration Gateway, is an open source, S3-compatible caching proxy. Goldsky's
 readers point their S3 client at TAG instead of at the bucket, and TAG keeps the
 objects each region actually reads on local NVMe.
 
-<BreakoutQuote username="Jeff Ling" title="Co-founder and CTO, Goldsky">
+<BreakoutQuote username="Håkon Åmdal and Jeff Ling" title="Goldsky">
   We use the Tigris Acceleration Gateway (TAG), which acts as a cache to make a
   large proportion of reads get served straight from a centralized cache instead
   of object storage.
@@ -110,7 +110,7 @@ That gives Goldsky three things:
 Goldsky names two reasons. Prism is an extremely egress-heavy workload, and
 Tigris does not charge egress fees. And stability mattered as much as speed.
 
-<BreakoutQuote username="Jeff Ling" title="Co-founder and CTO, Goldsky">
+<BreakoutQuote username="Håkon Åmdal and Jeff Ling" title="Goldsky">
   Of all the object storage providers we tried, Tigris offered the most stable
   performance for our workload.
 </BreakoutQuote>
