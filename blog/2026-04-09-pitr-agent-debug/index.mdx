@@ -1,0 +1,408 @@
+---
+slug: pitr-agent-debug
+title: "Your agent is burning tokens. Here's how to find out why."
+description: |
+  Correlate agent token spikes with upstream latency in Parseable, then use Tigris point-in-time recovery to reproduce the exact agent state that went wrong.
+image: ./pitr-agent-debug-hero.webp
+keywords:
+  - AI agents
+  - agent observability
+  - point-in-time recovery
+  - Parseable
+  - Tigris object storage
+  - debugging agents
+  - bucket snapshots
+  - reproducibility
+authors:
+  - ks
+tags:
+  - Engineering
+  - AI
+  - Observability
+  - Object Storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import QuickSummary from "@site/src/components/QuickSummary";
+
+{/* TODO: generate hero image */}
+
+<QuickSummary
+  readTime="8 min read"
+  items={[
+    {
+      title: "Token spikes aren't random.",
+      description:
+        "An agent that takes more steps and costs more tokens is usually compensating for missing data from somewhere else in your stack.",
+    },
+    {
+      title: "One query, full picture.",
+      description:
+        "Parseable puts agent traces and infrastructure telemetry in the same data lake so you can correlate token usage with upstream service latency in a single SQL query.",
+    },
+    {
+      title: "Reproduce any agent run.",
+      description:
+        "Tigris point-in-time recovery lets you restore to any write — not just named snapshots — so you can fork the exact bucket state your agent was working with.",
+    },
+    {
+      title: "Minutes, not days.",
+      description:
+        "The full debugging cycle — detect, correlate, reproduce, fix — takes one engineer a single session instead of days of bisecting logs across tools.",
+    },
+  ]}
+/>
+
+Your agent works fine for weeks. Then on a Tuesday morning, you notice it's
+burning through tokens — 3x the usual cost per run. The tasks still complete,
+but they take longer and the outputs are worse. Nothing crashed. No alerts
+fired. The agent is just quietly doing a bad job and charging you for it.
+
+This is the hardest kind of problem to debug in an AI system. The agent doesn't
+fail, it degrades. And the root cause is almost never the agent itself.
+
+{/* truncate */}
+
+## The scenario
+
+You run a document processing pipeline. An agent receives incoming contracts,
+extracts key terms, cross-references them against a compliance database, and
+writes structured summaries to a
+[Tigris bucket](https://www.tigrisdata.com/docs/get-started/). The compliance
+database is a separate service — a small API backed by its own data store.
+
+The agent's state lives in a snapshot-enabled Tigris bucket: its prompt
+templates, configuration, extracted data, and output artifacts. Every write is
+preserved. You can recover to any point in the bucket's history, not just named
+snapshots.
+
+The whole stack — agent traces, infrastructure logs, service metrics — flows
+into [Parseable](https://www.parseable.com/), an observability data lake built
+on Tigris object storage.
+
+## Step 1: Detect the spike
+
+Parseable
+[auto-computes GenAI metrics](https://www.parseable.com/docs/user-guide/agent-observability)
+at ingest time: `p_genai_cost_usd`, `p_genai_tokens_total`,
+`p_genai_tokens_per_sec`, and `p_genai_duration_ms`. No client-side tracking
+required. Your OpenTelemetry traces flow in and Parseable enriches them
+automatically.
+
+You spot the spike in the Parseable dashboard. Token usage per run has tripled
+since 6:00 AM. Cost per document went from $0.03 to $0.11.
+
+A quick SQL query narrows the window:
+
+```sql
+SELECT
+  DATE_TRUNC('hour', p_timestamp) AS hour,
+  AVG(p_genai_tokens_total)       AS avg_tokens,
+  AVG(p_genai_cost_usd)           AS avg_cost,
+  AVG(p_genai_duration_ms)        AS avg_duration_ms
+FROM
+  agent_traces
+WHERE
+  p_timestamp >= '2026-04-07T00:00:00Z'
+  AND gen_ai_agent_name = 'contract-processor'
+GROUP BY 1
+ORDER BY 1;
+```
+
+```
+hour                 | avg_tokens | avg_cost | avg_duration_ms
+---------------------+------------+----------+----------------
+2026-04-07T04:00:00Z |       4200 |     0.03 |           12400
+2026-04-07T05:00:00Z |       4350 |     0.03 |           12800
+2026-04-07T06:00:00Z |      11200 |     0.08 |           34500
+2026-04-07T07:00:00Z |      14800 |     0.11 |           45200
+2026-04-07T08:00:00Z |      15100 |     0.11 |           44800
+```
+
+Tokens tripled. Duration nearly quadrupled. Something changed at 6 AM and it
+wasn't a deployment.
+
+## Step 2: Find the bad run
+
+You pick a specific high-token run to investigate. Parseable's unified waterfall
+view shows every operation in the agent's workflow, correlated by `trace_id`:
+
+```sql
+SELECT
+  trace_id,
+  gen_ai_usage_input_tokens + gen_ai_usage_output_tokens AS total_tokens,
+  p_genai_duration_ms,
+  p_timestamp
+FROM
+  agent_traces
+WHERE
+  p_timestamp BETWEEN '2026-04-07T06:00:00Z' AND '2026-04-07T07:00:00Z'
+  AND gen_ai_agent_name = 'contract-processor'
+ORDER BY total_tokens DESC
+LIMIT 5;
+```
+
+```
+trace_id          | total_tokens | p_genai_duration_ms | p_timestamp
+------------------+--------------+---------------------+-------------------------
+a]7f2e...8c3d     |        18420 |               52300 | 2026-04-07T06:23:14.882Z
+b]9d1a...4f7e     |        16890 |               48700 | 2026-04-07T06:41:02.117Z
+c]3b8c...2a1f     |        15200 |               44100 | 2026-04-07T06:12:55.443Z
+d]e4f7...6b9c     |        14300 |               41800 | 2026-04-07T06:35:28.991Z
+e]1c5d...7e2a     |        13800 |               39600 | 2026-04-07T06:48:17.205Z
+```
+
+Trace `a]7f2e...8c3d` used 18,420 tokens — over 4x the normal ~4,200. You drill
+into the trace and see the agent is making **repeated LLM calls** to extract
+compliance terms. Normally it hits the compliance API once and gets structured
+data back. In this run, the API calls are timing out, and the agent is falling
+back to extracting terms directly from raw contract text using the LLM. More
+steps, more tokens, worse results.
+
+The agent isn't broken. It's compensating.
+
+## Step 3: Correlate with upstream latency
+
+Here's where a single pane of glass pays off. Your compliance service logs also
+flow into Parseable. One query correlates agent token spikes with upstream
+latency:
+
+```sql
+SELECT
+  DATE_TRUNC('hour', a.p_timestamp)  AS hour,
+  AVG(a.p_genai_tokens_total)        AS avg_agent_tokens,
+  AVG(c.response_time_ms)            AS avg_compliance_latency_ms,
+  COUNT(CASE WHEN c.status_code = 504 THEN 1 END) AS gateway_timeouts
+FROM
+  agent_traces a
+JOIN
+  compliance_service_logs c
+  ON DATE_TRUNC('hour', a.p_timestamp) = DATE_TRUNC('hour', c.p_timestamp)
+WHERE
+  a.p_timestamp >= '2026-04-07T00:00:00Z'
+  AND a.gen_ai_agent_name = 'contract-processor'
+GROUP BY 1
+ORDER BY 1;
+```
+
+```
+hour                 | avg_agent_tokens | avg_compliance_latency_ms | gateway_timeouts
+---------------------+------------------+---------------------------+-----------------
+2026-04-07T04:00:00Z |             4200 |                        85 |                0
+2026-04-07T05:00:00Z |             4350 |                       120 |                0
+2026-04-07T06:00:00Z |            11200 |                      4200 |               47
+2026-04-07T07:00:00Z |            14800 |                      8500 |              112
+2026-04-07T08:00:00Z |            15100 |                      9200 |              134
+```
+
+The compliance service started timing out at 6 AM. The agent's token usage
+tracks the latency almost perfectly. Every gateway timeout forced the agent into
+its fallback path — brute-forcing compliance extraction with the LLM instead of
+using structured API data.
+
+If these signals lived in separate tools, you'd spend hours tab-switching
+between an agent observability platform and your infrastructure monitoring.
+Parseable puts them in the same data lake, queryable with standard SQL.
+
+## Step 4: Reproduce the agent's state with Tigris PITR
+
+You've found the cause. Now you need to verify the fix. But the agent's state
+has moved on — it's processed hundreds more documents since 6 AM. You need to
+rewind.
+
+This is where Tigris point-in-time recovery changes the debugging workflow.
+
+On a snapshot-enabled bucket, **any UNIX nanosecond-precision timestamp works as
+a restore point** — not just named snapshots. Every write is recoverable. You
+pick the exact timestamp from your bad trace (`2026-04-07T06:23:14.882Z`) and
+read the bucket as it was at that moment:
+
+```python
+import boto3
+from datetime import datetime
+
+s3 = boto3.client("s3", endpoint_url="https://t3.storage.dev")
+
+# Convert the trace timestamp to nanoseconds
+bad_run_time = int(
+    datetime(2026, 4, 7, 6, 23, 14, 882000).timestamp() * 1_000_000_000
+)
+
+# List objects as they existed at that exact moment
+response = s3.list_objects_v2(
+    Bucket="contract-agent-state",
+    # Any nanosecond timestamp works, not just named snapshots
+    ExtraArgs={"X-Tigris-Snapshot": str(bad_run_time)},
+)
+
+for obj in response.get("Contents", []):
+    print(f"{obj['Key']} — last modified {obj['LastModified']}")
+```
+
+```
+prompts/extract-terms.txt — last modified 2026-04-01T14:22:00Z
+config/agent.json — last modified 2026-04-05T09:15:33Z
+context/compliance-cache.json — last modified 2026-04-07T05:58:12Z
+output/contract-8827.json — last modified 2026-04-07T06:23:14Z
+```
+
+Now you fork the bucket from that point in time to get a fully isolated copy:
+
+```python
+from tigris_boto3_ext import TigrisFork, TigrisSnapshotVersion
+
+# Fork from the exact nanosecond of the bad run
+with TigrisFork(s3, "contract-agent-state"):
+    with TigrisSnapshotVersion(s3, str(bad_run_time)):
+        s3.create_bucket(Bucket="debug-contract-agent-20260407")
+```
+
+The forked bucket is instant — no data copying, regardless of bucket size. It
+contains every object exactly as the agent saw it during the bad run: the prompt
+templates, the stale compliance cache, the partial output.
+
+You inspect `context/compliance-cache.json` and confirm: the cache is full of
+timeout errors. The agent had no compliance data to work with, so it improvised
+with the LLM.
+
+## Step 5: Reproduce and verify the fix
+
+With the forked bucket, you can reproduce the exact failure:
+
+```python
+import json
+
+# Read the agent config from the forked bucket
+config = s3.get_object(
+    Bucket="debug-contract-agent-20260407",
+    Key="config/agent.json",
+)
+agent_config = json.loads(config["Body"].read())
+print(f"Compliance API timeout: {agent_config['compliance_api_timeout_ms']}ms")
+# Output: Compliance API timeout: 3000ms
+
+# Read the stale cache
+cache = s3.get_object(
+    Bucket="debug-contract-agent-20260407",
+    Key="context/compliance-cache.json",
+)
+cache_data = json.loads(cache["Body"].read())
+timeout_entries = [e for e in cache_data["entries"] if e.get("error") == "timeout"]
+print(f"Timeout entries in cache: {len(timeout_entries)} / {len(cache_data['entries'])}")
+# Output: Timeout entries in cache: 38 / 42
+```
+
+The compliance API timeout was set to 3 seconds — fine under normal conditions,
+but the service was responding in 4-9 seconds during the incident. The agent's
+cache filled with timeouts, and each subsequent run tried the API, timed out,
+and fell back to the expensive LLM path.
+
+The fix is straightforward: increase the timeout, add a circuit breaker, and
+make the fallback path less token-hungry. You test against the forked bucket to
+confirm the patched agent produces the same output quality as a healthy run,
+using the exact data the agent had when it failed.
+
+## Why this workflow matters
+
+The debugging cycle here — detect, correlate, reproduce, fix — took one engineer
+a single session. Without these tools, the same investigation looks different:
+
+- **Without unified observability**: You notice the cost spike in your LLM
+  provider's billing dashboard. You check your agent platform for trace details.
+  You open a separate monitoring tool for infrastructure metrics. You manually
+  align timestamps across three UIs. Maybe you find the correlation. Maybe you
+  don't.
+
+- **Without point-in-time recovery**: You know the agent misbehaved at 6:23 AM
+  but its state has moved on. You try to reconstruct the conditions from logs.
+  You re-create test fixtures by hand. You're debugging a reproduction of a
+  reproduction, not the real thing.
+
+Parseable and Tigris collapse these into a tight loop. Parseable gives you one
+place to query agent behavior and infrastructure health with the same SQL.
+Tigris gives you time travel — fork the bucket to any nanosecond, get an
+isolated copy of everything the agent was working with, and reproduce the
+failure exactly.
+
+## Setting it up
+
+The infrastructure for this workflow is lighter than you'd expect.
+
+### Parseable: agent traces + infrastructure logs
+
+Point your OpenTelemetry Collector at Parseable:
+
+```yaml
+# otel-collector-config.yaml
+exporters:
+  otlphttp/parseable:
+    endpoint: ${PARSEABLE_URL}
+    headers:
+      Authorization: "Basic ${PARSEABLE_AUTH}"
+      X-P-Stream: "agent_traces"
+      X-P-Log-Source: "otel-traces"
+
+service:
+  pipelines:
+    traces:
+      exporters: [otlphttp/parseable]
+```
+
+Parseable auto-computes the GenAI metrics (`p_genai_tokens_total`,
+`p_genai_cost_usd`, etc.) at ingest time using
+[OpenTelemetry GenAI semantic conventions](https://www.parseable.com/docs/user-guide/agent-observability).
+Your infrastructure logs flow through the same collector into the same data
+lake.
+
+### Tigris: snapshot-enabled bucket
+
+Enable snapshots when you create the bucket:
+
+```python
+import boto3
+from tigris_boto3_ext import TigrisSnapshotEnabled
+
+s3 = boto3.client("s3", endpoint_url="https://t3.storage.dev")
+
+with TigrisSnapshotEnabled(s3):
+    s3.create_bucket(Bucket="contract-agent-state")
+```
+
+That's it. Every write is now recoverable to nanosecond precision. You can also
+create named snapshots for known-good states:
+
+```python
+from tigris_boto3_ext import create_snapshot
+
+result = create_snapshot(
+    s3, "contract-agent-state",
+    snapshot_name="pre-deploy-v2.4"
+)
+```
+
+Named snapshots are useful for release gates — tag a snapshot before deploying a
+new agent version so you have a clean rollback point. But the real power is that
+you don't need to plan ahead. Any timestamp works.
+
+## Agent state belongs in object storage
+
+If your agent's state lives in a local filesystem or an ephemeral container
+volume, it's gone the moment you need it for debugging. Object storage gives you
+durability by default, and a snapshot-enabled Tigris bucket adds time travel on
+top of that.
+
+Store your agent's prompts, configuration, context caches, and output artifacts
+in a Tigris bucket. When something goes wrong — and in production AI systems,
+something always goes wrong — you can fork the bucket to the exact moment of
+failure and reproduce the problem with the same data the agent had.
+
+Combined with Parseable's unified observability, you get a debugging workflow
+where the signal (what went wrong) and the state (what the agent was working
+with) are both available, correlated, and reproducible.
+
+<InlineCta
+  title="Try point-in-time recovery on Tigris"
+  subtitle="Snapshot-enabled buckets let you recover to any write. Fork them instantly to reproduce agent failures with the exact data that caused them."
+  button="Read the docs"
+  link="https://www.tigrisdata.com/docs/buckets/snapshots-and-forks/"
+/>
