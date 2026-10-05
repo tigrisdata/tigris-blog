@@ -43,10 +43,14 @@ reads stale state loses money. For teams building onchain, the read path is the
 product.
 
 [Goldsky](https://goldsky.com/) provides that read path: APIs, subgraphs, and
-streaming pipelines for teams building onchain, from DeFi apps to financial
-institutions adopting stablecoins. Their new data lake, Prism, answers billions
-of point lookups in under 10 ms from a single copy of each chain stored on
-Tigris.
+streaming pipelines for teams building onchain. Stablecoin and crypto regulation
+is moving quickly, and banks and other financial institutions are moving onchain
+with it. Goldsky is the data infrastructure that helps them get there, so it is
+built to be reliable enough for regulated environments: strict SLAs, serious
+security requirements, and deployments in the customer's own cloud.
+
+Their new data lake, Prism, answers billions of point lookups in under 10 ms
+from a single copy of each chain stored on Tigris.
 
 {/* truncate */}
 
@@ -59,16 +63,9 @@ bill grows with every request. Analytical engines hold the data but cannot
 answer a real-time API call in under 10 ms.
 
 The usual fix is a database in every region, each with its own copy of the
-chain. Goldsky went the other way.
-
-<BreakoutQuote
-  username="Håkon Åmdal and Jeff Ling"
-  title="Goldsky"
-  imageUrl={[hakonAmdal, jeffLing]}
->
-  Prism is Goldsky's data lake for blockchain data. It stores each chain once
-  and serves all of our products from the same files.
-</BreakoutQuote>
+chain. Goldsky went the other way. In their words, "Prism is Goldsky's data lake
+for blockchain data. It stores each chain once and serves all of our products
+from the same files."
 
 A chain writer batches blocks into [Vortex](https://vortex.dev/) files and
 writes them to Tigris, with a [SlateDB](https://slatedb.io/) index stored next
@@ -136,18 +133,12 @@ tried, Tigris "offered the most stable performance" for the workload.
   saying we could simplify, it's that now we can actually do the project.
 </BreakoutQuote>
 
-Goldsky did not take that on faith. Before committing, the team ran the real
-workload against Tigris in the shadow for months.
-
-<BreakoutQuote
-  username="Jeff Ling"
-  title="Co-founder and CTO, Goldsky"
-  imageUrl={jeffLing}
->
-  We ran a shadow deployment with not much of your team's involvement. We just
-  ran it. It's length of testing time, plus a lack of random things happening,
-  that lets us feel good about using the service.
-</BreakoutQuote>
+Reliability is what Goldsky sells to regulated customers, so the team did not
+take Tigris on faith. Before committing, they ran the real workload against
+Tigris in the shadow for months. "We ran a shadow deployment with not much of
+Tigris' involvement. We just ran it," says Jeff Ling, Goldsky's co-founder and
+CTO. "It's length of testing time, plus a lack of random things happening, that
+lets us feel good about using the service."
 
 ## Results
 
@@ -170,6 +161,10 @@ million, saving five figures a month.
 Goldsky did not have to choose between a slow bucket and a fleet of regional
 databases. Each chain lives once on Tigris, the tip lives in memory, and TAG
 covers the history in between.
+
+For the banks and financial institutions bringing stablecoins into production,
+that is the point. They get a data layer that behaves the same way every day,
+which is what a regulated business needs before it can build on it.
 
 <InlineCta
   title="Put a cache in front of your bucket"
