@@ -33,6 +33,11 @@ import PrismArchitecture from "./diagrams/PrismArchitecture";
 import jeffLing from "./jeff-ling.webp";
 import hakonAmdal from "./hakon-amdal.webp";
 
+_Goldsky published their own deep dive on this architecture:
+[Prism: A Geo-Replicated Data Lake Serving Billions of \<10 ms Point Lookups](https://goldsky.com/blog/prism-geo-replicated-data-lake-tigris-vortex-slatedb).
+Thank you to Håkon, Jeff, and the Goldsky team for writing about us. This post
+is the Tigris side of the same story._
+
 A wallet that takes a second to show a balance feels broken. A trading app that
 reads stale state loses money. For teams building onchain, the read path is the
 product.
@@ -165,9 +170,6 @@ million, saving five figures a month.
 Goldsky did not have to choose between a slow bucket and a fleet of regional
 databases. Each chain lives once on Tigris, the tip lives in memory, and TAG
 covers the history in between.
-
-Read the full engineering story in Goldsky's own writeup:
-[Prism: A Geo-Replicated Data Lake Serving Billions of \<10 ms Point Lookups](https://goldsky.com/blog/prism-geo-replicated-data-lake-tigris-vortex-slatedb).
 
 <InlineCta
   title="Put a cache in front of your bucket"
