@@ -95,11 +95,9 @@ The warm tier is what makes one copy of the chain enough.
 [TAG](https://www.tigrisdata.com/docs/acceleration-gateway/), the Tigris
 Acceleration Gateway, is an open source, S3-compatible caching proxy. Goldsky's
 readers point their S3 client at TAG instead of at the bucket, and TAG keeps the
-objects each region actually reads on local NVMe.
-
-As Goldsky describes it, "We use the Tigris Acceleration Gateway (TAG), which
-acts as a cache to make a large proportion of reads get served straight from a
-centralized cache instead of object storage."
+objects each region actually reads on local NVMe. Goldsky uses it so that most
+reads that miss memory are served from that cache and never reach object
+storage.
 
 That gives Goldsky three things:
 
