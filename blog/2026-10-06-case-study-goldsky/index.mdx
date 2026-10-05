@@ -77,8 +77,9 @@ bytes.
 
 A request falls through three tiers, and most never touch storage at all. About
 90% are answered from the reader's tip window in memory in under 1 ms. About 9%
-miss memory and are served by the TAG cache in the same region in roughly 9 ms.
-Under 1% reach the Tigris bucket, at 10 to 800 ms.
+miss memory and are served by the [TAG](https://github.com/tigrisdata/tag) cache
+in the same region in roughly 9 ms. Under 1% reach the Tigris bucket, at 10 to
+800 ms.
 
 Vortex makes the hot tier larger than it looks. It keeps the same compressed
 layout in memory as on disk, so a reader holds roughly ten times more data per
