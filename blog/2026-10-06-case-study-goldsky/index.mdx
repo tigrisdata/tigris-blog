@@ -1,0 +1,163 @@
+---
+slug: case-study-goldsky
+title:
+  "How Goldsky Serves Billions of Sub-10 ms Lookups from One Copy of the Chain"
+description: >
+  Goldsky built Prism, a geo-replicated blockchain data lake, on Tigris. TAG,
+  the Tigris Acceleration Gateway, serves historical point lookups in about 9 ms
+  without a database copy in every region.
+image: ./hero-image.webp
+keywords:
+  - Goldsky
+  - Prism
+  - blockchain data lake
+  - Tigris Acceleration Gateway
+  - TAG
+  - object storage cache
+  - Vortex
+  - SlateDB
+  - point lookups
+  - Tigris object storage
+authors:
+  - ks
+tags:
+  - Customers
+  - Data Lake
+  - Performance
+  - Object Storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import BreakoutQuote from "@site/src/components/BreakoutQuote";
+import PrismArchitecture from "./diagrams/PrismArchitecture";
+import jeffLing from "./jeff-ling.webp";
+
+_Goldsky published their own deep dive on this architecture:
+[Prism: A Geo-Replicated Data Lake Serving Billions of \<10 ms Point Lookups](https://goldsky.com/blog/prism-geo-replicated-data-lake-tigris-vortex-slatedb).
+Thank you to Håkon, Jeff, and the Goldsky team for writing about us. This post
+is the Tigris side of the same story._
+
+A wallet that takes a second to show a balance feels broken. A trading app that
+reads stale state loses money. For teams building onchain, the read path is the
+product.
+
+[Goldsky](https://goldsky.com/) provides that read path with APIs, subgraphs,
+and streaming pipelines for teams building onchain. Until now, those teams could
+either pay a provider for every call and watch the bill climb with traffic, or
+run the whole setup themselves and own the latency.
+
+Their new data lake, Prism, answers billions of point lookups in under 10 ms
+from a single copy of each chain stored on Tigris.
+
+{/* truncate */}
+
+## One chain, stored once
+
+Blockchain data outgrows general-purpose databases quickly. Solana alone holds
+close to 600 billion transactions and more than 600 TB, and it grows by
+thousands of transactions every second. Querying nodes directly works, but the
+bill grows with every request. Analytical engines hold the data but cannot
+answer a real-time API call in under 10 ms.
+
+The usual fix is a database in every region, each with its own copy of the
+chain. Goldsky went the other way. In their words, "Prism is Goldsky's data lake
+for blockchain data. It stores each chain once and serves all of our products
+from the same files."
+
+A chain writer batches blocks into [Vortex](https://vortex.dev/) files and
+writes them to Tigris, with a [SlateDB](https://slatedb.io/) index stored next
+to the data. Turbo pipelines, Edge RPC, Boost, and subgraphs all read those same
+bytes.
+
+## The architecture
+
+<div className="mermaid-frame">
+  <PrismArchitecture />
+</div>
+
+A request falls through three tiers, and most never touch storage at all. About
+90% are answered from the reader's tip window in memory in under 1 ms. About 9%
+miss memory and are served by the [TAG](https://github.com/tigrisdata/tag) cache
+in the same region in roughly 9 ms. Under 1% reach the Tigris bucket, at 10 to
+800 ms.
+
+Vortex makes the hot tier larger than it looks. It keeps the same compressed
+layout in memory as on disk, so a reader holds roughly ten times more data per
+GB of RAM than it would with Parquet decompressed into Arrow.
+
+On a cold miss, Prism fetches the surrounding data too, so the next lookup for
+that range is warm.
+
+## TAG: database latency without the database
+
+The warm tier is what makes one copy of the chain enough.
+[TAG](https://www.tigrisdata.com/docs/acceleration-gateway/), the Tigris
+Acceleration Gateway, is an open source, S3-compatible caching proxy. Goldsky's
+readers point their S3 client at TAG instead of at the bucket, and TAG keeps the
+objects each region actually reads on local NVMe. Goldsky uses it so that most
+reads that miss memory are served from that cache and never reach object
+storage.
+
+That gives Goldsky three things:
+
+- **History reads at about 9 ms.** That is the average S3 GetObject through TAG,
+  served out of object storage rather than a database.
+- **No second copy to run.** The bucket stays the source of truth. Writes,
+  deletes, and copies invalidate cached entries right away, so there is no
+  replica to keep in sync.
+- **No new client.** Prism already spoke S3. TAG was an endpoint change.
+
+## Why Tigris
+
+Goldsky names two reasons. Prism is an extremely egress-heavy workload, and
+Tigris does not charge egress fees. And of all the object storage providers they
+tried, Tigris "offered the most stable performance" for the workload.
+
+<BreakoutQuote
+  username="Jeff Ling"
+  title="Co-founder and CTO, Goldsky"
+  imageUrl={jeffLing}
+>
+  Without Tigris, the economics of this project likely wouldn't work at all.
+  Tigris's way of doing things enabled the project to begin with.
+</BreakoutQuote>
+
+When your customers operate in highly regulated environments, trust is the whole
+product, and nobody hands it over on a handshake. Goldsky didn't either. Before
+signing with Tigris, they ran the real workload in the shadow for months. "We
+ran a shadow deployment with not much of Tigris' involvement. We just ran it,"
+says Jeff Ling, Goldsky's co-founder and CTO. "It's length of testing time, plus
+a lack of random things happening, that lets us feel good about using the
+service."
+
+## Results
+
+Prism is in production today, serving from thousands to hundreds of thousands of
+requests per second per chain.
+
+| Chain           | Requests served at tip | Tip lookup | Historical p50 |
+| --------------- | ---------------------- | ---------- | -------------- |
+| Ethereum        | 67%                    | 1.4 ms     | 3.6 ms         |
+| Robinhood Chain | ~90%                   | 0.2 ms     | 11 ms          |
+| Optimism        | 49%                    | 0.8 ms     | 17 ms          |
+
+The savings reach Goldsky's customers too. Goldsky's own indexing services see
+cache hit rates up to 99% on Prism. One customer that turned on Prism caching
+through Boost cut upstream RPC usage from about 200 million requests a day to 80
+million, saving five figures a month.
+
+## Conclusion: one copy is enough
+
+Goldsky did not have to choose between a slow bucket and a fleet of regional
+databases. Each chain lives once on Tigris, the tip lives in memory, and TAG
+covers the history in between.
+
+So when the next bank decides it is time to go onchain, Goldsky is ready for
+them.
+
+<InlineCta
+  title="Put a cache in front of your bucket"
+  subtitle="TAG is an open source, S3-compatible caching proxy for Tigris. Point your S3 client at it and keep your code as it is."
+  button="Read the TAG quickstart"
+  link="https://www.tigrisdata.com/docs/acceleration-gateway/quickstart/"
+/>
