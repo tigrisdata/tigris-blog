@@ -301,6 +301,7 @@ function LogoContextMenu({
           onClick={async () => {
             try {
               const res = await fetch(BRAND_LOGO);
+              if (!res.ok) throw new Error("Could not fetch logo SVG");
               const svg = await res.text();
               await navigator.clipboard.writeText(svg);
             } catch {
@@ -521,6 +522,17 @@ export default function Navbar(): ReactNode {
     setOpenMenu(null);
     setMobileOpen(false);
   }, [pathname]);
+
+  // the sheet is hidden at desktop widths, so close it there; otherwise it
+  // comes back when the window shrinks again
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 800px)");
+    const onChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setMobileOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   // `pathname` includes the base URL (/blog/...), so it matches website hrefs
   const isActivePath = (href: string) => {
