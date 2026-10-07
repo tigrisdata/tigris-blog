@@ -185,7 +185,19 @@ directly is a nonstarter.
 I’m using objgit as my git server of choice for my own little experiments, like
 this untitled role-playing game I’m working on:
 
-{/* TODO(Xe): embed preview of my little roleplaying game demo */}
+import mosswaterVideo from "./mosswater.mp4";
+
+<video
+  controls
+  autoPlay
+  muted
+  width="100%"
+  height="auto"
+  style={{ marginBottom: "1rem", marginTop: "1rem" }}
+>
+  <source src={mosswaterVideo} type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
 
 Eventually I hope to have more cinematic boss fights like the MMOs I play, but
 for now I’m mostly using this as a way to smoke test and dogfood objgit and my
