@@ -1,0 +1,238 @@
+---
+slug: objgit-lfs
+title:
+  "I accidentally created a gamedev tool by implementing Git Large File Storage"
+description: |
+  Git LFS keeps big binary files out of your repo, but your git server has to
+  support it. Here's how objgit does it with presigned uploads straight to Tigris.
+keywords:
+  - git lfs
+  - git large file storage
+  - objgit
+  - presigned urls
+  - client uploads
+  - game development
+  - object storage
+  - tigris
+authors:
+  - xe
+tags:
+  - Engineering
+  - git
+  - objgit
+  - game development
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import RowPointsAtObject from "./diagrams/RowPointsAtObject";
+import ClientUploads from "./diagrams/ClientUploads";
+import StagingUpload from "./diagrams/StagingUpload";
+import SignedChecksum from "./diagrams/SignedChecksum";
+import PromoteToBlob from "./diagrams/PromoteToBlob";
+
+Git is the version control system of the people. It’s used across projects of
+all sizes, but there’s one glaring exception: Git isn’t often used for video
+game development. Git sucks at tracking changes to large files that aren’t plain
+text and video games have a lot of those: fonts, 3d models, 3d model source,
+reference images/video/3d scans, textures, QA screenshots, and more. The normal
+solution for this is to use Git [Large File Storage](https://git-lfs.com/)
+(LFS), but that requires your git server to support it.
+
+{/* truncate */}
+
+I’ve been dabbling into my own experiments in game development, and as such I’ve
+needed to store these large objects on objgit. As such, I’ve implemented Git
+Large File storage in objgit. Today we’re going to cover what LFS is, how it
+works, how objgit implements it with the client uploads pattern, and then
+contextualize it with some of the experiments I’ve been doing.
+
+## Oh, LFS is actually good. Why isn’t it everywhere?
+
+When you’re doing software development for webapps such as Horse Tinder, you end
+up needing to store two kinds of data: structured data (database rows) and
+unstructured data (uploads of horse images). The most common way to implement
+this is to make a column in your database contain a string referencing the right
+object in your object storage layer of choice. This column acts as a pointer to
+your storage, and is dereferenced when you grab the image to show in the Horse
+Tinder app.
+
+<RowPointsAtObject />
+
+Git LFS does the same thing but in Git instead of Postgres. When you store an
+object in LFS, the `git-lfs` command writes a pointer file where the file would
+normally be stored in the git repository. Pushing or pulling activates the
+`git-lfs` smudge filter to seamlessly replace that pointer with the actual value
+out from under the checkout.
+
+```text
+$ git cat-file -p :assets/fonts/Interface.ttf
+version https://git-lfs.github.com/spec/v1
+oid sha256:57f73e11f51999432bf7ab22ce55b6f945d5eca1bf824404cfa9ec2e3718c84e
+size 759720
+```
+
+This gives you the best of both worlds: the large objects get moved to a place
+they’re stored in efficiently (object storage) and what goes in the actual git
+repository is a small plaintext file that is efficient for git to make diffs of.
+Everyone’s a winner!
+
+The only downside is that it requires your git server of choice to implement LFS
+support. It’s not something that you can set up on the side not associated with
+your git server, your git server has to support LFS in particular and when you
+do you’re locked into a single provider storing your data. As I’m sure the
+version in the example pointer file would imply, GitHub does support Large File
+Storage, but there’s both bandwidth and storage limits
+[that seem a bit low for game development work](https://docs.github.com/en/billing/concepts/product-billing/git-lfs)
+as you scale. The pricing doesn’t really scale with what object storage costs if
+you did it yourself. But, you gotta pay the tax to get the UX, right? What if
+you didn’t do it yourself and used objgit?
+
+:::note
+
+Unlike you, dear reader, I work at a storage company and can afford to do fun
+things like this to avoid having to pay the cloud tax on git repos. In turn, you
+get to benefit from my creative laziness. Win/win!
+
+:::
+
+### DIY LFS
+
+When I saw some posts dreading the idea of implementing LFS into their git
+servers, I was kind of afraid and ready for torment. Turns out it was way easier
+than I expected. The
+[Git LFS API specification](https://github.com/git-lfs/git-lfs/blob/main/docs/api/README.md)
+is amazingly simple and has everything in a few API calls:
+
+1. Discovery: an endpoint at `https://git.server/{repoPath}.git/info/lfs` that
+   tells the git-lfs client how to interact with the LFS subsystem.
+2. Authentication: an endpoint returned by the discovery endpoint that explains
+   how to authenticate to the LFS server. This is also an SSH command.
+3. Bulk upload/download: an endpoint returned by the discovery endpoint that
+   lets LFS clients mass up/download objects. Once the uploads are done, send a
+   verify call for the server to ensure everything is okay and then move them to
+   the final resting place.
+
+Then the server sends the client presigned urls for PUT/GET operations and
+everything works out. That’s it. Honestly when I looked at doing this I had read
+some things in the Git library I use that made me think this would be really
+annoying to implement, but this was trivial enough it almost happened by
+accident.
+
+## The client uploads pattern 2
+
+One of the ways we tell people they should use Tigris is the
+[Client Uploads pattern](https://www.tigrisdata.com/docs/sdks/tigris/client-uploads/).
+This uses presigned URLs to have clients upload user content directly to object
+storage instead of having to use your app as a middleman.
+
+<ClientUploads />
+
+The main reason why you want to do this can be summed up in two words: egress
+fees. To be clear, Tigris doesn’t have egress fees, but your VPS host, app
+platform, or whatever we’re calling it now certainly will. Client uploads make
+the _client_ upload the data directly to object storage so your app doesn’t have
+to. It just asks the server for presigned upload URLs and then uses that as the
+PUT target.
+
+Git LFS abuses the hell out of this process for one simple reason: it saves git
+hosts egress fees. One of the main ways that Git LFS extends the client uploads
+pattern is via the convention of each object being named after the SHA256
+checksum of itself. This makes Git LFS a
+[content addressable store](https://en.wikipedia.org/wiki/Content-addressable_storage),
+which also means that if you try to upload the same file containing the same
+bytes twice, the first time is the only time the file is actually uploaded.
+
+Objgit implements the client upload pattern for LFS by combining the Unix-like
+idiom of upload -> rename with the content-aware SHA256 strategy. If a large
+file doesn’t already exist in the bucket, then the client gets a PUT URL
+pointing to temporary storage:
+
+<StagingUpload />
+
+One of the main ways this differs from normal presigned URLs is the fact that we
+ensure that the SHA256 checksum of the object matches _at upload time_ by
+encoding it into both the URL and the signature:
+
+<SignedChecksum />
+
+This solves one of the main “problems” with the client upload pattern: ensuring
+that the client actually uploaded what you expected it to. For marketing
+reasons, I’m calling this the client upload pattern 2. It’s the same thing as
+client uploads, but done again with content-aware superpowers.
+
+Either way when the upload is done and the client lets the server know it’s
+pushed things, the server will RenameObject what the client just uploaded to its
+final resting place in the LFS store:
+
+<PromoteToBlob />
+
+Then it creates a sentinel object in the repo related to the large object to let
+the clone path know that clients that can pull from that repo can grab that
+object. If you didn’t do that you could have clients pull large objects from
+repos they shouldn’t have access to. This would be bad.
+
+Et voila, you have large file storage!
+
+## I’m eating my dogfood
+
+As an example of where this is useful: consider game development. Games combine
+small text files (code) with large binary assets (models, music, textures,
+fonts, videos, etc.) Sometimes these objects can be multiple hundreds of
+megabytes (especially as the games industry seems to prioritize more and more
+graphics over more and more gameplay, but I digress) and storing them in Git
+directly is a nonstarter.
+
+I’m using objgit as my git server of choice for my own little experiments, like
+this untitled role-playing game I’m working on:
+
+{/* TODO(Xe): embed preview of my little roleplaying game demo */}
+
+Eventually I hope to have more cinematic boss fights like the MMOs I play, but
+for now I’m mostly using this as a way to smoke test and dogfood objgit and my
+other projects in parallel. I want to keep these repos private, and putting them
+on objgit on my homelab makes me feel safe enough to trust it. At the very least
+I know who’s responsible and can get them to prioritize fixes for my usecase 🙂.
+
+## Maintain your objects below five gigabytes in perpetual balance with API limits
+
+The only downside with this approach is that a single PutObject call has a hard
+body size limit of 5 gigabytes. Game development can often run into cases where
+single objects can be bigger than that, such as prerendered cutscenes,
+precompiled shader caches in very bad circumstances, or other such cases.
+Generally when you run into this you’re probably dealing with horrible technical
+debt that you can’t easily power through.
+
+Right now this basic architecture doesn’t work for a workload that has you store
+5Gi+ objects. Fixing this is going to be a bit annoying and require me to
+jettison part of the client upload pattern. But for now if you want to use
+objgit for storing your repos and your architecture makes you need to do this,
+consider a different architecture until this is fixed.
+
+:::note
+
+A good friend of mine that does game development has assured me that this is
+_not_ something that comes up often, so at least there’s that. I also am
+struggling to find good reasons that you should have objects larger than 5
+gigabytes committed to source control in general.
+
+:::
+
+This will be fixed, it’s just a matter of time, energy, and figuring out how to
+make this not an unmanageable pile of hacks. I’ll write more about this in the
+future.
+
+## I’m gonna keep working on objgit
+
+Either way, working on objgit and writing these deep dives into what I’ve been
+doing has seemingly become my job now. I’m gonna keep on keeping on and work on
+making objgit into the git server I always wish I had. I hope you enjoy the ride
+and enjoy what I’m working on!
+
+<InlineCta
+  title={"Host your game's assets next to its code"}
+  subtitle={
+    "objgit is an open-source git server that stores everything in Tigris, LFS objects included. Clients upload large files straight to the bucket, so your server never carries the bytes."
+  }
+  button={"Check out objgit on GitHub"}
+  link={"https://github.com/tigrisdata/objgit"}
+/>
