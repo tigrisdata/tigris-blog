@@ -20,7 +20,7 @@ import styles from "./styles.module.css";
  *
  * Three of the top-level items open a panel (Product, Developers, Company):
  * a featured card on the left, a short stacked list on the right, each entry
- * a title and one line. Pricing is a plain link. The panels open on hover
+ * a title and one line. Blog and Pricing are plain links. The panels open on hover
  * with a short grace period so the pointer can cross the gap, and on
  * click/Enter for touch and keyboard; Escape and clicking outside close them.
  * Below 800px the same groups render as sections of the mobile sheet.
@@ -151,11 +151,6 @@ const NAV: NavItem[] = [
           desc: "One command: MCP server and skills",
         },
         {
-          label: "Blog",
-          href: "/blog/",
-          desc: "Engineering notes and case studies",
-        },
-        {
           label: "Changelog",
           href: "https://www.tigrisdata.com/docs/changelog/",
           desc: "What shipped, and when",
@@ -200,6 +195,7 @@ const NAV: NavItem[] = [
       ],
     },
   },
+  { kind: "link", label: "Blog", href: "/blog/" },
   { kind: "link", label: "Pricing", href: "/pricing/" },
 ];
 
