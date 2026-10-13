@@ -1,0 +1,83 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 640 248"
+  width="640"
+  height="248"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 12px;
+      fill: #bac1be;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .shared {
+      rx: 4;
+      ry: 4;
+      fill: #1a2e35;
+      stroke: #2a3731;
+      stroke-width: 1;
+    }
+    .writes {
+      rx: 4;
+      ry: 4;
+      fill: rgba(98, 254, 181, 0.14);
+      stroke: rgba(98, 254, 181, 0.45);
+      stroke-width: 1;
+    }
+  </style>
+
+  <text x="320" y="28" text-anchor="middle" class="title">
+    One dataset, fifty forks
+  </text>
+  <text x="320" y="48" text-anchor="middle" class="sub">
+    each fork shares the parent's bytes and stores only its own writes
+  </text>
+
+  <text x="300" y="76" text-anchor="middle" class="sub">shared data (1 TB)</text>
+  <text x="560" y="76" text-anchor="middle" class="sub" fill="#62feb5">new writes</text>
+
+  <line
+    x1="520"
+    y1="82"
+    x2="520"
+    y2="206"
+    stroke="#2a3731"
+    stroke-width="1"
+    stroke-dasharray="3 3"
+  />
+
+  <text x="110" y="105" text-anchor="end" class="small">Agent 1</text>
+  <rect x="120" y="88" width="390" height="24" class="shared" />
+  <rect x="524" y="88" width="16" height="24" class="writes" />
+
+  <text x="110" y="139" text-anchor="end" class="small">Agent 2</text>
+  <rect x="120" y="122" width="390" height="24" class="shared" />
+  <rect x="524" y="122" width="30" height="24" class="writes" />
+
+  <text x="110" y="173" text-anchor="end" class="small">Agent 3</text>
+  <rect x="120" y="156" width="390" height="24" class="shared" />
+  <rect x="524" y="156" width="20" height="24" class="writes" />
+
+  <text x="315" y="198" text-anchor="middle" class="sub">…</text>
+
+  <text x="110" y="227" text-anchor="end" class="small">Agent 50</text>
+  <rect x="120" y="210" width="390" height="24" class="shared" />
+  <rect x="524" y="210" width="22" height="24" class="writes" />
+
+  <text x="300" y="246" text-anchor="middle" class="sub" fill="#62feb5">
+    stored once
+  </text>
+</svg>

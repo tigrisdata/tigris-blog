@@ -1,0 +1,67 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 640 244"
+  width="640"
+  height="244"
+  style="background: transparent"
+>
+  <style>
+    text {
+      font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI",
+        Helvetica, Arial, sans-serif;
+    }
+    .title {
+      font-size: 16px;
+      fill: #62feb5;
+      font-weight: 600;
+    }
+    .label {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .val {
+      font-size: 14px;
+      fill: #e2e8f0;
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 12px;
+      fill: #94a3b8;
+    }
+    .box {
+      rx: 8;
+      ry: 8;
+      stroke-width: 1;
+      fill: #142229;
+      stroke: #2a3731;
+    }
+  </style>
+
+  <text x="320" y="30" text-anchor="middle" class="title">
+    What copying costs, fifty times
+  </text>
+  <text x="320" y="50" text-anchor="middle" class="sub">
+    one 1 TB dataset, 2 million files, fifty agents
+  </text>
+
+  <rect x="40" y="64" width="560" height="46" class="box" />
+  <text x="62" y="92" class="label">COPY requests</text>
+  <text x="578" y="92" text-anchor="end" class="val" fill="#62feb5">
+    100M → $500 per batch
+  </text>
+
+  <rect x="40" y="120" width="560" height="46" class="box" />
+  <text x="62" y="148" class="label">Time before work starts</text>
+  <text x="578" y="148" text-anchor="end" class="val">
+    minutes per agent, fifty queued
+  </text>
+
+  <rect x="40" y="176" width="560" height="46" class="box" />
+  <text x="62" y="204" class="label">Duplicated storage</text>
+  <text x="578" y="204" text-anchor="end" class="val">50 × 1 TB = 50 TB</text>
+
+  <text x="320" y="238" text-anchor="middle" class="sub">
+    And you pay it again on the next sweep.
+  </text>
+</svg>
