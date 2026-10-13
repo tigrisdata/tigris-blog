@@ -1,0 +1,15 @@
+.neon {
+  background: rgba(98, 254, 181, 0.18);
+  color: #0b7a52;
+  padding: 0.08em 0.32em;
+  border-radius: 5px;
+  font-weight: 500;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+html[data-theme="dark"] .neon {
+  background: rgba(98, 254, 181, 0.13);
+  color: #62feb5;
+  text-shadow: 0 0 10px rgba(98, 254, 181, 0.35);
+}
