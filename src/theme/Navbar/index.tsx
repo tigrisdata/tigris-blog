@@ -626,12 +626,14 @@ export default function Navbar(): ReactNode {
           <div className={styles.actions}>
             <a
               href={tigrisConfig.loginUrl}
+              data-ph-capture-attribute-cta="blog-navbar-signin"
               className={clsx(styles.btn, styles.btnSecondary)}
             >
               Sign in
             </a>
             <a
               href={tigrisConfig.signUpUrl}
+              data-ph-capture-attribute-cta="blog-navbar-signup"
               className={clsx(styles.btn, styles.btnPrimary)}
             >
               Get started
@@ -704,12 +706,14 @@ export default function Navbar(): ReactNode {
             <div className={styles.mobileActions}>
               <a
                 href={tigrisConfig.loginUrl}
+                data-ph-capture-attribute-cta="blog-navbar-mobile-signin"
                 className={clsx(styles.btn, styles.btnSecondary)}
               >
                 Sign in
               </a>
               <a
                 href={tigrisConfig.signUpUrl}
+                data-ph-capture-attribute-cta="blog-navbar-mobile-signup"
                 className={clsx(styles.btn, styles.btnPrimary)}
               >
                 Get started
