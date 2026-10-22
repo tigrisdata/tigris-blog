@@ -1,0 +1,232 @@
+---
+slug: objgit-ram
+title: "Cutting objgit’s RAM usage"
+description: |
+  Agents hammer git servers, so every byte of RAM counts. Here's how profiling
+  pushes with pprof cut objgit's memory use when pushing golang/go.
+image: ./hero-image.webp
+keywords:
+  - objgit
+  - git server
+  - memory optimization
+  - go pprof
+  - memory profiling
+  - git index-pack
+  - git delta chains
+  - object storage
+  - tigris
+authors:
+  - xe
+tags:
+  - Engineering
+  - git
+  - objgit
+  - Go
+  - Performance
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import githubGitOps from "./github-git-ops.webp";
+import {
+  PhaseMemory,
+  PushBeforeAfter,
+  GitComparison,
+  DeltaChain,
+  PerObjectCost,
+  TableRec,
+} from "./diagrams";
+
+When a human works with a git repository, they tend to sync changes, do work
+locally, batch up new work, and then synchronize when they’re done. Agents don’t
+do this, they do pushes and pulls whenever the tokens demand. This ends up
+creating a lot of unpredictable demand on git servers and is probably the reason
+that so many companies are making their own git services. Graphs of this end up
+looking like this kind of terrifying nonsense that GitHub published recently:
+
+<img
+  src={githubGitOps}
+  alt="Line chart titled Git events per repository, by percentile for August 2026, on a logarithmic y-axis. Fetches, pushes, clones, and all requests stay under 100 events per repository up to P75, then climb steeply, with all requests reaching about 1 billion events at P100."
+/>
+
+That is logarithmic scale. That means the top git repos on GitHub are doing
+hundreds of git operations _per second_. As such, git servers need to be able to
+handle ridiculous amounts of punishment without falling over.
+
+Currently the most expensive part of server loadouts is memory. As such, making
+sure objgit doesn’t use significantly more memory than the git command you’re
+going to compare it to is important. Given that this started as a personal
+prototype that’s become my job somehow, I’m fairly certain that there’s lots of
+low hanging memory fruit. I’m also certain of that because I fixed a huge bug
+that cut down memory usage to ridiculous levels.
+
+Today is the story of how I made objgit use hilariously less RAM by doing the
+boring step of profiling, watching for RAM usage spikes, and figuring out ways
+to work around it. This is how you do optimization. Enjoy!
+
+## How I measured it
+
+When I think about git repos, I tend to break them into four basic categories:
+
+1. Very small repos such as throwaway projects or newly started projects. This
+   includes objgit and a bunch of the other demos I’ve made for my job.
+2. Normally sized git repos such as your organization’s money generator. This
+   includes the Tigris blog, our internal monorepo, and more along that size.
+3. “Big” open source repos such as the Go compiler and other things along that
+   line. Think repos that get more than a few contributions per hour.
+4. The titans of open source like the linux kernel, gcc, glibc, nixpkgs, or
+   other stress tests of the Git data model.
+
+Ideally, I want objgit to support repos of all those scales. Most of the
+repositories I personally maintain fit into the smaller two categories, but
+supporting those upper two tiers requires a lot more fiddly work. In order to
+benchmark RAM usage, I decided on this methodology:
+
+- Break pushes into a few phases and collect memory profiles on entering/exiting
+  each phase.
+- Time how long each phase took.
+- Once the process is done, take a memory profile, wait a few minutes for things
+  to settle, and then take another memory profile.
+- Open the memory profiles and see which parts of the source code use the most
+  memory.
+- Revisit life decisions.
+- Also every time objgit uses a new record amount of RAM, record another memory
+  profile.
+
+The rest was really adding a bunch of printf debug statements and littering
+[pprof calls](https://pkg.go.dev/runtime/pprof) throughout the push path. Then
+it was scripting the
+[pprof command](https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/) and
+doing fairly boring analysis:
+
+1. Use `go tool pprof` to view the `top10` entries in RAM use.
+2. Look down the tree to figure out what the source is.
+3. Look at the code and think about what went wrong.
+
+## Where the memory went
+
+Per phase, the RAM usage looks like this:
+
+<div className="mermaid-frame">
+  <PhaseMemory />
+</div>
+
+In v1.13.0 (before fixes), the index phase kept 279 MiB live after it finished
+indexing the scratch packfiles. When you push a git repo to objgit, it stages
+all the things you just pushed to a scratch repo in a temporary folder. It goes
+there because I naïvely thought that the git format is the native format for git
+repos, it would be a good idea to store temporary data in that format. This
+probably would have been better if I turned on “low memory” mode, but the exact
+way I did it was kinda wasteful in ways that scaled poorly as repos got bigger.
+
+All told, that made RAM use grow unboundedly against the number of objects being
+pushed to the relevant git repo with no real end in sight. In testing this got
+my development box (128 GiB of RAM) to swap thrash to the point I had to unplug
+it to reboot it.
+
+Fixing that alone cut a push of Xe/x from 617 MiB to 199 MiB RSS, and from 9.5 s
+to 1.2 s:
+
+<div className="mermaid-frame">
+  <PushBeforeAfter />
+</div>
+
+The easy fix was to implement the equivalent of `git index-pack` so that pushing
+has a place to store pack metadata and it doesn’t have to recursively figure it
+out on demand over and over. This also puts objgit at roughly 2× git’s peak RSS:
+
+<div className="mermaid-frame">
+  <GitComparison />
+</div>
+
+Obviously there’s a lot of room for improvement, and I expect to slowly poke at
+things as they become problems and I get additional ideas for optimization.
+
+## Two smaller fires
+
+Along the way I found a few other problems that were big enough to be kind of
+annoying, but not big enough to be their own dedicated blogpost.
+
+### Git delta chains hit a recursion limit with a single byte typo
+
+One of the ongoing themes of working on objgit is the constant oscillation of
+“Git stores the full versions of files” and “Git only stores the changes between
+versions of files”. [Delta chains](https://gitperf.com/chapter-06.html) make
+this concrete. Storing the entire copy of every file is storage-expensive, so
+Git will often save only the diff between the last version and the current one.
+This will create a “chain” of delta objects such that figuring out what a file
+is at X version can cause you to recurse through up to 50 separate objects to
+progressively resolve the files at that version.
+
+<div className="mermaid-frame">
+  <DeltaChain />
+</div>
+
+So to read version 4 of a file, you have to read version 1 and then apply deltas
+up the chain until you get to the end state. Git normally limits this to 50
+links or less in the chain, but this only really applies to big repos like the
+Linux kernel.
+
+While I was testing pushing the Linux kernel I found this typo in the code:
+
+```diff
+ func (s *Storer) deltaBase(base plumbing.Hash, depth int) (plumbing.EncodedObject, error) {
+-    if depth >= maxDeltaDepth {
++    if depth > maxDeltaDepth {
+         return nil, fmt.Errorf("%w: delta chain through %s is deeper than %d links", errBadCue, base.String(), maxDeltaDepth)
+     }
+```
+
+I wasn’t able to push the Linux kernel because I did greater than or equals
+instead of just greater than. Fixing that made it work immediately.
+
+Oops.
+
+### The pack index needed memory optimizations
+
+Separately, objgit figures out which objects it already has for a repo by
+loading an index of all the objects into memory and then using that throughout
+push/pull operations. Every live object in RAM looks like the following:
+
+<div className="mermaid-frame">
+  <PerObjectCost />
+</div>
+
+That is about 390 bytes per object. This doesn’t seem like a lot until you
+multiply it by the Linux kernel’s ~10 million objects: about 4 GiB of index per
+push. For now we can get away with an immutable sorted table that holds a
+40-byte record for each object:
+
+<div className="mermaid-frame">
+  <TableRec />
+</div>
+
+Combined with the SHA-1 hash, this makes objects about 60 bytes. That is oodles
+of RAM savings and is the only reason I’m able to operate against my `linux.git`
+copy in objgit with the hard 4 GiB RAM limit I set for the container in
+Kubernetes.
+
+## What's next
+
+For now this is pretty good, but I can always do better. Most of the RAM savings
+from here are more about shunting memory out of the objgit binary at this point.
+The ideas include:
+
+- Memory-mapping things everywhere so that data structures are stored on the
+  disk instead of memory. Disks are still kinda expensive, but less expensive
+  and easier to upgrade than RAM at this point.
+- Move the index data into a database engine like SQLite or Postgres. This would
+  move the data around and still maybe use a bit of RAM, but maybe it would be
+  less RAM-expensive?
+- Other performance based optimizations that could come from forking the git
+  library I use.
+
+I’m still working on this. Like I’ve said I’m dogfooding this pretty hardcore
+and I’m hoping that I’ll find more problems like this as I continue to work on
+my evil plans to save the world from bad software. Stay tuned!
+
+<InlineCta
+  title="Want a git server that fits in 4 GiB?"
+  subtitle="objgit stores every repository in Tigris, so your git data is globally distributed and the server stays small."
+  button="Check out objgit on GitHub"
+  link="https://github.com/tigrisdata/objgit"
+/>
