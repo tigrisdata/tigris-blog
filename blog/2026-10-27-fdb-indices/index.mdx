@@ -35,17 +35,15 @@ import {
 } from "./diagrams";
 
 The pithy way to think about Tigris is that we’re a database consultancy for an
-internal SRE client who itself is a SRE consultancy for an internal object
+internal SRE client who itself is an SRE consultancy for an internal object
 storage client. As such, we have a lot of opinions about how databases should
-work and how to operate them at cloud scale. This mix of expertise lets us be
-able to take something like [FoundationDB](https://www.foundationdb.org/) (an
-ordered key-value store that is microservices: the database) and implement
-database indices on top of it.
+work and how to operate them at cloud scale. This mix of expertise lets us take
+something like [FoundationDB](https://www.foundationdb.org/) (an ordered
+key-value store that is microservices: the database) and implement database
+indices on top of it.
 
 But what are indices (also spelled indexes), why do they matter, and how do they
-let us give you what you really want: better object storage? Today I’m going to
-peel back the database design curtain and explain what indices are, how they
-work, how we implemented them, and how you can take advantage of them in Tigris.
+let us give you what you really want: better object storage?
 
 ## Databases and you
 
@@ -64,7 +62,7 @@ CREATE TABLE IF NOT EXISTS customers
   );
 ```
 
-At some level this roughly correlates to the following Go structure:
+This roughly maps to the following Go structure:
 
 ```go
 type Customer struct {
@@ -101,10 +99,10 @@ for _, customer := range db.Customers {
 For decently small database tables that can fit into memory, this is fine. The
 problems here are twofold:
 
-1. Any time you search for users with any given email address, you have to scan
-   over all of the records in the table (database nerds call this a full table
-   scan).
-2. Any time you want to make sure that two users can’t share the same email
+1. Any time you search for customers with any given email address, you have to
+   scan over all of the records in the table (database nerds call this a full
+   table scan).
+2. Any time you want to make sure that two customers can’t share the same email
    address, you have to do that full table scan in your application code instead
    of that invariant being enforced by the database.
 
@@ -193,8 +191,8 @@ Error near line 33: UNIQUE constraint failed: customers.email_address
 
 This is all well and good if you’re using a relational database engine like
 SQLite, but how would you do it in FoundationDB? FoundationDB is basically a
-hashmap in a distributed system, so you have to implement things on top of its
-primitives.
+sorted map spread across a cluster, so you have to implement things on top of
+its primitives.
 
 Basically at a high level when you use indices in a relational database you need
 to ensure that the following things happen with regards to indices:
@@ -205,11 +203,12 @@ to ensure that the following things happen with regards to indices:
    as a last resort.
 
 A full table scan is especially disastrous in a FoundationDB environment because
-[FoundationDB transactions have rather strict limits](https://apple.github.io/foundationdb/known-limitations.html)
-with the advice that if your architecture requires you to obviate one of those
-you should consider a different architecture.
+[FoundationDB transactions have rather strict limits](https://apple.github.io/foundationdb/known-limitations.html):
+a transaction can’t run for more than five seconds or write more than 10 MB. The
+docs advise that if your architecture requires you to exceed one of those, you
+should consider a different architecture.
 
-### Our implementation of them
+### Where can you use indices in Tigris?
 
 The main place we expose indices to users is with
 [Object Metadata Queries](https://www.tigrisdata.com/docs/objects/query-metadata/).
@@ -242,18 +241,17 @@ WHERE `Last-Modified` > "2023-08-14T11:30:00Z"
 ORDER BY `Content-Type`
 ```
 
-This would let you find objects smaller than 64Ki, last modified after August
+This would let you find objects smaller than 64 KiB, last modified after August
 14, 2023, and order them by the `Content-Type` in the results.
 
 ### The gory details
 
-For the sake of argument, let’s say you have a query like this reading from a
-bucket of 5 objects:
+For the sake of argument, let’s say you list a bucket 5 objects at a time
+(`max-keys=5`) with a query like this:
 
 ```sql
-WHERE `Last-Modified` > "2023-08-14T11:30:00Z"
-  AND `Content-Length` < 65536
-ORDER BY `Content-Type`
+WHERE `Content-Length` > 0
+ORDER BY `Last-Modified` DESC
 ```
 
 This gets compiled to our internal query DSL in memory (and thus has no real
@@ -276,26 +274,31 @@ data. The flow looks kinda like this:
   <QueryFlow />
 </div>
 
-Or basically: you start out by assembling a query plan, scanning over the
-relevant indices, picking out the keys you want up to a limit and filtering
-during that scan, then sorting them and throwing the results back to the user
-with a continuation token so users can iterate in future calls. Fun fact: this
-is basically the same thing that happens in your MySQL or Postgres databases
-when you are doing queries that way. They don’t usually return continuation
-tokens though.
+Or basically: you start out by assembling a query plan, walking the relevant
+index in order, reading the row each entry points to, and filtering as you go
+until you hit the limit. Then you throw the results back to the user with a
+continuation token so they can iterate in future calls. The index is already
+sorted, so there’s no separate sort step. Fun fact: this is basically the same
+thing that happens in your MySQL or Postgres databases when you are doing
+queries that way. They don’t usually return continuation tokens though.
 
 ### Adding to the indices
 
-Our indices are implemented as FoundationDB keyspaces kinda like this:
+Tigris implements indices as FoundationDB keyspaces kinda like this:
 
 <div className="mermaid-frame">
   <IndexEntry />
 </div>
 
 When we insert or update objects into FoundationDB, we also add index rows in
-the same transaction. This is identical to how MySQL or Postgres would do this.
-Indices being keyspaces means that we can easily query a range of keys in the
-keyspace of that index and then read them out really cheaply.
+the same transaction. This is the same idea MySQL and Postgres use. Indices
+being keyspaces means that we can easily query a range of keys in the keyspace
+of that index and then read them out really cheaply.
+
+That isn’t free. Every object write now also writes an index key, so each index
+adds work to every write. The executor also doesn’t trust index entries blindly:
+if the row an entry points to is gone or has a different timestamp, it skips the
+entry and queues it for a cleaner. That’s the `dropIf` step in the plan above.
 
 Something that struck me as a bit odd when I was researching this is that the
 objects that the indexes are pointing to are in the FoundationDB key instead of
@@ -309,12 +312,10 @@ The main primitives of FoundationDB are `get` for reading a single value out of
 the database, `set` for updating a value in the database, `clear` for removing a
 value from the database, `clear_range` for removing a range of values from the
 database, and `get_range` for reading many keys from the database. Of these,
-`get_range` is the call that continues to have surprisingly useful ways to
-manifest itself.
+`get_range` keeps turning out to be the useful one.
 
 Let’s imagine that you have a bucket with a few image files that were generated
-once every month for the last few years. The indices for that could look like
-this:
+once a month since February. The indices for that could look like this:
 
 <div className="mermaid-frame">
   <MonthlyIndex />
@@ -327,17 +328,18 @@ that in a single `get_range` call:
   <RangeQuery />
 </div>
 
-And then the Tigris queries directly translate into the corresponding
-FoundationDB calls.
+And that’s most of a Tigris metadata query: one range read over the index, plus
+a point read for each entry it returns.
 
-## Conclusion
+## An index is just more keys
 
-Databases aren’t magic! They’re just carefully planned layers of abstraction on
-top of something like a key value store. Indices are one of the main ways that
+Databases aren’t magic! They’re carefully planned layers of abstraction on top
+of something like a key-value store, and an index is just more keys, sorted so
+that the question you want to ask becomes one range read. That ordering is how
 databases (or object storage services) can return results as fast as possible so
 you can move on with life and go make your impact on the world the way that
 really matters: via the creation of business to business software as a service
-applications. Do it on top of Tigris and get S3 compatible storage everywhere on
+applications. Do it on top of Tigris and get S3-compatible storage everywhere on
 the globe!
 
 <InlineCta
