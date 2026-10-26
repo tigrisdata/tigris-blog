@@ -1,0 +1,348 @@
+---
+slug: fdb-indices
+title: "How we do indices in FoundationDB"
+description: |
+  Indices turn full table scans into quick lookups. Here's how Tigris builds
+  database indices on FoundationDB so object metadata queries stay low-latency.
+keywords:
+  - foundationdb
+  - database indices
+  - database indexes
+  - secondary index
+  - full table scan
+  - get_range
+  - object metadata queries
+  - ListObjectsV2
+  - object storage
+  - tigris
+authors:
+  - xe
+tags:
+  - Engineering
+  - foundationdb
+  - database
+  - distributed systems
+  - object storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import {
+  ScanVsIndex,
+  QueryFlow,
+  IndexEntry,
+  MonthlyIndex,
+  RangeQuery,
+} from "./diagrams";
+
+The pithy way to think about Tigris is that we’re a database consultancy for an
+internal SRE client who itself is a SRE consultancy for an internal object
+storage client. As such, we have a lot of opinions about how databases should
+work and how to operate them at cloud scale. This mix of expertise lets us be
+able to take something like [FoundationDB](https://www.foundationdb.org/) (an
+ordered key-value store that is microservices: the database) and implement
+database indices on top of it.
+
+But what are indices (also spelled indexes), why do they matter, and how do they
+let us give you what you really want: better object storage? Today I’m going to
+peel back the database design curtain and explain what indices are, how they
+work, how we implemented them, and how you can take advantage of them in Tigris.
+
+## Databases and you
+
+At some level a database is just a bunch of rows of records with a query
+language to better select parts of records based on specific criteria. Let’s
+imagine a database schema like this:
+
+```sql
+CREATE TABLE IF NOT EXISTS customers
+  ( id INTEGER PRIMARY KEY AUTOINCREMENT
+  , created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  , updated_at TEXT
+  , deleted_at TEXT
+  , name TEXT NOT NULL
+  , email_address TEXT NOT NULL
+  );
+```
+
+At some level this roughly correlates to the following Go structure:
+
+```go
+type Customer struct {
+  ID int32
+  CreatedAt string // XXX sqlite has no time type
+  UpdatedAt *string
+  DeletedAt *string
+  Name string
+  EmailAddress string
+}
+```
+
+When the database server loads this all into memory, it basically puts it into a
+big slice of customer values. When you do a query such as:
+
+```sql
+SELECT * FROM customers WHERE email_address = 'xe@tigrisdata.com';
+```
+
+Under the hood it turns into a for loop like this:
+
+```go
+var result []Customer
+
+for _, customer := range db.Customers {
+  if customer.EmailAddress == "xe@tigrisdata.com" {
+    result = append(result, customer)
+  }
+}
+
+// Draw the rest of the owl here
+```
+
+For decently small database tables that can fit into memory, this is fine. The
+problems here are twofold:
+
+1. Any time you search for users with any given email address, you have to scan
+   over all of the records in the table (database nerds call this a full table
+   scan).
+2. Any time you want to make sure that two users can’t share the same email
+   address, you have to do that full table scan in your application code instead
+   of that invariant being enforced by the database.
+
+To solve both of these problems, the database elders gave us
+[database indices](https://en.wikipedia.org/wiki/Database_index). You can think
+about an index as basically a hash table of values to row IDs, kinda like this:
+
+```go
+type CustomerByEmailAddress map[string][]int32
+```
+
+Or the following SQL:
+
+```sql
+CREATE INDEX customer_by_email_address ON customers(email_address);
+```
+
+Assuming you have records in your customers table along the lines of:
+
+```sql
+INSERT INTO customers
+          ( id, name, email_address )
+VALUES
+  ( 1, 'Xe Iaso', 'xe@tigrisdata.com' )
+, ( 2, 'Ovais Tariq', 'redacted@tigrisdata.com' );
+```
+
+The contents of the `customer_by_email_address` index would look something like
+this:
+
+```go
+CustomerByEmailAddressIdx := CustomerByEmailAddress{
+  "xe@tigrisdata.com":       []int32{1},
+  "redacted@tigrisdata.com": []int32{2},
+}
+```
+
+So then to look up the rows that contain the email address `xe@tigrisdata.com`,
+the database engine does a for loop like this:
+
+```go
+var result []Customer
+
+rows, ok := db.CustomerByEmailAddressIdx["xe@tigrisdata.com"]
+if ok {
+  for _, id := range rows {
+    result = append(result, db.Customers[id])
+  }
+}
+
+// Draw the rest of the owl here
+```
+
+This converts your database interaction from having to read every row to only
+having to read a few rows at most.
+
+<div className="mermaid-frame">
+  <ScanVsIndex />
+</div>
+
+A unique index is basically the same thing but it has the constraint that each
+value can only point to one row:
+
+```sql
+CREATE UNIQUE INDEX customer_by_email_address ON customers(email_address);
+```
+
+Which is roughly Go type:
+
+```go
+type CustomerByEmailAddress map[string]int32
+```
+
+As an added bonus, if you try and insert two customers with the same email
+address, the database engine will stop you:
+
+```text
+SQLite-3.54 in-memory-> INSERT INTO customers
+                    ;->           ( id, name, email_address )
+                    ;-> VALUES
+                    ;->   ( 3, 'Xe Iaso but again', 'xe@tigrisdata.com' );
+Error near line 33: UNIQUE constraint failed: customers.email_address
+```
+
+## Indices in FoundationDB
+
+This is all well and good if you’re using a relational database engine like
+SQLite, but how would you do it in FoundationDB? FoundationDB is basically a
+hashmap in a distributed system, so you have to implement things on top of its
+primitives.
+
+Basically at a high level when you use indices in a relational database you need
+to ensure that the following things happen with regards to indices:
+
+1. Inserting or removing data is reflected in the index in the same transaction,
+   or at least fast enough that users don’t notice the churn.
+2. Querying for data consults any indices first and does a full table scan only
+   as a last resort.
+
+A full table scan is especially disastrous in a FoundationDB environment because
+[FoundationDB transactions have rather strict limits](https://apple.github.io/foundationdb/known-limitations.html)
+with the advice that if your architecture requires you to obviate one of those
+you should consider a different architecture.
+
+### Our implementation of them
+
+The main place we expose indices to users is with
+[Object Metadata Queries](https://www.tigrisdata.com/docs/objects/query-metadata/).
+They let you filter ListObjectsV2 calls via SQL-like queries like this:
+
+```sql
+WHERE `Last-Modified` > "2023-01-15T08:30:00Z" AND `Content-Type` = "text/javascript"
+```
+
+In order to make these queries efficient (and avoid the disastrous latency of
+full table scans), we have indices on the `Last-Modified` field. You can also
+filter and order by `Content-Type` and `Content-Length`, but we don’t currently
+have indices for those fields. This lets you write queries like this:
+
+```sql
+WHERE `Last-Modified` > "2022-06-10T14:20:00Z"
+  AND `Content-Type` = "text/plain"
+  AND key REGEXP ".*\.txt$"
+```
+
+This would let you filter for objects whose keys end in `.txt`, have a
+`text/plain` `Content-Type`, and were last modified some time after June
+10, 2022.
+
+You can also use those fields for changing how results are ordered:
+
+```sql
+WHERE `Last-Modified` > "2023-08-14T11:30:00Z"
+  AND `Content-Length` < 65536
+ORDER BY `Content-Type`
+```
+
+This would let you find objects smaller than 64Ki, last modified after August
+14, 2023, and order them by the `Content-Type` in the results.
+
+### The gory details
+
+For the sake of argument, let’s say you have a query like this reading from a
+bucket of 5 objects:
+
+```sql
+WHERE `Last-Modified` > "2023-08-14T11:30:00Z"
+  AND `Content-Length` < 65536
+ORDER BY `Content-Type`
+```
+
+This gets compiled to our internal query DSL in memory (and thus has no real
+analogue in text), but you can kinda visualize it like this:
+
+```text
+indexRange {"Bucket": "$bucket", "Index": "Last-Modified"}
+           from "$max" to "$min" # reverse walk for ordering by later
+  | pointRead {"Bucket": "$bucket", "Table": "global"} by "$key"
+  | dropIf rowMissing or rowDoesNotMatchIndexEntry   # stale entry → cleaner
+  | filter {"Content-Length": {"$gt": 0}}  # in memory, per row
+  | take 6                                 # max-keys + 1
+  | resumeToken = lastIndexEntry
+```
+
+Internally this queries the index first and then goes about to read the actual
+data. The flow looks kinda like this:
+
+<div className="mermaid-frame">
+  <QueryFlow />
+</div>
+
+Or basically: you start out by assembling a query plan, scanning over the
+relevant indices, picking out the keys you want up to a limit and filtering
+during that scan, then sorting them and throwing the results back to the user
+with a continuation token so users can iterate in future calls. Fun fact: this
+is basically the same thing that happens in your MySQL or Postgres databases
+when you are doing queries that way. They don’t usually return continuation
+tokens though.
+
+### Adding to the indices
+
+Our indices are implemented as FoundationDB keyspaces kinda like this:
+
+<div className="mermaid-frame">
+  <IndexEntry />
+</div>
+
+When we insert or update objects into FoundationDB, we also add index rows in
+the same transaction. This is identical to how MySQL or Postgres would do this.
+Indices being keyspaces means that we can easily query a range of keys in the
+keyspace of that index and then read them out really cheaply.
+
+Something that struck me as a bit odd when I was researching this is that the
+objects that the indexes are pointing to are in the FoundationDB key instead of
+the value, like they were in my trivial Go example above. However, after some
+thinking and reading through the documentation, I think that this is one of the
+more clever abuses of FoundationDB at Tigris. Why? This lets you query key
+ranges with a simple range read instead of having to recursively read values
+from the database.
+
+The main primitives of FoundationDB are `get` for reading a single value out of
+the database, `set` for updating a value in the database, `clear` for removing a
+value from the database, `clear_range` for removing a range of values from the
+database, and `get_range` for reading many keys from the database. Of these,
+`get_range` is the call that continues to have surprisingly useful ways to
+manifest itself.
+
+Let’s imagine that you have a bucket with a few image files that were generated
+once every month for the last few years. The indices for that could look like
+this:
+
+<div className="mermaid-frame">
+  <MonthlyIndex />
+</div>
+
+If you want to query the data from February 20th through April 20th, you can do
+that in a single `get_range` call:
+
+<div className="mermaid-frame">
+  <RangeQuery />
+</div>
+
+And then the Tigris queries directly translate into the corresponding
+FoundationDB calls.
+
+## Conclusion
+
+Databases aren’t magic! They’re just carefully planned layers of abstraction on
+top of something like a key value store. Indices are one of the main ways that
+databases (or object storage services) can return results as fast as possible so
+you can move on with life and go make your impact on the world the way that
+really matters: via the creation of business to business software as a service
+applications. Do it on top of Tigris and get S3 compatible storage everywhere on
+the globe!
+
+<InlineCta
+  title="Want to filter your buckets without a full scan?"
+  subtitle="Object Metadata Queries let you filter and sort ListObjectsV2 results by Last-Modified, Content-Type, and Content-Length, and Last-Modified queries read an index instead of the whole bucket."
+  button="Read the metadata query docs"
+  link="https://www.tigrisdata.com/docs/objects/query-metadata/"
+/>
