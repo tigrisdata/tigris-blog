@@ -59,9 +59,8 @@ export default function NewsletterSubscribe(
     })
       .then(() => {
         const posthog = window.posthog;
-        if (!posthog) {
+        if (posthog && typeof posthog.capture === "function") {
           posthog.capture("subscribed-newsletter-blog");
-          return;
         }
 
         reset();
