@@ -1,0 +1,235 @@
+---
+slug: case-study-prisma
+title:
+  "How Prisma Picked the Object Storage Behind Prisma Buckets"
+description: >
+  Prisma benchmarked Tigris and Cloudflare R2 from six Prisma Compute regions
+  before choosing the storage behind Prisma Buckets. One Tigris global bucket
+  finished the agent filesystem workload 3x to 5x faster than per-region R2
+  buckets, with a read floor near 10 ms. Prisma Buckets now run on Tigris.
+image: ./hero-image.webp
+keywords:
+  - Prisma
+  - Prisma Compute
+  - Prisma Buckets
+  - accelerated-fs
+  - Tigris object storage
+  - global bucket
+  - object storage benchmark
+  - Cloudflare R2
+authors:
+  - ks
+tags:
+  - Customers
+  - Performance
+  - AI Agents
+  - Object Storage
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import BreakoutQuote from "@site/src/components/BreakoutQuote";
+import BenchmarkSetup from "./diagrams/BenchmarkSetup";
+import sorenBramerSchmidt from "./soren-bramer-schmidt.webp";
+
+_Prisma co-founder Søren Bramer Schmidt published the full benchmark, charts
+and methodology in
+[Evaluating Object Storage Providers for Prisma Compute](https://www.prisma.io/blog/evaluating-object-storage-providers-for-prisma-compute).
+This post is the Tigris side of that story._
+
+An AI agent that treats a bucket as its filesystem does not read one big
+object. It reads thousands of small ones, one after another, and waits on each
+before it can ask for the next. On that workload the fastest read a store can
+return matters more than its peak throughput.
+
+[Prisma](https://www.prisma.io/) is building
+[Prisma Compute](https://www.prisma.io/compute), a platform that runs Bun in
+microVMs with Postgres, and now S3-compatible
+[Buckets](https://www.prisma.io/docs/compute/object-storage), built in. Before
+shipping Buckets, co-founder Søren Bramer Schmidt benchmarked the storage that
+would sit behind them from every Compute region, using
+[accelerated-fs](https://github.com/prisma/accelerated-fs), a virtual
+filesystem that gives agents fast access to datasets far larger than a
+microVM's disk. On the serial small-object workload that agents produce, one
+Tigris global bucket finished 3x to 5x faster than per-region Cloudflare R2
+buckets, with a read floor around 10 ms. Prisma Buckets launched on Tigris.
+
+{/* truncate */}
+
+## A filesystem that lives in a bucket
+
+accelerated-fs packs small files into objects and serves reads through a local
+cache. The cache absorbs repeat reads; everything else is a round trip to the
+object store. The example Søren uses is an agent that stores and indexes all
+of your email so it can grep through it quickly. That means thousands of small
+files, read in whatever order the agent needs them, with the agent blocked
+until each one arrives.
+
+Two constraints shaped the shortlist. Prisma Compute runs outside the AWS
+ecosystem, so per-GB egress at hyperscaler list prices (around $0.09/GB at
+AWS) would be paid on every byte the filesystem pulls. And the workload is
+latency-bound, not bandwidth-bound. Søren narrowed the field to the two
+S3-compatible providers that publish no-egress pricing and are built for use
+outside a single hyperscaler: Tigris and Cloudflare R2. AWS S3 and S3 Express
+One Zone came in later, in a separate probe from Frankfurt.
+
+## Six regions, one load test
+
+<div className="mermaid-frame">
+  <BenchmarkSetup />
+</div>
+
+The same load-test app was deployed to all six Prisma Compute regions:
+Frankfurt, Paris, N. Virginia, N. California, Singapore and Tokyo. In each
+region it built datasets of 10 KiB files at three sizes, 50 MiB, 500 MiB and 5
+GiB (5,120 to 524,288 files), then ran 1,000 random reads and 1,000 random
+writes, interleaved and one at a time, through a 100 MiB local cache.
+
+The storage setup differed in one important way. Tigris got a single global
+bucket shared by all six regions. R2 got six buckets, each created from its
+own Compute region so R2 would place it nearby, so R2 was tested on its own
+best terms.
+
+## The read floor sets the pace
+
+Across the three dataset sizes, Tigris's quickest reads landed between 8.9
+and 9.8 ms. R2's fastest reads sat between 41.9 and 44.4 ms. Average read
+latency on Tigris was roughly half of R2's, and total time spent waiting on
+object reads was 54 to 73 seconds on Tigris against 143 to 230 seconds on R2.
+
+| Dataset | Tigris floor / avg / p95 | R2 floor / avg / p95 | Time in object reads |
+| ------- | ------------------------ | -------------------- | -------------------- |
+| 50 MiB  | 9.8 / 44.7 / 131 ms      | 43.8 / 90.6 / 171 ms | 53.8 s vs 143.0 s    |
+| 500 MiB | 9.8 / 56.3 / 181 ms      | 41.9 / 88.0 / 177 ms | 66.4 s vs 153.8 s    |
+| 5 GiB   | 8.9 / 55.5 / 169 ms      | 44.4 / 105.7 / 237 ms | 72.6 s vs 229.7 s   |
+
+That floor is what the agent feels. At the 50 MiB size, where the whole
+dataset fits in the 100 MiB cache, p95 read latency as seen by the application
+was 29 ms on Tigris and 107 ms on R2. At 5 GiB, where most reads miss the
+cache, the two converged at 423 ms and 436 ms, because past the cache every
+read pays object store latency directly. The gap lives in the common case, not the worst
+one.
+
+## One global bucket instead of six regional ones
+
+The mixed read/write phase, averaged across all six regions, took 109.5
+seconds on Tigris and 578.7 seconds on R2 at 50 MiB. At 5 GiB the gap narrowed
+to 265.8 seconds against 860.7, still 3.2x. Every region favored Tigris, from
+2.0x in N. Virginia to 12.3x in Singapore.
+
+| Region        | 50 MiB (Tigris / R2) | 500 MiB       | 5 GiB          |
+| ------------- | -------------------- | ------------- | -------------- |
+| Singapore     | 62 s / 765 s         | 113 s / 918 s | 147 s / 1140 s |
+| Tokyo         | 82 s / 498 s         | 212 s / 610 s | 332 s / 773 s  |
+| Frankfurt     | 94 s / 584 s         | 184 s / 682 s | 263 s / 905 s  |
+| Paris         | 121 s / 421 s        | 220 s / 532 s | 316 s / 628 s  |
+| N. Virginia   | 216 s / 438 s        | 219 s / 498 s | 304 s / 686 s  |
+| N. California | 82 s / 767 s         | 151 s / 891 s | 233 s / 1033 s |
+
+Søren's read of the result is that the global bucket model handled the
+workload's shape much better than R2's regional buckets did, even with an R2
+bucket created near every Compute region. A Tigris bucket is one namespace
+with data placed near the requests it receives, so the six regions shared one
+durable copy of the dataset instead of six that would need to be kept in sync.
+
+He also ran the 50 MiB workload from a plane over Starlink. Tigris finished in
+248.5 seconds; R2 took 618.5 seconds, 2.5x longer.
+
+<BreakoutQuote
+  username="Søren Bramer Schmidt"
+  title="Co-founder, Prisma"
+  imageUrl={sorenBramerSchmidt}
+>
+  For this workload, Tigris was clearly faster.
+</BreakoutQuote>
+
+## No platform tax for leaving AWS
+
+A second probe from Frankfurt answered a question Prisma had to settle for its
+own platform: does object storage get slower when the client is not inside
+AWS? It ran 1,000 10 KiB reads and 1,000 writes against the Tigris global
+bucket, R2, S3 in eu-central-1 and S3 Express One Zone in eu-west-1, once from
+Prisma Compute and once from an AWS Lambda.
+
+Tigris had the lowest typical read latency of the Frankfurt stores, a median
+of 14 to 18 ms, against about 32 ms for S3 and about 85 ms for R2. It also had
+a long tail, with roughly 1% of reads spiking past 300 ms. For Tigris, R2
+and S3, the Compute and Lambda numbers were nearly identical. The latency
+belongs to the store, not to where the client runs.
+
+The bulk throughput test told a more mixed story, and the Prisma post says so
+plainly. Moving one 50 MiB object, S3 was the steadiest performer at around
+91 MiB/s up and 83 MiB/s down from Compute. Tigris averaged 60 MiB/s up and 81
+MiB/s down, nearly matching S3 on download but with wide variance between
+samples. R2 trailed at about 18 MiB/s up and 25 MiB/s down. Søren's conclusion
+is the right one: benchmark the thing you actually plan to run. For bulk
+upload and download, S3 pulled ahead. For thousands of serial small reads,
+Tigris did.
+
+## Results
+
+| Metric                                   | Tigris        | Cloudflare R2  |
+| ---------------------------------------- | ------------- | -------------- |
+| Read latency floor                       | ~10 ms        | ~44 ms         |
+| Mixed phase, 50 MiB, six-region average  | 109.5 s       | 578.7 s (5.3x) |
+| Mixed phase, 5 GiB, six-region average   | 265.8 s       | 860.7 s (3.2x) |
+| Application p95 read, 50 MiB             | 29 ms         | 107 ms         |
+| Buckets needed for six regions           | 1             | 6              |
+| Egress fees                              | None          | None           |
+
+A separate run documented in the accelerated-fs repo adds one more data
+point. From Frankfurt alone, inserting the 5 GiB dataset took 320 seconds on
+Tigris and 1,003 seconds on R2. Even a Tigris
+[instant retrieval archive](https://www.tigrisdata.com/docs/objects/tiers/)
+bucket, the lower-cost storage tier, finished the mixed phase faster than
+R2 at every size.
+
+Søren's verdict for accelerated-fs in June: Tigris is the better fit today,
+giving Prisma one durable shared bucket, no egress fees and much lower latency
+on the serial small-object pattern agents create when they use a bucket as a
+filesystem. Tigris is listed as a supported provider in accelerated-fs,
+reachable through the global endpoint with the region set to `auto`.
+
+## From benchmark to Prisma Buckets
+
+A month after the benchmark, Prisma
+[launched Object Store buckets](https://www.prisma.io/changelog/2026-07-24)
+for every Prisma Compute project: S3-compatible storage that lives in the same
+project as the database, so apps that store uploads or generated files no
+longer need a separate storage vendor. Asked about it on X the day before,
+Søren pointed back to the benchmark: "Tigris outperformed and is now available
+on Prisma Compute." In October he shipped an overhauled bucket file explorer
+with bulk upload and delete, prefix filtering and folder support, and said
+where the bytes live.
+
+<BreakoutQuote
+  username="Søren Bramer Schmidt"
+  title="Co-founder, Prisma"
+  imageUrl={sorenBramerSchmidt}
+>
+  Prisma Buckets are powered by @TigrisData so they are blazing fast. Free for
+  the rest of the year, so give it a try!
+</BreakoutQuote>
+
+_From [Søren's post on X](https://x.com/sorenbs/status/2109680559660429577),
+October 12, 2026._
+
+The same properties that won the benchmark carry over to Buckets. A Prisma
+project in Tokyo and one in N. Virginia talk to the same kind of global
+bucket, Prisma does not pay egress on what its users read back, and the small
+files that agents and apps write by the thousand come back from a store with
+a 10 ms floor.
+
+## Conclusion: one bucket, every region
+
+Agents turn object storage into a filesystem, and filesystems are judged by
+their slowest common operation. Prisma measured that operation from six
+regions and a plane, found that a single Tigris bucket beat six regional
+buckets at every size, and built Prisma Buckets on it. For anyone giving
+agents a place to put their files, that read floor is the number that
+matters.
+
+<InlineCta
+  title="Give your agents a filesystem that spans every region"
+  subtitle="One global bucket, no egress fees, and a read floor near 10 ms."
+  button="Create a bucket"
+/>
