@@ -27,4 +27,5 @@ jobs:
           npm install
           npx prettier --check .
           npx eslint .
+          npm run check:cta
           npm run build
