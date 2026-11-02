@@ -183,6 +183,55 @@ dashboard records the rate over time. Each count appears alongside an `Est.`
 column that scales it up to a cluster-wide estimate. You can see both the
 sampled count and the estimate.
 
+## Setup directions
+
+The repository includes a Docker Compose test bed with FoundationDB 7.3,
+ClickHouse, Grafana, and the load generator used in the clips.
+
+Before you start, install Go and the
+[FoundationDB client package](https://github.com/apple/foundationdb/releases).
+The `make testenv_up` command runs a Go program on the host to wait for the
+cluster. That program links against FoundationDB’s client library, even though
+the server runs in Docker. Moving this step into a container is on the list.
+
+```shell
+git clone https://github.com/tigrisdata/fdb-profile-analyzer
+cd fdb-profile-analyzer
+make testenv_up        # start FoundationDB, ClickHouse and Grafana, turn profiling on
+make testenv_verify    # check every service, including Grafana -> ClickHouse
+make load_start        # continuous load plus the ingester, in containers
+make load_logs         # watch the load cycles and the ingester's flushes
+```
+
+Open
+[localhost:3000/d/fdb-profile-analyzer](http://localhost:3000/d/fdb-profile-analyzer).
+On a cold start, the `fdb` container reports unhealthy until initialization
+creates the database and enables profiling. Clients flush their profiles every
+ten seconds, and the daemon polls for those records. Allow a couple of minutes
+for data to appear in the dashboard.
+
+We ran into three more problems when testing clients outside the bundled load
+generator:
+
+- `fdbcli` disables profiling for its own transactions on startup, so nothing
+  you do from the CLI will ever show up.
+- Go clients only queue a profile record when the transaction object is
+  finalized, which happens from a garbage collector callback. A short-lived
+  client with no GC pressure writes nothing at all.
+- Clients flush every ten seconds, so a process that commits and exits
+  immediately takes its profile records with it.
+
+To use a real cluster, download the release binary or the
+`quay.io/tigrisdata/fdb-profile-analyzer` image. Point `config.yaml` at your
+cluster file and ClickHouse instance. Replace the sample prefixes with your own.
+
+Before deployment, decide whether to enable `capture_mutation_values`. Hotspot
+analysis only needs mutation keys. The values contain your application’s data.
+Unless you need to keep those values, disable their capture.
+
+Start with prefixes you recognize and collect a baseline before the next deploy.
+That gives you something to compare when a key suddenly gets busy.
+
 ## What it looks like
 
 ### What’s putting load on the database?
@@ -301,55 +350,6 @@ to get the profiles.
 Several FoundationDB clusters feed one ClickHouse in production. Every row
 carries the `cluster_name` configured for its daemon. The dashboard’s cluster
 dropdown lets us switch between them.
-
-## Setup directions
-
-The repository includes a Docker Compose test bed with FoundationDB 7.3,
-ClickHouse, Grafana, and the load generator used in the clips.
-
-Before you start, install Go and the
-[FoundationDB client package](https://github.com/apple/foundationdb/releases).
-The `make testenv_up` command runs a Go program on the host to wait for the
-cluster. That program links against FoundationDB’s client library, even though
-the server runs in Docker. Moving this step into a container is on the list.
-
-```shell
-git clone https://github.com/tigrisdata/fdb-profile-analyzer
-cd fdb-profile-analyzer
-make testenv_up        # start FoundationDB, ClickHouse and Grafana, turn profiling on
-make testenv_verify    # check every service, including Grafana -> ClickHouse
-make load_start        # continuous load plus the ingester, in containers
-make load_logs         # watch the load cycles and the ingester's flushes
-```
-
-Open
-[localhost:3000/d/fdb-profile-analyzer](http://localhost:3000/d/fdb-profile-analyzer).
-On a cold start, the `fdb` container reports unhealthy until initialization
-creates the database and enables profiling. Clients flush their profiles every
-ten seconds, and the daemon polls for those records. Allow a couple of minutes
-for data to appear in the dashboard.
-
-We ran into three more problems when testing clients outside the bundled load
-generator:
-
-- `fdbcli` disables profiling for its own transactions on startup, so nothing
-  you do from the CLI will ever show up.
-- Go clients only queue a profile record when the transaction object is
-  finalized, which happens from a garbage collector callback. A short-lived
-  client with no GC pressure writes nothing at all.
-- Clients flush every ten seconds, so a process that commits and exits
-  immediately takes its profile records with it.
-
-To use a real cluster, download the release binary or the
-`quay.io/tigrisdata/fdb-profile-analyzer` image. Point `config.yaml` at your
-cluster file and ClickHouse instance. Replace the sample prefixes with your own.
-
-Before deployment, decide whether to enable `capture_mutation_values`. Hotspot
-analysis only needs mutation keys. The values contain your application’s data.
-Unless you need to keep those values, disable their capture.
-
-Start with prefixes you recognize and collect a baseline before the next deploy.
-That gives you something to compare when a key suddenly gets busy.
 
 <InlineCta
   title="Try fdb-profile-analyzer"
