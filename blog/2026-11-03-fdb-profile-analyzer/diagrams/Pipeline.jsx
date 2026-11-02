@@ -6,37 +6,39 @@
 
 import { AsciiFigure } from "@site/src/components/AsciiFigure";
 
+// 42rem is Tailwind's max-w-2xl; the site does not ship Tailwind, so the
+// value is inlined. Auto side margins center the block in the column.
+const WRAP_STYLE = { maxWidth: "42rem", margin: "0 auto" };
+
 const LINES = [
   [
-    "  ",
     ["gray", "┌──────────────┐"],
-    "    ",
+    "   ",
     ["gray", "┌──────────────────────┐"],
-    "    ",
+    "   ",
     ["gray", "┌────────────┐"],
-    "    ",
+    "   ",
     ["gray", "┌─────────┐"],
   ],
   [
-    "  ",
     ["gray", "│"],
     " ",
     ["base", "FoundationDB"],
     " ",
     ["gray", "│"],
-    ["cyan", "───▶"],
+    ["cyan", "──▶"],
     ["gray", "│"],
     " ",
     ["base", "fdb-profile-analyzer"],
     " ",
     ["gray", "│"],
-    ["cyan", "───▶"],
+    ["cyan", "──▶"],
     ["gray", "│"],
     " ",
     ["base", "ClickHouse"],
     " ",
     ["gray", "│"],
-    ["cyan", "───▶"],
+    ["cyan", "──▶"],
     ["gray", "│"],
     " ",
     ["base", "Grafana"],
@@ -44,36 +46,35 @@ const LINES = [
     ["gray", "│"],
   ],
   [
-    "  ",
     ["gray", "└──────────────┘"],
-    "    ",
+    "   ",
     ["gray", "└──────────────────────┘"],
-    "    ",
+    "   ",
     ["gray", "└────────────┘"],
-    "    ",
+    "   ",
     ["gray", "└─────────┘"],
   ],
   [
-    "    ",
+    " ",
     ["gray", "profile keyspace,"],
-    "   ",
+    "  ",
     ["gray", "a Go daemon: tails from"],
-    "     ",
+    "    ",
     ["gray", "three tables,"],
-    "     ",
-    ["gray", "one dashboard,"],
+    "    ",
+    ["gray", "one dashboard"],
   ],
   [
-    "    ",
+    " ",
     ["gray", "a ring buffer"],
-    "       ",
+    "      ",
     ["gray", "a cursor, read-only,"],
-    "        ",
+    "       ",
     ["gray", "30 / 7 day TTLs"],
-    "   ",
-    ["gray", "every engineer"],
+    "  ",
+    ["gray", "for everyone"],
   ],
-  ["                        ", ["gray", "at most 32 MB per poll"]],
+  ["                    ", ["gray", "at most 32 MB per poll"]],
 ];
 
 export default function Pipeline({
@@ -82,11 +83,13 @@ export default function Pipeline({
   fontSize,
 }) {
   return (
-    <AsciiFigure
-      label={label}
-      title={title}
-      lines={LINES}
-      fontSize={fontSize}
-    />
+    <div style={WRAP_STYLE}>
+      <AsciiFigure
+        label={label}
+        title={title}
+        lines={LINES}
+        fontSize={fontSize}
+      />
+    </div>
   );
 }

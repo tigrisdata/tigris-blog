@@ -134,18 +134,24 @@ const STEPS = [
 const LABEL = "FIG 03";
 const TITLE = "two transactions touch one key, and the loser does it all again";
 
+// 42rem is Tailwind's max-w-2xl; the site does not ship Tailwind, so the
+// value is inlined. Auto side margins center the block in the column.
+const WRAP_STYLE = { maxWidth: "42rem", margin: "0 auto" };
+
 export default function ConflictRetry({
   label = LABEL,
   title = TITLE,
   fontSize,
 }) {
   return (
-    <AnimatedAsciiFigure
-      label={label}
-      title={title}
-      lines={LINES}
-      steps={STEPS}
-      fontSize={fontSize}
-    />
+    <div style={WRAP_STYLE}>
+      <AnimatedAsciiFigure
+        label={label}
+        title={title}
+        lines={LINES}
+        steps={STEPS}
+        fontSize={fontSize}
+      />
+    </div>
   );
 }
