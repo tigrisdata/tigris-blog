@@ -269,10 +269,10 @@ dashboard and what it tells you about the workload.
 
 The query analyzer table has one row per prefix and operation type, ranked by
 Load. That’s total operation time divided by the length of the selected window:
-the average number of operations in flight. It’s PMM’s ranking metric, so it
-accounts for both operation duration and frequency. In the clip, `/users`
-commits sit on top because commits are slow and there are a lot of them, even
-though `get_version` calls are more numerous.
+the average number of operations in flight. It’s the same ranking metric used by
+Percona Monitoring and Management, accounting for both operation duration and
+frequency. In the clip, `/users` commits sit on top because commits are slow and
+there are a lot of them, even though `get_version` calls are more numerous.
 
 Narrow the key prefix filter to `/users` and the whole dashboard follows. The
 throughput chart underneath now shows activity for that prefix.
