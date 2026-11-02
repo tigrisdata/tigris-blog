@@ -148,12 +148,13 @@ const TITLE = "the profiling ring buffer, two writes after it fills";
 
 // The figure is 64 columns wide, so at full article width most of the panel
 // is empty. 42rem is Tailwind's max-w-2xl; the site does not ship Tailwind,
-// so the value is inlined.
-const MAX_WIDTH = "42rem";
+// so the value is inlined. Auto side margins keep the block centred in the
+// article column.
+const WRAP_STYLE = { maxWidth: "42rem", margin: "0 auto" };
 
 export default function RingBuffer({ label = LABEL, title = TITLE, fontSize }) {
   return (
-    <div style={{ maxWidth: MAX_WIDTH }}>
+    <div style={WRAP_STYLE}>
       <AnimatedAsciiFigure
         label={label}
         title={title}
