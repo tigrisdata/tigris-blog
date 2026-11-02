@@ -1,0 +1,381 @@
+---
+slug: fdb-profile-analyzer
+title: "FoundationDB didn't have a database analyzer. So we built one."
+description: |
+  FoundationDB keeps minutes of profiling data and no query text to group it
+  by. fdb-profile-analyzer keeps that history in ClickHouse and shows it in
+  Grafana.
+keywords:
+  - foundationdb
+  - database profiling
+  - query analytics
+  - hot keys
+  - transaction conflicts
+  - clickhouse
+  - grafana
+  - observability
+  - database performance
+  - tigris
+authors:
+  - pboros
+  - xe
+tags:
+  - Engineering
+  - foundationdb
+  - clickhouse
+  - grafana
+  - observability
+  - database
+---
+
+import InlineCta from "@site/src/components/InlineCta";
+import loadByPrefix from "./load-by-prefix.mp4";
+import hotspots from "./hotspots.mp4";
+import conflicts from "./conflicts.mp4";
+import overTime from "./over-time.mp4";
+import { RingBuffer, Pipeline, ConflictRetry } from "./diagrams";
+
+When a deploy changes how we use FoundationDB, we want to compare the database
+load before and after it. That gets awkward when the profiling data from before
+the deploy is already gone. In the test bed for our analyzer, a 100 MB profiling
+buffer holds about ten minutes of history under load.
+
+At Tigris, we needed that history to survive long enough to investigate it. We
+also wanted engineers to open a dashboard and see which keys were busy, without
+waiting for someone with cluster access to run a profiling script. Peter built
+[fdb-profile-analyzer](https://github.com/tigrisdata/fdb-profile-analyzer) to
+collect those records in ClickHouse and make them available in Grafana.
+
+{/* truncate */}
+
+## Finding load without query text
+
+With a relational database, you can group expensive queries by their SQL text
+and use `EXPLAIN` to investigate their execution plans.
+[FoundationDB](https://www.foundationdb.org/) gives us an ordered key-value
+store. It has no tables or query text to group by, so we need to ask about the
+keys our application reads and writes:
+
+- Which keys or keyspaces are getting the most traffic?
+- Where are transactions conflicting and retrying?
+- Are any regions of the keyspace responsible for disproportionate load?
+- Has our access pattern changed since the last deploy?
+
+Client transaction profiles contain the data we need, but getting from those
+records to an answer takes some work.
+
+## Profiling history expires
+
+If you’ve used a console’s capture button to save the last few seconds of
+gameplay, you’ve used a ring buffer. New video and audio replace the oldest
+recording as you play. You can save the attack that just won the fight, but the
+one from an hour ago is gone unless you saved it earlier.
+
+<RingBuffer />
+
+FoundationDB’s profiling data is also stored in a ring buffer. You turn client
+transaction profiling on with one `fdbcli` command:
+
+```text
+fdb> profile client set 1.0 100MB
+```
+
+Every client then samples its transactions (all of them, at a rate of 1.0) and
+writes records for seven event types (`get`, `get_range`, `get_version`,
+`commit`, and the three `error_*` variants) into a size-capped keyspace inside
+the database. When that keyspace hits 100 MB, FoundationDB trims the oldest
+records first. In the test bed that ships with the analyzer, the buffer fills
+about ten minutes after you turn the load on and stays full from then on. As new
+transactions are committed, the old profiling data is overwritten. Without a
+separate copy, that history is gone.
+
+A few minutes is enough for a spot check. At Tigris, we also need to know
+whether a key got hotter after a deploy or whether conflicts started on Tuesday.
+We need to keep the records before we know which ones we’ll want.
+
+## Getting to the profiles before they expire
+
+FoundationDB ships
+[a Python script](https://github.com/apple/foundationdb/blob/main/contrib/transaction_profiling_analyzer/transaction_profiling_analyzer.py)
+that reads the profiles and analyzes them or exports them for further analysis.
+An engineer with cluster access runs it, investigates the output, and shares the
+results with the team.
+
+This works. An earlier version of that process helped us discover inefficient
+stats writes, which contributed to
+[moving our async work to Kafka](https://www.tigrisdata.com/blog/quick-fdb-kafka/).
+But someone needs to be awake, have the right access, and get the script running
+while the records are still there. I seem to have stepped on a Python in a past
+life, because my Python environment problems regularly confuse people who know
+what they’re doing.
+
+Even with a working environment, running the script after an incident won’t
+recover records the buffer has already discarded. Comparing a deployment with
+yesterday requires collecting yesterday’s data.
+
+## We made the database analyzer we wanted
+
+Peter designed the analyzer around the questions we were used to asking of SQL
+databases:
+
+| SQL                                       | FoundationDB                                     |
+| ----------------------------------------- | ------------------------------------------------ |
+| What queries are expensive?               | Which keyspace is generating load?               |
+| What queries need indices?                | Which key or keyspace is becoming a new hotspot? |
+| Where are transactions waiting on locks?  | Where are transactions conflicting and retrying? |
+| Which query regressed after a deployment? | Which keyspace access pattern changed?           |
+
+The model was
+[Percona Monitoring and Management](https://www.percona.com/software/pmm) and
+its Query Analytics view: group by normalized query, rank by Load, drill down.
+FoundationDB has no query text to normalize, so the grouping dimension had to
+come from somewhere else.
+
+### Grouping operations by key prefix
+
+Our application decides how to lay out its keys. Prefixes give us names for
+those regions of the keyspace, so we can group activity by the data it touches.
+
+You tell the analyzer what your prefixes are in `config.yaml`:
+
+```yaml
+prefixes:
+  - /users
+  - /orders
+  - /events
+```
+
+With those prefixes configured, we can compare activity across `/users`,
+`/orders`, and `/events`. Longest match wins, so a specific prefix can sit
+alongside a broader one. Keys that match nothing get labelled with their own
+first 16 bytes plus `(unknown)`, so you can see where unclassified traffic comes
+from and decide which prefix to add next.
+
+### Overall architecture
+
+None of this depends on the Record Layer or any other layer. Tigris runs vanilla
+FoundationDB, and the analyzer only needs a cluster with client profiling turned
+on.
+
+<Pipeline />
+
+The analyzer copies FoundationDB’s client profiles into ClickHouse. Grafana
+queries that copy, so investigating old traffic doesn’t require reading from the
+production cluster.
+
+A Go daemon tails the profile keyspace from a cursor, decodes the records
+(including the ones FoundationDB splits into chunks when a transaction has too
+many mutations to fit in one record), and batches them into three ClickHouse
+tables: one row per operation, one row per mutation, and one row per conflict
+range.
+
+The tables carry their own TTLs (30 days for operations, 7 for mutations and
+conflict ranges), so retention is a schema setting rather than a cron job
+someone has to remember. Delivery is at-least-once, and the tables are
+`ReplacingMergeTree` so a replayed batch collapses into the original rows
+instead of double counting.
+
+## Profiling a busy cluster adds more work
+
+Reading profiles from the production database adds read load. During an
+incident, that’s an inconvenient time to ask the cluster to do more work just so
+we can figure out why it’s struggling.
+
+To limit that load, the daemon follows the profile keyspace with a read budget.
+It polls every two seconds and reads at most 32 MB of profile data per poll, and
+it never writes to FoundationDB at all; its cursor lives in ClickHouse. If the
+cluster produces profile records faster than that budget allows, the daemon
+falls behind, and FoundationDB trims the unread records out of the ring buffer
+like it would have anyway.
+
+Keeping that read budget means we can lose history. When it happens, the
+dashboard marks the gap. A red annotation appears across every panel at the
+moment of the loss, a History loss stat counts gap events and dropped records
+for the window, and the daemon logs a warning with the trimmed version range.
+The hole can’t be recovered, and the charts under-report for that window. If
+gaps keep showing up, the fix is an operator decision: run the ingester
+somewhere more reliable, give the buffer more room, or lower the sample rate.
+
+Sampling reduces the volume of profile data. To account for rates below 1.0, the
+dashboard records the rate over time. Every count column has an `Est.` sibling
+that scales the sampled count up to a cluster-wide estimate. The measured number
+stays next to the estimate instead of being replaced by it.
+
+## What it looks like
+
+### What’s putting load on the database?
+
+<video
+  controls
+  muted
+  playsInline
+  preload="metadata"
+  width="100%"
+  height="auto"
+  style={{ marginBottom: "1rem", marginTop: "1rem" }}
+>
+  <source src={loadByPrefix} type="video/mp4" />
+</video>
+
+The query analyzer table is one row per prefix and operation type, ranked by
+Load: total time spent divided by the wall-clock length of the window, which
+works out to the average number of operations in flight. It’s PMM’s ranking
+metric, so it accounts for both operation duration and frequency. In the clip,
+`/users` commits sit on top because commits are slow and there are a lot of
+them, even though `get_version` calls are more numerous.
+
+Narrow it with the key prefix filter and the whole dashboard follows, so the
+throughput chart underneath becomes “what is `/users` doing” instead of “what is
+the cluster doing”.
+
+### Are we creating hotspots?
+
+<video
+  controls
+  muted
+  playsInline
+  preload="metadata"
+  width="100%"
+  height="auto"
+  style={{ marginBottom: "1rem", marginTop: "1rem" }}
+>
+  <source src={hotspots} type="video/mp4" />
+</video>
+
+FoundationDB shards the keyspace into ranges and assigns each range to a team of
+storage servers. A flat distribution of reads spreads the work across the whole
+cluster. One hot key pins it to one team, and that team becomes the ceiling for
+everyone who touches the key. Prefix-level aggregates can hide this, which is
+why the hotspot tables rank individual keys and carry a running cumulative
+share.
+
+In the clip, `/users/hot/key` alone is 35% of all reads in the window, and the
+next key down is another 14%. Filter to `/events` and every key gets the same
+share, showing an even distribution in this workload. Under the per-key tables,
+the hot keyspace regions panel rolls keys up by their first N bytes, so a busy
+region shows up even when no single key in it is hot.
+
+### Where are conflicts happening?
+
+FoundationDB uses optimistic concurrency control. There are no locks and no
+deadlocks. A transaction reads what it wants, writes what it wants, and at
+commit time the cluster checks whether anything it read was changed by a
+transaction that committed in the meantime. If so, the commit fails with error
+1020, `not_committed`, and the client is expected to retry from the top.
+
+<ConflictRetry />
+
+A retry repeats the transaction’s reads. Under enough contention, those retries
+add load and compete with new transactions for the same keys.
+
+<video
+  controls
+  muted
+  playsInline
+  preload="metadata"
+  width="100%"
+  height="auto"
+  style={{ marginBottom: "1rem", marginTop: "1rem" }}
+>
+  <source src={conflicts} type="video/mp4" />
+</video>
+
+In the conflicts section, commits are drawn against conflicts over time, and the
+table next to it lists the ranges most often carried by losing transactions. The
+`read` rows show read conflict ranges from failed transactions; the `write` rows
+show their write conflict ranges. The top ranges give us somewhere to start
+investigating contention. Set the operation filter to `error_commit` and the
+recent operations table at the bottom becomes a list of the failed commits
+themselves, each with its error code and transaction ID.
+
+### What changed over time?
+
+<video
+  controls
+  muted
+  playsInline
+  preload="metadata"
+  width="100%"
+  height="auto"
+  style={{ marginBottom: "1rem", marginTop: "1rem" }}
+>
+  <source src={overTime} type="video/mp4" />
+</video>
+
+Keeping the records lets us compare activity across a deployment. This clip is
+staged: the “release” at 11:30 is a second load generator hammering one
+`/orders` key, and the “fix” at 11:38 is turning it off. Both are ordinary
+Grafana annotations. Throughput and conflicts step up at the release and step
+back down at the fix, and the hotspot table viewed before, during and after
+shows `/orders/hot/key` appear at the top and then disappear.
+
+Once we’ve collected a baseline, we can make that comparison across a real
+deployment. Seeing the conflicts drop after a fix gives us more to go on than
+waiting to see whether anyone pages us.
+
+## Giving it to everyone
+
+Engineers can open the dashboard in our Grafana and compare an optimization with
+earlier behavior. They don’t need cluster access or a working Python environment
+to get the profiles. Database specialists can spend that time investigating the
+results.
+
+Several FoundationDB clusters feed one ClickHouse in production. Every row
+carries the `cluster_name` configured for its daemon. The dashboard’s cluster
+dropdown lets us switch between them.
+
+## Setup directions
+
+The repository includes a Docker Compose test bed with FoundationDB 7.3,
+ClickHouse, Grafana, and the load generator used in the clips.
+
+Before you start, install Go and the
+[FoundationDB client package](https://github.com/apple/foundationdb/releases).
+The `make testenv_up` command runs a Go program on the host to wait for the
+cluster. That program links against FoundationDB’s client library, even though
+the server runs in Docker. Moving this step into a container is on the list.
+
+```shell
+git clone https://github.com/tigrisdata/fdb-profile-analyzer
+cd fdb-profile-analyzer
+make testenv_up        # start FoundationDB, ClickHouse and Grafana, turn profiling on
+make testenv_verify    # check every service, including Grafana -> ClickHouse
+make load_start        # continuous load plus the ingester, in containers
+make load_logs         # watch the load cycles and the ingester's flushes
+```
+
+Open
+[localhost:3000/d/fdb-profile-analyzer](http://localhost:3000/d/fdb-profile-analyzer).
+On a cold start, the `fdb` container reports unhealthy until initialization
+creates the database and enables profiling. Clients flush their profiles every
+ten seconds, and the daemon polls for those records. Allow a couple of minutes
+for data to appear in the dashboard.
+
+We ran into three more problems when testing clients outside the bundled load
+generator:
+
+- `fdbcli` disables profiling for its own transactions on startup, so nothing
+  you do from the CLI will ever show up.
+- Go clients only queue a profile record when the transaction object is
+  finalized, which happens from a garbage collector callback. A short-lived
+  client with no GC pressure writes nothing at all.
+- Clients flush every ten seconds, so a process that commits and exits
+  immediately takes its profile records with it.
+
+To use a real cluster, download the release binary or the
+`quay.io/tigrisdata/fdb-profile-analyzer` image. Point `config.yaml` at your
+cluster file and ClickHouse instance. Replace the sample prefixes with your own.
+
+Before deployment, decide whether to enable `capture_mutation_values`. Hotspot
+analysis only needs mutation keys. The values contain your application’s data.
+Unless you need to keep those values, disable their capture.
+
+Start with prefixes you recognize and collect a baseline before the next deploy.
+That gives you something to compare when a key suddenly gets busy.
+
+<InlineCta
+  title="Try fdb-profile-analyzer"
+  subtitle="fdb-profile-analyzer is open source and runs against any FoundationDB cluster with client profiling turned on. Tigris runs it against the clusters that hold your object metadata."
+  button="Get the code"
+  link="https://github.com/tigrisdata/fdb-profile-analyzer"
+/>
