@@ -18,7 +18,6 @@ keywords:
   - tigris
 authors:
   - pboros
-  - xe
 tags:
   - Engineering
   - foundationdb
@@ -28,6 +27,7 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
+import demo from "./fdb-profile-analyzer-demo.mp4";
 import loadByPrefix from "./load-by-prefix.mp4";
 import hotspots from "./hotspots.mp4";
 import conflicts from "./conflicts.mp4";
@@ -235,7 +235,20 @@ That gives you something to compare when a key suddenly gets busy.
 ## What it looks like
 
 If you want to follow along, spin up the test environment above and open
-Grafana. Let’s put some load on the database and see where it shows up.
+Grafana. The demo walks through common failure cases, including hot keys and
+transaction conflicts, and how to investigate them in the dashboard.
+
+<video
+  controls
+  playsInline
+  preload="metadata"
+  width="100%"
+  height="auto"
+  aria-label="FoundationDB profile analyzer demo: investigating common failure cases"
+  style={{ marginBottom: "1rem", marginTop: "1rem" }}
+>
+  <source src={demo} type="video/mp4" />
+</video>
 
 ### What’s putting load on the database?
 
