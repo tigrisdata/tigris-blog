@@ -47,6 +47,21 @@ collect those records in ClickHouse and make them available in Grafana.
 
 {/* truncate */}
 
+<video
+  controls
+  playsInline
+  preload="metadata"
+  width="100%"
+  height="auto"
+  aria-label="FoundationDB profile analyzer demo: investigating common failure cases"
+  style={{ marginBottom: "1rem", marginTop: "1rem" }}
+>
+  <source src={demo} type="video/mp4" />
+</video>
+
+The demo walks through common failure cases, including hot keys and transaction
+conflicts, and how to investigate them in the dashboard.
+
 ## Finding load without query text
 
 With a relational database, you can group expensive queries by their SQL text
@@ -235,22 +250,9 @@ That gives you something to compare when a key suddenly gets busy.
 ## What it looks like
 
 If you want to follow along, spin up the test environment above and open
-Grafana. The demo walks through common failure cases, including hot keys and
-transaction conflicts, and how to investigate them in the dashboard.
+Grafana.
 
-<video
-  controls
-  playsInline
-  preload="metadata"
-  width="100%"
-  height="auto"
-  aria-label="FoundationDB profile analyzer demo: investigating common failure cases"
-  style={{ marginBottom: "1rem", marginTop: "1rem" }}
->
-  <source src={demo} type="video/mp4" />
-</video>
-
-Below, I’ll break down each case from the demo: what to look for in the
+Below, I’ll break down each case from the demo above: what to look for in the
 dashboard and what it tells you about the workload.
 
 ### What’s putting load on the database?
