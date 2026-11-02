@@ -117,21 +117,21 @@ const STEPS = [
     show: ["s0", "s1", "kept", "h0", "hd0"],
     caption:
       "write #8: the buffer is full and the head wraps back to the start",
-    ms: 2600,
+    ms: 1200,
   },
   {
     show: ["w0", "v0", "h1", "hd1"],
     focus: ["w0", "v0", "s0", "h1", "hd1"],
     text: AFTER_T9,
     caption: "write #9: t9 lands on top of t1 and the head moves on",
-    ms: 2800,
+    ms: 2000,
   },
   {
     show: ["w1", "v1", "h2", "hd2"],
     focus: ["w1", "v1", "s1", "h2", "hd2"],
     text: AFTER_T10,
     caption: "write #10: t10 lands on top of t2",
-    ms: 2800,
+    ms: 2000,
   },
   // The figure as a still, which is where it stops.
   {
@@ -146,14 +146,21 @@ const STEPS = [
 const LABEL = "FIG 01";
 const TITLE = "the profiling ring buffer, two writes after it fills";
 
+// The figure is 64 columns wide, so at full article width most of the panel
+// is empty. 42rem is Tailwind's max-w-2xl; the site does not ship Tailwind,
+// so the value is inlined.
+const MAX_WIDTH = "42rem";
+
 export default function RingBuffer({ label = LABEL, title = TITLE, fontSize }) {
   return (
-    <AnimatedAsciiFigure
-      label={label}
-      title={title}
-      lines={LINES}
-      steps={STEPS}
-      fontSize={fontSize}
-    />
+    <div style={{ maxWidth: MAX_WIDTH }}>
+      <AnimatedAsciiFigure
+        label={label}
+        title={title}
+        lines={LINES}
+        steps={STEPS}
+        fontSize={fontSize}
+      />
+    </div>
   );
 }
