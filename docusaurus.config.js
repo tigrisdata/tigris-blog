@@ -38,11 +38,6 @@ const config = {
   onBrokenMarkdownLinks: "throw",
   trailingSlash: true,
 
-  markdown: {
-    mermaid: true,
-  },
-  themes: ["@docusaurus/theme-mermaid"],
-
   headTags: [
     {
       tagName: "link",

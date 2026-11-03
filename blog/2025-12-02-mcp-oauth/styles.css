@@ -96,13 +96,3 @@ img.install-btn {
     line-height: 2rem;
   }
 }
-
-.docusaurus-mermaid-container {
-  display: flex;
-  margin-left: auto;
-  margin-right: auto;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 2rem;
-  margin-top: 2rem;
-}

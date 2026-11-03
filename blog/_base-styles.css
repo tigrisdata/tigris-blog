@@ -174,17 +174,3 @@ img.install-btn {
     display: block;
   }
 }
-
-/*
- * Used by: mcp-oauth
- * Mermaid diagram centering
- */
-.docusaurus-mermaid-container {
-  display: flex;
-  margin-left: auto;
-  margin-right: auto;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 2rem;
-  margin-top: 2rem;
-}
