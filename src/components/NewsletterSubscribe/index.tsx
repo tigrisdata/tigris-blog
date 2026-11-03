@@ -68,7 +68,6 @@ export default function NewsletterSubscribe(
       })
       .catch(() => {
         // console.error(err);
-        // eslint-disable-next-line @typescript-eslint/comma-dangle
       })
   );
 

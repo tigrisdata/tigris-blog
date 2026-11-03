@@ -38,7 +38,7 @@ export function onRouteDidUpdate({ location, previousLocation }) {
         el.setAttribute("href", href.toString());
       });
     }
-  } catch (e) {
+  } catch {
     console.warn("Error augmenting Tigris Console links with pid query param");
   }
 }
