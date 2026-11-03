@@ -1,7 +1,7 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-/* eslint @typescript-eslint/no-var-requires: "off" */
+/* eslint @typescript-eslint/no-var-requires: "off", @typescript-eslint/no-require-imports: "off" */
 
 // Needed for testing with environment variables locally
 // On Vercel the environment variables are automatically injected
