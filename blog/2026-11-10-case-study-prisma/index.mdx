@@ -218,8 +218,9 @@ a 10 ms floor.
 
 Prisma measured the operation agents do most, a small read, from six regions
 and a plane. Tigris was faster at every dataset size, and Prisma Buckets now
-run on it. If you are putting an agent's files in
-a bucket, measure that read first.
+run on it. If you are backing an agent's filesystem
+with object storage, benchmark serial small-object GET latency from the
+regions your agents run in before you benchmark anything else.
 
 <InlineCta
   title="Give your agents a filesystem that works from any region"
