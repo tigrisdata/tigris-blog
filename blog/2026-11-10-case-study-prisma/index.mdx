@@ -38,8 +38,8 @@ This post is the Tigris side of that story._
 
 An AI agent that treats a bucket as its filesystem does not read one big
 object. It reads thousands of small ones, one after another, and waits on each
-before it can ask for the next. On that workload the fastest read a store can
-return matters more than its peak throughput.
+before it can ask for the next. Read latency decides how fast the agent runs.
+Throughput barely matters.
 
 [Prisma](https://www.prisma.io/) is building
 [Prisma Compute](https://www.prisma.io/compute), a platform that runs Bun in
@@ -125,11 +125,11 @@ to 265.8 seconds against 860.7, still 3.2x. Every region favored Tigris, from
 | N. Virginia   | 216 s / 438 s        | 219 s / 498 s | 304 s / 686 s  |
 | N. California | 82 s / 767 s         | 151 s / 891 s | 233 s / 1033 s |
 
-Søren's read of the result is that the global bucket model handled the
-workload's shape much better than R2's regional buckets did, even with an R2
-bucket created near every Compute region. A Tigris bucket is one namespace
-with data placed near the requests it receives, so the six regions shared one
-durable copy of the dataset instead of six that would need to be kept in sync.
+One global bucket beat six regional ones in every region, even with each R2
+bucket created right next to its Compute region. A Tigris bucket is one
+namespace with data placed near the requests it receives, so the six regions
+shared one durable copy of the dataset instead of six that would need to be
+kept in sync. Prisma went with the faster store.
 
 He also ran the 50 MiB workload from a plane over Starlink. Tigris finished in
 248.5 seconds; R2 took 618.5 seconds, 2.5x longer.
