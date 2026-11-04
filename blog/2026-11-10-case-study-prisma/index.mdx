@@ -72,7 +72,7 @@ S3-compatible providers that publish no-egress pricing and are built for use
 outside a single hyperscaler: Tigris and Cloudflare R2. AWS S3 and S3 Express
 One Zone came in later, in a separate probe from Frankfurt.
 
-## Six regions, one load test
+## The benchmark
 
 <div className="mermaid-frame">
   <BenchmarkSetup />
@@ -108,7 +108,7 @@ cache, the two converged at 423 ms and 436 ms, because past the cache every
 read pays object store latency directly. The difference shows up on cache
 hits, which are most reads.
 
-## One global bucket instead of six regional ones
+## Why the global bucket won
 
 The mixed read/write phase, averaged across all six regions, took 109.5
 seconds on Tigris and 578.7 seconds on R2 at 50 MiB. At 5 GiB the gap narrowed
@@ -124,11 +124,11 @@ to 265.8 seconds against 860.7, still 3.2x. Every region favored Tigris, from
 | N. Virginia   | 216 s / 438 s        | 219 s / 498 s | 304 s / 686 s  |
 | N. California | 82 s / 767 s         | 151 s / 891 s | 233 s / 1033 s |
 
-One global bucket beat six regional ones in every region, even with each R2
-bucket created right next to its Compute region. A Tigris bucket is one
-namespace with data placed near the requests it receives, so the six regions
-shared one durable copy of the dataset instead of six that would need to be
-kept in sync. Prisma went with the faster store.
+Tigris won in every region, even though each R2 bucket had been created
+right next to its Compute region. A Tigris bucket is a single namespace with
+data placed near the requests it receives, so all six regions read from the
+same durable copy of the dataset and nothing had to be kept in sync. Prisma
+went with the faster store.
 
 He also ran the 50 MiB workload from a plane over Starlink. Tigris finished in
 248.5 seconds; R2 took 618.5 seconds, 2.5x longer.
@@ -215,15 +215,15 @@ bucket, Prisma does not pay egress on what its users read back, and the small
 files that agents and apps write by the thousand come back from a store with
 a 10 ms floor.
 
-## Conclusion: one bucket, every region
+## Conclusion
 
 Prisma measured the operation agents do most, a small read, from six regions
-and a plane. A single Tigris bucket beat six regional buckets at every dataset
-size, and Prisma Buckets now run on it. If you are putting an agent's files in
+and a plane. Tigris was faster at every dataset size, and Prisma Buckets now
+run on it. If you are putting an agent's files in
 a bucket, measure that read first.
 
 <InlineCta
-  title="Give your agents a filesystem that spans every region"
-  subtitle="One global bucket, no egress fees, and a read floor near 10 ms."
+  title="Give your agents a filesystem that works from any region"
+  subtitle="A global bucket with no egress fees and a read floor near 10 ms."
   button="Create a bucket"
 />

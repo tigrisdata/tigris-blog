@@ -28,7 +28,7 @@ const LINES = [
 
 export default function BenchmarkSetup({
   label = "FIG 01",
-  title = "Six Prisma Compute regions share one Tigris bucket; R2 gets a bucket per region",
+  title = "Every Prisma Compute region shares the same Tigris bucket; R2 gets a bucket per region",
   fontSize,
 }) {
   return (
