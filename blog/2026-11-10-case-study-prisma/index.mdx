@@ -31,32 +31,36 @@ import BreakoutQuote from "@site/src/components/BreakoutQuote";
 import BenchmarkSetup from "./diagrams/BenchmarkSetup";
 import sorenBramerSchmidt from "./soren-bramer-schmidt.webp";
 
-[Prisma's](https://www.prisma.io/) team set out to give AI agents on
-[Prisma Compute](https://www.prisma.io/compute) a filesystem far larger than
-the microVM they run in, backed by object storage, without paying egress on
-every byte an agent reads back. The workload is thousands of small serial
-reads, so the store with the lowest latency floor would win. Co-founder Søren
-Bramer Schmidt benchmarked Tigris and Cloudflare R2 from all six Compute
-regions, published the
-[full results](https://www.prisma.io/blog/evaluating-object-storage-providers-for-prisma-compute),
-and shipped Prisma Buckets on Tigris.
+[Prisma](https://www.prisma.io/) is best known for its TypeScript ORM. In
+2026 the team built [Prisma Compute](https://www.prisma.io/compute), a
+platform that runs Bun in microVMs across six regions, and started adding the
+services an app needs alongside it: Postgres, and then S3-compatible Buckets
+for files.
+
+Buckets had a specific job to do. Prisma wanted AI agents on Compute to work
+with datasets far larger than the microVM's disk, so they wrote
+[accelerated-fs](https://github.com/prisma/accelerated-fs), a virtual
+filesystem that stores files as objects in a bucket and caches the hot ones
+locally. An agent using it reads thousands of small files one after another,
+which makes the latency of a single small read the number that decides how
+fast the agent runs.
+
+Before picking the object storage behind Buckets, co-founder Søren Bramer
+Schmidt benchmarked Tigris and Cloudflare R2 from every Compute region and
+published the
+[full results](https://www.prisma.io/blog/evaluating-object-storage-providers-for-prisma-compute).
+Prisma Buckets shipped on Tigris.
 
 {/* truncate */}
 
 ## Giving agents a filesystem bigger than the machine
 
-An agent running in a microVM has a small disk and often needs a large
-dataset. Søren's example is an agent that stores and indexes all of your email
-so it can grep through it. Prisma's answer is
-[accelerated-fs](https://github.com/prisma/accelerated-fs), a virtual
-filesystem that packs small files into objects in a bucket and serves reads
-through a local cache. The cache absorbs repeat reads; everything else is a
-round trip to the object store.
-
-That round trip is the whole problem. An agent using accelerated-fs does not
-read one big object. It reads thousands of small ones, one after another, and
-waits on each before it can ask for the next. The agent's speed is the latency
-of each read, added up thousands of times.
+Søren's example is an agent that stores and indexes all of your email so it
+can grep through it. accelerated-fs packs those files into objects and serves
+reads through a 100 MiB local cache. The cache absorbs repeat reads;
+everything else is a round trip to the object store, and the agent waits on
+each one before it can ask for the next. Its speed is the latency of a single
+read, added up thousands of times.
 
 ## What Prisma needed
 
