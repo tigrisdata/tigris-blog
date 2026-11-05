@@ -70,9 +70,8 @@
 
 .metricLabel {
   margin: 0.3rem 0 0;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ifm-color-emphasis-600);
 }

@@ -547,12 +547,9 @@ html[data-theme="dark"] .footer {
 .footer__title,
 .footer__copyright,
 .footer__endpoint {
-  font-family: var(--ifm-font-family-monospace);
-  font-size: 10px;
-  font-weight: normal;
-  line-height: 1.5;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
-  letter-spacing: 0.16em;
   color: var(--footer-eyebrow-color);
 }
 
@@ -597,17 +594,18 @@ html[data-theme="dark"] .footer {
   margin-bottom: 0;
 }
 
+/* The 14px/24px here is the list item's box (the spacing between links), not
+   the links' type; the links themselves are set in body below. */
 .footer__item {
   margin-top: 0;
   font-size: 14px;
-  font-weight: normal;
   line-height: 24px;
-  letter-spacing: -0.005em;
 }
 
 .footer__link-item {
+  font: var(--type-body);
+  letter-spacing: normal;
   color: var(--footer-link-color);
-  line-height: 20px;
 }
 
 .footer__link-item:hover {
@@ -766,16 +764,10 @@ html:not([data-theme="dark"]) .footer__soc2 {
 }
 
 .footer__card-subtitle {
-  font-family: var(--ifm-font-family-monospace);
-  font-size: 10px;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  line-height: 1.5;
   color: var(--footer-eyebrow-color);
-}
-
-.footer__card--chip .footer__card-subtitle {
-  font-size: 9px;
 }
 
 .footer__ai-buttons {
@@ -798,11 +790,8 @@ html:not([data-theme="dark"]) .footer__soc2 {
   border: 1px solid var(--footer-button-border-color);
   border-radius: 8px;
   background-color: var(--footer-button-background-color);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 19.5px;
-  letter-spacing: -0.005em;
+  font: var(--type-body);
+  letter-spacing: normal;
   color: var(--footer-heading-color);
   cursor: pointer;
   transition: border-color 200ms ease, background-color 200ms ease,
@@ -1874,8 +1863,8 @@ table td {
   padding: 10px 14px;
 }
 .markdown table th {
-  font: 500 10px/1.4 "Geist Mono", ui-monospace, monospace;
-  letter-spacing: 0.16em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: #9a9aa4;
   white-space: nowrap;
@@ -2127,8 +2116,8 @@ html[data-theme="dark"] {
   align-items: center;
   margin-bottom: 0.625rem;
   padding: 0.1875rem 0.5rem;
-  font: 500 11px / 1.2 var(--ifm-font-family-monospace);
-  letter-spacing: 0.14em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--adm);
   background: var(--adm-tag-bg);
@@ -2211,8 +2200,8 @@ html[data-theme="dark"] {
 }
 
 .blog-meta-strip .label {
-  font: 500 10px/1 var(--ifm-font-family-monospace);
-  letter-spacing: 0.18em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--docs-color-text-100);
 }
@@ -2259,8 +2248,8 @@ html[data-theme="dark"] {
 
 .blog-meta-strip .blog-meta-tags a,
 .blog-meta-strip .blog-meta-tags-toggle {
-  font: 400 10.5px/1 var(--ifm-font-family-monospace);
-  letter-spacing: 0.1em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--docs-color-text-100);
   background: transparent;

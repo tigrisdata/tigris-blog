@@ -23,8 +23,8 @@
 
 .label {
   margin: 0 0.5rem 0 0;
-  font: 500 11px/1 var(--ifm-font-family-monospace);
-  letter-spacing: 0.18em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--docs-color-text-100);
 }

@@ -20,8 +20,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
-  font: 500 11px/1 var(--ifm-font-family-monospace);
-  letter-spacing: 0.18em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--docs-color-text-100);
 }
@@ -56,9 +56,8 @@
 .eyebrow {
   display: inline-block;
   margin-bottom: 0.5rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--accent-text);
 }

@@ -13,9 +13,8 @@
 .sectionLabel {
   display: block;
   margin-bottom: 0.85rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ifm-color-emphasis-600);
 }
@@ -65,9 +64,8 @@
 .eyebrow {
   display: inline-block;
   margin-bottom: 0.6rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--accent-text);
 }
