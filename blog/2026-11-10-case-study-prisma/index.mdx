@@ -183,10 +183,9 @@ Buckets are powered by Tigris.
 
 ## Conclusion
 
-Prisma set out to give agents on Prisma Compute a filesystem larger than the
-machine they run on, measured the operation that workload does most, a small
-serial read, from six regions and a plane, and picked the store with the
-lowest floor. Tigris was faster at every dataset size and in every region,
+Prisma measured the operation its agent filesystem does most, a small serial
+read, from six regions and a plane, and picked the store with the lowest
+floor. Tigris was faster at every dataset size and in every region,
 with no penalty for running outside AWS and no egress on what agents read
 back. Prisma Buckets now run on it, free for Prisma Compute users through the
 end of the year.
