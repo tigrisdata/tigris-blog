@@ -336,7 +336,7 @@ code {
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 html[data-theme="dark"] {
-  --ifm-color-primary: #4ed9b2;
+  --ifm-color-primary: var(--accent);
   --ifm-color-primary-dark: #36d4a7;
   --ifm-color-primary-darker: #2ccea1;
   --ifm-color-primary-darkest: #24aa85;
@@ -345,9 +345,9 @@ html[data-theme="dark"] {
   --ifm-color-primary-lightest: #97e9d2;
 
   /* On the dark ground the bright green is already high-contrast. */
-  --accent-text: #4ed9b2;
+  --accent-text: var(--accent);
 
-  --ifm-background-color: #0b181e;
+  --ifm-background-color: var(--surface-ground);
 
   --docs-color-border: #2a3731;
 
@@ -355,18 +355,23 @@ html[data-theme="dark"] {
   --docs-color-text-100: #bac1be;
 
   --docs-color-background: #161616;
-  --docs-color-background-100: #142229;
+  --docs-color-background-100: var(--surface-raised);
   --docs-color-background-200: #2a2a2a;
   --docs-color-background-300: #2e2e2e;
 
   --docs-color-code-background: #1e1e1e;
 
-  --ifm-link-color: #62feb5;
+  --ifm-link-color: var(--code-output);
   --ifm-tabs-color-active-border: #66debd;
   --ifm-tabs-color-active: #66debd;
 
-  --ifm-footer-background-color: #0b181e;
-  --ifm-background-surface-color: #0b181e;
+  --ifm-footer-background-color: var(--surface-ground);
+  --ifm-background-surface-color: var(--surface-ground);
+
+  /* Shared (:root) values that the light theme also uses, re-pointed for dark
+     only so light mode keeps its current colours. */
+  --docs-color-primary: var(--code-output);
+  --docs-color-primary-tint: var(--surface-raised);
   --ifm-toc-border-color: #2a3731;
 
   --ifm-color-content: #e7e7e7;
@@ -483,13 +488,33 @@ html[data-theme="dark"] .footer {
   --footer-link-color: #8fa3b0;
   --footer-link-hover-color: #ffffff;
   --footer-icon-color: #728f9a;
-  --footer-accent-color: #4ed9b2;
-  --footer-accent-border-color: rgba(78, 217, 178, 0.35);
-  --footer-accent-background-color: rgba(98, 254, 181, 0.08);
-  --footer-icon-surface-background-color: rgba(98, 254, 181, 0.06);
-  --footer-icon-surface-border-color: rgba(78, 217, 178, 0.28);
+  --footer-accent-color: var(--accent);
+  --footer-accent-border-color: color-mix(
+    in srgb,
+    var(--accent) 35%,
+    transparent
+  );
+  --footer-accent-background-color: color-mix(
+    in srgb,
+    var(--code-output) 8%,
+    transparent
+  );
+  --footer-icon-surface-background-color: color-mix(
+    in srgb,
+    var(--code-output) 6%,
+    transparent
+  );
+  --footer-icon-surface-border-color: color-mix(
+    in srgb,
+    var(--accent) 28%,
+    transparent
+  );
   --footer-heading-color: #ffffff;
-  --footer-card-background-color: rgba(11, 24, 30, 0.6);
+  --footer-card-background-color: color-mix(
+    in srgb,
+    var(--surface-panel) 60%,
+    transparent
+  );
   --footer-card-border-color: rgba(255, 255, 255, 0.08);
   --footer-button-background-color: #1a2d36;
   --footer-button-border-color: #1e3340;
@@ -1215,7 +1240,12 @@ table td {
 /* Copy Styling from the Webflow site */
 .is--color_gradient_back {
   -webkit-text-fill-color: inherit;
-  background-image: linear-gradient(90deg, #62feb5, #6cd3f5 44%, #836af7c9);
+  background-image: linear-gradient(
+    90deg,
+    var(--code-output),
+    #6cd3f5 44%,
+    #836af7c9
+  );
   background-clip: padding-box;
   border-radius: 24px;
   width: 100%;
@@ -1224,7 +1254,12 @@ table td {
 
 .is--color_gradient_back-2 {
   -webkit-text-fill-color: inherit;
-  background-image: linear-gradient(90deg, #62feb5, #6cd3f5 44%, #836af7c9);
+  background-image: linear-gradient(
+    90deg,
+    var(--code-output),
+    #6cd3f5 44%,
+    #836af7c9
+  );
   background-clip: padding-box;
   border-radius: 24px;
   width: 100%;
@@ -1251,7 +1286,7 @@ table td {
 }
 
 .sl_card_m-2 {
-  background-color: #142229;
+  background-color: var(--surface-raised);
   border: 1px solid #fff0;
   border-radius: 24px;
 }
@@ -1841,14 +1876,14 @@ table td {
   max-width: 100%;
   overflow-x: auto;
   border-collapse: collapse;
-  border: 1px solid #27272c;
+  border: 1px solid var(--line-subtle);
   border-radius: 4px;
-  background: #101013;
+  background: var(--surface-panel);
   margin: 2.25rem auto;
   font-family: "Geist Mono", ui-monospace, monospace;
   font-size: 12.5px;
   font-variant-numeric: tabular-nums;
-  color: #d2d2d7;
+  color: var(--text-body);
 }
 .markdown table thead tr {
   background: #17171b;
@@ -1859,14 +1894,14 @@ table td {
      `table :is(tr, td, th, thead)` rule paints on every cell, so the table
      plane, header tint, hover, and zebra stripes (all set on tr/table) show. */
   background-color: transparent;
-  border: 1px solid #27272c;
+  border: 1px solid var(--line-subtle);
   padding: 10px 14px;
 }
 .markdown table th {
   font: var(--type-label);
   letter-spacing: var(--track-label);
   text-transform: uppercase;
-  color: #9a9aa4;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 .markdown table tbody tr {
@@ -1880,7 +1915,7 @@ table td {
 .markdown table td:first-child {
   font-family: Geist, system-ui, sans-serif;
   font-size: 13.5px;
-  color: #e7e7ea;
+  color: var(--text-strong);
   white-space: nowrap;
 }
 .markdown table th:nth-child(n + 3),
@@ -1896,7 +1931,7 @@ table td {
    old/new pairing).
    ========================================================================== */
 .markdown .table-banded table {
-  border: 1px solid #27272c;
+  border: 1px solid var(--line-subtle);
   border-radius: 4px;
   /* keep horizontal scroll from the default rule (a bare `overflow: hidden`
      would clip wide comparison tables with no way to reach the off-screen
@@ -1908,7 +1943,7 @@ table td {
 }
 .markdown .table-banded table th {
   border: 0;
-  border-bottom: 1px solid #27272c;
+  border-bottom: 1px solid var(--line-subtle);
   padding: 11px 16px;
 }
 .markdown .table-banded table td {
@@ -1934,12 +1969,12 @@ table td {
 .markdown .table-banded table tbody tr td:first-child {
   border-left: 2px solid transparent;
   white-space: nowrap;
-  color: #e7e7ea;
+  color: var(--text-strong);
   font-family: inherit;
   font-size: inherit;
 }
 .markdown .table-banded table tbody tr:nth-child(even) td:first-child {
-  border-left-color: #8aa2ff;
+  border-left-color: var(--status-note);
 }
 
 /* Excalidraw diagram frame (see .claude/skills/excalidraw-diagrams) */
@@ -2041,16 +2076,15 @@ table td {
 }
 
 html[data-theme="dark"] {
-  --adm-note: #818cf8;
-  --adm-info: #38bdf8;
-  --adm-tip: #4ade80;
-  --adm-warning: #fbbf24;
-  --adm-danger: #f87171;
-  --adm-aside: #a78bfa;
+  --adm-note: var(--status-note);
+  --adm-info: var(--status-info);
+  --adm-tip: var(--status-tip);
+  --adm-warning: var(--status-warning);
+  --adm-danger: var(--status-danger);
+  --adm-aside: var(--status-aside);
 
-  --adm-panel-bg: var(--docs-color-background-100);
+  --adm-panel-bg: var(--surface-panel);
   --adm-panel-border: var(--docs-color-border);
-  --adm-tag-bg: rgba(255, 255, 255, 0.04);
 }
 
 .theme-admonition {
@@ -2124,6 +2158,12 @@ html[data-theme="dark"] {
   border: 1px solid var(--adm-panel-border);
   border-color: color-mix(in srgb, var(--adm) 38%, transparent);
   border-radius: 3px;
+}
+
+/* Dark: the tag is its status colour at 13% over the panel. Set here rather
+   than in --adm-tag-bg because --adm is only defined on the admonition. */
+html[data-theme="dark"] .theme-admonition [class*="admonitionHeading_"] {
+  background: color-mix(in srgb, var(--adm) 13%, var(--surface-panel));
 }
 
 .theme-admonition [class*="admonitionHeading_"]:not(:last-child) {
@@ -2277,6 +2317,11 @@ html[data-theme="dark"] {
 .blog-meta-strip .blog-meta-tags a:first-child {
   color: var(--accent-text);
   border-color: color-mix(in srgb, var(--ifm-color-primary) 45%, transparent);
+}
+
+/* Dark: chip colour at 13% over the panel. */
+html[data-theme="dark"] .blog-meta-strip .blog-meta-tags a:first-child {
+  background: color-mix(in srgb, var(--accent) 13%, var(--surface-panel));
 }
 
 /* Two states only: desktop row above, mobile stack below. */
