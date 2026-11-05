@@ -31,35 +31,17 @@ import BreakoutQuote from "@site/src/components/BreakoutQuote";
 import BenchmarkSetup from "./diagrams/BenchmarkSetup";
 import sorenBramerSchmidt from "./soren-bramer-schmidt.webp";
 
-<BreakoutQuote
-  username="Søren Bramer Schmidt"
-  title="Co-founder, Prisma"
-  imageUrl={sorenBramerSchmidt}
->
-  For this workload, Tigris was clearly faster.
-</BreakoutQuote>
-
-**Company:** [Prisma](https://www.prisma.io/)<br />
-**Products:** Prisma ORM, Prisma Postgres, Prisma Compute, Prisma Buckets<br />
-**Stack:** Bun, microVMs, Postgres, Tigris<br />
-**Regions:** Frankfurt, Paris, N. Virginia, N. California, Singapore, Tokyo<br />
-**Workload:** accelerated-fs, a virtual filesystem for AI agents
+[Prisma's](https://www.prisma.io/) team set out to give AI agents on
+[Prisma Compute](https://www.prisma.io/compute) a filesystem far larger than
+the microVM they run in, backed by object storage, without paying egress on
+every byte an agent reads back. The workload is thousands of small serial
+reads, so the store with the lowest latency floor would win. Co-founder Søren
+Bramer Schmidt benchmarked Tigris and Cloudflare R2 from all six Compute
+regions, published the
+[full results](https://www.prisma.io/blog/evaluating-object-storage-providers-for-prisma-compute),
+and shipped Prisma Buckets on Tigris.
 
 {/* truncate */}
-
-## About Prisma
-
-Prisma makes a widely used TypeScript ORM. In 2026 the company extended that
-into
-[Prisma Compute](https://www.prisma.io/compute), a platform that runs Bun in
-microVMs across six regions with Postgres built in, and then added
-S3-compatible [Buckets](https://www.prisma.io/docs/compute/object-storage) so
-apps and agents on Compute can store files without a second vendor.
-
-Co-founder Søren Bramer Schmidt ran the evaluation that picked the storage
-behind Buckets and published the full benchmark, charts and methodology in
-[Evaluating Object Storage Providers for Prisma Compute](https://www.prisma.io/blog/evaluating-object-storage-providers-for-prisma-compute).
-This post is the Tigris side of that story.
 
 ## Giving agents a filesystem bigger than the machine
 
@@ -136,6 +118,14 @@ copy of the dataset and nothing had to be kept in sync.
 
 He also ran the 50 MiB workload from a plane over Starlink. Tigris finished in
 248.5 seconds and R2 took 618.5, 2.5x longer.
+
+<BreakoutQuote
+  username="Søren Bramer Schmidt"
+  title="Co-founder, Prisma"
+  imageUrl={sorenBramerSchmidt}
+>
+  For this workload, Tigris was clearly faster.
+</BreakoutQuote>
 
 ## No penalty for running outside AWS
 
