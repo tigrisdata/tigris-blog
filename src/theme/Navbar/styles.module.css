@@ -111,10 +111,7 @@
 .trigger {
   border-radius: 3px;
   padding: 6px 12px;
-  font-family: var(--nav-font);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 20px;
+  font: var(--type-subhead-sm);
   letter-spacing: normal;
   color: var(--nav-muted);
   text-decoration: none;
@@ -306,8 +303,8 @@
   padding: 0 17px;
   border-radius: 3px;
   border: 1px solid transparent;
-  font: 500 14.5px/1 var(--nav-font);
-  letter-spacing: -0.005em;
+  font: var(--type-subhead-sm);
+  letter-spacing: normal;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
@@ -372,7 +369,8 @@
 .mobileLink,
 .mobileSubLink {
   display: block;
-  font-weight: 600;
+  font: var(--type-subhead-sm);
+  letter-spacing: normal;
   color: var(--nav-muted);
   text-decoration: none;
 }
@@ -409,8 +407,8 @@
 /* website .label */
 .label {
   margin: 0 0 8px;
-  font: 500 9.5px/1 var(--nav-mono);
-  letter-spacing: 0.2em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: #8ba3a0;
 }

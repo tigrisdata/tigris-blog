@@ -53,8 +53,8 @@
 }
 
 .tag {
-  font: 500 11px / 1.2 var(--ifm-font-family-monospace);
-  letter-spacing: 0.14em;
+  font: var(--type-label);
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--docs-color-text-100);
 }
