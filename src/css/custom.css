@@ -26,31 +26,6 @@
   src: url(/fonts/Poppins-Italic.ttf);
 }
 
-@font-face {
-  font-family: Hanken Grotesk;
-  font-weight: 100;
-  font-display: block;
-  font-style: normal;
-  font-named-instance: "Regular";
-  src: url(/fonts/HankenGrotesk-Regular.ttf);
-}
-
-@font-face {
-  font-family: Hanken Grotesk;
-  font-weight: 100 900;
-  font-display: block;
-  font-style: italic;
-  font-named-instance: "Italic";
-  src: url(/fonts/HankenGrotesk-Italic.ttf);
-}
-
-@font-face {
-  font-family: Fira Code VF;
-  font-weight: 300 700;
-  font-style: normal;
-  src: url(/fonts/FiraCode-VariableFont_wght.ttf);
-}
-
 /* Excalidraw's handwriting font, used by the inline SVG diagrams. Served as a
    file rather than inlined per-SVG so a page with ten diagrams doesn't ship ten
    copies of it. */
@@ -67,21 +42,27 @@ code {
   font-variant-ligatures: none;
 }
 
+/* Buttons take the surrounding type instead of the browser's default (Arial
+   13.33px in Chrome). Components that style a button set their own font. */
+button {
+  font: inherit;
+}
+
 :root {
   --ifm-spacing-horizontal: 1.5rem;
 
-  /* Match the marketing homepage (tigrisdata.com): Geist for body text,
-     Hanken Grotesk for headings, Geist Mono for code. */
+  /* Match the marketing homepage (tigrisdata.com): Geist for text, Geist Mono
+     for code. */
   --ifm-font-family-base: "Geist", system-ui, -apple-system, "Segoe UI", Roboto,
     Ubuntu, Cantarell, "Noto Sans", BlinkMacSystemFont, Helvetica, Arial,
     sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 
   /* Headings use Geist too (like the homepage hero) so titles and body read as
-     one typeface, with weight for hierarchy. Hanken is reserved for CTA buttons. */
+     one typeface, with weight for hierarchy. */
   --ifm-heading-font-family: var(--ifm-font-family-base);
 
-  --ifm-font-family-monospace: "Geist Mono", "Fira Code VF", SFMono-Regular,
-    Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --ifm-font-family-monospace: "Geist Mono", SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
 
   --ifm-font-weight-bold: 900;
 
