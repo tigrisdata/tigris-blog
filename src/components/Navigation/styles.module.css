@@ -137,7 +137,7 @@
 
 .active {
   background-color: var(--ifm-color-primary) !important;
-  color: #0b181e;
+  color: var(--accent-ink);
 }
 
 @media (max-width: 768px) {
