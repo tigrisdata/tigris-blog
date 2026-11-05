@@ -425,7 +425,8 @@
 /* right-click menu on the logo */
 .ctx {
   position: fixed;
-  z-index: 100;
+  /* above the sticky bar, which it overlaps when you right-click the logo */
+  z-index: calc(var(--ifm-z-index-fixed) + 1);
   min-width: 200px;
   border-radius: 4px;
   border: 1px solid color-mix(in oklab, #fff 10%, transparent);
