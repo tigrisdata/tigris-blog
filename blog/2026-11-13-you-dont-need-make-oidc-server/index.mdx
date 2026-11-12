@@ -3,7 +3,6 @@ slug: you-dont-need-make-oidc-server
 title: "You don't need to make your own OIDC server anymore"
 description: |
   Dynamic client registration flooded our Auth0 tenant, so we built our own OIDC server for MCP. CIMD makes that unneeded. Here's what we run instead, and why.
-image: ./hero-image.webp
 keywords:
   - MCP
   - OIDC
@@ -25,7 +24,6 @@ tags:
 ---
 
 import InlineCta from "@site/src/components/InlineCta";
-import heroImage from "./hero-image.webp";
 import OidcTopology from "../2025-12-16-mcp-oidc-provider/diagrams/OidcTopology";
 import {
   OAuthHandshake,
@@ -34,12 +32,6 @@ import {
   CimdFlow,
   RelayFlow,
 } from "./diagrams";
-
-<img
-  src={heroImage}
-  className="hero-image"
-  alt="TODO: describe the image here"
-/>
 
 In any service you end up having three basic problems: business logic,
 authentication, and authorization. All of these end up needing to be fairly
