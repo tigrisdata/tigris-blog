@@ -33,10 +33,9 @@ somewhere to keep its files?
 
 [Runable](https://runable.com) is an AI agent for people who would rather not
 touch code. Most of its more than 2 million registered users run small
-businesses: a bakery that wants online orders, a coach who needs a booking app,
-a shop that wants a website by this afternoon. They describe what they want and
-Runable builds it, whether that's a website, a mobile app, a slide deck or an ad
-campaign.
+businesses: a bakery that wants online orders, or a shop that wants a website by
+this afternoon. They describe what they want and Runable builds it, whether
+that's a website, a mobile app, a slide deck or an ad campaign.
 
 For apps, that includes the backend. Every app Runable builds gets its own
 Tigris bucket and an access key that works on that bucket and nowhere else.
@@ -45,11 +44,11 @@ Tigris bucket and an access key that works on that bucket and nowhere else.
 
 ![Runable's home screen on the Grow tab, with a prompt box, running ad campaigns, social accounts, cold outreach, and the agent's own spend-limited card.](./runable-home.webp)
 
-## Every app gets a backend of its own
+## A backend for every app
 
 A website can be a folder of static files, but an app needs more. Once a user
 says "let customers upload a photo" or "take payments," the app needs a
-database, file storage, payments and sign-in, and someone has to set all of it
+database, object storage, payments and sign-in, and someone has to set all of it
 up.
 
 On Runable, the agent does that with one tool call. The call creates the
@@ -65,9 +64,8 @@ takes 10.8 seconds at the median, and the agent goes back to writing features.
 
 An agent writes the code in these apps, and a small business owns it without
 ever reading it. Runable wouldn't let isolation between apps depend on that code
-being right. Each app gets its own bucket, plus a key with the Editor role on
-that bucket and nothing else. If one app leaks its key, the damage stops at that
-app's files.
+being right. Each app gets its own bucket and a key with the Editor role on that
+bucket alone, so if one app leaks its key, only that app's files are at risk.
 
 <BreakoutQuote
   username="Saksham Sarda"
@@ -82,36 +80,41 @@ app's files.
 The people who use those apps never see the bucket. They upload avatars, product
 photos and documents straight to Tigris through presigned URLs, and the app
 serves them back. When a Runable user copies an app to try a new direction, the
-copy gets a fresh bucket and key of its own.
+copy gets a fresh bucket and key.
 
 ## Planning for a thousand apps a day
 
-As apps on Runable took off, the team planned storage for where growth was
-heading: thousands of new apps a day, each with its own bucket and its own
-scoped key. Minting a key had to be as routine as creating the bucket, with no
-account-level ceiling to plan around.
+Runable planned its storage for thousands of new apps a day. Each app needs a
+bucket and a scoped key, so the team wanted no account-level ceiling to plan
+around.
 
-The team weighed the usual shortcuts. Shared keys, or many apps in one bucket,
-would weaken the isolation. A fleet of storage accounts would turn key
-management into a job of its own. Runable wanted storage that was built for one
-bucket and one key per tenant from the start.
+{/* TODO(ks): name the old provider and the limit Runable hit there */}
 
-"Our users build a thousand apps a day, and every one gets its own key," says
-Saksham. "We wanted storage where minting a scoped key is as routine as creating
-the bucket, so we never have to think about it."
+Shared keys, or many apps in one bucket, would weaken the isolation. A fleet of
+storage accounts would turn key management into a separate job.
+
+<BreakoutQuote
+  username="Saksham Sarda"
+  title="Co-founder and CTO, Runable"
+  imageUrl={sakshamSarda}
+>
+  Our users build a thousand apps a day, and every one gets its own key. We
+  wanted storage where minting a scoped key is as routine as creating the
+  bucket, so we never have to think about it.
+</BreakoutQuote>
 
 ## A 336-line switch
 
-Runable joined a shared Slack channel with Tigris, and Saksham asked what anyone
-asks before moving storage. Is it really S3-compatible? What does migration look
-like? Will the pricing hold once we depend on it? The answers, with docs links,
+Runable joined a shared Slack channel with Tigris, and Saksham asked whether
+Tigris was really S3-compatible, what migration would look like, and whether the
+pricing would hold once Runable depended on it. The answers, with docs links,
 were there the next morning.
 
-The switch itself was one module. Ankit, on the Runable team, replaced the old
+Ankit, on the Runable team, made the switch in one module. He replaced the old
 provider's code with a Tigris version that creates the bucket, sets CORS so
 browsers can upload to presigned URLs, and mints a key with `role: "Editor"` on
-that one bucket. The apps didn't change. They still speak S3, with a new
-endpoint and new keys.
+that one bucket. The apps still speak S3 and didn't change beyond a new endpoint
+and new keys.
 
 The pull request added 336 lines, removed 92, and merged 32 minutes after it
 opened. A week later it was serving production, less than two weeks after
@@ -132,7 +135,7 @@ with the rest.
 
 ## More of Runable on Tigris
 
-The next version of Runable puts the platform's own files on Tigris too. A
+In its next version, Runable will put the platform's own files on Tigris too. A
 global bucket will hold users' attachments, artifacts, skills and voices,
 managed with Tigris's Pulumi provider.
 
