@@ -73,9 +73,10 @@ code {
    yet; later steps move components onto them. Use the semantic tokens
    (--text-body, --surface-panel) in components, not the primitives, except
    where the brief's mapping names a primitive. The blog's semantic colours
-   resolve under [data-surface="blog"], which is set on the root in a later
-   step. These describe the dark Grey surface only; light mode keeps its
-   existing values.
+   resolve under [data-surface="marketing"] (the Teal surface), which
+   src/theme/Root puts on <html>; the blog stays on Teal by brand decision.
+   [data-surface="blog"] (Grey) is defined but unused. These describe the
+   dark surfaces only; light mode keeps its existing values.
    ========================================================================== */
 
 /* Type. Shorthand is `weight size/line-height family`. Apply the matching
