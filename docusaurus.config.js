@@ -90,7 +90,7 @@ const config = {
           showReadingTime: true,
           feedOptions: {
             type: "all",
-            copyright: `Copyright © ${new Date().getFullYear()} Tigris Data, Inc.`,
+            copyright: `Copyright © ${new Date().getFullYear()} Tigris Data, LLC`,
           },
           remarkPlugins: [simplePlantUML],
         },
@@ -308,7 +308,7 @@ const config = {
             ],
           },
         ],
-        copyright: `© ${new Date().getFullYear()} Tigris Data, Inc · All rights reserved`,
+        copyright: `© ${new Date().getFullYear()} Tigris Data, LLC · All rights reserved`,
       },
       ...(process.env.NEXT_ALGOLIA_APPID && process.env.NEXT_ALGOLIA_APIKEY
         ? {
