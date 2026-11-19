@@ -5,7 +5,7 @@
    ~520px. */
 
 .cta {
-  --cta: #57d3a4;
+  --cta: var(--accent);
   position: relative;
   display: flex;
   flex-wrap: wrap;
@@ -42,7 +42,7 @@
   display: block;
   font: 500 17.5px/1.4 var(--ifm-font-family-base);
   letter-spacing: -0.01em;
-  color: #f0f0f3;
+  color: var(--text-strong);
   text-wrap: pretty;
 }
 
@@ -51,7 +51,7 @@
   max-width: 54ch;
   font-size: 13.5px;
   line-height: 1.55;
-  color: #8f8f99;
+  color: var(--text-label);
 }
 
 /* Filled button — the end-of-post weight */

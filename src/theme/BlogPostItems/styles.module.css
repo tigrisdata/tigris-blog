@@ -38,7 +38,7 @@
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--ifm-color-emphasis-200);
-  background: #0b181e;
+  background: var(--surface-panel);
 }
 
 .featuredImage {
@@ -150,7 +150,7 @@
 .chipActive:hover {
   background: var(--ifm-color-primary);
   border-color: var(--ifm-color-primary);
-  color: #0b181e;
+  color: var(--accent-ink);
 }
 
 .controlsRight {
