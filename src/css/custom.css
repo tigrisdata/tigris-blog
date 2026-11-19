@@ -67,6 +67,196 @@ code {
   font-variant-ligatures: none;
 }
 
+/* ==========================================================================
+   Type and colour tokens (tigrisdata.com shared system)
+   Copied verbatim from the design brief, section 3. Nothing references these
+   yet; later steps move components onto them. Use the semantic tokens
+   (--text-body, --surface-panel) in components, not the primitives, except
+   where the brief's mapping names a primitive. The blog's semantic colours
+   resolve under [data-surface="blog"], which is set on the root in a later
+   step. These describe the dark Grey surface only; light mode keeps its
+   existing values.
+   ========================================================================== */
+
+/* Type. Shorthand is `weight size/line-height family`. Apply the matching
+   --track-* as letter-spacing; `label` is also text-transform: uppercase. */
+:root {
+  --font-sans: Geist, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  /* Geist */
+  --type-display-hero: 800 clamp(52px, 4.2vw, 60px) / 1 var(--font-sans);
+  --track-display-hero: -0.025em;
+  --type-display-lg: 500 48px/56px var(--font-sans);
+  --track-display-lg: -0.02em;
+  --type-display: 500 34px/40px var(--font-sans);
+  --track-display: -0.02em;
+  --type-heading-lg: 500 24px/32px var(--font-sans);
+  --track-heading-lg: -0.02em;
+  --type-heading: 500 20px/28px var(--font-sans);
+  --track-heading: -0.01em;
+  --type-heading-sm: 500 18px/28px var(--font-sans);
+  --track-heading-sm: -0.005em;
+  --type-subhead: 400 18px/28px var(--font-sans);
+  --track-subhead: -0.005em;
+  --type-subhead-md: 600 16px/24px var(--font-sans);
+  --type-subhead-sm: 500 14px/20px var(--font-sans);
+  --type-body-lg: 400 16px/26px var(--font-sans);
+  --type-body: 400 14px/20px var(--font-sans);
+  --type-body-sm: 400 12px/16px var(--font-sans);
+  --weight-strong: 600; /* bold in running text */
+  /* Geist Mono */
+  --type-mono-display: 400 34px/40px var(--font-mono);
+  --track-mono-display: -0.02em;
+  --type-mono-stat-lg: 500 24px/32px var(--font-mono);
+  --track-mono-stat-lg: -0.02em;
+  --type-mono-stat: 400 18px/24px var(--font-mono);
+  --type-mono: 400 14px/22px var(--font-mono);
+  --type-mono-sm: 400 12px/18px var(--font-mono);
+  --type-label: 500 10px/14px var(--font-mono);
+  --track-label: 0.12em; /* uppercase */
+}
+
+/* Colour */
+:root {
+  /* Primitives */
+  --foundation-white: #ffffff;
+  --foundation-offwhite: #f7f7f7;
+  --foundation-black: #09090b;
+  --grey-50: #fafafa;
+  --grey-100: #f3f4f6;
+  --grey-150: #eeeff1;
+  --grey-200: #e5e7eb;
+  --grey-300: #d1d5db;
+  --grey-400: #a3a8b4;
+  --grey-500: #828a9a;
+  --grey-600: #656d7d;
+  --grey-700: #4b515c;
+  --grey-800: #393e47;
+  --grey-900: #1f2126;
+  --grey-925: #141518;
+  --mint-50: #f1f6f4;
+  --mint-100: #ebf4f0;
+  --mint-200: #dcf2ec;
+  --mint-300: #a2dece;
+  --mint-400: #74e0b8;
+  --mint-500: #57d3a4;
+  --mint-600: #32be88;
+  --mint-700: #258f67;
+  --mint-800: #28544a;
+  --mint-900: #203730;
+  --mint-925: #10201d;
+  --mint-950: #08110f;
+  --teal-50: #eef4f2;
+  --teal-100: #d6e6e2;
+  --teal-200: #c3d4d0;
+  --teal-300: #a8bdb9;
+  --teal-400: #8ba3a0;
+  --teal-500: #3c5b59;
+  --teal-600: #22353b;
+  --teal-700: #1b2b32;
+  --teal-800: #142229;
+  --teal-900: #101f26;
+  --teal-925: #0b181e;
+  --teal-950: #0a171e;
+  --indigo-50: #f7f9ff;
+  --indigo-100: #e7ecfc;
+  --indigo-200: #cfd4ff;
+  --indigo-300: #b3b6fb;
+  --indigo-400: #818cf8;
+  --indigo-500: #686ef8;
+  --indigo-600: #494fea;
+  --indigo-700: #343bf0;
+  --indigo-800: #2f346d;
+  --indigo-900: #222554;
+  --indigo-950: #131633;
+  --forest-50: #f5fffa;
+  --forest-100: #dff9ed;
+  --forest-200: #ccf3de;
+  --forest-300: #acebca;
+  --forest-400: #6bd29b;
+  --forest-500: #2dce77;
+  --forest-600: #23b366;
+  --forest-700: #327d55;
+  --forest-800: #104727;
+  --forest-900: #013519;
+  --forest-950: #03200e;
+  --amber-50: #fffcf6;
+  --amber-100: #fff0d2;
+  --amber-200: #ffe6a4;
+  --amber-300: #ffdb7d;
+  --amber-400: #ffca42;
+  --amber-500: #ffb118;
+  --amber-600: #ffa012;
+  --amber-700: #af7402;
+  --amber-800: #51340c;
+  --amber-900: #3f2401;
+  --amber-950: #271500;
+  --ruby-50: #fffbfb;
+  --ruby-100: #fff1f1;
+  --ruby-200: #fdcbcb;
+  --ruby-300: #fca5a5;
+  --ruby-400: #f87171;
+  --ruby-500: #ef4444;
+  --ruby-600: #d64343;
+  --ruby-700: #b91c1c;
+  --ruby-800: #7f2a2a;
+  --ruby-900: #4e1413;
+  --ruby-950: #2f0c0b;
+  --cyan-100: #def7fe;
+  --cyan-300: #87e2ff;
+  --cyan-500: #3abce7;
+}
+
+/* Semantic · shared by marketing and blog */
+:root {
+  --accent: var(--mint-500);
+  --accent-hover: var(--mint-400);
+  --accent-ink: var(--mint-925);
+  --accent-soft: var(--mint-300);
+  --accent-line: var(--mint-800);
+  --code-output: var(--mint-400);
+  --status-note: var(--indigo-400);
+  --status-tip: var(--mint-500);
+  --status-info: var(--cyan-500);
+  --status-warning: var(--amber-600);
+  --status-danger: var(--ruby-400);
+  --status-aside: var(--indigo-300);
+}
+
+/* Semantic · marketing (Teal) */
+[data-surface="marketing"] {
+  --surface-ground: var(--teal-950);
+  --surface-panel: var(--teal-925);
+  --surface-hover: var(--teal-900);
+  --surface-raised: var(--teal-800);
+  --line-subtle: var(--teal-700);
+  --line: var(--teal-600);
+  --line-strong: var(--teal-500);
+  --text-display: var(--teal-50);
+  --text-strong: var(--teal-50);
+  --text-body: var(--teal-100);
+  --text-soft: var(--teal-200);
+  --text-muted: var(--teal-300);
+  --text-label: var(--teal-400);
+}
+
+/* Semantic · blog and docs (Grey) */
+[data-surface="blog"] {
+  --surface-ground: var(--foundation-black);
+  --surface-panel: var(--grey-925);
+  --surface-hover: var(--grey-900);
+  --surface-raised: var(--grey-900);
+  --line-subtle: var(--grey-900);
+  --line: var(--grey-900);
+  --line-strong: var(--grey-800);
+  --text-display: var(--foundation-offwhite);
+  --text-strong: var(--grey-150);
+  --text-body: var(--grey-300);
+  --text-soft: var(--grey-300);
+  --text-muted: var(--grey-400);
+  --text-label: var(--grey-500);
+}
+
 :root {
   --ifm-spacing-horizontal: 1.5rem;
 
