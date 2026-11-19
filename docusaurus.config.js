@@ -54,10 +54,12 @@ const config = {
     ...rb2bHeadTag,
   ],
 
-  // Match the marketing homepage fonts (Geist / Geist Mono / Hanken Grotesk).
+  // Geist and Geist Mono at the weights the type system uses: 400 reading;
+  // 500 headings, buttons and labels; 600 strong; 800 marketing hero only.
+  // Geist Mono is 400 and 500.
   stylesheets: [
     {
-      href: "https://fonts.googleapis.com/css2?family=Geist:wght@300..900&family=Geist+Mono:wght@300..700&family=Hanken+Grotesk:wght@400..800&display=swap",
+      href: "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;800&family=Geist+Mono:wght@400;500&display=swap",
       rel: "stylesheet",
     },
   ],
