@@ -288,7 +288,7 @@ function LogoContextMenu({
       style={{ top: pos.top, left: pos.left }}
     >
       <div className={styles.ctxPreview}>
-        <img src={BRAND_LOGO} alt="Tigris logo" width={92} height={56} />
+        <img src={BRAND_LOGO} alt="Tigris logo" width={98} height={60} />
       </div>
       <div className={styles.ctxList}>
         <button
@@ -553,7 +553,7 @@ export default function Navbar(): ReactNode {
                 setContextMenu({ x: e.clientX, y: e.clientY });
               }}
             >
-              <img src={logoSrc} alt="Tigris" width={92} height={56} />
+              <img src={logoSrc} alt="Tigris" width={98} height={60} />
             </a>
 
             <ul className={styles.links}>

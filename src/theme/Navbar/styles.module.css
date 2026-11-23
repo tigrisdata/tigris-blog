@@ -87,15 +87,16 @@
 }
 
 /* The stacked wordmark (59x36, with "a Dropbox company" under it) is drawn
-   at 56px so the subline is legible. The negative block margin keeps its
-   layout box at the old 32px, so the bar keeps its height (77px desktop,
-   65px mobile) and the logo is centred in it. */
+   at 60px, the brand's x60 size variant, so the subline is legible. The
+   negative block margin keeps its layout box at the old 32px, so the bar
+   keeps its height (77px desktop, 65px mobile) and the logo is centred in
+   it. */
 .logo img {
   color: transparent;
-  height: 56px;
+  height: 60px;
   width: auto;
   max-width: none;
-  margin-block: calc((32px - 56px) / 2);
+  margin-block: calc((32px - 60px) / 2);
 }
 
 .links {
@@ -452,11 +453,11 @@
   padding: 16px;
 }
 
-/* 56px, like the navbar logo, so the stacked wordmark's "a Dropbox company"
-   subline is readable in the preview. */
+/* 60px (the x60 size variant), like the navbar logo, so the stacked
+   wordmark's "a Dropbox company" subline is readable in the preview. */
 .ctxPreview img {
   display: block;
-  height: 56px;
+  height: 60px;
   width: auto;
 }
 
