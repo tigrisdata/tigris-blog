@@ -83,6 +83,10 @@
 .logo {
   display: flex;
   align-items: center;
+  /* Holds the slot of the previous 59x24 wordmark at 32px tall (about
+     78.66px) so the stacked 59x36 wordmark, which is narrower at the same
+     height, sits left-aligned in it and the nav links stay where they were. */
+  min-width: calc(32px * 59 / 24);
   color: inherit;
 }
 
