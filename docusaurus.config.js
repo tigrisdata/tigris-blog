@@ -162,8 +162,11 @@ const config = {
         hideOnScroll: false,
         logo: {
           href: tigrisConfig.websiteUrl,
-          src: "/logo/light.png",
-          srcDark: "/logo/dark.png",
+          // Not rendered: src/theme/Navbar replaces the stock navbar and uses
+          // `/img/tigris-logo.svg`. Kept pointing at the current wordmark so
+          // nothing that reads this config falls back to an old logo.
+          src: "/logo/light.svg",
+          srcDark: "/img/tigris-logo.svg",
           alt: "Tigris Blog",
           height: "26px",
           target: "_self",
@@ -237,16 +240,17 @@ const config = {
         // No `href`: the marketing footer renders the wordmark as a plain
         // image, and Docusaurus' footer logo link is styled at opacity 0.5,
         // which is what made the wordmark look muted here.
-        // Both files are the brand wordmark as shipped by the website repo:
-        // `/img/tigris-logo.svg` is public/images/tigris-logo.svg (the asset
-        // the marketing footer itself uses) and `/logo/light.svg` is
-        // public/brand/color-light/Logo.svg for the light color mode.
+        // Both files are the stacked "a Dropbox company" wordmark from the
+        // brand team, byte-for-byte: `/img/tigris-logo.svg` is the "on dark"
+        // version and `/logo/light.svg` the "on light" one. The artwork is
+        // 59x36; it is drawn 44px tall (custom.css `.footer__logo`), the
+        // brand's x44 size variant, which scales it to about 72x44.
         logo: {
           src: "/logo/light.svg",
           srcDark: "/img/tigris-logo.svg",
           alt: "Tigris",
-          width: "59",
-          height: "24",
+          width: "72",
+          height: "44",
         },
         // Mirrors the marketing footer's columns, order and link set exactly
         // (website repo: src/components/Footer.tsx -- `resourceLinks` and
