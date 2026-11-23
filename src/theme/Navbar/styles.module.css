@@ -83,18 +83,19 @@
 .logo {
   display: flex;
   align-items: center;
-  /* Holds the slot of the previous 59x24 wordmark at 32px tall (about
-     78.66px) so the stacked 59x36 wordmark, which is narrower at the same
-     height, sits left-aligned in it and the nav links stay where they were. */
-  min-width: calc(32px * 59 / 24);
   color: inherit;
 }
 
+/* The stacked wordmark (59x36, with "a Dropbox company" under it) is drawn
+   at 56px so the subline is legible. The negative block margin keeps its
+   layout box at the old 32px, so the bar keeps its height (77px desktop,
+   65px mobile) and the logo is centred in it. */
 .logo img {
   color: transparent;
-  height: 32px;
+  height: 56px;
   width: auto;
   max-width: none;
+  margin-block: calc((32px - 56px) / 2);
 }
 
 .links {

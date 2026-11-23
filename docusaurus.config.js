@@ -243,14 +243,14 @@ const config = {
         // Both files are the stacked "a Dropbox company" wordmark from the
         // brand team, byte-for-byte: `/img/tigris-logo.svg` is the "on dark"
         // version and `/logo/light.svg` the "on light" one. The artwork is
-        // 59x36; it is fitted to the old wordmark's 24px height (custom.css
-        // `.footer__logo`), so it scales proportionally to about 39x24.
+        // 59x36; it is drawn 48px tall (custom.css `.footer__logo`) so the
+        // subline is legible, which scales it proportionally to about 79x48.
         logo: {
           src: "/logo/light.svg",
           srcDark: "/img/tigris-logo.svg",
           alt: "Tigris",
-          width: "39",
-          height: "24",
+          width: "79",
+          height: "48",
         },
         // Mirrors the marketing footer's columns, order and link set exactly
         // (website repo: src/components/Footer.tsx -- `resourceLinks` and
