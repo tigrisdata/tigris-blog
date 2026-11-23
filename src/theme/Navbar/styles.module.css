@@ -452,9 +452,11 @@
   padding: 16px;
 }
 
+/* 56px, like the navbar logo, so the stacked wordmark's "a Dropbox company"
+   subline is readable in the preview. */
 .ctxPreview img {
   display: block;
-  height: 32px;
+  height: 56px;
   width: auto;
 }
 
