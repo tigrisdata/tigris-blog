@@ -553,7 +553,7 @@ export default function Navbar(): ReactNode {
                 setContextMenu({ x: e.clientX, y: e.clientY });
               }}
             >
-              <img src={logoSrc} alt="Tigris" width={79} height={32} />
+              <img src={logoSrc} alt="Tigris" width={52} height={32} />
             </a>
 
             <ul className={styles.links}>
